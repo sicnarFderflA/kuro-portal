@@ -3,46 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KURO · Student Dashboard | Xavier University</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>KURO · Student Dashboard | Xavier University - Ateneo de Cagayan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        :root {
+            --xavier-primary: #283871;
+            --xavier-primary-dark: #1e2b57;
+            --xavier-gold: #D4AF37;
+            --xavier-gold-dark: #b8942e;
+            --xavier-cream: #F9F6F0;
+            --xavier-dark-text: #1A2E3F;
+            --xavier-gray-text: #5A6E6B;
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: #f4f7fc; }
-        .top-nav { background: white; padding: 0.8rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e9eef3; flex-wrap: wrap; }
-        .logo-area h2 { color: #1b4d2e; display: flex; align-items: center; gap: 0.5rem; }
+        body { font-family: 'Inter', sans-serif; background: #f0f2f5; }
+        
+        .top-nav { 
+            background: var(--xavier-primary); 
+            padding: 0.8rem 2rem; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 3px solid var(--xavier-gold); 
+            flex-wrap: wrap; 
+        }
+        .logo-area { display: flex; align-items: center; gap: 1rem; }
+        .school-logo-header { height: 50px; width: auto; }
+        .logo-area h2 { color: white; display: flex; align-items: center; gap: 0.5rem; font-size: 1.3rem; }
+        .logo-area h2 i { color: var(--xavier-gold); }
         .user-info { display: flex; align-items: center; gap: 1rem; }
-        .avatar { width: 42px; height: 42px; border-radius: 50%; background: #1b4d2e; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; }
-        .logout-nav { background: #fff0df; color: #a5530e; border: none; padding: 0.4rem 1rem; border-radius: 30px; cursor: pointer; }
-        .main-content { padding: 2rem; max-width: 1200px; margin: 0 auto; }
+        .avatar { width: 42px; height: 42px; border-radius: 50%; background: var(--xavier-gold); color: var(--xavier-primary); display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .user-info div { color: white; }
+        .user-info #userEmail { color: rgba(255,255,255,0.8); }
+        .logout-nav { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 0.4rem 1rem; border-radius: 30px; cursor: pointer; transition: 0.2s; }
+        .logout-nav:hover { background: rgba(255,255,255,0.25); }
+        
+        .main-content { padding: 2rem; max-width: 1200px; margin: 0 auto; background: white; border-radius: 1rem; margin-top: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         .dashboard-title { margin-bottom: 1.5rem; }
+        .dashboard-title h2 { color: var(--xavier-gold); font-size: 1.6rem; }
+        .dashboard-title p { color: var(--xavier-gray-text); margin-top: 0.3rem; }
+        
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-        .stat-card { background: white; border-radius: 1.5rem; padding: 1.2rem; border: 1px solid #eef2f0; }
-        .grants-table { width: 100%; background: white; border-radius: 1.5rem; border-collapse: collapse; }
-        .grants-table th, .grants-table td { padding: 1rem; text-align: left; border-bottom: 1px solid #ecf3e8; }
+        .stat-card { background: #f8f9fa; border-radius: 1.5rem; padding: 1.2rem; border: 1px solid #eef2f0; border-top: 4px solid var(--xavier-gold); }
+        .stat-card i { color: var(--xavier-gold); font-size: 1.5rem; margin-bottom: 0.5rem; }
+        .stat-card h3 { font-size: 1.8rem; color: var(--xavier-primary); }
+        .stat-card span { color: var(--xavier-gray-text); font-size: 0.8rem; }
+        
+        .grants-table { width: 100%; background: white; border-radius: 1rem; border-collapse: collapse; overflow: hidden; border: 1px solid #eef2f0; }
+        .grants-table th { background: var(--xavier-primary); color: white; padding: 1rem; text-align: left; font-weight: 600; }
+        .grants-table td { padding: 1rem; text-align: left; border-bottom: 1px solid #ecf3e8; }
         .status { padding: 0.2rem 0.7rem; border-radius: 40px; font-size: 0.7rem; font-weight: 600; display: inline-block; }
         .status.pending { background: #fff0db; color: #b45f1b; }
         .status.approved { background: #e0f5e6; color: #1e6f3f; }
         .btn-sm { background: #eef2fa; border: none; padding: 0.3rem 1rem; border-radius: 30px; cursor: pointer; }
-        .btn-primary { background: #1b4d2e; color: white; border: none; padding: 0.5rem 1.2rem; border-radius: 40px; cursor: pointer; }
+        .btn-primary { background: var(--xavier-gold); color: var(--xavier-primary); border: none; padding: 0.5rem 1.2rem; border-radius: 40px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+        .btn-primary:hover { background: var(--xavier-gold-dark); color: white; }
         .flex-between { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem; }
+        .flex-between h3 { color: var(--xavier-primary); }
+        
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 2000; visibility: hidden; opacity: 0; transition: 0.2s; }
         .modal-overlay.active { visibility: visible; opacity: 1; }
         .modal-container { background: white; border-radius: 2rem; max-width: 600px; width: 90%; max-height: 85vh; overflow-y: auto; padding: 1.8rem; }
-        .modal-header { display: flex; justify-content: space-between; margin-bottom: 1rem; font-weight: 700; font-size: 1.2rem; }
+        .modal-header { display: flex; justify-content: space-between; margin-bottom: 1rem; font-weight: 700; font-size: 1.2rem; color: var(--xavier-primary); }
         .close-modal { background: none; border: none; font-size: 1.5rem; cursor: pointer; }
         .grant-tile { background: #f9fbf7; border: 1px solid #e2ecd9; border-radius: 1rem; padding: 1rem; margin-bottom: 0.8rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .grant-tile:hover { background: #f1f7ec; border-color: var(--xavier-gold); }
         .input-field { padding: 0.6rem; border-radius: 40px; border: 1px solid #cddfc7; width: 100%; margin-bottom: 0.8rem; }
         .demo-note { font-size: 0.68rem; background: #f3f7ef; padding: 0.6rem; border-radius: 28px; margin-top: 1rem; text-align: center; }
-        @media (max-width: 700px) { .top-nav { flex-direction: column; gap: 0.8rem; } }
+        footer { text-align: center; font-size: 0.65rem; color: var(--xavier-gray-text); padding: 1rem; border-top: 1px solid #e8ecd9; margin-top: 1rem; }
+        footer i { color: var(--xavier-gold); }
+        @media (max-width: 700px) { .top-nav { flex-direction: column; gap: 0.8rem; } .logo-area { flex-direction: column; text-align: center; } }
     </style>
 </head>
 <body>
 <div class="top-nav">
-    <div class="logo-area"><h2><i class="fas fa-scroll" style="color:#d4af37;"></i> KURO · Student Portal</h2><div style="font-size:0.7rem;">Xavier University | Kinaadman Student Research Award</div></div>
-    <div class="user-info"><div class="avatar" id="userAvatar">S</div><div><div id="userName"></div><div id="userEmail" style="font-size:0.7rem;"></div></div><button id="logoutBtn" class="logout-nav"><i class="fas fa-sign-out-alt"></i> Logout</button></div>
+    <div class="logo-area">
+        <img src="xu_logo.png" alt="Xavier University Logo" class="school-logo-header" style="height: 45px; width: auto;" onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerHTML = '<h2><i class=\'fas fa-scroll\'></i> KURO · Student Portal</h2>'">
+        <h2><i class="fas fa-scroll"></i> KURO · Student Portal</h2>
+    </div>
+    <div class="user-info">
+        <div class="avatar" id="userAvatar">S</div>
+        <div><div id="userName"></div><div id="userEmail" style="font-size:0.7rem;"></div></div>
+        <button id="logoutBtn" class="logout-nav"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
 </div>
 <div class="main-content" id="mainContent"></div>
+<footer><i class="fas fa-scroll"></i> Kinaadman University Research Office · Xavier University - Ateneo de Cagayan</footer>
 <div id="globalModal" class="modal-overlay"><div class="modal-container"><div class="modal-header"><span id="modalTitle"></span><button class="close-modal" id="closeModalBtn">&times;</button></div><div id="modalBody"></div></div></div>
 
 <script>
@@ -67,7 +114,7 @@
         <table class="grants-table"><thead><tr><th>Award</th><th>Submitted</th><th>Status</th><th>Action</th></tr></thead><tbody>`;
         if (mySubs.length === 0) html += `<tr><td colspan="4">No applications yet. Click "New Application" to apply for KSRA.</td></tr>`;
         mySubs.forEach(sub => { html += `<tr><td><strong>${sub.grantTitle}</strong></td><td>${sub.submittedDate}</td><td><span class="status ${sub.status === 'Approved' ? 'approved' : 'pending'}">${sub.status}</span></td><td><button class="btn-sm view-sub" data-id="${sub.id}">View</button></td></tr>`; });
-        html += `</tbody></table><div class="demo-note"><i class="fas fa-info-circle"></i> Kinaadman Student Research Award (KSRA) supports undergraduate and graduate student research.</div>`;
+        html += `</tbody></table><div class="demo-note"><i class="fas fa-info-circle"></i> Kinaadman Student Research Award (KSRA) supports undergraduate and graduate student research at Xavier University - Ateneo de Cagayan.</div>`;
         document.getElementById('mainContent').innerHTML = html;
         document.getElementById('newApplyBtn')?.addEventListener('click', openForm);
         document.querySelectorAll('.view-sub').forEach(btn => btn.addEventListener('click', () => { const id = btn.getAttribute('data-id'); const sub = mySubs.find(s => s.id === id); if(sub) showDetails(sub); }));

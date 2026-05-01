@@ -3,14 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>KURO · Sign In | Xavier University Research Office</title>
+    <title>KURO · Sign In | Xavier University - Ateneo de Cagayan Research Office</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        /* ==================== XAVIER UNIVERSITY COLOR SCHEME ==================== */
+        :root {
+            --xavier-primary: #283871;         /* Main brand color - Navy Blue */
+            --xavier-primary-dark: #1e2b57;    /* Darker shade for depth */
+            --xavier-primary-light: #3e5090;   /* Lighter shade for hover states */
+            --xavier-gold: #D4AF37;            /* Ateneo gold accent */
+            --xavier-gold-light: #E8C84A;      /* Gold highlight */
+            --xavier-cream: #F9F6F0;           /* Off-white background */
+            --xavier-dark-text: #1A2E3F;       /* Dark text color */
+            --xavier-gray-text: #5A6E6B;       /* Secondary text */
+            --bg-gradient-start: #1b2352;      /* Background gradient start */
+            --bg-gradient-end: #10183a;        /* Background gradient end */
+        }
+        
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             min-height: 100vh;
-            background: linear-gradient(135deg, #0a2a1f 0%, #0e3d2c 50%, #041a10 100%);
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--xavier-primary) 50%, var(--bg-gradient-end) 100%);
             font-family: 'Inter', sans-serif;
             display: flex;
             align-items: center;
@@ -18,25 +32,71 @@
             padding: 1.5rem;
         }
         .login-container {
-            max-width: 520px;
+            max-width: 540px;
             width: 100%;
-            background: rgba(255,255,250,0.98);
+            background: var(--xavier-cream);
             border-radius: 2rem;
             overflow: hidden;
-            box-shadow: 0 30px 50px rgba(0,0,0,0.3);
+            box-shadow: 0 30px 50px rgba(0,0,0,0.35);
+            border: 1px solid rgba(40, 56, 113, 0.2);
         }
         .brand-header {
-            background: linear-gradient(115deg, #1b4d2e, #0f3620);
-            padding: 2rem;
+            background: linear-gradient(115deg, var(--xavier-primary-dark), var(--xavier-primary));
+            padding: 2rem 2rem 1.5rem;
             text-align: center;
             color: white;
-            border-bottom: 3px solid #d4af37;
+            border-bottom: 3px solid var(--xavier-gold);
         }
-        .brand-header h1 { font-size: 2rem; font-family: 'Poppins', sans-serif; }
-        .office-tag { font-size: 0.7rem; letter-spacing: 2px; background: rgba(0,0,0,0.3); display: inline-block; padding: 0.2rem 1rem; border-radius: 40px; margin-top: 0.5rem; }
+        .school-logo {
+            margin: 0 auto 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            padding: 0;
+        }
+        .school-logo img {
+            max-width: 140px;
+            height: auto;
+            display: block;
+            filter: drop-shadow(0 2px 8px rgba(0,0,0,0.2));
+        }
+        .school-logo .logo-fallback {
+            font-size: 3rem;
+            color: var(--xavier-gold);
+        }
+        .brand-header h1 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 800;
+            font-size: 2rem;
+            letter-spacing: -0.3px;
+            color: #FFF8E7;
+            margin-top: 0.3rem;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        .school-fullname {
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            background: rgba(255,255,255,0.15);
+            display: inline-block;
+            padding: 0.25rem 1.2rem;
+            border-radius: 40px;
+            margin-top: 0.5rem;
+            font-weight: 500;
+            color: #FFEFCF;
+        }
+        .office-tag { 
+            font-size: 0.65rem; 
+            letter-spacing: 2px; 
+            background: rgba(0,0,0,0.3); 
+            display: inline-block; 
+            padding: 0.2rem 1rem; 
+            border-radius: 40px; 
+            margin-top: 0.6rem;
+        }
         .login-content { padding: 2rem; }
         .restriction-badge {
-            background: #fef6e8;
+            background: #FEF6E8;
             border-radius: 60px;
             padding: 0.5rem 1rem;
             display: inline-flex;
@@ -45,6 +105,11 @@
             font-size: 0.7rem;
             margin-bottom: 1.2rem;
             font-weight: 600;
+            color: var(--xavier-primary-dark);
+            border: 1px solid var(--xavier-gold);
+        }
+        .restriction-badge i {
+            color: var(--xavier-gold);
         }
         .google-btn {
             display: flex;
@@ -53,36 +118,81 @@
             gap: 12px;
             width: 100%;
             background: white;
-            border: 1px solid #cddfc7;
+            border: 1px solid #CDDFC7;
             border-radius: 48px;
             padding: 0.85rem;
             font-weight: 600;
             cursor: pointer;
-            transition: 0.2s;
+            transition: all 0.2s ease;
+            color: var(--xavier-primary-dark);
         }
-        .google-btn:hover { background: #f9fff7; transform: scale(1.01);}
+        .google-btn i:first-child {
+            color: #4285F4;
+        }
+        .google-btn:hover { 
+            background: #F9FFF7; 
+            transform: scale(1.01);
+            border-color: var(--xavier-primary);
+            box-shadow: 0 4px 12px rgba(40, 56, 113, 0.15);
+        }
         .demo-note { 
             font-size: 0.68rem; 
-            background: #f3f7ef; 
+            background: #F3F7EF; 
             padding: 0.75rem; 
             border-radius: 28px; 
             margin-top: 1rem; 
             text-align: center;
             line-height: 1.4;
+            color: var(--xavier-gray-text);
+            border: 1px solid #E2ECD9;
         }
-        .alert-message { margin-top: 1rem; font-size: 0.75rem; text-align: center; color: #bc6f25; background: #fff3e0; padding: 0.6rem; border-radius: 40px; display: none; }
-        footer { text-align: center; font-size: 0.65rem; color: #7f9a88; padding: 1rem; }
-        .admin-badge { background: #d4af3720; border: 1px solid #d4af37; border-radius: 30px; padding: 0.2rem 0.7rem; font-size: 0.65rem; display: inline-block; margin-top: 0.3rem; }
+        .demo-note strong {
+            color: var(--xavier-primary);
+        }
+        .alert-message { 
+            margin-top: 1rem; 
+            font-size: 0.75rem; 
+            text-align: center; 
+            color: #BC6F25; 
+            background: #FFF3E0; 
+            padding: 0.6rem; 
+            border-radius: 40px; 
+            display: none; 
+            border-left: 3px solid var(--xavier-gold);
+        }
+        footer { 
+            text-align: center; 
+            font-size: 0.65rem; 
+            color: #7F9A88; 
+            padding: 1rem;
+            border-top: 1px solid #E8ECD9;
+        }
+        footer i {
+            color: var(--xavier-primary);
+        }
+        .admin-badge { 
+            background: rgba(40, 56, 113, 0.08); 
+            border: 1px solid var(--xavier-primary); 
+            border-radius: 30px; 
+            padding: 0.2rem 0.7rem; 
+            font-size: 0.65rem; 
+            display: inline-block; 
+            margin-top: 0.3rem;
+            color: var(--xavier-primary-dark);
+        }
     </style>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 <div class="login-container">
     <div class="brand-header">
-        <i class="fas fa-university" style="font-size: 2rem;"></i>
+        <div class="school-logo" id="logoContainer">
+            <img id="schoolLogoImg" src="xu_logo.png" alt="Xavier University - Ateneo de Cagayan Logo" onerror="handleLogoError()">
+        </div>
         <h1>KURO</h1>
+        <div class="school-fullname">Xavier University - Ateneo de Cagayan</div>
         <div class="office-tag">Kinaadman University Research Office</div>
-        <div style="font-size:0.7rem; margin-top:0.3rem;">Xavier University · Grants & Awards Portal</div>
+        <div style="font-size:0.7rem; margin-top:0.3rem; opacity:0.9;">Research Grants & Awards Submission Portal</div>
     </div>
     <div class="login-content">
         <div style="text-align:center;">
@@ -90,25 +200,40 @@
         </div>
         <div id="googleButtonContainer"></div>
         <div class="demo-note">
-            <i class="fas fa-graduation-cap"></i> <strong>Xavier University Authentication</strong><br>
-            Students (@my.xu.edu.ph) → Student Dashboard (KSRA only)<br>
-            Faculty (@xu.edu.ph) → Faculty Dashboard (Grants + Reviewer mode)<br>
-            <span style="background:#d4af3720; padding:2px 8px; border-radius:20px; display:inline-block; margin-top:5px;">🔐 Admin: 200520181@my.xu.edu.ph → KURO Admin Console</span>
+            <i class="fas fa-graduation-cap"></i> <strong>Xavier University - Ateneo de Cagayan Authentication</strong><br>
+            🎓 Students (@my.xu.edu.ph) → Student Dashboard (KSRA only)<br>
+            👨‍🏫 Faculty (@xu.edu.ph) → Faculty Dashboard (Grants + Reviewer mode)<br>
+            <span class="admin-badge">🔐 Admin: 200520181@my.xu.edu.ph → KURO Admin Console</span>
         </div>
         <div id="loginErrorMsg" class="alert-message"></div>
     </div>
-    <footer><i class="fas fa-scroll"></i> Kinaadman University Research Office · Secured OAuth 2.0</footer>
+    <footer>
+        <i class="fas fa-scroll"></i> Kinaadman University Research Office · Secured OAuth 2.0<br>
+        <span style="font-size:0.6rem;">Xavier University - Ateneo de Cagayan | Transforming Minds, Serving Communities</span>
+    </footer>
 </div>
 
 <script>
-    // ==================== KURO LOGIN WITH DOMAIN RESTRICTION & EXACT ADMIN ====================
+    function handleLogoError() {
+        const logoContainer = document.getElementById('logoContainer');
+        if (logoContainer) {
+            logoContainer.innerHTML = '<div class="logo-fallback"><i class="fas fa-university"></i></div>';
+        }
+    }
+    
+    const logoImg = document.getElementById('schoolLogoImg');
+    if (logoImg) {
+        logoImg.onerror = handleLogoError;
+        setTimeout(() => {
+            if (logoImg.complete && logoImg.naturalWidth === 0) {
+                handleLogoError();
+            }
+        }, 500);
+    }
+    
     const XAVIER_DOMAINS = ['xu.edu.ph', 'my.xu.edu.ph'];
-    
-    // EXACT ADMIN EMAIL - CASE SENSITIVE (as provided)
     const KURO_ADMIN_EMAIL = "200520181@my.xu.edu.ph";
-    
-    // Optional: additional admin emails can be added here if needed
-    const ADDITIONAL_ADMINS = []; // e.g., "research.office@xu.edu.ph"
+    const ADDITIONAL_ADMINS = [];
     
     function isAdminEmail(email) {
         return email === KURO_ADMIN_EMAIL || ADDITIONAL_ADMINS.includes(email);
@@ -156,13 +281,11 @@
         const email = payload.email;
         const domain = email.split('@')[1]?.toLowerCase();
         
-        // Check if domain is allowed
         if (!XAVIER_DOMAINS.includes(domain)) {
-            showError(`Access Denied: ${email} is not a Xavier University email (@xu.edu.ph or @my.xu.edu.ph).`);
+            showError(`Access Denied: ${email} is not a Xavier University - Ateneo de Cagayan email (@xu.edu.ph or @my.xu.edu.ph).`);
             return;
         }
         
-        // Store user data
         const userData = { 
             name: payload.name, 
             email: email, 
@@ -171,7 +294,6 @@
         };
         sessionStorage.setItem('kuro_user', JSON.stringify(userData));
         
-        // Redirect based on user type
         const redirectUrl = getRedirectUrl(email);
         window.location.href = redirectUrl;
     }
@@ -180,22 +302,23 @@
         const container = document.getElementById('googleButtonContainer');
         if (!container) return;
         
-        // Google Client ID - REPLACE WITH YOUR ACTUAL CLIENT ID
         const GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com";
         
         if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID === "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com") {
-            // Demo mode for testing
             container.innerHTML = `
-                <div style="background:#fef1df; border-radius:48px; padding:0.7rem; text-align:center; margin-bottom:0.7rem; font-size:0.7rem;">
+                <div style="background:#FEF1DF; border-radius:48px; padding:0.7rem; text-align:center; margin-bottom:0.7rem; font-size:0.7rem; border:1px solid #D4AF37;">
                     <i class="fas fa-cogs"></i> Demo Mode: Configure Google Client ID in <strong>login.html</strong>
                 </div>
-                <button class="google-btn" id="mockGoogleBtn"><i class="fab fa-google"></i> Demo Sign In</button>
-                <div style="font-size:0.65rem; text-align:center; margin-top:0.5rem; color:#6f8f7a;">
-                    Test accounts: student@my.xu.edu.ph | faculty@xu.edu.ph | <strong>200520181@my.xu.edu.ph (Admin)</strong>
+                <button class="google-btn" id="mockGoogleBtn"><i class="fab fa-google"></i> Sign in with Xavier Google Account</button>
+                <div style="font-size:0.65rem; text-align:center; margin-top:0.8rem; color:#5A6E6B;">
+                    <strong>Test Accounts:</strong><br>
+                    🎓 Student: student@my.xu.edu.ph → Student Dashboard (KSRA)<br>
+                    👨‍🏫 Faculty: faculty@xu.edu.ph → Faculty Dashboard (Grants + Reviewer)<br>
+                    👑 Admin: <strong>200520181@my.xu.edu.ph</strong> → KURO Admin Console
                 </div>
             `;
             document.getElementById('mockGoogleBtn')?.addEventListener('click', () => {
-                const email = prompt("Enter demo email:\n- Student: student@my.xu.edu.ph\n- Faculty: faculty@xu.edu.ph\n- Admin: 200520181@my.xu.edu.ph", "200520181@my.xu.edu.ph");
+                const email = prompt("Enter Xavier University email:\n- Student: student@my.xu.edu.ph\n- Faculty: faculty@xu.edu.ph\n- Admin: 200520181@my.xu.edu.ph", "200520181@my.xu.edu.ph");
                 if (email && XAVIER_DOMAINS.includes(email.split('@')[1]?.toLowerCase())) {
                     const userData = { 
                         name: email.split('@')[0], 
@@ -212,12 +335,12 @@
             return;
         }
         
-        // Real Google OAuth
         google.accounts.id.initialize({ 
             client_id: GOOGLE_CLIENT_ID, 
             callback: handleGoogleResponse,
             auto_select: false,
-            cancel_on_tap_outside: true
+            cancel_on_tap_outside: true,
+            context: "signin"
         });
         google.accounts.id.renderButton(container, { 
             theme: 'outline', 
@@ -229,7 +352,6 @@
         });
     }
     
-    // Check existing session
     const existingUser = sessionStorage.getItem('kuro_user');
     if (existingUser) {
         try {
