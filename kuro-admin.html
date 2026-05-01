@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KURO · Admin Dashboard | Xavier University</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f4f7fc; }
+        .top-nav { background: white; padding: 0.8rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e9eef3; flex-wrap: wrap; }
+        .logo-area h2 { color: #1b4d2e; display: flex; align-items: center; gap: 0.5rem; }
+        .user-info { display: flex; align-items: center; gap: 1rem; }
+        .avatar { width: 42px; height: 42px; border-radius: 50%; background: #1b4d2e; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .logout-nav { background: #fff0df; color: #a5530e; border: none; padding: 0.4rem 1rem; border-radius: 30px; cursor: pointer; }
+        .main-content { padding: 2rem; max-width: 1400px; margin: 0 auto; }
+        .dashboard-title { margin-bottom: 1.5rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card { background: white; border-radius: 1.5rem; padding: 1.2rem; border: 1px solid #eef2f0; }
+        .grants-table { width: 100%; background: white; border-radius: 1.5rem; border-collapse: collapse; }
+        .grants-table th, .grants-table td { padding: 1rem; text-align: left; border-bottom: 1px solid #ecf3e8; }
+        .status { padding: 0.2rem 0.7rem; border-radius: 40px; font-size: 0.7rem; font-weight: 600; display: inline-block; }
+        .status.pending { background: #fff0db; color: #b45f1b; }
+        .status.approved { background: #e0f5e6; color: #1e6f3f; }
+        .btn-sm { background: #eef2fa; border: none; padding: 0.3rem 1rem; border-radius: 30px; cursor: pointer; }
+        .btn-primary { background: #1b4d2e; color: white; border: none; padding: 0.5rem 1.2rem; border-radius: 40px; cursor: pointer; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .grant-tile { background: #f9fbf7; border: 1px solid #e2ecd9; border-radius: 1rem; padding: 1rem; margin-bottom: 0.8rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 2000; visibility: hidden; opacity: 0; transition: 0.2s; }
+        .modal-overlay.active { visibility: visible; opacity: 1; }
+        .modal-container { background: white; border-radius: 2rem; max-width: 700px; width: 90%; max-height: 85vh; overflow-y: auto; padding: 1.8rem; }
+        .modal-header { display: flex; justify-content: space-between; margin-bottom: 1rem; font-weight: 700; font-size: 1.2rem; }
+        .close-modal { background: none; border: none; font-size: 1.5rem; cursor: pointer; }
+        .application-detail { background: #fefcf5; padding: 1rem; border-radius: 1rem; margin-bottom: 1rem; border-left: 4px solid #d4af37; }
+        .input-field { padding: 0.6rem; border-radius: 40px; border: 1px solid #cddfc7; width: 100%; margin-bottom: 0.8rem; }
+        @media (max-width: 700px) { .top-nav { flex-direction: column; gap: 0.8rem; } }
+        .chart-container { max-width: 450px; background: white; border-radius: 1rem; padding: 1rem; margin-top: 1rem; }
+    </style>
+</head>
+<body>
+<div class="top-nav">
+    <div class="logo-area"><h2><i class="fas fa-scroll" style="color:#d4af37;"></i> KURO · Admin Console</h2><div style="font-size:0.7rem;">Xavier University Research Office</div></div>
+    <div class="user-info"><div class="avatar" id="userAvatar">A</div><div><div id="userName"></div><div id="userEmail" style="font-size:0.7rem;"></div></div><button id="logoutBtn" class="logout-nav"><i class="fas fa-sign-out-alt"></i> Logout</button></div>
+</div>
+<div class="main-content" id="mainContent"></div>
+<div id="globalModal" class="modal-overlay"><div class="modal-container"><div class="modal-header"><span id="modalTitle"></span><button class="close-modal" id="closeModalBtn">&times;</button></div><div id="modalBody"></div></div></div>
+
+<script>
+    const currentUser = JSON.parse(sessionStorage.getItem('kuro_user'));
+    if (!currentUser) window.location.href = "login.html";
+    document.getElementById('userName').innerText = currentUser.name;
+    document.getElementById('userEmail').innerText = currentUser.email;
+    document.getElementById('userAvatar').innerText = currentUser.name?.charAt(0) || 'A';
+    
+    let submissionsDB = JSON.parse(localStorage.getItem('kuro_submissions')) || {};
+    let reviewerTasks = JSON.parse(localStorage.getItem('kuro_reviewer_tasks')) || {};
+    const ALL_GRANTS = ["INSTITUTIONAL RESEARCH (IR) AWARD", "MIGUEL BERNAD HUMANITIES RESEARCH (MBHR) AWARD", "MINDANAO RESEARCH (MR) AWARD", "MATTEO RICCI RESEARCH (MRR) AWARD", "Publication Award", "Madigan Award", "Kinaadman Student Research Award (KSRA)"];
+    
+    function getAllApplications() { let apps = []; for (let [email, subs] of Object.entries(submissionsDB)) { subs.forEach(s => apps.push({ ...s, applicantEmail: email })); } return apps; }
+    function persist() { localStorage.setItem('kuro_submissions', JSON.stringify(submissionsDB)); localStorage.setItem('kuro_reviewer_tasks', JSON.stringify(reviewerTasks)); }
+    
+    function render() {
+        const allApps = getAllApplications();
+        const stats = { total: allApps.length, pending: allApps.filter(a => a.status !== "Approved").length, reviewers: Object.keys(reviewerTasks).length };
+        let html = `<div class="dashboard-title"><h2><i class="fas fa-chalkboard-user"></i> KURO Administrator Dashboard</h2><p>Manage grants, applications, and external reviewers</p></div>
+        <div class="stats-grid"><div class="stat-card"><i class="fas fa-file-alt"></i><h3>${stats.total}</h3><span>Total Applications</span></div><div class="stat-card"><i class="fas fa-hourglass-half"></i><h3>${stats.pending}</h3><span>Pending Review</span></div><div class="stat-card"><i class="fas fa-users"></i><h3>${stats.reviewers}</h3><span>Active Reviewers</span></div></div>
+        <div class="chart-container"><canvas id="submissionChart" width="400" height="200"></canvas></div>
+        <h3 style="margin-top:1.5rem;"><i class="fas fa-list-ul"></i> All Grants & Awards</h3>
+        <div id="grantsList"></div>`;
+        document.getElementById('mainContent').innerHTML = html;
+        const ctx = document.getElementById('submissionChart')?.getContext('2d');
+        if(ctx) new Chart(ctx, { type: 'bar', data: { labels: ALL_GRANTS, datasets: [{ label: 'Applications', data: ALL_GRANTS.map(g => allApps.filter(a => a.grantTitle === g).length), backgroundColor: '#1b4d2e' }] } });
+        const container = document.getElementById('grantsList');
+        ALL_GRANTS.forEach(grant => { const appsCount = allApps.filter(a => a.grantTitle === grant).length; const div = document.createElement('div'); div.className = "grant-tile"; div.innerHTML = `<div><strong>${grant}</strong><div class="grant-category">${appsCount} application(s)</div></div><i class="fas fa-chevron-right"></i>`; div.addEventListener('click', () => showGrantApps(grant)); container.appendChild(div); });
+    }
+    
+    function showGrantApps(grantTitle) {
+        const apps = getAllApplications().filter(a => a.grantTitle === grantTitle);
+        let body = apps.length === 0 ? "<p>No submissions.</p>" : "";
+        apps.forEach(app => { body += `<div class="application-detail"><strong>Applicant:</strong> ${app.applicantEmail}<br><strong>Project:</strong> ${app.projectTitle}<br><strong>Status:</strong> <span class="status ${app.status === 'Approved' ? 'approved' : 'pending'}">${app.status}</span><br><div style="margin-top:0.5rem;"><button class="btn-sm update-status" data-id="${app.id}">Update Status</button><button class="btn-sm assign-reviewer" data-id="${app.id}" data-grant="${grantTitle}">Assign Reviewer</button></div></div>`; });
+        document.getElementById('modalTitle').innerHTML = `Applications for ${grantTitle}`;
+        document.getElementById('modalBody').innerHTML = body;
+        modal.classList.add('active');
+        document.querySelectorAll('.update-status').forEach(btn => btn.addEventListener('click', (e) => { const id = btn.getAttribute('data-id'); updateStatus(id); }));
+        document.querySelectorAll('.assign-reviewer').forEach(btn => btn.addEventListener('click', (e) => { const id = btn.getAttribute('data-id'); const grant = btn.getAttribute('data-grant'); assignReviewer(id, grant); }));
+    }
+    
+    function updateStatus(appId) { for (let [email, apps] of Object.entries(submissionsDB)) { const app = apps.find(a => a.id === appId); if(app) { const newStatus = prompt(`Current: ${app.status}\nNew Status (Under Review / External Review / Approved):`, app.status); if(newStatus && ["Under Review","External Review","Approved"].includes(newStatus)) { app.status = newStatus; persist(); alert("Status updated"); closeModal(); render(); } return; } } }
+    
+    function assignReviewer(appId, grantTitle) { const email = prompt("Enter reviewer email (external):"); if(email && email.includes('@')) { if(!reviewerTasks[email]) reviewerTasks[email] = []; reviewerTasks[email].push({ id: appId, grantTitle: grantTitle, dueDate: new Date(Date.now()+14*86400000).toISOString().slice(0,10) }); persist(); alert(`Reviewer ${email} assigned.`); closeModal(); } }
+    
+    const modal = document.getElementById('globalModal');
+    function closeModal() { modal.classList.remove('active'); }
+    document.getElementById('closeModalBtn').onclick = closeModal;
+    modal.onclick = (e) => { if(e.target === modal) closeModal(); };
+    document.getElementById('logoutBtn').onclick = () => { sessionStorage.clear(); window.location.href = "login.html"; };
+    render();
+</script>
+</body>
+</html>

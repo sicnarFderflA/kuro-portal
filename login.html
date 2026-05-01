@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>KURO · Sign In | Xavier University Research Office</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0a2a1f 0%, #0e3d2c 50%, #041a10 100%);
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+        .login-container {
+            max-width: 520px;
+            width: 100%;
+            background: rgba(255,255,250,0.98);
+            border-radius: 2rem;
+            overflow: hidden;
+            box-shadow: 0 30px 50px rgba(0,0,0,0.3);
+        }
+        .brand-header {
+            background: linear-gradient(115deg, #1b4d2e, #0f3620);
+            padding: 2rem;
+            text-align: center;
+            color: white;
+            border-bottom: 3px solid #d4af37;
+        }
+        .brand-header h1 { font-size: 2rem; font-family: 'Poppins', sans-serif; }
+        .office-tag { font-size: 0.7rem; letter-spacing: 2px; background: rgba(0,0,0,0.3); display: inline-block; padding: 0.2rem 1rem; border-radius: 40px; margin-top: 0.5rem; }
+        .login-content { padding: 2rem; }
+        .restriction-badge {
+            background: #fef6e8;
+            border-radius: 60px;
+            padding: 0.5rem 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.7rem;
+            margin-bottom: 1.2rem;
+            font-weight: 600;
+        }
+        .google-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            background: white;
+            border: 1px solid #cddfc7;
+            border-radius: 48px;
+            padding: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .google-btn:hover { background: #f9fff7; transform: scale(1.01);}
+        .demo-note { 
+            font-size: 0.68rem; 
+            background: #f3f7ef; 
+            padding: 0.75rem; 
+            border-radius: 28px; 
+            margin-top: 1rem; 
+            text-align: center;
+            line-height: 1.4;
+        }
+        .alert-message { margin-top: 1rem; font-size: 0.75rem; text-align: center; color: #bc6f25; background: #fff3e0; padding: 0.6rem; border-radius: 40px; display: none; }
+        footer { text-align: center; font-size: 0.65rem; color: #7f9a88; padding: 1rem; }
+        .admin-badge { background: #d4af3720; border: 1px solid #d4af37; border-radius: 30px; padding: 0.2rem 0.7rem; font-size: 0.65rem; display: inline-block; margin-top: 0.3rem; }
+    </style>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+<div class="login-container">
+    <div class="brand-header">
+        <i class="fas fa-university" style="font-size: 2rem;"></i>
+        <h1>KURO</h1>
+        <div class="office-tag">Kinaadman University Research Office</div>
+        <div style="font-size:0.7rem; margin-top:0.3rem;">Xavier University · Grants & Awards Portal</div>
+    </div>
+    <div class="login-content">
+        <div style="text-align:center;">
+            <div class="restriction-badge"><i class="fas fa-shield-alt"></i> Restricted to @xu.edu.ph | @my.xu.edu.ph</div>
+        </div>
+        <div id="googleButtonContainer"></div>
+        <div class="demo-note">
+            <i class="fas fa-graduation-cap"></i> <strong>Xavier University Authentication</strong><br>
+            Students (@my.xu.edu.ph) → Student Dashboard (KSRA only)<br>
+            Faculty (@xu.edu.ph) → Faculty Dashboard (Grants + Reviewer mode)<br>
+            <span style="background:#d4af3720; padding:2px 8px; border-radius:20px; display:inline-block; margin-top:5px;">🔐 Admin: 200520181@my.xu.edu.ph → KURO Admin Console</span>
+        </div>
+        <div id="loginErrorMsg" class="alert-message"></div>
+    </div>
+    <footer><i class="fas fa-scroll"></i> Kinaadman University Research Office · Secured OAuth 2.0</footer>
+</div>
+
+<script>
+    // ==================== KURO LOGIN WITH DOMAIN RESTRICTION & EXACT ADMIN ====================
+    const XAVIER_DOMAINS = ['xu.edu.ph', 'my.xu.edu.ph'];
+    
+    // EXACT ADMIN EMAIL - CASE SENSITIVE (as provided)
+    const KURO_ADMIN_EMAIL = "200520181@my.xu.edu.ph";
+    
+    // Optional: additional admin emails can be added here if needed
+    const ADDITIONAL_ADMINS = []; // e.g., "research.office@xu.edu.ph"
+    
+    function isAdminEmail(email) {
+        return email === KURO_ADMIN_EMAIL || ADDITIONAL_ADMINS.includes(email);
+    }
+    
+    function getUserType(email) {
+        if (isAdminEmail(email)) return "admin";
+        const domain = email.split('@')[1]?.toLowerCase();
+        if (domain === "my.xu.edu.ph") return "student";
+        if (domain === "xu.edu.ph") return "faculty";
+        return "unknown";
+    }
+    
+    function getRedirectUrl(email) {
+        const userType = getUserType(email);
+        if (userType === "admin") return "kuro-admin.html";
+        if (userType === "student") return "student-dashboard.html";
+        if (userType === "faculty") return "faculty-dashboard.html";
+        return "login.html";
+    }
+    
+    function parseJwt(token) {
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+            return JSON.parse(jsonPayload);
+        } catch(e) { return null; }
+    }
+    
+    function showError(msg) {
+        const errDiv = document.getElementById('loginErrorMsg');
+        errDiv.innerText = msg;
+        errDiv.style.display = 'block';
+        setTimeout(() => { errDiv.style.display = 'none'; }, 5000);
+    }
+    
+    function handleGoogleResponse(response) {
+        const payload = parseJwt(response.credential);
+        if (!payload || !payload.email) { 
+            showError("Authentication failed. Please try again."); 
+            return; 
+        }
+        
+        const email = payload.email;
+        const domain = email.split('@')[1]?.toLowerCase();
+        
+        // Check if domain is allowed
+        if (!XAVIER_DOMAINS.includes(domain)) {
+            showError(`Access Denied: ${email} is not a Xavier University email (@xu.edu.ph or @my.xu.edu.ph).`);
+            return;
+        }
+        
+        // Store user data
+        const userData = { 
+            name: payload.name, 
+            email: email, 
+            picture: payload.picture || '',
+            isAdmin: isAdminEmail(email)
+        };
+        sessionStorage.setItem('kuro_user', JSON.stringify(userData));
+        
+        // Redirect based on user type
+        const redirectUrl = getRedirectUrl(email);
+        window.location.href = redirectUrl;
+    }
+    
+    function initGoogleSignIn() {
+        const container = document.getElementById('googleButtonContainer');
+        if (!container) return;
+        
+        // Google Client ID - REPLACE WITH YOUR ACTUAL CLIENT ID
+        const GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com";
+        
+        if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID === "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com") {
+            // Demo mode for testing
+            container.innerHTML = `
+                <div style="background:#fef1df; border-radius:48px; padding:0.7rem; text-align:center; margin-bottom:0.7rem; font-size:0.7rem;">
+                    <i class="fas fa-cogs"></i> Demo Mode: Configure Google Client ID in <strong>login.html</strong>
+                </div>
+                <button class="google-btn" id="mockGoogleBtn"><i class="fab fa-google"></i> Demo Sign In</button>
+                <div style="font-size:0.65rem; text-align:center; margin-top:0.5rem; color:#6f8f7a;">
+                    Test accounts: student@my.xu.edu.ph | faculty@xu.edu.ph | <strong>200520181@my.xu.edu.ph (Admin)</strong>
+                </div>
+            `;
+            document.getElementById('mockGoogleBtn')?.addEventListener('click', () => {
+                const email = prompt("Enter demo email:\n- Student: student@my.xu.edu.ph\n- Faculty: faculty@xu.edu.ph\n- Admin: 200520181@my.xu.edu.ph", "200520181@my.xu.edu.ph");
+                if (email && XAVIER_DOMAINS.includes(email.split('@')[1]?.toLowerCase())) {
+                    const userData = { 
+                        name: email.split('@')[0], 
+                        email: email, 
+                        picture: '',
+                        isAdmin: email === KURO_ADMIN_EMAIL
+                    };
+                    sessionStorage.setItem('kuro_user', JSON.stringify(userData));
+                    window.location.href = getRedirectUrl(email);
+                } else if (email) {
+                    showError("Invalid domain. Use @xu.edu.ph or @my.xu.edu.ph");
+                }
+            });
+            return;
+        }
+        
+        // Real Google OAuth
+        google.accounts.id.initialize({ 
+            client_id: GOOGLE_CLIENT_ID, 
+            callback: handleGoogleResponse,
+            auto_select: false,
+            cancel_on_tap_outside: true
+        });
+        google.accounts.id.renderButton(container, { 
+            theme: 'outline', 
+            size: 'large', 
+            width: '100%', 
+            text: 'signin_with', 
+            shape: 'pill',
+            logo_alignment: 'center'
+        });
+    }
+    
+    // Check existing session
+    const existingUser = sessionStorage.getItem('kuro_user');
+    if (existingUser) {
+        try {
+            const user = JSON.parse(existingUser);
+            if (user.email && XAVIER_DOMAINS.includes(user.email.split('@')[1]?.toLowerCase())) {
+                window.location.href = getRedirectUrl(user.email);
+            } else {
+                sessionStorage.removeItem('kuro_user');
+            }
+        } catch(e) {
+            sessionStorage.removeItem('kuro_user');
+        }
+    }
+    
+    initGoogleSignIn();
+</script>
+</body>
+</html>
