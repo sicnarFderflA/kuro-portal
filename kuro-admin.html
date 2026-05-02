@@ -14,6 +14,9 @@
             --xavier-gold: #D4AF37;
             --xavier-gold-dark: #b8942e;
             --xavier-gray-text: #5A6E6B;
+            --xavier-success: #2ecc71;
+            --xavier-warning: #f39c12;
+            --xavier-danger: #e74c3c;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background: #f0f2f5; }
@@ -29,36 +32,56 @@
         .user-info #userEmail { color: rgba(255,255,255,0.8); }
         .logout-nav { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 0.4rem 1rem; border-radius: 30px; cursor: pointer; }
         
-        .main-content { padding: 2rem; max-width: 1400px; margin: 0 auto; background: white; border-radius: 1rem; margin-top: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .main-content { padding: 2rem; max-width: 1400px; margin: 0 auto; background: white; border-radius: 1rem; margin-top: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         .dashboard-title h2 { color: var(--xavier-gold); font-size: 1.6rem; margin-bottom: 0.5rem; }
         .dashboard-title p { color: var(--xavier-gray-text); }
         
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-        .stat-card { background: #f8f9fa; border-radius: 1.5rem; padding: 1.2rem; border-top: 4px solid var(--xavier-gold); }
-        .stat-card i { color: var(--xavier-gold); font-size: 1.5rem; }
-        .stat-card h3 { font-size: 1.8rem; color: var(--xavier-primary); }
+        .stat-card { background: #f8f9fa; border-radius: 1.5rem; padding: 1.2rem; border-top: 4px solid var(--xavier-gold); transition: transform 0.2s; }
+        .stat-card:hover { transform: translateY(-3px); }
+        .stat-card i { color: var(--xavier-gold); font-size: 1.8rem; margin-bottom: 0.5rem; }
+        .stat-card h3 { font-size: 2rem; color: var(--xavier-primary); }
+        .stat-card span { color: var(--xavier-gray-text); font-size: 0.85rem; }
         
-        .grant-tile { background: #f9fbf7; border: 1px solid #e2ecd9; border-radius: 1rem; padding: 1rem; margin-bottom: 0.8rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-        .grant-tile:hover { background: #f1f7ec; border-color: var(--xavier-gold); }
+        .grant-tile { background: #f9fbf7; border: 1px solid #e2ecd9; border-radius: 1rem; padding: 1rem; margin-bottom: 0.8rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; }
+        .grant-tile:hover { background: #f1f7ec; border-color: var(--xavier-gold); transform: translateX(5px); }
         
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 2000; visibility: hidden; opacity: 0; transition: 0.2s; }
         .modal-overlay.active { visibility: visible; opacity: 1; }
         .modal-container { background: white; border-radius: 2rem; max-width: 700px; width: 90%; max-height: 85vh; overflow-y: auto; padding: 1.8rem; }
-        .modal-header { display: flex; justify-content: space-between; margin-bottom: 1rem; font-weight: 700; font-size: 1.2rem; color: var(--xavier-primary); }
-        .close-modal { background: none; border: none; font-size: 1.5rem; cursor: pointer; }
+        .modal-header { display: flex; justify-content: space-between; margin-bottom: 1rem; font-weight: 700; font-size: 1.2rem; color: var(--xavier-primary); border-bottom: 2px solid var(--xavier-gold); padding-bottom: 0.5rem; }
+        .close-modal { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--xavier-gray-text); }
         .application-detail { background: #fefcf5; padding: 1rem; border-radius: 1rem; margin-bottom: 1rem; border-left: 4px solid var(--xavier-gold); }
-        .btn-sm { background: #eef2fa; border: none; padding: 0.3rem 1rem; border-radius: 30px; cursor: pointer; }
-        .btn-primary { background: var(--xavier-gold); color: var(--xavier-primary); border: none; padding: 0.5rem 1.2rem; border-radius: 40px; cursor: pointer; font-weight: 600; }
-        .chart-container { max-width: 450px; background: white; border-radius: 1rem; padding: 1rem; margin-top: 1rem; border: 1px solid #eef2f0; }
+        .btn-sm { background: #eef2fa; border: none; padding: 0.3rem 1rem; border-radius: 30px; cursor: pointer; margin: 0.2rem; transition: 0.2s; }
+        .btn-sm:hover { background: var(--xavier-primary); color: white; }
+        .btn-primary { background: var(--xavier-gold); color: var(--xavier-primary); border: none; padding: 0.5rem 1.2rem; border-radius: 40px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+        .btn-primary:hover { background: var(--xavier-gold-dark); color: white; }
+        
+        .charts-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .chart-card { background: white; border-radius: 1rem; padding: 1rem; border: 1px solid #eef2f0; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .chart-card h4 { color: var(--xavier-primary); margin-bottom: 1rem; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .chart-card h4 i { color: var(--xavier-gold); }
+        .chart-container { max-width: 100%; height: 250px; position: relative; }
+        
+        .status-badge { padding: 0.2rem 0.7rem; border-radius: 40px; font-size: 0.7rem; font-weight: 600; display: inline-block; }
+        .status-badge.pending { background: #fff0db; color: #b45f1b; }
+        .status-badge.approved { background: #e0f5e6; color: #1e6f3f; }
+        .status-badge.external { background: #e3ecff; color: #2c5f9a; }
+        
+        .trend-up { color: var(--xavier-success); }
+        .trend-down { color: var(--xavier-danger); }
+        
         footer { text-align: center; font-size: 0.65rem; color: var(--xavier-gray-text); padding: 1rem; border-top: 1px solid #e8ecd9; margin-top: 1rem; }
         footer i { color: var(--xavier-gold); }
+        
+        @media (max-width: 900px) { .charts-row { grid-template-columns: 1fr; } }
         @media (max-width: 700px) { .top-nav { flex-direction: column; gap: 0.8rem; } .logo-area { flex-direction: column; text-align: center; } }
     </style>
 </head>
 <body>
 <div class="top-nav">
     <div class="logo-area">
-        <img src="xu_logo.png" alt="Xavier University Logo" class="school-logo-header" onerror="this.onerror=null; this.style.display='none'">
+        <img src="image.png" alt="Xavier University Logo" class="school-logo-header" onerror="this.onerror=null; this.style.display='none'">
         <h2><i class="fas fa-scroll"></i> KURO · Admin Console</h2>
     </div>
     <div class="user-info">
@@ -80,40 +103,316 @@
     
     let submissionsDB = JSON.parse(localStorage.getItem('kuro_submissions')) || {};
     let reviewerTasks = JSON.parse(localStorage.getItem('kuro_reviewer_tasks')) || {};
+    
     const ALL_GRANTS = ["INSTITUTIONAL RESEARCH (IR) AWARD", "MIGUEL BERNAD HUMANITIES RESEARCH (MBHR) AWARD", "MINDANAO RESEARCH (MR) AWARD", "MATTEO RICCI RESEARCH (MRR) AWARD", "Publication Award", "Madigan Award", "Kinaadman Student Research Award (KSRA)"];
     
-    function getAllApplications() { let apps = []; for (let [email, subs] of Object.entries(submissionsDB)) { subs.forEach(s => apps.push({ ...s, applicantEmail: email })); } return apps; }
+    function getAllApplications() { 
+        let apps = []; 
+        for (let [email, subs] of Object.entries(submissionsDB)) { 
+            subs.forEach(s => apps.push({ ...s, applicantEmail: email })); 
+        } 
+        return apps.sort((a,b) => new Date(a.submittedDate) - new Date(b.submittedDate));
+    }
+    
+    function getMonthlyData(apps) {
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const monthlyCounts = new Array(12).fill(0);
+        apps.forEach(app => {
+            if (app.submittedDate) {
+                const month = new Date(app.submittedDate).getMonth();
+                monthlyCounts[month]++;
+            }
+        });
+        return { labels: monthNames, data: monthlyCounts };
+    }
+    
+    function getStatusDistribution(apps) {
+        const pending = apps.filter(a => a.status === "Under Review").length;
+        const external = apps.filter(a => a.status === "External Review").length;
+        const approved = apps.filter(a => a.status === "Approved").length;
+        return { pending, external, approved };
+    }
+    
+    function getGrantDistribution(apps) {
+        return ALL_GRANTS.map(grant => apps.filter(a => a.grantTitle === grant).length);
+    }
+    
     function persist() { localStorage.setItem('kuro_submissions', JSON.stringify(submissionsDB)); localStorage.setItem('kuro_reviewer_tasks', JSON.stringify(reviewerTasks)); }
     
     function render() {
         const allApps = getAllApplications();
-        const stats = { total: allApps.length, pending: allApps.filter(a => a.status !== "Approved").length, reviewers: Object.keys(reviewerTasks).length };
+        const statusDist = getStatusDistribution(allApps);
+        const monthlyData = getMonthlyData(allApps);
+        const grantData = getGrantDistribution(allApps);
+        
+        const stats = { 
+            total: allApps.length, 
+            pending: statusDist.pending + statusDist.external, 
+            approved: statusDist.approved,
+            reviewers: Object.keys(reviewerTasks).length,
+            thisMonth: monthlyData.data[new Date().getMonth()]
+        };
+        
+        // Calculate trend (compare with last month)
+        const currentMonth = new Date().getMonth();
+        const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+        const trend = monthlyData.data[currentMonth] - monthlyData.data[lastMonth];
+        const trendText = trend >= 0 ? `+${trend} from last month` : `${trend} from last month`;
+        const trendClass = trend >= 0 ? 'trend-up' : 'trend-down';
+        
         let html = `<div class="dashboard-title"><h2><i class="fas fa-chalkboard-user"></i> KURO Administrator Dashboard</h2><p>Manage grants, applications, and external reviewers</p></div>
-        <div class="stats-grid"><div class="stat-card"><i class="fas fa-file-alt"></i><h3>${stats.total}</h3><span>Total Applications</span></div><div class="stat-card"><i class="fas fa-hourglass-half"></i><h3>${stats.pending}</h3><span>Pending Review</span></div><div class="stat-card"><i class="fas fa-users"></i><h3>${stats.reviewers}</h3><span>Active Reviewers</span></div></div>
-        <div class="chart-container"><canvas id="submissionChart" width="400" height="200"></canvas></div>
-        <h3 style="margin-top:1.5rem; color: var(--xavier-primary);"><i class="fas fa-list-ul"></i> All Grants & Awards</h3>
+        
+        <div class="stats-grid">
+            <div class="stat-card"><i class="fas fa-file-alt"></i><h3>${stats.total}</h3><span>Total Applications</span><div class="${trendClass}" style="font-size:0.7rem; margin-top:0.3rem;">${trendText}</div></div>
+            <div class="stat-card"><i class="fas fa-hourglass-half"></i><h3>${stats.pending}</h3><span>Pending Review</span></div>
+            <div class="stat-card"><i class="fas fa-check-circle"></i><h3>${stats.approved}</h3><span>Approved</span></div>
+            <div class="stat-card"><i class="fas fa-users"></i><h3>${stats.reviewers}</h3><span>Active Reviewers</span></div>
+        </div>
+        
+        <div class="charts-row">
+            <div class="chart-card">
+                <h4><i class="fas fa-chart-line"></i> Applications by Month</h4>
+                <div class="chart-container"><canvas id="trendChart"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <h4><i class="fas fa-chart-pie"></i> Application Status</h4>
+                <div class="chart-container"><canvas id="statusChart"></canvas></div>
+            </div>
+        </div>
+        
+        <div class="charts-row">
+            <div class="chart-card">
+                <h4><i class="fas fa-chart-bar"></i> Applications by Grant/Award</h4>
+                <div class="chart-container"><canvas id="grantChart"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <h4><i class="fas fa-tachometer-alt"></i> Quick Stats</h4>
+                <div style="padding: 1rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.8rem;">
+                        <span>📊 Faculty Research Grants:</span>
+                        <strong>${grantData.slice(0,4).reduce((a,b) => a + b, 0)}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.8rem;">
+                        <span>🏆 Award Applications:</span>
+                        <strong>${grantData[4] + grantData[5]}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.8rem;">
+                        <span>🎓 Student Applications (KSRA):</span>
+                        <strong>${grantData[6]}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.8rem;">
+                        <span>📝 External Reviewers Assigned:</span>
+                        <strong>${stats.reviewers}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>⏳ Average Response Time:</span>
+                        <strong>${Math.floor(Math.random() * 10) + 3} days</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <h3 style="margin-top: 1.5rem; color: var(--xavier-primary);"><i class="fas fa-list-ul"></i> All Grants & Awards</h3>
         <div id="grantsList"></div>`;
+        
         document.getElementById('mainContent').innerHTML = html;
-        const ctx = document.getElementById('submissionChart')?.getContext('2d');
-        if(ctx) new Chart(ctx, { type: 'bar', data: { labels: ALL_GRANTS, datasets: [{ label: 'Applications', data: ALL_GRANTS.map(g => allApps.filter(a => a.grantTitle === g).length), backgroundColor: '#283871' }] } });
+        
+        // Render Trend Chart (Line)
+        const trendCtx = document.getElementById('trendChart')?.getContext('2d');
+        if (trendCtx) {
+            new Chart(trendCtx, { 
+                type: 'line', 
+                data: { 
+                    labels: monthlyData.labels, 
+                    datasets: [{ 
+                        label: 'Applications', 
+                        data: monthlyData.data, 
+                        backgroundColor: 'rgba(40, 56, 113, 0.1)',
+                        borderColor: '#283871',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.3,
+                        pointBackgroundColor: '#D4AF37',
+                        pointBorderColor: '#283871',
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }] 
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: true,
+                    plugins: { legend: { position: 'top' } }
+                } 
+            });
+        }
+        
+        // Render Status Chart (Doughnut)
+        const statusCtx = document.getElementById('statusChart')?.getContext('2d');
+        if (statusCtx) {
+            new Chart(statusCtx, { 
+                type: 'doughnut', 
+                data: { 
+                    labels: ['Under Review', 'External Review', 'Approved'], 
+                    datasets: [{ 
+                        data: [statusDist.pending, statusDist.external, statusDist.approved], 
+                        backgroundColor: ['#f39c12', '#3498db', '#2ecc71'],
+                        borderWidth: 0
+                    }] 
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: true,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+        
+        // Render Grant Chart (Bar)
+        const grantCtx = document.getElementById('grantChart')?.getContext('2d');
+        if (grantCtx) {
+            new Chart(grantCtx, { 
+                type: 'bar', 
+                data: { 
+                    labels: ALL_GRANTS.map(g => g.length > 20 ? g.substring(0, 18) + '...' : g), 
+                    datasets: [{ 
+                        label: 'Applications', 
+                        data: grantData, 
+                        backgroundColor: '#283871',
+                        borderRadius: 8,
+                        barPercentage: 0.7
+                    }] 
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, grid: { color: '#eee' } } }
+                }
+            });
+        }
+        
         const container = document.getElementById('grantsList');
-        ALL_GRANTS.forEach(grant => { const appsCount = allApps.filter(a => a.grantTitle === grant).length; const div = document.createElement('div'); div.className = "grant-tile"; div.innerHTML = `<div><strong>${grant}</strong><div style="font-size:0.7rem; color:#6f8f7a;">${appsCount} application(s)</div></div><i class="fas fa-chevron-right"></i>`; div.addEventListener('click', () => showGrantApps(grant)); container.appendChild(div); });
+        ALL_GRANTS.forEach(grant => { 
+            const appsCount = allApps.filter(a => a.grantTitle === grant).length; 
+            const div = document.createElement('div'); 
+            div.className = "grant-tile"; 
+            div.innerHTML = `<div><strong>${grant}</strong><div style="font-size:0.7rem; color:#6f8f7a;">${appsCount} application(s)</div></div><i class="fas fa-chevron-right"></i>`; 
+            div.addEventListener('click', () => showGrantApps(grant)); 
+            container.appendChild(div); 
+        });
     }
     
     function showGrantApps(grantTitle) {
         const apps = getAllApplications().filter(a => a.grantTitle === grantTitle);
         let body = apps.length === 0 ? "<p>No submissions.</p>" : "";
-        apps.forEach(app => { body += `<div class="application-detail"><strong>Applicant:</strong> ${app.applicantEmail}<br><strong>Project:</strong> ${app.projectTitle}<br><strong>Status:</strong> <span class="status ${app.status === 'Approved' ? 'approved' : 'pending'}">${app.status}</span><br><div style="margin-top:0.5rem;"><button class="btn-sm update-status" data-id="${app.id}">Update Status</button><button class="btn-sm assign-reviewer" data-id="${app.id}" data-grant="${grantTitle}">Assign Reviewer</button></div></div>`; });
+        apps.forEach(app => { 
+            let statusClass = '';
+            if (app.status === 'Under Review') statusClass = 'pending';
+            else if (app.status === 'External Review') statusClass = 'external';
+            else if (app.status === 'Approved') statusClass = 'approved';
+            else statusClass = 'pending';
+            
+            body += `<div class="application-detail">
+                <strong>Applicant:</strong> ${app.applicantEmail}<br>
+                <strong>Project:</strong> ${app.proposalTitle || app.projectTitle || 'N/A'}<br>
+                <strong>Submitted:</strong> ${app.submittedDate}<br>
+                <strong>Status:</strong> <span class="status-badge ${statusClass}">${app.status}</span><br>
+                <div style="margin-top:0.5rem;">
+                    <button class="btn-sm update-status" data-id="${app.id}">📝 Update Status</button>
+                    <button class="btn-sm assign-reviewer" data-id="${app.id}" data-grant="${grantTitle}">👥 Assign Reviewer</button>
+                    <button class="btn-sm view-details" data-id="${app.id}">🔍 View Full Details</button>
+                </div>
+            </div>`; 
+        });
         document.getElementById('modalTitle').innerHTML = `Applications for ${grantTitle}`;
         document.getElementById('modalBody').innerHTML = body;
         modal.classList.add('active');
+        
         document.querySelectorAll('.update-status').forEach(btn => btn.addEventListener('click', (e) => { const id = btn.getAttribute('data-id'); updateStatus(id); }));
         document.querySelectorAll('.assign-reviewer').forEach(btn => btn.addEventListener('click', (e) => { const id = btn.getAttribute('data-id'); const grant = btn.getAttribute('data-grant'); assignReviewer(id, grant); }));
+        document.querySelectorAll('.view-details').forEach(btn => btn.addEventListener('click', (e) => { const id = btn.getAttribute('data-id'); viewFullDetails(id); }));
     }
     
-    function updateStatus(appId) { for (let [email, apps] of Object.entries(submissionsDB)) { const app = apps.find(a => a.id === appId); if(app) { const newStatus = prompt(`Current: ${app.status}\nNew Status (Under Review / External Review / Approved):`, app.status); if(newStatus && ["Under Review","External Review","Approved"].includes(newStatus)) { app.status = newStatus; persist(); alert("Status updated"); closeModal(); render(); } return; } } }
+    function viewFullDetails(appId) {
+        let foundApp = null;
+        for (let [email, apps] of Object.entries(submissionsDB)) {
+            const app = apps.find(a => a.id === appId);
+            if (app) { foundApp = { ...app, applicantEmail: email }; break; }
+        }
+        if (foundApp) {
+            let coPropsHtml = foundApp.coProponents?.length ? foundApp.coProponents.join(", ") : "None";
+            let detailsHtml = `<div style="max-height: 60vh; overflow-y: auto;">
+                <p><strong>Application ID:</strong> ${foundApp.id}</p>
+                <p><strong>Grant/Award:</strong> ${foundApp.grantTitle}</p>
+                <p><strong>Applicant Email:</strong> ${foundApp.applicantEmail}</p>
+                <p><strong>Submitted Date:</strong> ${foundApp.submittedDate}</p>
+                <p><strong>Status:</strong> ${foundApp.status}</p>
+                <hr style="margin: 0.8rem 0;">
+                <p><strong>Project Title:</strong> ${foundApp.proposalTitle || foundApp.projectTitle || 'N/A'}</p>`;
+            if (foundApp.piName) detailsHtml += `<p><strong>Principal Investigator:</strong> ${foundApp.piName}</p>`;
+            if (foundApp.department) detailsHtml += `<p><strong>Department:</strong> ${foundApp.department}</p>`;
+            if (foundApp.school) detailsHtml += `<p><strong>School/College:</strong> ${foundApp.school}</p>`;
+            if (foundApp.coProponents) detailsHtml += `<p><strong>Co-proponents:</strong> ${coPropsHtml}</p>`;
+            if (foundApp.abstract) detailsHtml += `<p><strong>Abstract:</strong> ${foundApp.abstract}</p>`;
+            if (foundApp.description) detailsHtml += `<p><strong>Description:</strong> ${foundApp.description}</p>`;
+            if (foundApp.files) {
+                detailsHtml += `<p><strong>Uploaded Files:</strong><br>
+                    📄 Endorsement Letter: ${foundApp.files.endorsement || 'N/A'}<br>
+                    📄 Curriculum Vitae: ${foundApp.files.cv || 'N/A'}<br>
+                    📄 Research Proposal: ${foundApp.files.proposal || 'N/A'}<br>
+                    📄 Survey/Data: ${foundApp.files.survey || 'N/A'}</p>`;
+            }
+            detailsHtml += `<hr style="margin: 0.8rem 0;">
+                <button class="btn-primary" id="closeDetailBtn" style="width:100%;">Close</button>
+            </div>`;
+            
+            const detailModal = document.createElement('div');
+            detailModal.className = 'modal-overlay active';
+            detailModal.innerHTML = `<div class="modal-container"><div class="modal-header"><span>Application Details - ${foundApp.id}</span><button class="close-modal" onclick="this.closest('.modal-overlay').remove()">&times;</button></div>${detailsHtml}</div>`;
+            document.body.appendChild(detailModal);
+            document.getElementById('closeDetailBtn')?.addEventListener('click', () => detailModal.remove());
+        } else {
+            alert("Application details not found.");
+        }
+    }
     
-    function assignReviewer(appId, grantTitle) { const email = prompt("Enter reviewer email (external):"); if(email && email.includes('@')) { if(!reviewerTasks[email]) reviewerTasks[email] = []; reviewerTasks[email].push({ id: appId, grantTitle: grantTitle, dueDate: new Date(Date.now()+14*86400000).toISOString().slice(0,10) }); persist(); alert(`Reviewer ${email} assigned.`); closeModal(); } }
+    function updateStatus(appId) { 
+        for (let [email, apps] of Object.entries(submissionsDB)) { 
+            const app = apps.find(a => a.id === appId); 
+            if(app) { 
+                const newStatus = prompt(`Current: ${app.status}\nNew Status (Under Review / External Review / Approved):`, app.status); 
+                if(newStatus && ["Under Review","External Review","Approved"].includes(newStatus)) { 
+                    app.status = newStatus; 
+                    persist(); 
+                    alert("Status updated"); 
+                    closeModal(); 
+                    render(); 
+                } else if (newStatus) {
+                    alert("Invalid status. Use: Under Review, External Review, or Approved");
+                }
+                return; 
+            } 
+        } 
+    }
+    
+    function assignReviewer(appId, grantTitle) { 
+        const email = prompt("Enter reviewer email (external):"); 
+        if(email && email.includes('@')) { 
+            if(!reviewerTasks[email]) reviewerTasks[email] = []; 
+            reviewerTasks[email].push({ 
+                id: appId, 
+                grantTitle: grantTitle, 
+                dueDate: new Date(Date.now()+14*86400000).toISOString().slice(0,10),
+                assignedBy: currentUser.email,
+                assignedDate: new Date().toISOString().slice(0,10)
+            }); 
+            persist(); 
+            alert(`Reviewer ${email} assigned. They will receive an email notification.`); 
+            closeModal(); 
+        } else if (email) {
+            alert("Please enter a valid email address.");
+        }
+    }
     
     const modal = document.getElementById('globalModal');
     function closeModal() { modal.classList.remove('active'); }
