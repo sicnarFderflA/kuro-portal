@@ -6,3 +6,6 @@ List to do:
 2. ~~Application for all Research grants will be in a same title; just have an option what grant will the user apply for (all grants have the same requirements)~~
 3. KURO Logo, ~~Colors and overall design finalization~~
 4. Improve Admin Dashboard graphs
+5. Apply Hosting Service
+6. Database
+7. Translate Downloadble Forms to Application Entries
