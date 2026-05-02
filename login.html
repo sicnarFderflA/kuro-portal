@@ -9,16 +9,16 @@
     <style>
         /* ==================== XAVIER UNIVERSITY COLOR SCHEME ==================== */
         :root {
-            --xavier-primary: #283871;         /* Main brand color - Navy Blue */
-            --xavier-primary-dark: #1e2b57;    /* Darker shade for depth */
-            --xavier-primary-light: #3e5090;   /* Lighter shade for hover states */
-            --xavier-gold: #D4AF37;            /* Ateneo gold accent */
-            --xavier-gold-light: #E8C84A;      /* Gold highlight */
-            --xavier-cream: #F9F6F0;           /* Off-white background */
-            --xavier-dark-text: #1A2E3F;       /* Dark text color */
-            --xavier-gray-text: #5A6E6B;       /* Secondary text */
-            --bg-gradient-start: #1b2352;      /* Background gradient start */
-            --bg-gradient-end: #10183a;        /* Background gradient end */
+            --xavier-primary: #283871;
+            --xavier-primary-dark: #1e2b57;
+            --xavier-primary-light: #3e5090;
+            --xavier-gold: #D4AF37;
+            --xavier-gold-dark: #b8942e;
+            --xavier-cream: #F9F6F0;
+            --xavier-dark-text: #1A2E3F;
+            --xavier-gray-text: #5A6E6B;
+            --bg-gradient-start: #1b2352;
+            --bg-gradient-end: #10183a;
         }
         
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -31,22 +31,27 @@
             justify-content: center;
             padding: 1.5rem;
         }
+        
+        /* Main Login Card */
         .login-container {
             max-width: 540px;
             width: 100%;
-            background: var(--xavier-cream);
-            border-radius: 2rem;
+            background: white;
+            border-radius: 1.5rem;
             overflow: hidden;
-            box-shadow: 0 30px 50px rgba(0,0,0,0.35);
-            border: 1px solid rgba(40, 56, 113, 0.2);
+            box-shadow: 0 25px 45px rgba(0,0,0,0.3);
         }
+        
+        /* Navy Header with Gold Bottom Border */
         .brand-header {
-            background: linear-gradient(115deg, var(--xavier-primary-dark), var(--xavier-primary));
+            background: var(--xavier-primary);
             padding: 2rem 2rem 1.5rem;
             text-align: center;
             color: white;
             border-bottom: 3px solid var(--xavier-gold);
         }
+        
+        /* School Logo */
         .school-logo {
             margin: 0 auto 0.8rem;
             display: flex;
@@ -56,24 +61,24 @@
             padding: 0;
         }
         .school-logo img {
-            max-width: 140px;
+            max-width: 120px;
             height: auto;
             display: block;
-            filter: drop-shadow(0 2px 8px rgba(0,0,0,0.2));
         }
         .school-logo .logo-fallback {
             font-size: 3rem;
             color: var(--xavier-gold);
         }
+        
         .brand-header h1 {
             font-family: 'Poppins', sans-serif;
             font-weight: 800;
             font-size: 2rem;
             letter-spacing: -0.3px;
-            color: #FFF8E7;
+            color: white;
             margin-top: 0.3rem;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
         }
+        
         .school-fullname {
             font-size: 0.75rem;
             letter-spacing: 1px;
@@ -85,16 +90,23 @@
             font-weight: 500;
             color: #FFEFCF;
         }
+        
         .office-tag { 
             font-size: 0.65rem; 
             letter-spacing: 2px; 
-            background: rgba(0,0,0,0.3); 
+            background: rgba(0,0,0,0.25); 
             display: inline-block; 
             padding: 0.2rem 1rem; 
             border-radius: 40px; 
             margin-top: 0.6rem;
         }
-        .login-content { padding: 2rem; }
+        
+        /* White Content Area */
+        .login-content { 
+            padding: 2rem; 
+            background: white;
+        }
+        
         .restriction-badge {
             background: #FEF6E8;
             border-radius: 60px;
@@ -111,44 +123,58 @@
         .restriction-badge i {
             color: var(--xavier-gold);
         }
+        
+        /* Gold Button */
         .google-btn {
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 12px;
             width: 100%;
-            background: white;
-            border: 1px solid #CDDFC7;
+            background: var(--xavier-gold);
+            border: none;
             border-radius: 48px;
             padding: 0.85rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
-            color: var(--xavier-primary-dark);
+            color: var(--xavier-primary);
+            font-size: 0.95rem;
+        }
+        .google-btn i {
+            font-size: 1.2rem;
         }
         .google-btn i:first-child {
-            color: #4285F4;
+            color: #fff;
+            background: #4285F4;
+            border-radius: 50%;
+            padding: 2px;
         }
         .google-btn:hover { 
-            background: #F9FFF7; 
+            background: var(--xavier-gold-dark);
+            color: white;
             transform: scale(1.01);
-            border-color: var(--xavier-primary);
-            box-shadow: 0 4px 12px rgba(40, 56, 113, 0.15);
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
         }
+        .google-btn:hover i:first-child {
+            color: white;
+        }
+        
         .demo-note { 
             font-size: 0.68rem; 
-            background: #F3F7EF; 
+            background: #f8f9fa; 
             padding: 0.75rem; 
             border-radius: 28px; 
             margin-top: 1rem; 
             text-align: center;
             line-height: 1.4;
             color: var(--xavier-gray-text);
-            border: 1px solid #E2ECD9;
+            border: 1px solid #e8ecd9;
         }
         .demo-note strong {
             color: var(--xavier-primary);
         }
+        
         .alert-message { 
             margin-top: 1rem; 
             font-size: 0.75rem; 
@@ -160,16 +186,19 @@
             display: none; 
             border-left: 3px solid var(--xavier-gold);
         }
+        
         footer { 
             text-align: center; 
             font-size: 0.65rem; 
-            color: #7F9A88; 
+            color: var(--xavier-gray-text); 
             padding: 1rem;
-            border-top: 1px solid #E8ECD9;
+            border-top: 1px solid #e8ecd9;
+            background: white;
         }
         footer i {
-            color: var(--xavier-primary);
+            color: var(--xavier-gold);
         }
+        
         .admin-badge { 
             background: rgba(40, 56, 113, 0.08); 
             border: 1px solid var(--xavier-primary); 
@@ -179,6 +208,17 @@
             display: inline-block; 
             margin-top: 0.3rem;
             color: var(--xavier-primary-dark);
+        }
+        
+        /* Demo mode button styling */
+        .demo-mode-btn {
+            background: var(--xavier-gold);
+            color: var(--xavier-primary);
+            border: none;
+        }
+        .demo-mode-btn:hover {
+            background: var(--xavier-gold-dark);
+            color: white;
         }
     </style>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -214,6 +254,7 @@
 </div>
 
 <script>
+    // ==================== LOGO FALLBACK HANDLER ====================
     function handleLogoError() {
         const logoContainer = document.getElementById('logoContainer');
         if (logoContainer) {
@@ -231,6 +272,7 @@
         }, 500);
     }
     
+    // ==================== AUTHENTICATION LOGIC ====================
     const XAVIER_DOMAINS = ['xu.edu.ph', 'my.xu.edu.ph'];
     const KURO_ADMIN_EMAIL = "200520181@my.xu.edu.ph";
     const ADDITIONAL_ADMINS = [];
@@ -305,11 +347,11 @@
         const GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com";
         
         if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID === "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com") {
+            // Demo mode - Gold button styling
             container.innerHTML = `
-                <div style="background:#FEF1DF; border-radius:48px; padding:0.7rem; text-align:center; margin-bottom:0.7rem; font-size:0.7rem; border:1px solid #D4AF37;">
-                    <i class="fas fa-cogs"></i> Demo Mode: Configure Google Client ID in <strong>login.html</strong>
-                </div>
-                <button class="google-btn" id="mockGoogleBtn"><i class="fab fa-google"></i> Sign in with Xavier Google Account</button>
+                <button class="google-btn demo-mode-btn" id="mockGoogleBtn">
+                    <i class="fab fa-google"></i> Sign in with Xavier Google Account
+                </button>
                 <div style="font-size:0.65rem; text-align:center; margin-top:0.8rem; color:#5A6E6B;">
                     <strong>Test Accounts:</strong><br>
                     🎓 Student: student@my.xu.edu.ph → Student Dashboard (KSRA)<br>
@@ -335,6 +377,7 @@
             return;
         }
         
+        // Real Google OAuth - Gold button styling
         google.accounts.id.initialize({ 
             client_id: GOOGLE_CLIENT_ID, 
             callback: handleGoogleResponse,
@@ -348,10 +391,24 @@
             width: '100%', 
             text: 'signin_with', 
             shape: 'pill',
-            logo_alignment: 'center'
+            logo_alignment: 'center',
+            type: 'standard',
+            theme: 'filled_blue'
         });
+        // Override with custom gold styling via CSS
+        const style = document.createElement('style');
+        style.textContent = `
+            .g_id_signout, .g_id_signin {
+                background: #D4AF37 !important;
+                color: #283871 !important;
+                border-radius: 48px !important;
+                font-weight: 600 !important;
+            }
+        `;
+        document.head.appendChild(style);
     }
     
+    // Check existing session
     const existingUser = sessionStorage.getItem('kuro_user');
     if (existingUser) {
         try {

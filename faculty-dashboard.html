@@ -17,7 +17,15 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background: #f0f2f5; }
         
-        .top-nav { background: var(--xavier-primary); padding: 0.8rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--xavier-gold); flex-wrap: wrap; }
+        .top-nav { 
+            background: var(--xavier-primary); 
+            padding: 0.8rem 2rem; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 3px solid var(--xavier-gold); 
+            flex-wrap: wrap; 
+        }
         .logo-area { display: flex; align-items: center; gap: 1rem; }
         .school-logo-header { height: 45px; width: auto; }
         .logo-area h2 { color: white; display: flex; align-items: center; gap: 0.5rem; font-size: 1.3rem; }
@@ -30,41 +38,108 @@
         .switch-reviewer-btn.active { background: var(--xavier-gold); color: var(--xavier-primary); }
         .logout-nav { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 0.4rem 1rem; border-radius: 30px; cursor: pointer; }
         
-        .main-content { padding: 2rem; max-width: 1200px; margin: 0 auto; background: white; border-radius: 1rem; margin-top: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .dashboard-title h2 { color: var(--xavier-gold); font-size: 1.6rem; margin-bottom: 0.5rem; }
-        .dashboard-title p { color: var(--xavier-gray-text); }
+        .main-content { padding: 2rem; max-width: 1200px; margin: 0 auto; background: white; border-radius: 1rem; margin-top: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .dashboard-title { margin-bottom: 1.5rem; }
+        .dashboard-title h2 { color: var(--xavier-gold); font-size: 1.6rem; }
+        .dashboard-title p { color: var(--xavier-gray-text); margin-top: 0.3rem; }
         
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-        .stat-card { background: #f8f9fa; border-radius: 1.5rem; padding: 1.2rem; border-top: 4px solid var(--xavier-gold); }
-        .stat-card i { color: var(--xavier-gold); font-size: 1.5rem; }
+        .stat-card { background: #f8f9fa; border-radius: 1.5rem; padding: 1.2rem; border: 1px solid #eef2f0; border-top: 4px solid var(--xavier-gold); }
+        .stat-card i { color: var(--xavier-gold); font-size: 1.5rem; margin-bottom: 0.5rem; }
         .stat-card h3 { font-size: 1.8rem; color: var(--xavier-primary); }
-        .grants-table { width: 100%; background: white; border-radius: 1rem; border-collapse: collapse; border: 1px solid #eef2f0; }
-        .grants-table th { background: var(--xavier-primary); color: white; padding: 1rem; text-align: left; }
-        .grants-table td { padding: 1rem; border-bottom: 1px solid #ecf3e8; }
-        .status { padding: 0.2rem 0.7rem; border-radius: 40px; font-size: 0.7rem; display: inline-block; }
+        .stat-card span { color: var(--xavier-gray-text); font-size: 0.8rem; }
+        
+        .grants-table { width: 100%; background: white; border-radius: 1rem; border-collapse: collapse; overflow: hidden; border: 1px solid #eef2f0; }
+        .grants-table th { background: var(--xavier-primary); color: white; padding: 1rem; text-align: left; font-weight: 600; }
+        .grants-table td { padding: 1rem; text-align: left; border-bottom: 1px solid #ecf3e8; }
+        .status { padding: 0.2rem 0.7rem; border-radius: 40px; font-size: 0.7rem; font-weight: 600; display: inline-block; }
         .status.pending { background: #fff0db; color: #b45f1b; }
         .status.approved { background: #e0f5e6; color: #1e6f3f; }
         .btn-sm { background: #eef2fa; border: none; padding: 0.3rem 1rem; border-radius: 30px; cursor: pointer; }
-        .btn-primary { background: var(--xavier-gold); color: var(--xavier-primary); border: none; padding: 0.5rem 1.2rem; border-radius: 40px; cursor: pointer; font-weight: 600; }
+        .btn-primary { background: var(--xavier-gold); color: var(--xavier-primary); border: none; padding: 0.5rem 1.2rem; border-radius: 40px; cursor: pointer; font-weight: 600; transition: 0.2s; }
         .btn-primary:hover { background: var(--xavier-gold-dark); color: white; }
-        .flex-between { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .btn-primary:disabled { background: #ccc; cursor: not-allowed; color: #666; }
+        .btn-secondary { background: transparent; border: 1px solid var(--xavier-primary); color: var(--xavier-primary); padding: 0.5rem 1.2rem; border-radius: 40px; cursor: pointer; font-weight: 600; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem; }
+        .flex-between h3 { color: var(--xavier-primary); }
+        
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 2000; visibility: hidden; opacity: 0; transition: 0.2s; }
         .modal-overlay.active { visibility: visible; opacity: 1; }
-        .modal-container { background: white; border-radius: 2rem; max-width: 600px; width: 90%; max-height: 85vh; overflow-y: auto; padding: 1.8rem; }
-        .modal-header { display: flex; justify-content: space-between; margin-bottom: 1rem; font-weight: 700; font-size: 1.2rem; color: var(--xavier-primary); }
+        .modal-container { background: white; border-radius: 2rem; max-width: 850px; width: 90%; max-height: 90vh; overflow-y: auto; padding: 1.8rem; }
+        .modal-header { display: flex; justify-content: space-between; margin-bottom: 1rem; font-weight: 700; font-size: 1.2rem; color: var(--xavier-primary); border-bottom: 2px solid var(--xavier-gold); padding-bottom: 0.5rem; }
         .close-modal { background: none; border: none; font-size: 1.5rem; cursor: pointer; }
-        .grant-tile { background: #f9fbf7; border: 1px solid #e2ecd9; border-radius: 1rem; padding: 1rem; margin-bottom: 0.8rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-        .input-field { padding: 0.6rem; border-radius: 40px; border: 1px solid #cddfc7; width: 100%; margin-bottom: 0.8rem; }
+        
+        .step-indicator { display: flex; justify-content: space-between; margin-bottom: 2rem; position: relative; }
+        .step-indicator::before { content: ''; position: absolute; top: 20px; left: 40px; right: 40px; height: 2px; background: #ddd; z-index: 1; }
+        .step { text-align: center; flex: 1; position: relative; z-index: 2; background: white; }
+        .step .step-circle { width: 40px; height: 40px; background: #ddd; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-weight: bold; color: white; }
+        .step.active .step-circle { background: var(--xavier-gold); color: var(--xavier-primary); }
+        .step.completed .step-circle { background: var(--xavier-primary); color: white; }
+        .step .step-label { font-size: 0.75rem; color: #888; }
+        .step.active .step-label { color: var(--xavier-primary); font-weight: 600; }
+        
+        .step-content { display: none; }
+        .step-content.active { display: block; }
+        
+        .form-group { margin-bottom: 1.2rem; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 0.4rem; color: var(--xavier-primary); }
+        .form-group label .required { color: #e74c3c; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.7rem; border: 1px solid #ddd; border-radius: 10px; font-family: inherit; font-size: 0.9rem; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--xavier-gold); }
+        
+        .co-prop-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; align-items: center; }
+        .co-prop-row input { flex: 1; }
+        .add-btn { background: var(--xavier-gold); color: var(--xavier-primary); border: none; padding: 0.3rem 0.8rem; border-radius: 30px; cursor: pointer; font-size: 0.75rem; margin-top: 0.5rem; }
+        .remove-btn { background: #e74c3c; color: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-size: 0.8rem; }
+        
+        .file-upload { border: 2px dashed #ddd; border-radius: 1rem; padding: 1rem; text-align: center; margin-bottom: 1rem; }
+        .file-upload input { margin-top: 0.5rem; }
+        .file-note { font-size: 0.7rem; color: #888; margin-top: 0.3rem; }
+        .download-link { display: inline-block; margin-left: 1rem; font-size: 0.8rem; color: var(--xavier-primary); text-decoration: none; cursor: pointer; }
+        .download-link:hover { text-decoration: underline; color: var(--xavier-gold); }
+        
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .wizard-buttons { display: flex; justify-content: space-between; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #eee; }
+        
+        .eligibility-card { background: #f8f9fa; border-radius: 1rem; padding: 1.2rem; margin-bottom: 1rem; border-left: 4px solid var(--xavier-gold); cursor: pointer; transition: 0.2s; }
+        .eligibility-card.selected { border-left-color: var(--xavier-primary); background: #eef2fa; }
+        .eligibility-card h3 { color: var(--xavier-primary); margin-bottom: 0.5rem; }
+        .eligibility-card .amount { font-weight: bold; color: var(--xavier-gold); margin-bottom: 0.5rem; }
+        .eligibility-card p { font-size: 0.85rem; color: #555; margin-bottom: 0.5rem; }
+        .eligibility-card ul { margin-left: 1.2rem; font-size: 0.8rem; color: #666; }
+        
+        /* Label-only award cards - not clickable */
+        .award-label-card { 
+            background: #f8f9fa; 
+            border-radius: 1rem; 
+            padding: 1.2rem; 
+            margin-bottom: 1rem; 
+            border-left: 4px solid #aaa; 
+            opacity: 0.8;
+            cursor: default;
+        }
+        .award-label-card h3 { color: #666; margin-bottom: 0.5rem; }
+        .award-label-card p { font-size: 0.85rem; color: #888; margin-bottom: 0.5rem; }
+        .award-label-card .notice { font-size: 0.7rem; color: #e74c3c; margin-top: 0.5rem; font-style: italic; }
+        
+        .process-step { margin-bottom: 1.5rem; }
+        .process-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem; }
+        .process-num { width: 32px; height: 32px; background: var(--xavier-primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; }
+        .process-text { font-size: 0.95rem; line-height: 1.5; color: #333; }
+        .process-note { background: #f0f4fa; padding: 1rem; border-radius: 0.8rem; margin-top: 0.5rem; margin-left: 2.5rem; border-left: 3px solid var(--xavier-gold); }
+        .process-note i { color: var(--xavier-gold); margin-right: 0.5rem; }
+        
         .demo-note { font-size: 0.68rem; background: #f3f7ef; padding: 0.6rem; border-radius: 28px; margin-top: 1rem; text-align: center; }
         footer { text-align: center; font-size: 0.65rem; color: var(--xavier-gray-text); padding: 1rem; border-top: 1px solid #e8ecd9; margin-top: 1rem; }
         footer i { color: var(--xavier-gold); }
-        @media (max-width: 700px) { .top-nav { flex-direction: column; gap: 0.8rem; } .logo-area { flex-direction: column; text-align: center; } }
+        
+        @media (max-width: 700px) { .top-nav { flex-direction: column; gap: 0.8rem; } .logo-area { flex-direction: column; text-align: center; } .form-row { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 <div class="top-nav">
     <div class="logo-area">
-        <img src="xu_logo.png" alt="Xavier University Logo" class="school-logo-header" onerror="this.onerror=null; this.style.display='none'">
+        <img src="xu_logo.png" alt="Xavier University Logo" class="school-logo-header" style="height: 45px; width: auto;" onerror="this.onerror=null; this.style.display='none'">
         <h2><i class="fas fa-scroll"></i> KURO · Faculty Portal</h2>
     </div>
     <div class="user-info">
@@ -76,7 +151,95 @@
 </div>
 <div class="main-content" id="mainContent"></div>
 <footer><i class="fas fa-scroll"></i> Kinaadman University Research Office · Xavier University - Ateneo de Cagayan</footer>
-<div id="globalModal" class="modal-overlay"><div class="modal-container"><div class="modal-header"><span id="modalTitle"></span><button class="close-modal" id="closeModalBtn">&times;</button></div><div id="modalBody"></div></div></div>
+<div id="wizardModal" class="modal-overlay">
+    <div class="modal-container">
+        <div class="modal-header">
+            <span id="modalTitle">Faculty Research Grant Application</span>
+            <button class="close-modal" id="closeModalBtn">&times;</button>
+        </div>
+        
+        <div class="step-indicator">
+            <div class="step" id="step1Indicator"><div class="step-circle">1</div><div class="step-label">Select Grant</div></div>
+            <div class="step" id="step2Indicator"><div class="step-circle">2</div><div class="step-label">Process & Guidelines</div></div>
+            <div class="step" id="step3Indicator"><div class="step-circle">3</div><div class="step-label">Application Form</div></div>
+        </div>
+        
+        <!-- Step 1: Grant Selection -->
+        <div id="step1Content" class="step-content active">
+            <h3 style="color: var(--xavier-primary); margin-bottom: 1rem;"><i class="fas fa-info-circle"></i> Faculty Research Grants</h3>
+            <div id="grantsListContainer"></div>
+            
+            <h3 style="color: var(--xavier-primary); margin: 1.5rem 0 1rem;"><i class="fas fa-award"></i> Publication Award</h3>
+            <div class="award-label-card">
+                <h3>📖 Publication Award</h3>
+                <p>Recognizes outstanding scholarly publications by Xavier University faculty members.</p>
+                <div class="notice">⚠️ Please contact KURO directly for Publication Award application process and guidelines.</div>
+            </div>
+            
+            <h3 style="color: var(--xavier-primary); margin: 1.5rem 0 1rem;"><i class="fas fa-medal"></i> Madigan Award</h3>
+            <div class="award-label-card">
+                <h3>🏆 Madigan Award</h3>
+                <p>Prestigious award for excellence in research and academic contribution.</p>
+                <div class="notice">⚠️ Please contact KURO directly for Madigan Award application process and guidelines.</div>
+            </div>
+            
+            <div class="wizard-buttons">
+                <button class="btn-secondary" id="cancelWizardBtn">Cancel</button>
+                <button class="btn-primary" id="nextToStep2Btn" disabled>Next →</button>
+            </div>
+        </div>
+        
+        <!-- Step 2: Process -->
+        <div id="step2Content" class="step-content">
+            <h3 style="color: var(--xavier-primary); margin-bottom: 1.5rem;"><i class="fas fa-clipboard-list"></i> Research Grants Submission Process</h3>
+            
+            <div class="process-step">
+                <div class="process-header">
+                    <div class="process-num">1</div>
+                    <div class="process-text">The proposal must follow the provided proposal template <strong>(XURG Form 1)</strong>, otherwise the proposal may be rejected without technical review.</div>
+                </div>
+            </div>
+            
+            <div class="process-step">
+                <div class="process-header">
+                    <div class="process-num">2</div>
+                    <div class="process-text">The proposal must be submitted together with the following: <strong>endorsement form (XURG Form 2)</strong>, <strong>one-page curriculum vitae</strong> of the principal investigator/project leader and all research team members, and if applicable <strong>survey questionnaire/data matrix</strong>.</div>
+                </div>
+            </div>
+            
+            <div class="process-step">
+                <div class="process-header">
+                    <div class="process-num">3</div>
+                    <div class="process-text">An incomplete application may be rejected. Please contact KURO through email at <strong>kinaadman@xu.edu.ph</strong> or at local extension <strong>9167</strong> for questions or assistance.</div>
+                </div>
+            </div>
+            
+            <div class="process-step">
+                <div class="process-header">
+                    <div class="process-num">4</div>
+                    <div class="process-text"><strong>MR proposals</strong> are required to have a lead component (program) proposal, and a separate proposal for each component project.</div>
+                </div>
+                <div class="process-note">
+                    <i class="fas fa-pushpin"></i> <strong>📌 Note:</strong> A program is a group of inter-related R&D projects requiring an interdisciplinary, multidisciplinary, or transdisciplinary approach to meet established goal(s) within a specific time frame. A project, on the other hand, is a basic unit in the investigation of a specific R&D problem with predetermined objectives to be accomplished within a specific time frame.
+                </div>
+            </div>
+            
+            <div class="wizard-buttons">
+                <button class="btn-secondary" id="backToStep1Btn">← Back</button>
+                <button class="btn-primary" id="nextToStep3Btn">Proceed to Application →</button>
+            </div>
+        </div>
+        
+        <!-- Step 3: Application Form -->
+        <div id="step3Content" class="step-content">
+            <div id="applicationFormContainer"></div>
+            <div class="wizard-buttons">
+                <button class="btn-secondary" id="backToStep2Btn">← Back</button>
+                <button class="btn-primary" id="submitApplicationBtn">Submit Application</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
     const currentUser = JSON.parse(sessionStorage.getItem('kuro_user'));
@@ -85,7 +248,32 @@
     let isReviewerMode = false;
     let submissionsDB = JSON.parse(localStorage.getItem('kuro_submissions')) || {};
     let reviewerTasks = JSON.parse(localStorage.getItem('kuro_reviewer_tasks')) || {};
-    const FACULTY_GRANTS = ["INSTITUTIONAL RESEARCH (IR) AWARD", "MIGUEL BERNAD HUMANITIES RESEARCH (MBHR) AWARD", "MINDANAO RESEARCH (MR) AWARD", "MATTEO RICCI RESEARCH (MRR) AWARD", "Publication Award", "Madigan Award"];
+    let selectedGrant = null;
+    let selectedType = null;
+    let currentStep = 1;
+    
+    const FACULTY_GRANTS_DATA = {
+        "INSTITUTIONAL RESEARCH (IR) AWARD": {
+            amount: "Php 20,000.00 up to Php 75,000.00",
+            eligibility: "• Full-time regular higher education faculty member, holder of at least a master's degree<br>• OR a team of 2-3 full-time regular faculty members, holders of at least a master's degree",
+            focus: "Research projects relevant to improve University's policies, programs, teaching and learning systems"
+        },
+        "MIGUEL BERNAD HUMANITIES RESEARCH (MBHR) AWARD": {
+            amount: "up to Php 80,000.00",
+            eligibility: "• Full-time regular higher education faculty member, holder of at least a master's degree<br>• OR a team of 2-3 full-time regular faculty members, holders of at least a master's degree",
+            focus: "Research in humanities focusing on Miguel A Bernad, SJ's works OR Mindanaoan consciousness"
+        },
+        "MINDANAO RESEARCH (MR) AWARD": {
+            amount: "Php 400,000.00 up to Php 2,000,000.00",
+            eligibility: "• Research team of full-time regular faculty members with master's degree from at least 2 disciplines<br>• Principal investigators must have doctorate degree and completed at least 2 researches<br>• Must consist of at least 2 component projects<br>• Maximum of 3 years",
+            focus: "Addresses issues in Mindanao, aligned to University Research Agenda"
+        },
+        "MATTEO RICCI RESEARCH (MRR) AWARD": {
+            amount: "up to Php 200,000.00",
+            eligibility: "• Full-time regular higher education faculty member, holder of at least a master's degree<br>• OR a team of 2-3 full-time regular faculty members, holders of at least a master's degree",
+            focus: "Research projects aligned to Xavier Ateneo Research Agenda"
+        }
+    };
     
     document.getElementById('userName').innerText = currentUser.name;
     document.getElementById('userEmail').innerText = currentUser.email;
@@ -95,33 +283,206 @@
     
     function renderApplicant() {
         const mySubs = submissionsDB[currentUser.email] || [];
-        const stats = { pending: mySubs.filter(s => s.status !== "Approved").length, approved: mySubs.filter(s => s.status === "Approved").length, available: FACULTY_GRANTS.length };
-        let html = `<div class="dashboard-title"><h2><i class="fas fa-file-alt"></i> My Grant Applications</h2><p>Faculty Research Grants, Publication Award, Madigan Award</p></div>
+        const stats = { pending: mySubs.filter(s => s.status !== "Approved").length, approved: mySubs.filter(s => s.status === "Approved").length, available: Object.keys(FACULTY_GRANTS_DATA).length };
+        let html = `<div class="dashboard-title"><h2><i class="fas fa-flask"></i> My Research Applications</h2><p>Faculty Research Grants Only</p></div>
         <div class="stats-grid"><div class="stat-card"><i class="fas fa-hourglass-half"></i> <h3>${stats.pending}</h3><span>Under Review</span></div><div class="stat-card"><i class="fas fa-check-circle"></i> <h3>${stats.approved}</h3><span>Approved</span></div><div class="stat-card"><i class="fas fa-trophy"></i> <h3>${stats.available}</h3><span>Available Grants</span></div></div>
         <div class="flex-between"><h3>My Submissions</h3><button class="btn-primary" id="newApplyBtn"><i class="fas fa-plus"></i> New Application</button></div>
         <table class="grants-table"><thead><tr><th>Grant/Award</th><th>Submitted</th><th>Status</th><th>Action</th></tr></thead><tbody>`;
-        if (mySubs.length === 0) html += `<tr><td colspan="4">No applications yet.</td></tr>`;
-        mySubs.forEach(sub => { html += `<tr><td><strong>${sub.grantTitle}</strong></td><td>${sub.submittedDate}</td><td><span class="status ${sub.status === 'Approved' ? 'approved' : 'pending'}">${sub.status}</span></td><td><button class="btn-sm view-sub" data-id="${sub.id}">View</button></td></tr>`; });
-        html += `</tbody></table><div class="demo-note"><i class="fas fa-info-circle"></i> Faculty can apply for IR, MBHR, MR, MRR, Publication Award, and Madigan Award.</div>`;
+        if (mySubs.length === 0) html += `<tr><td colspan="4">No applications yet. Click "New Application" to start.</td></tr>`;
+        mySubs.forEach(sub => { html += `<tr>
+                    <td><strong>${sub.grantTitle}</strong><br><small style="color:#888;">${sub.proposalTitle || ''}</small></td>
+                    <td>${sub.submittedDate}</td>
+                    <td><span class="status ${sub.status === 'Approved' ? 'approved' : 'pending'}">${sub.status}</span></td>
+                    <td><button class="btn-sm view-sub" data-id="${sub.id}">View</button></td>
+                </tr>`; });
+        html += `</tbody></table><div class="demo-note"><i class="fas fa-info-circle"></i> Faculty Research Grants: IR Award, MBHR Award, MR Award, MRR Award. For Publication Award and Madigan Award, please contact KURO directly at kinaadman@xu.edu.ph.</div>`;
         document.getElementById('mainContent').innerHTML = html;
-        document.getElementById('newApplyBtn')?.addEventListener('click', openGrantSelector);
+        document.getElementById('newApplyBtn')?.addEventListener('click', () => openWizard());
         document.querySelectorAll('.view-sub').forEach(btn => btn.addEventListener('click', () => { const id = btn.getAttribute('data-id'); const sub = mySubs.find(s => s.id === id); if(sub) showDetails(sub); }));
     }
     
-    function openGrantSelector() {
-        let grantsHtml = `<p>Select a grant or award:</p>`;
-        FACULTY_GRANTS.forEach(g => { grantsHtml += `<div class="grant-tile" data-grant="${g}"><div><strong>${g}</strong></div><i class="fas fa-chevron-right"></i></div>`; });
-        document.getElementById('modalTitle').innerHTML = "Apply for Grant/Award";
-        document.getElementById('modalBody').innerHTML = grantsHtml;
+    function openWizard() {
+        selectedGrant = null;
+        selectedType = null;
+        currentStep = 1;
+        updateStepUI();
+        renderGrantSelection();
         modal.classList.add('active');
-        document.querySelectorAll('.grant-tile').forEach(tile => { tile.addEventListener('click', () => { const grant = tile.getAttribute('data-grant'); closeModal(); showProposalForm(grant); }); });
     }
     
-    function showProposalForm(grantTitle) {
-        document.getElementById('modalTitle').innerHTML = `Apply: ${grantTitle}`;
-        document.getElementById('modalBody').innerHTML = `<form id="propForm"><label>Project Title</label><input type="text" id="title" class="input-field" required><label>Abstract</label><textarea id="abstract" rows="4" class="input-field"></textarea><label>Budget</label><input type="text" id="budget" class="input-field"><button type="submit" class="btn-primary">Submit</button></form>`;
-        modal.classList.add('active');
-        document.getElementById('propForm').addEventListener('submit', (e) => { e.preventDefault(); const title = document.getElementById('title').value; if(!title) return; const newId = "SUB" + Date.now(); const newSub = { id: newId, grantTitle: grantTitle, status: "Under Review", submittedDate: new Date().toISOString().slice(0,10), projectTitle: title, abstract: document.getElementById('abstract').value }; if(!submissionsDB[currentUser.email]) submissionsDB[currentUser.email] = []; submissionsDB[currentUser.email].push(newSub); persist(); closeModal(); renderApplicant(); alert("Proposal submitted!"); });
+    function renderGrantSelection() {
+        const container = document.getElementById('grantsListContainer');
+        let html = '';
+        for (const [grant, data] of Object.entries(FACULTY_GRANTS_DATA)) {
+            html += `<div class="eligibility-card" data-grant="${grant}" data-type="faculty">
+                        <h3>${grant}</h3>
+                        <div class="amount">💰 Grant Amount: ${data.amount}</div>
+                        <p><strong>Focus:</strong> ${data.focus}</p>
+                        <p><strong>Eligibility:</strong></p>
+                        <ul>${data.eligibility.split('<br>').map(item => `<li>${item}</li>`).join('')}</ul>
+                    </div>`;
+        }
+        container.innerHTML = html;
+        
+        document.querySelectorAll('.eligibility-card').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.eligibility-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                selectedGrant = card.getAttribute('data-grant');
+                selectedType = 'faculty';
+                document.getElementById('nextToStep2Btn').disabled = false;
+            });
+        });
+    }
+    
+    function updateStepUI() {
+        for (let i = 1; i <= 3; i++) {
+            const indicator = document.getElementById(`step${i}Indicator`);
+            const content = document.getElementById(`step${i}Content`);
+            if (i === currentStep) {
+                indicator.classList.add('active');
+                indicator.classList.remove('completed');
+                content.classList.add('active');
+            } else if (i < currentStep) {
+                indicator.classList.add('completed');
+                indicator.classList.remove('active');
+                content.classList.remove('active');
+            } else {
+                indicator.classList.remove('active', 'completed');
+                content.classList.remove('active');
+            }
+        }
+        document.getElementById('modalTitle').innerHTML = `Faculty Research Grant Application - Step ${currentStep} of 3`;
+    }
+    
+    function renderApplicationForm() {
+        const formHtml = `
+            <form id="facultyAppForm">
+                <div class="form-group">
+                    <label>Name of Principal Investigator / Project Leader <span class="required">*</span></label>
+                    <input type="text" id="piName" placeholder="Enter full name" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Email Address <span class="required">*</span></label><input type="email" id="email" placeholder="Enter email address" required></div>
+                    <div class="form-group"><label>Name of Department <span class="required">*</span></label><input type="text" id="department" placeholder="Enter department" required></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Name of School or College <span class="required">*</span></label><input type="text" id="school" placeholder="Enter school/college" required></div>
+                    <div class="form-group"><label>Proposal Title <span class="required">*</span></label><input type="text" id="proposalTitle" placeholder="Enter proposal title" required></div>
+                </div>
+                <div class="form-group">
+                    <label>Name(s) of Co-proponents</label>
+                    <div id="coProponentsContainer">
+                        <div class="co-prop-row"><input type="text" placeholder="Name of co-proponent 1" class="co-prop-input"></div>
+                    </div>
+                    <button type="button" class="add-btn" id="addCoProponentBtn"><i class="fas fa-plus"></i> Add Co-proponent</button>
+                </div>
+                <div class="form-group">
+                    <label>Endorsement Letter <span class="required">*</span> (XURG Form 2 - Signed)</label>
+                    <div class="file-upload"><i class="fas fa-file-pdf"></i> <input type="file" id="endorsementLetter" accept=".pdf" required><div class="file-note">PDF only. Max 10 MB.</div></div>
+                    <a id="downloadXURG2" class="download-link"><i class="fas fa-download"></i> Download XURG Form 2 (Template)</a>
+                </div>
+                <div class="form-group">
+                    <label>Curriculum Vitae <span class="required">*</span> (CVs of project leader and team)</label>
+                    <div class="file-upload"><i class="fas fa-file-pdf"></i> <input type="file" id="curriculumVitae" accept=".pdf" required><div class="file-note">PDF only. Max 10 MB.</div></div>
+                </div>
+                <div class="form-group">
+                    <label>Research Proposal <span class="required">*</span> (XURG Form 1)</label>
+                    <div class="file-upload"><i class="fas fa-file-pdf"></i> <input type="file" id="researchProposal" accept=".pdf" required><div class="file-note">PDF only. Max 10 MB.</div></div>
+                    <a id="downloadXURG1" class="download-link"><i class="fas fa-download"></i> Download XURG Form 1 (Template)</a>
+                </div>
+                <div class="form-group">
+                    <label>Survey Questionnaire / Data Matrix <span style="font-weight:normal; color:#888;">(Optional - when applicable)</span></label>
+                    <div class="file-upload"><i class="fas fa-file-pdf"></i> <input type="file" id="surveyData" accept=".pdf"><div class="file-note">PDF only. Max 10 MB. Not required.</div></div>
+                </div>
+            </form>
+        `;
+        document.getElementById('applicationFormContainer').innerHTML = formHtml;
+        
+        let coPropCount = 1;
+        document.getElementById('addCoProponentBtn')?.addEventListener('click', () => {
+            coPropCount++;
+            const container = document.getElementById('coProponentsContainer');
+            const newRow = document.createElement('div');
+            newRow.className = 'co-prop-row';
+            newRow.innerHTML = `<input type="text" placeholder="Name of co-proponent ${coPropCount}" class="co-prop-input"><button type="button" class="remove-btn" onclick="this.parentElement.remove()">✕</button>`;
+            container.appendChild(newRow);
+        });
+        
+        document.getElementById('downloadXURG1')?.addEventListener('click', (e) => { e.preventDefault(); alert("XURG Form 1 - Research Proposal Template would download here.\n\nIn production, link to actual PDF file."); });
+        document.getElementById('downloadXURG2')?.addEventListener('click', (e) => { e.preventDefault(); alert("XURG Form 2 - Endorsement Letter Template would download here.\n\nIn production, link to actual PDF file."); });
+    }
+    
+    function submitApplication() {
+        const piName = document.getElementById('piName')?.value;
+        const email = document.getElementById('email')?.value;
+        const department = document.getElementById('department')?.value;
+        const school = document.getElementById('school')?.value;
+        const proposalTitle = document.getElementById('proposalTitle')?.value;
+        
+        if (!piName || !email || !department || !school || !proposalTitle) {
+            alert("Please fill all required fields.");
+            return;
+        }
+        
+        const coPropInputs = document.querySelectorAll('.co-prop-input');
+        const coProponents = Array.from(coPropInputs).map(inp => inp.value).filter(v => v.trim() !== "");
+        
+        const endorsementFile = document.getElementById('endorsementLetter')?.files[0];
+        const cvFile = document.getElementById('curriculumVitae')?.files[0];
+        const proposalFile = document.getElementById('researchProposal')?.files[0];
+        
+        if (!endorsementFile || !cvFile || !proposalFile) {
+            alert("Please upload all required documents: Endorsement Letter (XURG Form 2), Curriculum Vitae, and Research Proposal (XURG Form 1).");
+            return;
+        }
+        
+        const newId = "FRG" + Date.now();
+        const newSubmission = {
+            id: newId,
+            grantTitle: selectedGrant,
+            grantType: "Faculty Research Grant",
+            status: "Under Review",
+            submittedDate: new Date().toISOString().slice(0,10),
+            piName: piName,
+            email: email,
+            department: department,
+            school: school,
+            proposalTitle: proposalTitle,
+            coProponents: coProponents,
+            files: {
+                endorsement: endorsementFile.name,
+                cv: cvFile.name,
+                proposal: proposalFile.name,
+                survey: document.getElementById('surveyData')?.files[0]?.name || "Not provided"
+            }
+        };
+        
+        if (!submissionsDB[currentUser.email]) submissionsDB[currentUser.email] = [];
+        submissionsDB[currentUser.email].push(newSubmission);
+        persist();
+        closeModal();
+        renderApplicant();
+        alert(`✅ Your application for "${selectedGrant}" has been submitted successfully!\n\nYou will receive updates via email.`);
+    }
+    
+    function closeModal() { modal.classList.remove('active'); selectedGrant = null; currentStep = 1; }
+    
+    function showDetails(sub) {
+        let coPropsHtml = sub.coProponents?.length ? sub.coProponents.join(", ") : "None";
+        let detailsHtml = `<div><strong>Grant/Award:</strong> ${sub.grantTitle}<br>
+        <strong>Proposal Title:</strong> ${sub.proposalTitle || sub.projectTitle || "N/A"}<br>
+        <strong>Submitted:</strong> ${sub.submittedDate}<br>
+        <strong>Status:</strong> <span class="status ${sub.status === 'Approved' ? 'approved' : 'pending'}">${sub.status}</span><br>`;
+        if (sub.piName) detailsHtml += `<strong>Principal Investigator:</strong> ${sub.piName}<br><strong>Department:</strong> ${sub.department}<br><strong>School/College:</strong> ${sub.school}<br><strong>Co-proponents:</strong> ${coPropsHtml}<br>`;
+        if (sub.files) detailsHtml += `<strong>Uploaded Files:</strong> Endorsement: ${sub.files.endorsement}, CV: ${sub.files.cv}, Proposal: ${sub.files.proposal}<br>`;
+        detailsHtml += `</div><button class="btn-sm" id="closeDetail" style="margin-top:1rem;">Close</button>`;
+        
+        const detailModal = document.createElement('div');
+        detailModal.className = 'modal-overlay active';
+        detailModal.innerHTML = `<div class="modal-container"><div class="modal-header"><span>Application Details</span><button class="close-modal" onclick="this.closest('.modal-overlay').remove()">&times;</button></div><div>${detailsHtml}</div></div>`;
+        document.body.appendChild(detailModal);
+        document.querySelector('#closeDetail')?.addEventListener('click', () => detailModal.remove());
     }
     
     function renderReviewer() {
@@ -129,26 +490,34 @@
         let html = `<div class="dashboard-title"><h2><i class="fas fa-star-of-life"></i> External Reviewer Mode</h2><p>Evaluate assigned grant proposals</p></div>
         <div class="stats-grid"><div class="stat-card"><i class="fas fa-clipboard-list"></i><h3>${myTasks.length}</h3><span>Assigned Reviews</span></div></div>`;
         if (myTasks.length === 0) html += `<div class="demo-note">No pending review invitations.</div>`;
-        else { html += `<table class="grants-table"><thead><tr><th>Grant/Award</th><th>Proposal ID</th><th>Due Date</th><th>Action</th></tr></thead><tbody>`; myTasks.forEach(task => { html += `<tr><td>${task.grantTitle}</td><td>${task.id}</td><td>${task.dueDate}</td><td><button class="btn-sm review-task" data-id="${task.id}">Review</button></td></tr>`; }); html += `</tbody></table>`; }
+        else { html += `<table class="grants-table"><thead><tr><th>Grant/Award</th><th>Proposal ID</th><th>Due Date</th><th>Action</th><tr></thead><tbody>`; myTasks.forEach(task => { html += `<tr><td>${task.grantTitle}</td><td>${task.id}</td><td>${task.dueDate}</td><td><button class="btn-sm review-task" data-id="${task.id}">Review</button></tr>`; }); html += `</tbody></td>`; }
         document.getElementById('mainContent').innerHTML = html;
         document.querySelectorAll('.review-task').forEach(btn => btn.addEventListener('click', (e) => { const id = btn.getAttribute('data-id'); showReviewForm(id); }));
     }
     
     function showReviewForm(proposalId) {
-        document.getElementById('modalTitle').innerHTML = "Submit Review";
-        document.getElementById('modalBody').innerHTML = `<form id="reviewForm"><label>Score (1-10)</label><select id="score" class="input-field"><option>10</option><option>9</option><option>8</option><option>7</option><option>6</option></select><label>Comments</label><textarea id="comments" rows="4" class="input-field"></textarea><label>Recommendation</label><select id="rec" class="input-field"><option>Approve</option><option>Revisions Required</option><option>Reject</option></select><button type="submit" class="btn-primary">Submit Review</button></form>`;
-        modal.classList.add('active');
-        document.getElementById('reviewForm').addEventListener('submit', (e) => { e.preventDefault(); alert(`Review submitted for ${proposalId}`); if(reviewerTasks[currentUser.email]) { reviewerTasks[currentUser.email] = reviewerTasks[currentUser.email].filter(t => t.id !== proposalId); persist(); } closeModal(); renderReviewer(); });
+        const modalDiv = document.createElement('div');
+        modalDiv.className = 'modal-overlay active';
+        modalDiv.innerHTML = `<div class="modal-container"><div class="modal-header"><span>Submit Review</span><button class="close-modal" onclick="this.closest('.modal-overlay').remove()">&times;</button></div>
+        <form id="reviewForm"><div class="form-group"><label>Score (1-10)</label><select id="score" class="input-field"><option>10</option><option>9</option><option>8</option><option>7</option><option>6</option><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option></select></div>
+        <div class="form-group"><label>Comments</label><textarea id="comments" rows="4" class="input-field"></textarea></div>
+        <div class="form-group"><label>Recommendation</label><select id="rec" class="input-field"><option>Approve</option><option>Revisions Required</option><option>Reject</option></select></div>
+        <button type="submit" class="btn-primary">Submit Review</button></form></div>`;
+        document.body.appendChild(modalDiv);
+        document.getElementById('reviewForm').addEventListener('submit', (e) => { e.preventDefault(); alert(`Review submitted for ${proposalId}`); if(reviewerTasks[currentUser.email]) { reviewerTasks[currentUser.email] = reviewerTasks[currentUser.email].filter(t => t.id !== proposalId); persist(); } modalDiv.remove(); renderReviewer(); });
     }
     
     function toggleMode() { isReviewerMode = !isReviewerMode; const btn = document.getElementById('switchReviewerBtn'); if (isReviewerMode) { btn.innerHTML = '<i class="fas fa-user-graduate"></i> Switch to Applicant'; btn.classList.add('active'); renderReviewer(); } else { btn.innerHTML = '<i class="fas fa-user-check"></i> Switch to Reviewer'; btn.classList.remove('active'); renderApplicant(); } }
     
-    function showDetails(sub) { document.getElementById('modalTitle').innerHTML = "Details"; document.getElementById('modalBody').innerHTML = `<div><strong>${sub.projectTitle}</strong><br>Status: ${sub.status}<br>Submitted: ${sub.submittedDate}<br>Abstract: ${sub.abstract || "N/A"}</div><button class="btn-sm" id="closeDetail">Close</button>`; modal.classList.add('active'); document.getElementById('closeDetail')?.addEventListener('click', closeModal); }
-    
-    const modal = document.getElementById('globalModal');
-    function closeModal() { modal.classList.remove('active'); }
+    const modal = document.getElementById('wizardModal');
     document.getElementById('closeModalBtn').onclick = closeModal;
     modal.onclick = (e) => { if(e.target === modal) closeModal(); };
+    document.getElementById('cancelWizardBtn')?.addEventListener('click', closeModal);
+    document.getElementById('nextToStep2Btn')?.addEventListener('click', () => { if(selectedGrant) { currentStep = 2; updateStepUI(); } });
+    document.getElementById('backToStep1Btn')?.addEventListener('click', () => { currentStep = 1; updateStepUI(); });
+    document.getElementById('nextToStep3Btn')?.addEventListener('click', () => { renderApplicationForm(); currentStep = 3; updateStepUI(); });
+    document.getElementById('backToStep2Btn')?.addEventListener('click', () => { currentStep = 2; updateStepUI(); });
+    document.getElementById('submitApplicationBtn')?.addEventListener('click', submitApplication);
     document.getElementById('logoutBtn').onclick = () => { sessionStorage.clear(); window.location.href = "login.html"; };
     document.getElementById('switchReviewerBtn').onclick = toggleMode;
     renderApplicant();
