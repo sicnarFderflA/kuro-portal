@@ -503,7 +503,8 @@
 <footer><i class="fas fa-scroll"></i> Kinaadman University Research Office · Xavier University - Ateneo de Cagayan</footer>
 
 <script>
-// ============== INITIALIZATION ==============
+const API_URL = 'https://kuro-api-m4mb.onrender.com';
+
 const currentUser = JSON.parse(sessionStorage.getItem('kuro_user'));
 if (!currentUser) window.location.href = "login.html";
 

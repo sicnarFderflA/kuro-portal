@@ -94,6 +94,7 @@
 <div id="globalModal" class="modal-overlay"><div class="modal-container"><div class="modal-header"><span id="modalTitle"></span><button class="close-modal" id="closeModalBtn">&times;</button></div><div id="modalBody"></div></div></div>
 
 <script>
+    const API_URL = 'https://kuro-api-m4mb.onrender.com';
     const currentUser = JSON.parse(sessionStorage.getItem('kuro_user'));
     if (!currentUser || !currentUser.email || !currentUser.email.endsWith('@my.xu.edu.ph')) { window.location.href = "login.html"; }
     

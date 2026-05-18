@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* ==================== XAVIER UNIVERSITY COLOR SCHEME ==================== */
+        /* Your existing styles here - keep them as is */
         :root {
             --xavier-primary: #283871;
             --xavier-primary-dark: #1e2b57;
@@ -32,7 +32,6 @@
             padding: 1.5rem;
         }
         
-        /* Main Login Card */
         .login-container {
             max-width: 540px;
             width: 100%;
@@ -42,7 +41,6 @@
             box-shadow: 0 25px 45px rgba(0,0,0,0.3);
         }
         
-        /* Navy Header with Gold Bottom Border */
         .brand-header {
             background: var(--xavier-primary);
             padding: 2rem 2rem 1.5rem;
@@ -51,7 +49,6 @@
             border-bottom: 3px solid var(--xavier-gold);
         }
         
-        /* Both Logos Side by Side */
         .logos-container {
             display: flex;
             align-items: center;
@@ -80,7 +77,6 @@
             transform: scale(1.05);
         }
         
-        /* Hover label - appears only on hover */
         .logo-label {
             font-size: 0.55rem;
             opacity: 0;
@@ -101,7 +97,6 @@
             bottom: -1.5rem;
         }
         
-        /* Text-based logos (fallback) */
         .text-logo {
             background: rgba(255,255,255,0.1);
             padding: 0.3rem 0.8rem;
@@ -141,13 +136,11 @@
             margin-top: 0.6rem;
         }
         
-        /* White Content Area */
         .login-content { 
             padding: 2rem; 
             background: white;
         }
         
-        /* Role Selection Buttons */
         .role-selection {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -179,7 +172,6 @@
             margin-bottom: 0;
         }
         
-        /* Hover tooltip for email domain info */
         .role-btn .role-hover-info {
             position: absolute;
             bottom: -2.5rem;
@@ -255,7 +247,6 @@
             color: var(--xavier-gold);
         }
         
-        /* Google Button */
         .google-btn {
             display: flex;
             align-items: center;
@@ -338,6 +329,7 @@
             .logo-label { font-size: 0.5rem; }
         }
     </style>
+    <!-- Google Sign-In Script - properly closed -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
@@ -359,7 +351,6 @@
         <div style="font-size:0.7rem; margin-top:0.3rem; opacity:0.9;">Research Grants & Awards Submission Portal</div>
     </div>
     <div class="login-content">
-        <!-- Role Selection Buttons -->
         <div class="role-selection">
             <div class="role-btn" data-role="student">
                 <i class="fas fa-user-graduate"></i>
@@ -400,6 +391,8 @@
 </div>
 
 <script>
+    const API_URL = 'https://kuro-api-m4mb.onrender.com';
+    
     // ==================== LOGO HANDLING ====================
     let selectedRole = null;
     const KURO_ADMIN_EMAIL = "200520181@my.xu.edu.ph";
@@ -413,7 +406,6 @@
             btn.classList.add('selected');
             selectedRole = btn.dataset.role;
             
-            // Update restriction badge text based on role
             const badge = document.querySelector('.restriction-badge');
             if (selectedRole === 'student') {
                 badge.innerHTML = '<i class="fas fa-shield-alt"></i> Selected: Student - Sign in with @my.xu.edu.ph';
@@ -462,7 +454,6 @@
     }
     
     function handleGoogleResponse(response) {
-        // Check if role was selected
         if (!selectedRole) {
             showError("Please select your role first (Student, Faculty, or Admin) before signing in.");
             return;
@@ -482,14 +473,13 @@
             return;
         }
         
-        // Validate role matches email domain
         if (selectedRole === 'student' && domain !== 'my.xu.edu.ph') {
-            showError(`You selected "Student" but ${email} is not a @my.xu.edu.ph account. Please select the correct role.`);
+            showError(`You selected "Student" but ${email} is not a @my.xu.edu.ph account.`);
             return;
         }
         
         if (selectedRole === 'faculty' && domain !== 'xu.edu.ph') {
-            showError(`You selected "Faculty" but ${email} is not a @xu.edu.ph account. Please select the correct role.`);
+            showError(`You selected "Faculty" but ${email} is not a @xu.edu.ph account.`);
             return;
         }
         
@@ -507,8 +497,7 @@
         };
         sessionStorage.setItem('kuro_user', JSON.stringify(userData));
         
-        const redirectUrl = getRedirectUrl(email);
-        window.location.href = redirectUrl;
+        window.location.href = getRedirectUrl(email);
     }
     
     function initGoogleSignIn() {
@@ -518,7 +507,6 @@
         const GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com";
         
         if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID === "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com") {
-            // Demo mode - manual email entry
             container.innerHTML = `
                 <button class="google-btn" id="mockGoogleBtn">
                     <i class="fab fa-google"></i> Sign in with Google
@@ -530,58 +518,49 @@
                     👑 Admin: 200520181@my.xu.edu.ph
                 </div>
             `;
-            document.getElementById('mockGoogleBtn')?.addEventListener('click', () => {
+            
+            document.getElementById('mockGoogleBtn')?.addEventListener('click', async () => {
                 if (!selectedRole) {
                     showError("Please select your role first (Student, Faculty, or Admin)");
                     return;
                 }
                 
-                let defaultEmail = "";
-                let message = "";
+                let email = "";
+                let password = "";
                 if (selectedRole === 'student') {
-                    defaultEmail = "student@my.xu.edu.ph";
-                    message = "Enter STUDENT email (@my.xu.edu.ph):";
+                    email = "student@my.xu.edu.ph";
+                    password = "student123";
                 } else if (selectedRole === 'faculty') {
-                    defaultEmail = "faculty@xu.edu.ph";
-                    message = "Enter FACULTY email (@xu.edu.ph):";
+                    email = "faculty@xu.edu.ph";
+                    password = "password123";
                 } else {
-                    defaultEmail = "200520181@my.xu.edu.ph";
-                    message = "Enter ADMIN email:";
+                    email = "200520181@my.xu.edu.ph";
+                    password = "admin123";
                 }
                 
-                const email = prompt(message, defaultEmail);
-                if (email && XAVIER_DOMAINS.includes(email.split('@')[1]?.toLowerCase())) {
-                    const domain = email.split('@')[1]?.toLowerCase();
-                    if (selectedRole === 'student' && domain !== 'my.xu.edu.ph') {
-                        showError(`"${email}" is not a @my.xu.edu.ph account.`);
-                        return;
-                    }
-                    if (selectedRole === 'faculty' && domain !== 'xu.edu.ph') {
-                        showError(`"${email}" is not a @xu.edu.ph account.`);
-                        return;
-                    }
-                    if (selectedRole === 'admin' && !isAdminEmail(email)) {
-                        showError(`"${email}" is not an authorized admin account.`);
-                        return;
-                    }
+                try {
+                    const response = await fetch(`${API_URL}/api/auth/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password, selectedRole })
+                    });
                     
-                    const userData = { 
-                        name: email.split('@')[0], 
-                        email: email, 
-                        picture: '',
-                        isAdmin: email === KURO_ADMIN_EMAIL,
-                        role: selectedRole
-                    };
-                    sessionStorage.setItem('kuro_user', JSON.stringify(userData));
-                    window.location.href = getRedirectUrl(email);
-                } else if (email) {
-                    showError("Invalid domain. Use @xu.edu.ph or @my.xu.edu.ph");
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        sessionStorage.setItem('kuro_user', JSON.stringify(data.user));
+                        window.location.href = getRedirectUrl(email);
+                    } else {
+                        showError(data.error || "Login failed");
+                    }
+                } catch (error) {
+                    console.error('Login error:', error);
+                    showError("Cannot connect to server. Backend may be starting up. Please try again.");
                 }
             });
             return;
         }
         
-        // Real Google OAuth
         google.accounts.id.initialize({ 
             client_id: GOOGLE_CLIENT_ID, 
             callback: handleGoogleResponse,
@@ -600,7 +579,6 @@
         });
     }
     
-    // Check existing session
     const existingUser = sessionStorage.getItem('kuro_user');
     if (existingUser) {
         try {
