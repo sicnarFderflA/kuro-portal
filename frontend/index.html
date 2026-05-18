@@ -13,10 +13,35 @@
             align-items: center;
             justify-content: center;
             margin: 0;
+            padding: 1rem;
         }
         .redirect-container {
             text-align: center;
             color: white;
+            max-width: 400px;
+        }
+        .logos-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .logo-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .logo-wrapper img {
+            height: 55px;
+            width: auto;
+            object-fit: contain;
+        }
+        .logo-label {
+            font-size: 0.55rem;
+            opacity: 0.8;
+            letter-spacing: 1px;
         }
         .spinner {
             width: 50px;
@@ -30,6 +55,15 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        h1 {
+            font-size: 2rem;
+            margin: 0.5rem 0;
+            letter-spacing: -0.3px;
+        }
+        p {
+            opacity: 0.8;
+            margin: 0.5rem 0;
+        }
         a {
             color: #D4AF37;
             text-decoration: none;
@@ -37,19 +71,39 @@
         a:hover {
             text-decoration: underline;
         }
+        .redirect-message {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
     </style>
     <script>
-        // Redirect to login page after 1 second
+        // Redirect to login page after 1.5 seconds
         setTimeout(function() {
             window.location.href = "login.html";
-        }, 1000);
+        }, 1500);
     </script>
 </head>
 <body>
     <div class="redirect-container">
+        <div class="logos-container">
+            <div class="logo-wrapper">
+                <img src="xu_logo.png" alt="Xavier University Logo" onerror="this.parentElement.innerHTML='<span style=\'font-size:0.7rem;\'>XU</span>'">
+                <span class="logo-label">Xavier University</span>
+            </div>
+            <div class="logo-wrapper">
+                <img src="kuro_logo.png" alt="KURO Logo" onerror="this.parentElement.innerHTML='<span style=\'font-size:0.7rem;\'>KURO</span>'">
+                <span class="logo-label">Research Office</span>
+            </div>
+        </div>
+        
         <div class="spinner"></div>
-        <h2>KURO</h2>
-        <p>Redirecting to <a href="login.html">Login Page</a>...</p>
+        
+        <h1>KURO</h1>
+        <p>Kinaadman University Research Office</p>
+        
+        <div class="redirect-message">
+            Redirecting to <a href="login.html">Login Page</a>...
+        </div>
     </div>
 </body>
 </html>
