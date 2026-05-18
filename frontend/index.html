@@ -4,10 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KURO · Redirecting...</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #1b2352 0%, #283871 50%, #10183a 100%);
+            background: linear-gradient(135deg, #1b2352 0%, #283871 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -15,94 +23,99 @@
             margin: 0;
             padding: 1rem;
         }
+
+        /* Simple Clean Container */
         .redirect-container {
             text-align: center;
-            color: white;
             max-width: 400px;
+            width: 100%;
         }
-        .logos-container {
+
+        /* Logos - Simple Side by Side, No Filters */
+        .logos {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 1.5rem;
-            margin-bottom: 1.5rem;
+            gap: 2rem;
+            margin-bottom: 2rem;
         }
-        .logo-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.3rem;
-        }
-        .logo-wrapper img {
-            height: 55px;
+
+        .logos img {
+            height: 65px;
             width: auto;
-            object-fit: contain;
         }
-        .logo-label {
-            font-size: 0.55rem;
-            opacity: 0.8;
-            letter-spacing: 1px;
-        }
+
+        /* Clean Spinner */
         .spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid rgba(255,255,255,0.2);
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(255,255,255,0.2);
             border-top-color: #D4AF37;
             border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 1.5rem auto;
         }
+
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        /* Simple Text */
         h1 {
-            font-size: 2rem;
-            margin: 0.5rem 0;
-            letter-spacing: -0.3px;
+            color: white;
+            font-size: 1.8rem;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            margin-bottom: 0.3rem;
         }
-        p {
-            opacity: 0.8;
-            margin: 0.5rem 0;
+
+        .subtitle {
+            color: rgba(255,255,255,0.7);
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
         }
-        a {
+
+        .redirect-link {
+            margin-top: 1.5rem;
+        }
+
+        .redirect-link a {
             color: #D4AF37;
             text-decoration: none;
+            font-size: 0.75rem;
+            opacity: 0.8;
+            transition: opacity 0.2s;
         }
-        a:hover {
+
+        .redirect-link a:hover {
+            opacity: 1;
             text-decoration: underline;
-        }
-        .redirect-message {
-            margin-top: 1rem;
-            font-size: 0.9rem;
         }
     </style>
     <script>
-        // Redirect to login page after 1.5 seconds
         setTimeout(function() {
             window.location.href = "login.html";
-        }, 1500);
+        }, 1800);
     </script>
 </head>
 <body>
     <div class="redirect-container">
-        <div class="logos-container">
-            <div class="logo-wrapper">
-                <img src="xu_logo.png" alt="Xavier University Logo" onerror="this.parentElement.innerHTML='<span style=\'font-size:0.7rem;\'>XU</span>'">
-                <span class="logo-label">Xavier University</span>
-            </div>
-            <div class="logo-wrapper">
-                <img src="kuro_logo.png" alt="KURO Logo" onerror="this.parentElement.innerHTML='<span style=\'font-size:0.7rem;\'>KURO</span>'">
-                <span class="logo-label">Research Office</span>
-            </div>
+        <!-- Simple Logos - Normal Display -->
+        <div class="logos">
+            <img src="xu_logo.png" alt="Xavier University">
+            <img src="kuro_logo.png" alt="KURO">
         </div>
-        
+
+        <!-- Clean Spinner -->
         <div class="spinner"></div>
-        
+
+        <!-- Text -->
         <h1>KURO</h1>
-        <p>Kinaadman University Research Office</p>
-        
-        <div class="redirect-message">
-            Redirecting to <a href="login.html">Login Page</a>...
+        <div class="subtitle">Kinaadman University Research Office</div>
+
+        <!-- Manual Link -->
+        <div class="redirect-link">
+            <a href="login.html">Continue to Login →</a>
         </div>
     </div>
 </body>
