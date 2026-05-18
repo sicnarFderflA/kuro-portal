@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="autocomplete" content="off">
+    <title>KURO · Faculty Dashboard | Xavier University - Ateneo de Cagayan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root {
+            --xavier-primary: #283871;
+            --xavier-primary-dark: #1e2b57;
+            --xavier-gold: #D4AF37;
+            --xavier-gold-dark: #b8942e;
+            --xavier-gray-text: #5A6E6B;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f0f2f5; }
+        
+        .top-nav { background: var(--xavier-primary); padding: 0.8rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--xavier-gold); flex-wrap: wrap; }
+        .logo-area { display: flex; align-items: center; gap: 1rem; }
+        .school-logo-header { height: 45px; width: auto; }
+        .logo-area h2 { color: white; display: flex; align-items: center; gap: 0.5rem; font-size: 1.3rem; }
+        .logo-area h2 i { color: var(--xavier-gold); }
+        .user-info { display: flex; align-items: center; gap: 1rem; }
+        .avatar { width: 42px; height: 42px; border-radius: 50%; background: var(--xavier-gold); color: var(--xavier-primary); display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .user-info div { color: white; }
+        .user-info #userEmail { color: rgba(255,255,255,0.8); }
+        .switch-reviewer-btn { background: rgba(255,255,255,0.15); color: white; border: 1px solid var(--xavier-gold); padding: 0.4rem 1rem; border-radius: 30px; cursor: pointer; font-size: 0.75rem; }
+        .switch-reviewer-btn.active { background: var(--xavier-gold); color: var(--xavier-primary); }
+        .logout-nav { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 0.4rem 1rem; border-radius: 30px; cursor: pointer; }
+        
+        .main-content { padding: 2rem; max-width: 1200px; margin: 1.5rem auto; background: white; border-radius: 1rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .dashboard-title { margin-bottom: 1.5rem; }
+        .dashboard-title h2 { color: var(--xavier-gold); font-size: 1.6rem; font-weight: 600; }
+        .dashboard-title p { color: var(--xavier-gray-text); margin-top: 0.3rem; font-size: 0.85rem; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card { background: #f8f9fa; border-radius: 1rem; padding: 1.2rem; border-top: 4px solid var(--xavier-gold); text-align: left; }
+        .stat-card i { color: var(--xavier-gold); font-size: 1.5rem; margin-bottom: 0.5rem; }
+        .stat-card h3 { font-size: 1.8rem; color: var(--xavier-primary); font-weight: 700; }
+        .stat-card span { color: var(--xavier-gray-text); font-size: 0.8rem; }
+        
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem; }
+        .section-header h3 { color: var(--xavier-primary); font-size: 1.2rem; font-weight: 600; }
+        
+        .grants-table { width: 100%; background: white; border-radius: 0.8rem; border-collapse: collapse; overflow: hidden; border: 1px solid #eef2f0; }
+        .grants-table th { background: var(--xavier-primary); color: white; padding: 1rem; text-align: left; font-weight: 600; font-size: 0.85rem; }
+        .grants-table td { padding: 1rem; text-align: left; border-bottom: 1px solid #ecf3e8; font-size: 0.85rem; }
+        .grants-table tr:last-child td { border-bottom: none; }
+        
+        .status { padding: 0.2rem 0.7rem; border-radius: 40px; font-size: 0.7rem; font-weight: 600; display: inline-block; }
+        .status.pending { background: #fff0db; color: #b45f1b; }
+        .status.approved { background: #e0f5e6; color: #1e6f3f; }
+        .status.draft { background: #e8e8e8; color: #666; }
+        
+        .btn-sm { background: #eef2fa; border: none; padding: 0.3rem 1rem; border-radius: 30px; cursor: pointer; font-size: 0.75rem; transition: 0.2s; }
+        .btn-sm:hover { background: var(--xavier-primary); color: white; }
+        .btn-primary { background: var(--xavier-gold); color: var(--xavier-primary); border: none; padding: 0.5rem 1.2rem; border-radius: 40px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+        .btn-primary:hover { background: var(--xavier-gold-dark); color: white; }
+        .btn-secondary { background: transparent; border: 1px solid var(--xavier-primary); color: var(--xavier-primary); padding: 0.5rem 1.2rem; border-radius: 40px; cursor: pointer; font-weight: 600; }
+        .btn-danger { background: #e74c3c; color: white; border: none; padding: 0.3rem 1rem; border-radius: 30px; cursor: pointer; font-size: 0.75rem; transition: 0.2s; }
+        .btn-danger:hover { background: #c0392b; }
+        
+        .demo-note { font-size: 0.7rem; background: #f3f7ef; padding: 0.8rem 1rem; border-radius: 28px; margin-top: 1rem; text-align: center; border: 1px solid #e8ecd9; color: var(--xavier-gray-text); }
+        .demo-note i { color: var(--xavier-gold); margin-right: 0.3rem; }
+        footer { text-align: center; font-size: 0.65rem; color: var(--xavier-gray-text); padding: 1rem; background: transparent; }
+        footer i { color: var(--xavier-gold); margin-right: 0.3rem; }
+        
+        .swal2-popup { width: 1000px !important; max-width: 95vw !important; }
+        .swal2-html-container { overflow-y: auto !important; max-height: 70vh !important; }
+        
+        .form-group { margin-bottom: 0.8rem; text-align: left; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 0.2rem; color: var(--xavier-primary); font-size: 0.8rem; text-align: left; }
+        .form-group label .required { color: #e74c3c; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px; font-family: inherit; font-size: 0.8rem; text-align: left; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+        
+        .form-section-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--xavier-primary);
+            border-bottom: 2px solid var(--xavier-gold);
+            padding-bottom: 0.3rem;
+            margin: 0.8rem 0 0.8rem 0;
+        }
+        .form-subsection-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--xavier-primary);
+            margin: 0.6rem 0 0.3rem 0;
+            padding-left: 0.3rem;
+            border-left: 3px solid var(--xavier-gold);
+            text-align: left;
+        }
+        
+        .eligibility-card { background: #f8f9fa; border-radius: 0.8rem; padding: 1rem; margin-bottom: 1rem; border-left: 4px solid var(--xavier-gold); cursor: pointer; transition: 0.2s; text-align: left; }
+        .eligibility-card.selected { border-left-color: var(--xavier-primary); background: #eef2fa; }
+        .eligibility-card h3 { color: var(--xavier-primary); font-size: 1rem; margin-bottom: 0.4rem; font-weight: 700; text-align: left; }
+        .eligibility-card .amount { font-weight: bold; color: var(--xavier-gold); font-size: 0.8rem; margin-bottom: 0.3rem; text-align: left; }
+        .eligibility-card .focus { font-size: 0.75rem; color: #555; margin-bottom: 0.5rem; text-align: left; }
+        .eligibility-card .eligibility-title { font-weight: 600; font-size: 0.7rem; color: var(--xavier-primary); margin-top: 0.3rem; margin-bottom: 0.2rem; text-align: left; }
+        .eligibility-card ul { margin-left: 1.2rem; font-size: 0.7rem; color: #666; text-align: left; }
+        .eligibility-card li { margin-bottom: 0.2rem; text-align: left; }
+        
+        .activity-card { background: #f8f9fa; border-radius: 0.6rem; padding: 0.6rem; margin-bottom: 0.6rem; border-left: 3px solid var(--xavier-gold); text-align: left; }
+        .activity-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; }
+        .activity-title { font-weight: 700; color: var(--xavier-primary); font-size: 0.8rem; }
+        .activity-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.4rem; }
+        .activity-grid .field { display: flex; flex-direction: column; text-align: left; }
+        .activity-grid .field label { font-size: 0.65rem; font-weight: 600; color: var(--xavier-primary); margin-bottom: 0.1rem; text-align: left; }
+        .activity-grid .field input, .activity-grid .field textarea { padding: 0.3rem; font-size: 0.75rem; border-radius: 4px; border: 1px solid #ddd; width: 100%; text-align: left; }
+        .date-range-row { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.3rem; flex-wrap: wrap; text-align: left; }
+        .date-range-row label { font-size: 0.65rem; font-weight: 600; color: var(--xavier-primary); }
+        .date-range-row select { padding: 0.3rem; border-radius: 4px; border: 1px solid #ddd; font-size: 0.7rem; }
+        
+        .budget-item-row { background: #f8f9fa; border-radius: 0.6rem; padding: 0.5rem; margin-bottom: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+        .budget-item-row select, .budget-item-row input { padding: 0.4rem; border-radius: 4px; border: 1px solid #ddd; font-size: 0.75rem; text-align: left; }
+        .budget-category { width: 170px; }
+        .budget-subcategory { width: 150px; }
+        .budget-item-select { width: 180px; }
+        .budget-specs { flex: 2; min-width: 120px; }
+        .budget-unit-cost { width: 90px; }
+        .budget-qty { width: 60px; }
+        .budget-total { width: 80px; font-weight: bold; text-align: right; font-size: 0.75rem; }
+        .budget-remove-item { background: #e74c3c; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 0.7rem; flex-shrink: 0; }
+        .budget-summary { background: var(--xavier-primary); color: white; padding: 0.6rem; border-radius: 0.6rem; margin-top: 0.6rem; text-align: right; font-size: 0.9rem; }
+        
+        .add-btn { background: var(--xavier-gold); color: var(--xavier-primary); border: none; padding: 0.2rem 0.6rem; border-radius: 20px; cursor: pointer; font-size: 0.7rem; margin-top: 0.3rem; }
+        .remove-btn { background: #e74c3c; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 0.7rem; }
+        
+        .tabs { display: flex; gap: 0.3rem; margin-bottom: 1rem; border-bottom: 1px solid #ddd; flex-wrap: wrap; }
+        .tab-btn { background: none; border: none; padding: 0.4rem 0.8rem; font-size: 0.75rem; font-weight: 600; color: var(--xavier-gray-text); cursor: pointer; transition: 0.2s; border-radius: 6px 6px 0 0; }
+        .tab-btn.active { color: var(--xavier-primary); border-bottom: 2px solid var(--xavier-gold); background: #f8f9fa; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .member-row, .reference-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; align-items: center; text-align: left; }
+        .member-row input, .reference-row input { flex: 1; padding: 0.4rem; border-radius: 4px; border: 1px solid #ddd; font-size: 0.75rem; }
+
+        .form-group.missing input,
+        .form-group.missing textarea,
+        .form-group.missing select {
+            border-color: #e74c3c !important;
+            background-color: #fff5f5 !important;
+        }
+
+        .form-group.missing label {
+            color: #e74c3c !important;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        @media (max-width: 900px) { .budget-item-row { flex-direction: column; align-items: stretch; } .budget-category, .budget-subcategory, .budget-item-select, .budget-specs, .budget-unit-cost, .budget-qty { width: 100%; } }
+        @media (max-width: 700px) { .form-row { grid-template-columns: 1fr; } .activity-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<div class="top-nav">
+    <div class="logo-area">
+        <img src="xu_logo.png" alt="Xavier University Logo" class="school-logo-header" style="height: 45px; width: auto;" onerror="this.onerror=null; this.style.display='none'">
+        <img src="kuro_logo.png" alt="KURO Logo" class="kuro-logo-header" style="height: 40px; width: auto; margin-left: 0.5rem;" onerror="this.onerror=null; this.style.display='none'">
+        <h2><i class="fas fa-scroll"></i> KURO · Faculty Portal</h2>
+    </div>
+    <div class="user-info">
+        <div class="avatar" id="userAvatar">F</div>
+        <div><div id="userName"></div><div id="userEmail" style="font-size:0.7rem;"></div></div>
+        <button id="switchReviewerBtn" class="switch-reviewer-btn"><i class="fas fa-user-check"></i> Switch to Reviewer</button>
+        <button id="logoutBtn" class="logout-nav"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+</div>
+<div class="main-content" id="mainContent"></div>
+<footer><i class="fas fa-scroll"></i> Kinaadman University Research Office · Xavier University - Ateneo de Cagayan</footer>
+
+<script>
+const currentUser = JSON.parse(sessionStorage.getItem('kuro_user'));
+if (!currentUser || !currentUser.email || !currentUser.email.endsWith('@xu.edu.ph')) { window.location.href = "login.html"; }
+
+let isReviewerMode = false;
+let submissionsDB = JSON.parse(localStorage.getItem('kuro_submissions')) || {};
+let draftsDB = JSON.parse(localStorage.getItem('kuro_drafts_' + currentUser.email)) || [];
+let reviewerTasks = JSON.parse(localStorage.getItem('kuro_reviewer_tasks')) || {};
+let selectedGrant = null;
+let editDraftId = null;
+let currentDraftData = null;
+
+const FACULTY_GRANTS_DATA = {
+    "INSTITUTIONAL RESEARCH (IR) AWARD": { 
+        amount: "Php 20,000 - Php 75,000", 
+        focus: "Research projects relevant to improve University's policies, programs, teaching and learning systems",
+        eligibility: "• Full-time regular higher education faculty member, holder of at least a master's degree<br>• OR a team of 2-3 full-time regular faculty members, holders of at least a master's degree"
+    },
+    "MIGUEL BERNAD HUMANITIES RESEARCH (MBHR) AWARD": { 
+        amount: "up to Php 80,000", 
+        focus: "Research in humanities focusing on Miguel A Bernad, SJ's works OR Mindanaoan consciousness",
+        eligibility: "• Full-time regular higher education faculty member, holder of at least a master's degree<br>• OR a team of 2-3 full-time regular faculty members, holders of at least a master's degree"
+    },
+    "MINDANAO RESEARCH (MR) AWARD": { 
+        amount: "Php 400,000 - Php 2,000,000", 
+        focus: "Addresses issues in Mindanao, aligned to University Research Agenda",
+        eligibility: "• Research team of full-time regular faculty members with master's degree from at least 2 disciplines<br>• Principal investigators must have doctorate degree and completed at least 2 researches<br>• Must consist of at least 2 component projects<br>• Maximum of 3 years"
+    },
+    "MATTEO RICCI RESEARCH (MRR) AWARD": { 
+        amount: "up to Php 200,000", 
+        focus: "Research projects aligned to Xavier Ateneo Research Agenda",
+        eligibility: "• Full-time regular higher education faculty member, holder of at least a master's degree<br>• OR a team of 2-3 full-time regular faculty members, holders of at least a master's degree"
+    }
+};
+
+const BUDGET_STRUCTURE = {
+    "I. MAINTENANCE AND OPERATING EXPENSES": {
+        "I.1 Transportation": ["Vehicle Rental", "Gasoline", "Others (Specify)"],
+        "I.2 Materials & Supplies": ["Others (Specify)"],
+        "I.3 Services": ["Data Collectors", "Enumerators/Field Samplers", "KI Interviewers", "FGD Facilitators", "Laboratory Technicians", "Data Encoders", "Statistician", "Other Professional Fees", "Others (Specify)"],
+        "I.4 Others": ["Others (Specify)"]
+    },
+    "II. ADMINISTRATIVE COST": {
+        "II.1 Meals & Snacks": ["Team Activity Meals", "Individual Data-Gatherer Meals", "Others (Specify)"]
+    },
+    "III. HONORARIA": {
+        "III.1 Personnel": ["Principal Investigator/Project Leader", "Faculty Researchers", "Research Assistants", "Others (Specify)"]
+    },
+    "IV. CONTINGENCY/UNFORESEEN EXPENSES": {
+        "IV.1 Contingency": ["Others (Specify)"]
+    }
+};
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const CURRENT_YEAR = new Date().getFullYear();
+const NEXT_YEAR = CURRENT_YEAR + 1;
+const YEAR_AFTER = CURRENT_YEAR + 2;
+
+document.getElementById('userName').innerText = currentUser.name;
+document.getElementById('userEmail').innerText = currentUser.email;
+document.getElementById('userAvatar').innerText = currentUser.name?.charAt(0) || 'F';
+
+function persist() { localStorage.setItem('kuro_submissions', JSON.stringify(submissionsDB)); localStorage.setItem('kuro_reviewer_tasks', JSON.stringify(reviewerTasks)); }
+function saveDrafts() { localStorage.setItem('kuro_drafts_' + currentUser.email, JSON.stringify(draftsDB)); }
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
+}
+
+async function showSuccess(message, title) { await Swal.fire({ icon: 'success', title: title, text: message, confirmButtonColor: '#D4AF37' }); }
+async function showError(message, title) { await Swal.fire({ icon: 'error', title: title, text: message, confirmButtonColor: '#D4AF37' }); }
+async function confirmDelete(itemName) { 
+    return await Swal.fire({ title: 'Delete Draft?', text: 'Delete "' + itemName + '"? This cannot be undone.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e74c3c', cancelButtonColor: '#6c757d', confirmButtonText: 'Yes, delete' });
+}
+async function confirmSaveDraft() {
+    return await Swal.fire({ title: 'Save as Draft?', text: 'Your progress will be saved. You can continue later.', icon: 'info', showCancelButton: true, confirmButtonColor: '#D4AF37', confirmButtonText: 'Save Draft' });
+}
+async function confirmSubmit(grantTitle) {
+    return await Swal.fire({ title: 'Submit Application?', html: 'Submit application for <strong>' + escapeHtml(grantTitle) + '</strong>?', icon: 'question', showCancelButton: true, confirmButtonColor: '#D4AF37', confirmButtonText: 'Yes, submit!' });
+}
+async function showDraftSaved() { await Swal.fire({ icon: 'success', title: 'Draft Saved!', text: 'Your application has been saved.', confirmButtonColor: '#D4AF37', timer: 2000 }); }
+
+function renderApplicant() {
+    const mySubs = submissionsDB[currentUser.email] || [];
+    const stats = { 
+        pending: mySubs.filter(s => s.status !== "Approved").length, 
+        approved: mySubs.filter(s => s.status === "Approved").length, 
+        available: Object.keys(FACULTY_GRANTS_DATA).length, 
+        drafts: draftsDB.length 
+    };
+    
+    let html = '<div class="dashboard-title"><h2>My Research Applications</h2><p>Faculty Research Grants: IR Award, MBHR Award, MR Award, MRR Award</p></div>';
+    html += '<div class="stats-grid">';
+    html += '<div class="stat-card"><i class="fas fa-hourglass-half"></i> <h3>' + stats.pending + '</h3> <span>Under Review</span></div>';
+    html += '<div class="stat-card"><i class="fas fa-check-circle"></i> <h3>' + stats.approved + '</h3> <span>Approved</span></div>';
+    html += '<div class="stat-card"><i class="fas fa-trophy"></i> <h3>' + stats.available + '</h3> <span>Available Grants</span></div>';
+    html += '<div class="stat-card"><i class="fas fa-pen-fancy"></i> <h3>' + stats.drafts + '</h3> <span>Drafts</span></div></div>';
+    
+    html += '<div class="section-header"><h3>My Submissions</h3><button class="btn-primary" id="newApplyBtn"><i class="fas fa-plus"></i> New Application</button></div>';
+    html += '<table class="grants-table"><thead>';
+    html += '<tr><th>Grant/Award</th><th>Title</th><th>Date</th><th>Status</th><th>Action</th></tr>';
+    html += '</thead><tbody>';
+    
+    for (const sub of mySubs) {
+        let statusClass = sub.status === 'Approved' ? 'approved' : 'pending';
+        html += '<tr>';
+        html += '<td><strong>' + escapeHtml(sub.grantTitle) + '</strong></td>';
+        html += '<td>' + escapeHtml(sub.proposalTitle || '') + '</td>';
+        html += '<td>' + sub.submittedDate + '</td>';
+        html += '<td><span class="status ' + statusClass + '">' + sub.status + '</span></td>';
+        html += '<td><button class="btn-sm view-sub" data-id="' + sub.id + '">View</button></td>';
+        html += '</tr>';
+    }
+    
+    for (let idx = 0; idx < draftsDB.length; idx++) {
+        const draft = draftsDB[idx];
+        html += '<tr>';
+        html += '<td><strong>' + escapeHtml(draft.grantTitle) + '</strong></td>';
+        html += '<td>' + escapeHtml(draft.proposalTitle || 'Untitled') + '</td>';
+        html += '<td>' + (draft.lastSaved || '') + '</td>';
+        html += '<td><span class="status draft">Draft</span></td>';
+        html += '<td><button class="btn-sm edit-draft" data-idx="' + idx + '">Edit</button> <button class="btn-danger delete-draft" data-idx="' + idx + '">Delete</button></td>';
+        html += '</tr>';
+    }
+    
+    if (mySubs.length === 0 && draftsDB.length === 0) {
+        html += '<tr><td colspan="5" style="text-align: center;">No applications yet. Click "New Application" to start.</td></tr>';
+    }
+    
+    html += '</tbody></table>';
+    html += '<div class="demo-note"><i class="fas fa-info-circle"></i> Faculty Research Grants: IR Award, MBHR Award, MR Award, MRR Award. For Publication Award and Madigan Award, please contact KURO directly at kinaadman@xu.edu.ph.</div>';
+    
+    document.getElementById('mainContent').innerHTML = html;
+    
+    document.getElementById('newApplyBtn')?.addEventListener('click', () => { editDraftId = null; currentDraftData = null; openGrantSelection(); });
+    document.querySelectorAll('.view-sub').forEach(btn => btn.addEventListener('click', async (e) => { const id = btn.getAttribute('data-id'); const sub = mySubs.find(s => s.id === id); if(sub) await showDetails(sub); }));
+    document.querySelectorAll('.edit-draft').forEach(btn => btn.addEventListener('click', (e) => { const idx = parseInt(btn.getAttribute('data-idx')); editDraftId = idx; currentDraftData = draftsDB[idx]; openApplicationForm(true); }));
+    document.querySelectorAll('.delete-draft').forEach(btn => btn.addEventListener('click', async (e) => { 
+        const idx = parseInt(btn.getAttribute('data-idx'));
+        const draft = draftsDB[idx];
+        const result = await confirmDelete(draft?.proposalTitle || 'this draft');
+        if (result.isConfirmed) {
+            draftsDB.splice(idx, 1);
+            saveDrafts();
+            renderApplicant();
+            await showSuccess('Draft deleted!', 'Deleted');
+        }
+    }));
+}
+
+async function showDetails(sub) {
+    await Swal.fire({ icon: 'info', title: 'Application Details', html: '<div style="text-align:left"><p><strong>Grant:</strong> ' + escapeHtml(sub.grantTitle) + '</p><p><strong>Project:</strong> ' + escapeHtml(sub.proposalTitle || 'N/A') + '</p><p><strong>PI:</strong> ' + escapeHtml(sub.piName || 'N/A') + '</p><p><strong>Status:</strong> ' + sub.status + '</p><p><strong>Submitted:</strong> ' + sub.submittedDate + '</p></div>', confirmButtonColor: '#D4AF37' });
+}
+
+async function openGrantSelection() {
+    let optionsHtml = '';
+    for (const [grant, data] of Object.entries(FACULTY_GRANTS_DATA)) {
+        optionsHtml += '<div class="eligibility-card" data-grant="' + grant + '">';
+        optionsHtml += '<h3>' + grant + '</h3>';
+        optionsHtml += '<div class="amount">💰 Grant Amount: ' + data.amount + '</div>';
+        optionsHtml += '<div class="focus"><strong>Focus:</strong> ' + data.focus + '</div>';
+        optionsHtml += '<div class="eligibility-title">Eligibility:</div>';
+        optionsHtml += '<ul>' + data.eligibility.split('<br>').map(item => '<li>' + item + '</li>').join('') + '</ul>';
+        optionsHtml += '</div>';
+    }
+    
+    const result = await Swal.fire({
+        title: 'Select Research Grant',
+        html: '<div id="grantOptions" style="text-align:left;">' + optionsHtml + '</div>',
+        confirmButtonText: 'Next →',
+        showCancelButton: true,
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#D4AF37',
+        didOpen: () => {
+            document.querySelectorAll('#grantOptions .eligibility-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    document.querySelectorAll('#grantOptions .eligibility-card').forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                });
+            });
+        },
+        preConfirm: () => {
+            const selected = document.querySelector('#grantOptions .eligibility-card.selected');
+            if (!selected) { Swal.showValidationMessage('Please select a grant'); return false; }
+            return selected.getAttribute('data-grant');
+        }
+    });
+    
+    if (result.isConfirmed && result.value) {
+        selectedGrant = result.value;
+        currentDraftData = null;
+        await openApplicationForm(false);
+    }
+}
+
+function renderActivities(activities) {
+    activities = activities || [];
+    const uniqueId = Date.now();
+    let html = '';
+    const monthOptions = MONTHS.map(m => '<option value="' + m + '">' + m + '</option>').join('');
+    const yearOptions = [CURRENT_YEAR, NEXT_YEAR, YEAR_AFTER].map(y => '<option value="' + y + '">' + y + '</option>').join('');
+    
+    if (activities.length === 0) {
+        html = '<div class="activity-card"><div class="activity-header"><span class="activity-title">New Activity</span><button type="button" class="remove-btn" onclick="this.closest(\'.activity-card\').remove()">✕</button></div>' +
+            '<div class="activity-grid"><div class="field"><label>Activity Name</label><input type="text" class="act-name" name="act_name_' + uniqueId + '_0" autocomplete="off" placeholder="e.g., Data Gathering"></div><div class="field"><label>Description</label><textarea class="act-desc" name="act_desc_' + uniqueId + '_0" rows="2" autocomplete="off" placeholder="Brief description"></textarea></div>' +
+            '<div class="field"><label>Objective</label><input type="text" class="act-objective" name="act_objective_' + uniqueId + '_0" autocomplete="off" placeholder="Which objective?"></div><div class="field"><label>Expected Output</label><input type="text" class="act-output" name="act_output_' + uniqueId + '_0" autocomplete="off" placeholder="Deliverable"></div></div>' +
+            '<div class="date-range-row"><label>Start:</label><select class="act-start-month" name="act_start_month_' + uniqueId + '_0">' + monthOptions + '</select><select class="act-start-year" name="act_start_year_' + uniqueId + '_0">' + yearOptions + '</select><label>End:</label><select class="act-end-month" name="act_end_month_' + uniqueId + '_0">' + monthOptions + '</select><select class="act-end-year" name="act_end_year_' + uniqueId + '_0">' + yearOptions + '</select></div></div>';
+    } else {
+        for (let idx = 0; idx < activities.length; idx++) {
+            const act = activities[idx];
+            html += '<div class="activity-card"><div class="activity-header"><span class="activity-title">Activity ' + (idx+1) + '</span><button type="button" class="remove-btn" onclick="this.closest(\'.activity-card\').remove()">✕</button></div>' +
+                '<div class="activity-grid"><div class="field"><label>Activity Name</label><input type="text" class="act-name" name="act_name_' + uniqueId + '_' + idx + '" autocomplete="off" value="' + escapeHtml(act.name || '') + '" placeholder="Activity Name"></div>' +
+                '<div class="field"><label>Description</label><textarea class="act-desc" name="act_desc_' + uniqueId + '_' + idx + '" rows="2" autocomplete="off" placeholder="Description">' + escapeHtml(act.description || '') + '</textarea></div>' +
+                '<div class="field"><label>Objective</label><input type="text" class="act-objective" name="act_objective_' + uniqueId + '_' + idx + '" autocomplete="off" value="' + escapeHtml(act.objective || '') + '" placeholder="Objective"></div>' +
+                '<div class="field"><label>Expected Output</label><input type="text" class="act-output" name="act_output_' + uniqueId + '_' + idx + '" autocomplete="off" value="' + escapeHtml(act.output || '') + '" placeholder="Output"></div></div>' +
+                '<div class="date-range-row"><label>Start:</label><select class="act-start-month" name="act_start_month_' + uniqueId + '_' + idx + '">' + MONTHS.map(m => '<option value="' + m + '" ' + (act.startMonth === m ? 'selected' : '') + '>' + m + '</option>').join('') + '</select>' +
+                '<select class="act-start-year" name="act_start_year_' + uniqueId + '_' + idx + '">' + [CURRENT_YEAR, NEXT_YEAR, YEAR_AFTER].map(y => '<option value="' + y + '" ' + (parseInt(act.startYear) === y ? 'selected' : '') + '>' + y + '</option>').join('') + '</select>' +
+                '<label>End:</label><select class="act-end-month" name="act_end_month_' + uniqueId + '_' + idx + '">' + MONTHS.map(m => '<option value="' + m + '" ' + (act.endMonth === m ? 'selected' : '') + '>' + m + '</option>').join('') + '</select>' +
+                '<select class="act-end-year" name="act_end_year_' + uniqueId + '_' + idx + '">' + [CURRENT_YEAR, NEXT_YEAR, YEAR_AFTER].map(y => '<option value="' + y + '" ' + (parseInt(act.endYear) === y ? 'selected' : '') + '>' + y + '</option>').join('') + '</select></div></div>';
+        }
+    }
+    return html;
+}
+
+function renderSubcategoryOptions(category, selectedSub) {
+    if (!category || !BUDGET_STRUCTURE[category]) return '<option value="">Select Subcategory</option>';
+    let options = '<option value="">Select Subcategory</option>';
+    for (const sub of Object.keys(BUDGET_STRUCTURE[category])) {
+        options += '<option value="' + sub + '" ' + (selectedSub === sub ? 'selected' : '') + '>' + sub + '</option>';
+    }
+    return options;
+}
+
+function renderItemOptions(category, subcategory, selectedItem) {
+    if (!category || !subcategory || !BUDGET_STRUCTURE[category] || !BUDGET_STRUCTURE[category][subcategory]) return '<option value="">Select Item</option>';
+    let options = '<option value="">Select Item</option>';
+    for (const item of BUDGET_STRUCTURE[category][subcategory]) {
+        options += '<option value="' + item + '" ' + (selectedItem === item ? 'selected' : '') + '>' + item + '</option>';
+    }
+    return options;
+}
+
+function renderBudgetItems(budgetItems) {
+    budgetItems = budgetItems || [];
+    const uniqueId = Date.now();
+    let html = '';
+    if (budgetItems.length === 0) {
+        html = '<div class="budget-item-row"><select class="budget-category" name="budget_category_' + uniqueId + '_0" onchange="updateSubcategories(this)"><option value="">Category</option>' + Object.keys(BUDGET_STRUCTURE).map(c => '<option value="' + c + '">' + c + '</option>').join('') + '</select>' +
+            '<select class="budget-subcategory" name="budget_subcategory_' + uniqueId + '_0" onchange="updateSubSubcategories(this)"><option value="">Subcategory</option></select>' +
+            '<select class="budget-item-select" name="budget_item_' + uniqueId + '_0"><option value="">Item</option></select>' +
+            '<input type="text" class="budget-specs" name="budget_specs_' + uniqueId + '_0" autocomplete="off" placeholder="Specifications/Description">' +
+            '<input type="number" class="budget-unit-cost" name="budget_unitcost_' + uniqueId + '_0" autocomplete="off" placeholder="Unit Cost" oninput="updateBudgetTotals()">' +
+            '<input type="number" class="budget-qty" name="budget_qty_' + uniqueId + '_0" autocomplete="off" placeholder="Qty" value="1" style="width:60px" oninput="updateBudgetTotals()">' +
+            '<span class="budget-total">₱0</span>' +
+            '<button type="button" class="budget-remove-item" onclick="this.closest(\'.budget-item-row\').remove(); updateBudgetTotals()">✕</button></div>';
+    } else {
+        for (let i = 0; i < budgetItems.length; i++) {
+            const item = budgetItems[i];
+            html += '<div class="budget-item-row"><select class="budget-category" name="budget_category_' + uniqueId + '_' + i + '" onchange="updateSubcategories(this)"><option value="">Category</option>' + Object.keys(BUDGET_STRUCTURE).map(c => '<option value="' + c + '" ' + (item.category === c ? 'selected' : '') + '>' + c + '</option>').join('') + '</select>' +
+                '<select class="budget-subcategory" name="budget_subcategory_' + uniqueId + '_' + i + '" onchange="updateSubSubcategories(this)"><option value="">Subcategory</option>' + renderSubcategoryOptions(item.category, item.subcategory) + '</select>' +
+                '<select class="budget-item-select" name="budget_item_' + uniqueId + '_' + i + '"><option value="">Item</option>' + renderItemOptions(item.category, item.subcategory, item.itemName) + '</select>' +
+                '<input type="text" class="budget-specs" name="budget_specs_' + uniqueId + '_' + i + '" autocomplete="off" placeholder="Specifications/Description" value="' + escapeHtml(item.specs || '') + '">' +
+                '<input type="number" class="budget-unit-cost" name="budget_unitcost_' + uniqueId + '_' + i + '" autocomplete="off" placeholder="Unit Cost" value="' + (item.unitCost || '') + '" oninput="updateBudgetTotals()">' +
+                '<input type="number" class="budget-qty" name="budget_qty_' + uniqueId + '_' + i + '" autocomplete="off" placeholder="Qty" value="' + (item.qty || '1') + '" style="width:60px" oninput="updateBudgetTotals()">' +
+                '<span class="budget-total">₱' + ((item.unitCost || 0) * (item.qty || 1)).toLocaleString() + '</span>' +
+                '<button type="button" class="budget-remove-item" onclick="this.closest(\'.budget-item-row\').remove(); updateBudgetTotals()">✕</button></div>';
+        }
+    }
+    return html;
+}
+
+function renderResearchTeamMembers(members) {
+    members = members || [];
+    const uniqueId = Date.now();
+    let html = '';
+    if (members.length === 0) {
+        html = '<div class="member-row"><input type="text" name="member_name_' + uniqueId + '_0" autocomplete="off" placeholder="Name of faculty" style="flex:1"><input type="text" name="member_role_' + uniqueId + '_0" autocomplete="off" placeholder="Role, main task, deliverables" style="flex:2"></div>';
+    } else {
+        for (let i = 0; i < members.length; i++) {
+            html += '<div class="member-row"><input type="text" name="member_name_' + uniqueId + '_' + i + '" autocomplete="off" placeholder="Name of faculty" value="' + escapeHtml(members[i].name || '') + '" style="flex:1"><input type="text" name="member_role_' + uniqueId + '_' + i + '" autocomplete="off" placeholder="Role, main task, deliverables" value="' + escapeHtml(members[i].role || '') + '" style="flex:2"><button type="button" class="remove-btn" onclick="this.parentElement.remove()">✕</button></div>';
+        }
+    }
+    return html;
+}
+
+function renderReferences(refs) {
+    refs = refs || [];
+    const uniqueId = Date.now();
+    let html = '';
+    if (refs.length === 0) {
+        html = '<div class="reference-row"><input type="text" name="ref_' + uniqueId + '_0" autocomplete="off" placeholder="Author. Year. Title. Journal/Book. Publisher. Pages" style="flex:1"></div>';
+    } else {
+        for (let i = 0; i < refs.length; i++) {
+            html += '<div class="reference-row"><input type="text" name="ref_' + uniqueId + '_' + i + '" autocomplete="off" placeholder="Author. Year. Title. Journal/Book. Publisher. Pages" value="' + escapeHtml(refs[i]) + '" style="flex:1"><button type="button" class="remove-btn" onclick="this.parentElement.remove()">✕</button></div>';
+        }
+    }
+    return html;
+}
+
+function renderFullXURGForm1(draftData) {
+    const d = draftData || {};
+    const uniqueId = Date.now();
+    let budgetTotal = 0;
+    if (d.budgetItems) {
+        for (const item of d.budgetItems) {
+            budgetTotal += (item.unitCost || 0) * (item.qty || 1);
+        }
+    }
+    
+    let html = '<div class="form-section-title">📝 Research Proposal (XURG Form 1)</div>';
+    
+    html += '<div class="form-subsection-title">📌 Project Profile</div>';
+    html += '<div class="form-group"><label>Project Title</label><input type="text" id="projTitle" name="projTitle_' + uniqueId + '" autocomplete="off" value="' + escapeHtml(d.proposalTitle || '') + '" placeholder="Enter project title"></div>';
+    html += '<div class="form-row"><div class="form-group"><label>Principal Investigator/Project Leader </label><input type="text" id="piName" name="piName_' + uniqueId + '" autocomplete="off" value="' + escapeHtml(d.piName || '') + '" placeholder="Full name"></div>';
+    html += '<div class="form-group"><label>Email Address </label><input type="email" id="piEmail" name="piEmail_' + uniqueId + '" autocomplete="off" value="' + escapeHtml(d.piEmail || '') + '" placeholder="Email address"></div></div>';
+    html += '<div class="form-row"><div class="form-group"><label>Department </label><input type="text" id="dept" name="dept_' + uniqueId + '" autocomplete="off" value="' + escapeHtml(d.dept || '') + '" placeholder="Department"></div>';
+    html += '<div class="form-group"><label>School/College </label><input type="text" id="school" name="school_' + uniqueId + '" autocomplete="off" value="' + escapeHtml(d.school || '') + '" placeholder="School or College"></div></div>';
+    html += '<div class="form-row"><div class="form-group"><label>Local Extension </label><input type="text" id="extension" name="extension_' + uniqueId + '" autocomplete="off" value="' + escapeHtml(d.extension || '') + '" placeholder="Local extension"></div>';
+    html += '<div class="form-group"><label>Project Duration </label><input type="text" id="duration" name="duration_' + uniqueId + '" autocomplete="off" value="' + escapeHtml(d.duration || '') + '" placeholder="e.g., 12 months"></div></div>';
+    
+    html += '<div class="form-subsection-title">📖 Rationale</div>';
+    html += '<div class="form-group"><textarea id="rationale" name="rationale_' + uniqueId + '" rows="3" autocomplete="off" placeholder="Introduce the basis/motivation for the project.">' + escapeHtml(d.rationale || '') + '</textarea></div>';
+    
+    html += '<div class="form-subsection-title">📚 Review of Literature</div>';
+    html += '<div class="form-group"><textarea id="litReview" name="litReview_' + uniqueId + '" rows="3" autocomplete="off" placeholder="Related researches, theoretical framework.">' + escapeHtml(d.litReview || '') + '</textarea></div>';
+    
+    html += '<div class="form-subsection-title">🎯 Objectives</div>';
+    html += '<div class="form-group"><textarea id="objectives" name="objectives_' + uniqueId + '" rows="2" autocomplete="off" placeholder="State clearly the overall research objective and specific objectives.">' + escapeHtml(d.objectives || '') + '</textarea></div>';
+    
+    html += '<div class="form-subsection-title">🔬 Methodology</div>';
+    html += '<div class="form-group"><textarea id="methodology" name="methodology_' + uniqueId + '" rows="4" autocomplete="off" placeholder="Research setting, sampling, data gathering, statistical analysis, ethical concerns.">' + escapeHtml(d.methodology || '') + '</textarea></div>';
+    
+    html += '<div class="form-subsection-title">📊 Target Accomplishments and Expected Outputs</div>';
+    html += '<div class="form-group"><textarea id="outputs" name="outputs_' + uniqueId + '" rows="2" autocomplete="off" placeholder="Measurable results and deliverables.">' + escapeHtml(d.outputs || '') + '</textarea></div>';
+    
+    html += '<div class="form-subsection-title">📑 Literature Cited</div>';
+    html += '<div id="referencesContainer">' + renderReferences(d.references) + '</div>';
+    html += '<button type="button" class="add-btn" onclick="addReference()">+ Add Reference</button>';
+    
+    html += '<div class="form-subsection-title">👥 Research Team Members</div>';
+    html += '<div id="teamMembersContainer">' + renderResearchTeamMembers(d.teamMembers) + '</div>';
+    html += '<button type="button" class="add-btn" onclick="addTeamMember()">+ Add Team Member</button>';
+    
+    html += '<div class="form-subsection-title">📅 Major Activities & Workplan</div>';
+    html += '<div id="activitiesContainer">' + renderActivities(d.activities) + '</div>';
+    html += '<button type="button" class="add-btn" onclick="addActivity()">+ Add Activity</button>';
+    
+    html += '<div class="form-subsection-title">💰 Budgetary Requirements</div>';
+    html += '<div id="budgetContainer">' + renderBudgetItems(d.budgetItems) + '</div>';
+    html += '<button type="button" class="add-btn" onclick="addBudgetItem()">+ Add Budget Item</button>';
+    html += '<div id="budgetSummary" class="budget-summary">GRAND TOTAL: ₱' + budgetTotal.toLocaleString() + '</div>';
+    
+    return html;
+}
+
+function renderXURGForm2(draftData) {
+    const d = draftData || {};
+    const uniqueId = Date.now();
+    
+    let html = '<div class="form-section-title">📋 Endorsement Letter (XURG Form 2)</div>';
+    
+    html += '<div class="form-subsection-title">📌 Endorsement Information</div>';
+    html += '<div class="form-row"><div class="form-group"><label>Date <span class="required">*</span></label><input type="date" id="endorsementDate" name="endorsementDate_' + uniqueId + '" autocomplete="off" value="' + (d.endorsementDate || '') + '"></div></div>';
+    html += '<div class="form-row"><div class="form-group"><label>Department <span class="required">*</span></label><input type="text" id="endorseDept" name="endorseDept_' + uniqueId + '" autocomplete="off" value="' + escapeHtml(d.endorseDept || '') + '" placeholder="Department"></div>';
+    html += '<div class="form-group"><label>School/College <span class="required">*</span></label><input type="text" id="endorseSchool" name="endorseSchool_' + uniqueId + '" autocomplete="off" value="' + escapeHtml(d.endorseSchool || '') + '" placeholder="School or College"></div></div>';
+    html += '<div class="form-group"><label>School Year <span class="required">*</span></label><input type="text" id="schoolYear" name="schoolYear_' + uniqueId + '" autocomplete="off" value="' + escapeHtml(d.schoolYear || '') + '" placeholder="e.g., 2025-2026"></div>';
+    
+    // Digital Signatures - Card Style Layout
+    html += '<div class="form-subsection-title">✍️ Digital Signatures</div>';
+    html += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">';
+    
+    // Chairperson Card
+    html += '<div style="background: #f8f9fa; padding: 1rem; border-radius: 0.8rem; border-left: 3px solid var(--xavier-gold);">';
+    html += '<h4 style="margin-bottom: 0.5rem; color: var(--xavier-primary);"><i class="fas fa-user-tie"></i> Department Chair</h4>';
+    html += '<div class="form-group"><label>Full Name <span class="required">*</span></label><input type="text" id="fromChair" name="fromChair_' + uniqueId + '" autocomplete="off" value="' + escapeHtml(d.fromChair || '') + '" placeholder="Enter full name"></div>';
+    html += '<div class="form-group"><label>Email Address <span class="required">*</span></label><input type="email" id="chairEmail" name="chairEmail_' + uniqueId + '" autocomplete="off" value="' + escapeHtml(d.chairEmail || '') + '" placeholder="chairperson@xu.edu.ph"></div>';
+    html += '</div>';
+    
+    // Dean Card
+    html += '<div style="background: #f8f9fa; padding: 1rem; border-radius: 0.8rem; border-left: 3px solid var(--xavier-gold);">';
+    html += '<h4 style="margin-bottom: 0.5rem; color: var(--xavier-primary);"><i class="fas fa-university"></i> Dean</h4>';
+    html += '<div class="form-group"><label>Full Name <span class="required">*</span></label><input type="text" id="deanName" name="deanName_' + uniqueId + '" autocomplete="off" value="' + escapeHtml(d.deanName || '') + '" placeholder="Enter full name"></div>';
+    html += '<div class="form-group"><label>Email Address <span class="required">*</span></label><input type="email" id="deanEmail" name="deanEmail_' + uniqueId + '" autocomplete="off" value="' + escapeHtml(d.deanEmail || '') + '" placeholder="dean@xu.edu.ph"></div>';
+    html += '</div>';
+    
+    html += '</div>';
+    
+    html += '<div class="demo-note" style="margin-top: 1rem;"><i class="fas fa-envelope"></i> Signature requests will be sent via email. Each signatory will receive a unique link to review and digitally sign the endorsement letter.</div>';
+    
+    return html;
+}
+
+function collectActivities() {
+    const activities = [];
+    document.querySelectorAll('#activitiesContainer .activity-card').forEach(card => {
+        activities.push({
+            name: card.querySelector('.act-name')?.value || '',
+            description: card.querySelector('.act-desc')?.value || '',
+            objective: card.querySelector('.act-objective')?.value || '',
+            output: card.querySelector('.act-output')?.value || '',
+            startMonth: card.querySelector('.act-start-month')?.value || '',
+            startYear: card.querySelector('.act-start-year')?.value || '',
+            endMonth: card.querySelector('.act-end-month')?.value || '',
+            endYear: card.querySelector('.act-end-year')?.value || ''
+        });
+    });
+    return activities;
+}
+
+function collectBudgetItems() {
+    const items = [];
+    document.querySelectorAll('#budgetContainer .budget-item-row').forEach(row => {
+        items.push({
+            category: row.querySelector('.budget-category')?.value || '',
+            subcategory: row.querySelector('.budget-subcategory')?.value || '',
+            itemName: row.querySelector('.budget-item-select')?.value || '',
+            specs: row.querySelector('.budget-specs')?.value || '',
+            unitCost: parseFloat(row.querySelector('.budget-unit-cost')?.value) || 0,
+            qty: parseFloat(row.querySelector('.budget-qty')?.value) || 1
+        });
+    });
+    return items;
+}
+
+function collectFormData() {
+    return {
+        proposalTitle: document.getElementById('projTitle')?.value || '',
+        piName: document.getElementById('piName')?.value || '',
+        piEmail: document.getElementById('piEmail')?.value || '',
+        dept: document.getElementById('dept')?.value || '',
+        school: document.getElementById('school')?.value || '',
+        extension: document.getElementById('extension')?.value || '',
+        duration: document.getElementById('duration')?.value || '',
+        rationale: document.getElementById('rationale')?.value || '',
+        litReview: document.getElementById('litReview')?.value || '',
+        objectives: document.getElementById('objectives')?.value || '',
+        methodology: document.getElementById('methodology')?.value || '',
+        outputs: document.getElementById('outputs')?.value || '',
+        references: Array.from(document.querySelectorAll('#referencesContainer .reference-row input')).map(inp => inp.value).filter(v => v.trim()),
+        teamMembers: Array.from(document.querySelectorAll('#teamMembersContainer .member-row')).map(row => ({ name: row.children[0]?.value, role: row.children[1]?.value })),
+        activities: collectActivities(),
+        budgetItems: collectBudgetItems(),
+        endorsementDate: document.getElementById('endorsementDate')?.value || '',
+        fromChair: document.getElementById('fromChair')?.value || '',
+        chairEmail: document.getElementById('chairEmail')?.value || '',
+        endorseDept: document.getElementById('endorseDept')?.value || '',
+        endorseSchool: document.getElementById('endorseSchool')?.value || '',
+        schoolYear: document.getElementById('schoolYear')?.value || '',
+        deanName: document.getElementById('deanName')?.value || '',
+        deanEmail: document.getElementById('deanEmail')?.value || '',
+        signatures: { chair: false, dean: false }
+    };
+}
+
+function clearAllHighlights() {
+    document.querySelectorAll('.form-group').forEach(group => {
+        group.classList.remove('missing');
+    });
+    document.querySelectorAll('.field-error-message').forEach(el => el.remove());
+    document.querySelectorAll('.add-btn').forEach(btn => {
+        btn.style.border = '';
+        btn.style.backgroundColor = '';
+    });
+}
+
+// Validate and highlight fields
+function validateAndHighlightFields(formData) {
+    const errors = [];
+    
+    // Helper to mark a field as missing
+    function markField(fieldId, errorMessage, subsectionTitleId = null) {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            const formGroup = field.closest('.form-group');
+            if (formGroup) {
+                formGroup.classList.add('missing');
+                // Remove existing error message
+                const existingError = formGroup.querySelector('.field-error-message');
+                if (existingError) existingError.remove();
+                // Add error message below field
+                const errorSpan = document.createElement('small');
+                errorSpan.className = 'field-error-message';
+                errorSpan.style.color = '#e74c3c';
+                errorSpan.style.fontSize = '0.7rem';
+                errorSpan.style.display = 'block';
+                errorSpan.style.marginTop = '0.25rem';
+                errorSpan.innerHTML = '⚠️ ' + errorMessage;
+                formGroup.appendChild(errorSpan);
+            }
+            // Shake animation
+            field.style.animation = 'shake 0.3s ease-in-out';
+            setTimeout(() => { field.style.animation = ''; }, 300);
+        }
+        
+        errors.push({ fieldId, message: errorMessage });
+    }
+    
+    // Helper to find subsection title by text content and highlight it
+    function highlightSubsectionByText(searchText) {
+        const subsections = document.querySelectorAll('.form-subsection-title');
+        for (const subsection of subsections) {
+            if (subsection.textContent.includes(searchText)) {
+                subsection.style.color = '#e74c3c';
+                subsection.style.borderLeftColor = '#e74c3c';
+                break;
+            }
+        }
+    }
+    
+    // Helper to mark a container section (for dynamic lists)
+    function markContainer(containerId, errorMessage, subsectionText) {
+        const container = document.getElementById(containerId);
+        if (container) {
+            // Find the subsection title by text and highlight it
+            const subsections = document.querySelectorAll('.form-subsection-title');
+            for (const subsection of subsections) {
+                if (subsection.textContent.includes(subsectionText)) {
+                    subsection.style.color = '#e74c3c';
+                    subsection.style.borderLeftColor = '#e74c3c';
+                    // Remove existing error message
+                    const existingError = subsection.parentElement?.querySelector('.container-error-message');
+                    if (existingError) existingError.remove();
+                    // Add error message below subsection title
+                    const errorSpan = document.createElement('small');
+                    errorSpan.className = 'container-error-message';
+                    errorSpan.style.color = '#e74c3c';
+                    errorSpan.style.fontSize = '0.7rem';
+                    errorSpan.style.display = 'block';
+                    errorSpan.style.marginTop = '0.25rem';
+                    errorSpan.style.marginBottom = '0.5rem';
+                    errorSpan.innerHTML = '⚠️ ' + errorMessage;
+                    subsection.insertAdjacentElement('afterend', errorSpan);
+                    break;
+                }
+            }
+            // Also highlight the container border
+            container.style.border = '2px solid #e74c3c';
+            container.style.borderRadius = '0.6rem';
+            container.style.padding = '0.5rem';
+        }
+        errors.push({ fieldId: containerId, message: errorMessage });
+    }
+    
+    // Clear previous container highlights
+    function clearContainerHighlights() {
+        document.querySelectorAll('.container-error-message').forEach(el => el.remove());
+        document.querySelectorAll('#referencesContainer, #teamMembersContainer, #activitiesContainer, #budgetContainer').forEach(container => {
+            container.style.border = '';
+            container.style.padding = '';
+        });
+        document.querySelectorAll('.form-subsection-title').forEach(title => {
+            title.style.color = '';
+            title.style.borderLeftColor = '';
+        });
+    }
+    
+    // Call this at the start
+    clearContainerHighlights();
+    
+    // XURG FORM 1 - Required Fields
+    if (!formData.proposalTitle || formData.proposalTitle.trim() === '') {
+        markField('projTitle', 'Project Title is required');
+        highlightSubsectionByText('📌 Project Profile');
+    }
+    if (!formData.piName || formData.piName.trim() === '') {
+        markField('piName', 'Principal Investigator name is required');
+        highlightSubsectionByText('📌 Project Profile');
+    }
+    if (!formData.piEmail || formData.piEmail.trim() === '') {
+        markField('piEmail', 'Email Address is required');
+        highlightSubsectionByText('📌 Project Profile');
+    }
+    if (!formData.dept || formData.dept.trim() === '') {
+        markField('dept', 'Department is required');
+        highlightSubsectionByText('📌 Project Profile');
+    }
+    if (!formData.school || formData.school.trim() === '') {
+        markField('school', 'School/College is required');
+        highlightSubsectionByText('📌 Project Profile');
+    }
+    
+    // Local Extension - NOW REQUIRED
+    if (!formData.extension || formData.extension.trim() === '') {
+        markField('extension', 'Local Extension is required');
+        highlightSubsectionByText('📌 Project Profile');
+    }
+    
+    // Project Duration - NOW REQUIRED
+    if (!formData.duration || formData.duration.trim() === '') {
+        markField('duration', 'Project Duration is required');
+        highlightSubsectionByText('📌 Project Profile');
+    }
+    
+    // Rationale
+    if (!formData.rationale || formData.rationale.trim() === '') {
+        markField('rationale', 'Rationale is required');
+        highlightSubsectionByText('📖 Rationale');
+    }
+    
+    // Review of Literature
+    if (!formData.litReview || formData.litReview.trim() === '') {
+        markField('litReview', 'Review of Literature is required');
+        highlightSubsectionByText('📚 Review of Literature');
+    }
+    
+    // Objectives
+    if (!formData.objectives || formData.objectives.trim() === '') {
+        markField('objectives', 'Objectives are required');
+        highlightSubsectionByText('🎯 Objectives');
+    }
+    
+    // Methodology
+    if (!formData.methodology || formData.methodology.trim() === '') {
+        markField('methodology', 'Methodology is required');
+        highlightSubsectionByText('🔬 Methodology');
+    }
+    
+    // Target Accomplishments and Expected Outputs
+    if (!formData.outputs || formData.outputs.trim() === '') {
+        markField('outputs', 'Expected Outputs are required');
+        highlightSubsectionByText('📊 Target Accomplishments');
+    }
+    
+    // Literature Cited - References Container
+    const hasValidReference = formData.references && formData.references.length > 0 && formData.references.some(r => r && r.trim() !== '');
+    if (!hasValidReference) {
+        markContainer('referencesContainer', 'Please add at least one Literature Cited', '📑 Literature Cited');
+    }
+    
+    // Research Team Members
+    const hasValidTeamMember = formData.teamMembers && formData.teamMembers.length > 0 && formData.teamMembers.some(m => m.name && m.name.trim() !== '');
+    if (!hasValidTeamMember) {
+        markContainer('teamMembersContainer', 'Please add at least one Research Team Member', '👥 Research Team Members');
+    }
+    
+    // Major Activities & Workplan
+    const hasValidActivity = formData.activities && formData.activities.length > 0 && formData.activities.some(a => a.name && a.name.trim() !== '');
+    if (!hasValidActivity) {
+        markContainer('activitiesContainer', 'Please add at least one Major Activity', '📅 Major Activities');
+    }
+    
+    // Budgetary Requirements
+    const hasValidBudget = formData.budgetItems && formData.budgetItems.length > 0 && formData.budgetItems.some(i => i.unitCost > 0 && i.qty > 0);
+    if (!hasValidBudget) {
+        markContainer('budgetContainer', 'Please add at least one valid Budget Item with Unit Cost and Quantity', '💰 Budgetary Requirements');
+    }
+    
+    // XURG FORM 2 - Required Fields
+    if (!formData.endorsementDate || formData.endorsementDate.trim() === '') {
+        markField('endorsementDate', 'Date is required');
+        highlightSubsectionByText('📌 Endorsement Information');
+    }
+    if (!formData.fromChair || formData.fromChair.trim() === '') {
+        markField('fromChair', 'Department Chair name is required');
+        highlightSubsectionByText('📌 Endorsement Information');
+    }
+    if (!formData.endorseDept || formData.endorseDept.trim() === '') {
+        markField('endorseDept', 'Department is required');
+        highlightSubsectionByText('📌 Endorsement Information');
+    }
+    if (!formData.endorseSchool || formData.endorseSchool.trim() === '') {
+        markField('endorseSchool', 'School/College is required');
+        highlightSubsectionByText('📌 Endorsement Information');
+    }
+    if (!formData.schoolYear || formData.schoolYear.trim() === '') {
+        markField('schoolYear', 'School Year is required');
+        highlightSubsectionByText('📌 Endorsement Information');
+    }
+    if (!formData.chairName || formData.chairName.trim() === '') {
+        markField('chairName', 'Chairperson Name is required');
+        highlightSubsectionByText('✍️ Endorsement Signatures');
+    }
+    if (!formData.deanName || formData.deanName.trim() === '') {
+        markField('deanName', 'Dean Name is required');
+        highlightSubsectionByText('✍️ Endorsement Signatures');
+    }
+    if (!formData.coordName || formData.coordName.trim() === '') {
+        markField('coordName', 'Research Coordinator Name is required');
+        highlightSubsectionByText('✍️ Endorsement Signatures');
+    }
+    
+    return errors;
+}
+
+function updateSubcategories(select) {
+    let itemDiv = select.closest('.budget-item-row');
+    let subcatSelect = itemDiv.querySelector('.budget-subcategory');
+    let category = select.value;
+    if (!category || !BUDGET_STRUCTURE[category]) { 
+        subcatSelect.innerHTML = '<option value="">Select Subcategory</option>'; 
+        return; 
+    }
+    let options = '<option value="">Select Subcategory</option>';
+    for (const sub of Object.keys(BUDGET_STRUCTURE[category])) {
+        options += '<option value="' + sub + '">' + sub + '</option>';
+    }
+    subcatSelect.innerHTML = options;
+    subcatSelect.onchange();
+}
+
+function updateSubSubcategories(select) {
+    let itemDiv = select.closest('.budget-item-row');
+    let itemSelect = itemDiv.querySelector('.budget-item-select');
+    let category = itemDiv.querySelector('.budget-category').value;
+    let subcategory = select.value;
+    if (!category || !subcategory || !BUDGET_STRUCTURE[category] || !BUDGET_STRUCTURE[category][subcategory]) {
+        itemSelect.innerHTML = '<option value="">Select Item</option>';
+        return;
+    }
+    let options = '<option value="">Select Item</option>';
+    for (const item of BUDGET_STRUCTURE[category][subcategory]) {
+        options += '<option value="' + item + '">' + item + '</option>';
+    }
+    itemSelect.innerHTML = options;
+}
+
+function updateBudgetTotals() {
+    let total = 0;
+    document.querySelectorAll('#budgetContainer .budget-item-row').forEach(row => {
+        let unitCost = parseFloat(row.querySelector('.budget-unit-cost')?.value) || 0;
+        let qty = parseFloat(row.querySelector('.budget-qty')?.value) || 1;
+        row.querySelector('.budget-total').innerText = '₱' + (unitCost * qty).toLocaleString();
+        total += unitCost * qty;
+    });
+    let summary = document.querySelector('#budgetSummary');
+    if (summary) summary.innerHTML = 'GRAND TOTAL: ₱' + total.toLocaleString();
+}
+
+async function openApplicationForm(isEdit) {
+    const d = currentDraftData || {};
+    
+    let formHtml = '<div class="tabs">';
+    formHtml += '<button type="button" class="tab-btn active" data-tab="xurg1">XURG Form 1</button>';
+    formHtml += '<button type="button" class="tab-btn" data-tab="xurg2">XURG Form 2</button>';
+    formHtml += '</div>';
+    formHtml += '<div id="tabXurg1" class="tab-content active">' + renderFullXURGForm1(d) + '</div>';
+    formHtml += '<div id="tabXurg2" class="tab-content">' + renderXURGForm2(d) + '</div>';
+    
+    // Create a custom footer with our own buttons
+    const customButtons = `
+        <div style="display: flex; gap: 1rem; justify-content: center; padding: 1rem 0 0 0;">
+            <button id="customSubmitBtn" class="swal2-confirm swal2-styled" style="background-color: #D4AF37; color: #283871; border: none; padding: 0.5rem 1.5rem; border-radius: 40px; font-weight: 600; cursor: pointer;">${isEdit ? 'Update & Submit' : 'Submit Application'}</button>
+            <button id="customDraftBtn" class="swal2-cancel swal2-styled" style="background-color: #6c757d; color: white; border: none; padding: 0.5rem 1.5rem; border-radius: 40px; font-weight: 600; cursor: pointer;">Save as Draft</button>
+        </div>
+    `;
+    
+    let swalInstance = null;
+    let formDataCache = null;
+    
+    const result = await Swal.fire({
+        title: selectedGrant,
+        html: '<div style="max-height: 65vh; overflow-y: auto; padding-right: 5px;" autocomplete="off">' + formHtml + '</div>',
+        width: '1000px',
+        showConfirmButton: false,  // Disable default confirm button
+        showCancelButton: false,   // Disable default cancel button
+        footer: customButtons,
+        didOpen: () => {
+            swalInstance = Swal;
+            
+            // Setup tab switching
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    this.classList.add('active');
+                    const tabId = this.getAttribute('data-tab');
+                    document.getElementById('tab' + tabId.charAt(0).toUpperCase() + tabId.slice(1)).classList.add('active');
+                    clearAllHighlights();
+                });
+            });
+            updateBudgetTotals();
+            
+            // Custom Submit Button Handler
+            const submitBtn = document.getElementById('customSubmitBtn');
+            if (submitBtn) {
+                submitBtn.addEventListener('click', async () => {
+                    const formData = collectFormData();
+                    clearAllHighlights();
+                    const errors = validateAndHighlightFields(formData);
+                    
+                    if (errors.length > 0) {
+                        Swal.showValidationMessage('Please complete all required fields (highlighted in red).');
+                        return;
+                    }
+                    
+                    // Submit the application
+                    const confirmResult = await confirmSubmit(selectedGrant);
+                    if (confirmResult.isConfirmed) {
+                        const newId = "FRG" + Date.now();
+                        const newSubmission = { id: newId, grantTitle: selectedGrant, grantType: "Faculty Research Grant", status: "Under Review", submittedDate: new Date().toISOString().slice(0,10), ...formData };
+                        if (!submissionsDB[currentUser.email]) submissionsDB[currentUser.email] = [];
+                        submissionsDB[currentUser.email].push(newSubmission);
+                        
+                        if (isEdit && editDraftId !== null && draftsDB[editDraftId]) {
+                            draftsDB.splice(editDraftId, 1);
+                            saveDrafts();
+                        }
+                        persist();
+                        renderApplicant();
+                        await showSuccess('Application submitted successfully!', 'Success');
+                        Swal.close();
+                    }
+                });
+            }
+            
+            // Custom Draft Button Handler
+            const draftBtn = document.getElementById('customDraftBtn');
+            if (draftBtn) {
+                draftBtn.addEventListener('click', async () => {
+                    const formData = collectFormData();
+                    
+                    // Clear previous highlights
+                    clearAllHighlights();
+                    
+                    // Check only the minimum required for draft (just project title)
+                    if (!formData.proposalTitle || formData.proposalTitle.trim() === '') {
+                        // Highlight just the project title field
+                        const projTitleField = document.getElementById('projTitle');
+                        if (projTitleField) {
+                            const formGroup = projTitleField.closest('.form-group');
+                            if (formGroup) {
+                                formGroup.classList.add('missing');
+                                const existingError = formGroup.querySelector('.field-error-message');
+                                if (existingError) existingError.remove();
+                                const errorSpan = document.createElement('small');
+                                errorSpan.className = 'field-error-message';
+                                errorSpan.style.color = '#e74c3c';
+                                errorSpan.style.fontSize = '0.7rem';
+                                errorSpan.style.display = 'block';
+                                errorSpan.style.marginTop = '0.25rem';
+                                errorSpan.innerHTML = '⚠️ Project Title is required to save as draft';
+                                formGroup.appendChild(errorSpan);
+                            }
+                            projTitleField.style.animation = 'shake 0.3s ease-in-out';
+                            setTimeout(() => { projTitleField.style.animation = ''; }, 300);
+                            
+                            const subsections = document.querySelectorAll('.form-subsection-title');
+                            for (const subsection of subsections) {
+                                if (subsection.textContent.includes('📌 Project Profile')) {
+                                    subsection.style.color = '#e74c3c';
+                                    subsection.style.borderLeftColor = '#e74c3c';
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        // Show error message without closing the modal
+                        await Swal.showValidationMessage('Project Title is required to save as draft');
+                        return;  // Don't close, just return
+                    }
+                    
+                    // Confirm and save draft
+                    const confirmResult = await confirmSaveDraft();
+                    if (confirmResult.isConfirmed) {
+                        const draft = { grantTitle: selectedGrant, lastSaved: new Date().toISOString().slice(0,10), ...formData };
+                        if (editDraftId !== null && draftsDB[editDraftId]) { draftsDB[editDraftId] = draft; }
+                        else { draftsDB.push(draft); }
+                        saveDrafts();
+                        renderApplicant();
+                        await showDraftSaved();
+                        Swal.close();  // Only close on successful save
+                    }
+                });
+            }
+        }
+    });
+}
+
+async function submitApplication(formData, isEdit) {
+    const result = await confirmSubmit(selectedGrant);
+    if (!result.isConfirmed) return;
+    
+    const newId = "FRG" + Date.now();
+    const newSubmission = { 
+        id: newId, 
+        grantTitle: selectedGrant, 
+        grantType: "Faculty Research Grant", 
+        status: "Awaiting Signatures",  // Changed from "Under Review"
+        submittedDate: new Date().toISOString().slice(0,10), 
+        signatures: { chair: false, dean: false, coordinator: false },
+        ...formData 
+    };
+    
+    if (!submissionsDB[currentUser.email]) submissionsDB[currentUser.email] = [];
+    submissionsDB[currentUser.email].push(newSubmission);
+    
+    if (isEdit && editDraftId !== null && draftsDB[editDraftId]) {
+        draftsDB.splice(editDraftId, 1);
+        saveDrafts();
+    }
+    persist();
+    
+    // Send signature requests
+    await sendSignatureRequests(newSubmission);
+    
+    renderApplicant();
+    await showSuccess('Application submitted! Signature requests have been sent to endorsers.', 'Success');
+}
+
+async function sendSignatureRequests(application) {
+    const signatures = ['chair', 'dean'];
+    const roles = {
+        chair: { name: application.fromChair, email: application.chairEmail, title: 'Department Chair' },
+        dean: { name: application.deanName, email: application.deanEmail, title: 'Dean' }
+    };
+    
+    let signatureRequests = JSON.parse(localStorage.getItem('kuro_signature_requests')) || {};
+    
+    for (const role of signatures) {
+        const signer = roles[role];
+        if (signer.email && signer.name) {
+            const token = btoa(`${application.id}_${role}_${Date.now()}`);
+            const signatureLink = `${window.location.origin}/signature-confirm.html?token=${token}&role=${role}&id=${application.id}`;
+            
+            signatureRequests[token] = {
+                appId: application.id,
+                role: role,
+                signerEmail: signer.email,
+                signerName: signer.name,
+                application: application,
+                completed: false,
+                createdAt: new Date().toISOString()
+            };
+            
+            // Simulate sending email (in production, this would call a backend API)
+            console.log(`📧 EMAIL SENT TO ${signer.email}:`);
+            console.log(`Subject: Digital Signature Request for Research Grant Application`);
+            console.log(`Body: Dear ${signer.name},`);
+            console.log(`You have been requested to digitally sign an endorsement letter for "${application.proposalTitle}".`);
+            console.log(`Click here to sign: ${signatureLink}`);
+            console.log('---');
+            
+            // In a real implementation, you would call an API endpoint:
+            // await fetch('/api/send-signature-email', {
+            //     method: 'POST',
+            //     body: JSON.stringify({ to: signer.email, link: signatureLink, application: application })
+            // });
+        }
+    }
+    
+    localStorage.setItem('kuro_signature_requests', JSON.stringify(signatureRequests));
+    
+    // Show confirmation to user
+    await Swal.fire({
+        icon: 'success',
+        title: 'Signature Requests Sent!',
+        html: `Signature requests have been sent to:<br>
+               📧 ${roles.chair.email} (Department Chair)<br>
+               📧 ${roles.dean.email} (Dean)<br>
+               📧 ${roles.coordinator.email} (Research Coordinator)<br><br>
+               The application will be processed once all signatures are collected.`,
+        confirmButtonColor: '#D4AF37'
+    });
+}
+function renderReviewer() {
+    const myTasks = reviewerTasks[currentUser.email] || [];
+    let html = '<div class="dashboard-title"><h2>External Reviewer Mode</h2><p>Evaluate assigned grant proposals</p></div><div class="stats-grid"><div class="stat-card"><i class="fas fa-clipboard-list"></i><h3>' + myTasks.length + '</h3><span>Assigned Reviews</span></div></div>';
+    if (myTasks.length === 0) { html += '<div class="demo-note">No pending review invitations.</div>'; }
+    else {
+        html += '<table class="grants-table"><thead><tr><th>Grant/Award</th><th>Proposal ID</th><th>Due Date</th><th>Action</th></td></thead><tbody>';
+        for (const task of myTasks) {
+            html += '<td><strong>' + escapeHtml(task.grantTitle) + '</strong></td>';
+            html += '<td>' + task.id + '</td>';
+            html += '<td>' + task.dueDate + '</td>';
+            html += '<td><button class="btn-sm review-task" data-id="' + task.id + '">Review</button></td>';
+            html += '</tr>';
+        }
+        html += '</tbody><table>';
+    }
+    document.getElementById('mainContent').innerHTML = html;
+    document.querySelectorAll('.review-task').forEach(btn => btn.addEventListener('click', async (e) => { const id = btn.getAttribute('data-id'); await showReviewForm(id); }));
+}
+
+async function showReviewForm(proposalId) {
+    const result = await Swal.fire({
+        title: 'Submit Review',
+        html: '<div style="text-align:left"><label>Score (1-10):</label><select id="score" style="width:100%; padding:6px; margin-bottom:10px;">' + [10,9,8,7,6,5,4,3,2,1].map(s => '<option>' + s + '</option>').join('') + '</select>' +
+              '<label>Comments:</label><textarea id="comments" rows="3" style="width:100%; padding:6px; margin-bottom:10px;"></textarea>' +
+              '<label>Recommendation:</label><select id="rec" style="width:100%; padding:6px;">' + ['Approve', 'Revisions Required', 'Reject'].map(r => '<option>' + r + '</option>').join('') + '</select></div>',
+        focusConfirm: false,
+        confirmButtonColor: '#D4AF37',
+        confirmButtonText: 'Submit Review',
+        showCancelButton: true,
+        preConfirm: () => ({ score: document.getElementById('score').value, comments: document.getElementById('comments').value, recommendation: document.getElementById('rec').value })
+    });
+    if (result.isConfirmed) {
+        await showSuccess('Review submitted!', 'Thank You');
+        if (reviewerTasks[currentUser.email]) { 
+            reviewerTasks[currentUser.email] = reviewerTasks[currentUser.email].filter(t => t.id !== proposalId); 
+            persist(); 
+        }
+        renderReviewer();
+    }
+}
+
+function toggleMode() {
+    isReviewerMode = !isReviewerMode;
+    const btn = document.getElementById('switchReviewerBtn');
+    if (isReviewerMode) { btn.innerHTML = 'Switch to Applicant'; btn.classList.add('active'); renderReviewer(); }
+    else { btn.innerHTML = 'Switch to Reviewer'; btn.classList.remove('active'); renderApplicant(); }
+}
+
+window.addReference = function() { 
+    const uniqueId = Date.now();
+    const refCount = document.querySelectorAll('#referencesContainer .reference-row').length;
+    document.getElementById('referencesContainer')?.insertAdjacentHTML('beforeend', '<div class="reference-row"><input type="text" name="ref_' + uniqueId + '_' + refCount + '" autocomplete="off" placeholder="Author. Year. Title. Journal/Book. Publisher. Pages" style="flex:1"><button type="button" class="remove-btn" onclick="this.parentElement.remove()">✕</button></div>'); 
+};
+window.addTeamMember = function() { document.getElementById('teamMembersContainer')?.insertAdjacentHTML('beforeend', '<div class="member-row"><input type="text" placeholder="Name of faculty" style="flex:1"><input type="text" placeholder="Role, main task, deliverables" style="flex:2"><button type="button" class="remove-btn" onclick="this.parentElement.remove()">✕</button></div>'); };
+window.addActivity = function() { 
+    let monthOptions = MONTHS.map(m => '<option value="' + m + '">' + m + '</option>').join('');
+    let yearOptions = [CURRENT_YEAR, NEXT_YEAR, YEAR_AFTER].map(y => '<option value="' + y + '">' + y + '</option>').join('');
+    document.getElementById('activitiesContainer')?.insertAdjacentHTML('beforeend', '<div class="activity-card"><div class="activity-header"><span class="activity-title">New Activity</span><button type="button" class="remove-btn" onclick="this.closest(\'.activity-card\').remove()">✕</button></div>' +
+        '<div class="activity-grid"><div class="field"><label>Activity Name</label><input type="text" class="act-name" placeholder="e.g., Data Gathering"></div><div class="field"><label>Description</label><textarea class="act-desc" rows="2" placeholder="Brief description"></textarea></div>' +
+        '<div class="field"><label>Objective</label><input type="text" class="act-objective" placeholder="Which objective?"></div><div class="field"><label>Expected Output</label><input type="text" class="act-output" placeholder="Deliverable"></div></div>' +
+        '<div class="date-range-row"><label>Start:</label><select class="act-start-month">' + monthOptions + '</select><select class="act-start-year">' + yearOptions + '</select><label>End:</label><select class="act-end-month">' + monthOptions + '</select><select class="act-end-year">' + yearOptions + '</select></div></div>');
+};
+window.addBudgetItem = function() {
+    document.getElementById('budgetContainer')?.insertAdjacentHTML('beforeend', '<div class="budget-item-row"><select class="budget-category" onchange="updateSubcategories(this)"><option value="">Category</option>' + Object.keys(BUDGET_STRUCTURE).map(c => '<option value="' + c + '">' + c + '</option>').join('') + '</select><select class="budget-subcategory" onchange="updateSubSubcategories(this)"><option value="">Subcategory</option></select><select class="budget-item-select"><option value="">Item</option></select><input type="text" class="budget-specs" placeholder="Specifications/Description"><input type="number" class="budget-unit-cost" placeholder="Unit Cost" oninput="updateBudgetTotals()"><input type="number" class="budget-qty" placeholder="Qty" value="1" style="width:60px" oninput="updateBudgetTotals()"><span class="budget-total">₱0</span><button type="button" class="budget-remove-item" onclick="this.closest(\'.budget-item-row\').remove(); updateBudgetTotals()">✕</button></div>');
+    updateBudgetTotals();
+};
+window.updateSubcategories = updateSubcategories;
+window.updateSubSubcategories = updateSubSubcategories;
+window.updateBudgetTotals = updateBudgetTotals;
+
+document.getElementById('logoutBtn').onclick = () => { sessionStorage.clear(); window.location.href = "login.html"; };
+document.getElementById('switchReviewerBtn').onclick = toggleMode;
+renderApplicant();
+</script>
+</body>
+</html>

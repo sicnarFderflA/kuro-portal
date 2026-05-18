@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KURO · Admin Dashboard | Xavier University - Ateneo de Cagayan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #283871;
+            --primary-dark: #1e2b57;
+            --gold: #D4AF37;
+            --gold-dark: #b8942e;
+            --gray-text: #5A6E6B;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --light-bg: #f8f9fa;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f0f2f5;
+        }
+
+        /* Navigation */
+        .top-nav {
+            background: var(--primary);
+            padding: 0.8rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid var(--gold);
+            flex-wrap: wrap;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-area h2 {
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.3rem;
+        }
+
+        .logo-area h2 i {
+            color: var(--gold);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: var(--gold);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .user-info div {
+            color: white;
+        }
+
+        .logout-nav {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 0.4rem 1rem;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .logout-nav:hover {
+            background: rgba(255,255,255,0.25);
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 1.5rem auto;
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .dashboard-title h2 {
+            color: var(--gold);
+            font-size: 1.6rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .dashboard-title p {
+            color: var(--gray-text);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--light-bg);
+            border-radius: 1rem;
+            padding: 1.2rem;
+            border-top: 4px solid var(--gold);
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .stat-card i {
+            color: var(--gold);
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card h3 {
+            font-size: 2rem;
+            color: var(--primary);
+        }
+
+        .stat-card span {
+            color: var(--gray-text);
+            font-size: 0.85rem;
+        }
+
+        /* Charts Row */
+        .charts-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 1rem;
+            border: 1px solid #eef2f0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .chart-card h4 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-card h4 i {
+            color: var(--gold);
+        }
+
+        .chart-container {
+            max-width: 100%;
+            height: 250px;
+            position: relative;
+        }
+
+        /* Tables */
+        .applications-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .applications-table th {
+            background: var(--primary);
+            color: white;
+            padding: 0.8rem;
+            text-align: left;
+            font-size: 0.8rem;
+        }
+
+        .applications-table td {
+            padding: 0.8rem;
+            border-bottom: 1px solid #eee;
+            font-size: 0.8rem;
+        }
+
+        .applications-table tr:hover {
+            background: #f5f5f5;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            padding: 0.2rem 0.7rem;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-badge.pending {
+            background: #fff0db;
+            color: #b45f1b;
+        }
+
+        .status-badge.approved {
+            background: #e0f5e6;
+            color: #1e6f3f;
+        }
+
+        .status-badge.external {
+            background: #e3ecff;
+            color: #2c5f9a;
+        }
+
+        /* Buttons */
+        .btn-sm {
+            background: #eef2fa;
+            border: none;
+            padding: 0.3rem 0.8rem;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            margin: 0.1rem;
+            transition: 0.2s;
+        }
+
+        .btn-sm:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 0.3rem 0.8rem;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            margin: 0.1rem;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .btn-primary {
+            background: var(--gold);
+            color: var(--primary);
+            border: none;
+            padding: 0.5rem 1.2rem;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: var(--gold-dark);
+            color: white;
+        }
+
+        /* Modal Tabs */
+        .modal-detail-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 0;
+        }
+
+        .modal-detail-tab {
+            background: none;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--gray-text);
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+            transition: 0.2s;
+            position: relative;
+        }
+
+        .modal-detail-tab.active {
+            color: var(--primary);
+            background: #f0f2f5;
+        }
+
+        .modal-detail-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--gold);
+        }
+
+        .modal-detail-tab:hover:not(.active) {
+            background: #f5f5f5;
+            color: var(--primary);
+        }
+
+        .modal-tab-content {
+            display: none;
+        }
+
+        .modal-tab-content.active {
+            display: block;
+        }
+
+        /* Detail Sections */
+        .detail-section {
+            margin-bottom: 1rem;
+            padding: 0.8rem;
+            background: var(--light-bg);
+            border-radius: 0.8rem;
+        }
+
+        .detail-section h4 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            border-left: 3px solid var(--gold);
+            padding-left: 0.5rem;
+        }
+
+        .detail-field {
+            margin-bottom: 0.3rem;
+            font-size: 0.8rem;
+        }
+
+        .detail-field strong {
+            color: var(--primary);
+        }
+
+        /* Filter Bar */
+        .filter-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-bar select, .filter-bar input {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        footer {
+            text-align: center;
+            font-size: 0.65rem;
+            color: var(--gray-text);
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .budget-table {
+            width: 100%;
+            font-size: 0.75rem;
+            border-collapse: collapse;
+        }
+
+        .budget-table th, .budget-table td {
+            padding: 0.5rem;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .budget-table th {
+            background: #e0e0e0;
+        }
+
+        @media (max-width: 768px) {
+            .main-content { padding: 1rem; }
+            .applications-table { font-size: 0.7rem; }
+            .btn-sm { padding: 0.2rem 0.5rem; font-size: 0.65rem; }
+            .charts-row { grid-template-columns: 1fr; }
+        }
+
+        .detail-section {
+            margin-bottom: 1rem;
+            padding: 0.8rem;
+            background: var(--light-bg);
+            border-radius: 0.8rem;
+            text-align: left;
+        }
+
+        .detail-section h4 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            border-left: 3px solid var(--gold);
+            padding-left: 0.5rem;
+            text-align: left;
+        }
+
+        .detail-field {
+            margin-bottom: 0.3rem;
+            font-size: 0.8rem;
+            text-align: left;
+        }
+
+        .detail-field strong {
+            color: var(--primary);
+            display: inline-block;
+            min-width: 180px;
+        }
+
+        .detail-section ul, .detail-section ol {
+            margin-left: 1.5rem;
+            text-align: left;
+        }
+
+        .detail-section li {
+            text-align: left;
+            margin-bottom: 0.2rem;
+        }
+
+        .detail-section div[style*="margin-bottom:0.8rem"] {
+            text-align: left;
+        }
+
+        .budget-table {
+            width: 100%;
+            font-size: 0.75rem;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        .budget-table th, .budget-table td {
+            padding: 0.5rem;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .budget-table th {
+            background: #e0e0e0;
+            text-align: left;
+        }
+
+        .budget-table td:last-child,
+        .budget-table th:last-child {
+            text-align: right;
+        }
+
+        .detail-section div[style*="font-family: serif"] {
+            text-align: left;
+        }
+
+        .detail-section div[style*="font-family: serif"] p {
+            text-align: left;
+        }
+
+        .detail-section div[style*="font-family: serif"] div {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="top-nav">
+    <div class="logo-area">
+        <img src="xu_logo.png" alt="Xavier University Logo" class="school-logo-header" style="height: 45px; width: auto;" onerror="this.onerror=null; this.style.display='none'">
+        <img src="kuro_logo.png" alt="KURO Logo" class="kuro-logo-header" style="height: 40px; width: auto; margin-left: 0.5rem;" onerror="this.onerror=null; this.style.display='none'">
+        <h2>KURO · Admin Console</h2>
+    </div>
+    <div class="user-info">
+        <div class="avatar" id="userAvatar">A</div>
+        <div><div id="userName"></div><div id="userEmail" style="font-size:0.7rem;"></div></div>
+        <button id="logoutBtn" class="logout-nav"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+</div>
+<div class="main-content" id="mainContent"></div>
+<footer><i class="fas fa-scroll"></i> Kinaadman University Research Office · Xavier University - Ateneo de Cagayan</footer>
+
+<script>
+// ============== INITIALIZATION ==============
+const currentUser = JSON.parse(sessionStorage.getItem('kuro_user'));
+if (!currentUser) window.location.href = "login.html";
+
+document.getElementById('userName').innerText = currentUser.name;
+document.getElementById('userEmail').innerText = currentUser.email;
+document.getElementById('userAvatar').innerText = currentUser.name ? currentUser.name.charAt(0) : 'A';
+
+// Load data from localStorage
+let submissionsDB = JSON.parse(localStorage.getItem('kuro_submissions')) || {};
+let reviewerTasks = JSON.parse(localStorage.getItem('kuro_reviewer_tasks')) || {};
+
+const ALL_GRANTS = [
+    "INSTITUTIONAL RESEARCH (IR) AWARD",
+    "MIGUEL BERNAD HUMANITIES RESEARCH (MBHR) AWARD",
+    "MINDANAO RESEARCH (MR) AWARD",
+    "MATTEO RICCI RESEARCH (MRR) AWARD",
+    "Publication Award",
+    "Madigan Award",
+    "Kinaadman Student Research Award (KSRA)"
+];
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+// ============== HELPER FUNCTIONS ==============
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
+}
+
+function getAllApplications() {
+    let apps = [];
+    for (let email in submissionsDB) {
+        let subs = submissionsDB[email];
+        if (Array.isArray(subs)) {
+            subs.forEach(function(s) {
+                apps.push(Object.assign({}, s, { applicantEmail: email }));
+            });
+        }
+    }
+    return apps.sort(function(a, b) {
+        return new Date(b.submittedDate) - new Date(a.submittedDate);
+    });
+}
+
+function saveToLocalStorage() {
+    localStorage.setItem('kuro_submissions', JSON.stringify(submissionsDB));
+    localStorage.setItem('kuro_reviewer_tasks', JSON.stringify(reviewerTasks));
+}
+
+// ============== CHART DATA FUNCTIONS ==============
+function getMonthlyData(apps) {
+    let monthlyCounts = new Array(12).fill(0);
+    apps.forEach(function(app) {
+        if (app.submittedDate) {
+            let month = new Date(app.submittedDate).getMonth();
+            monthlyCounts[month]++;
+        }
+    });
+    return monthlyCounts;
+}
+
+function getStatusDistribution(apps) {
+    let pending = apps.filter(a => a.status === 'Under Review').length;
+    let external = apps.filter(a => a.status === 'External Review').length;
+    let approved = apps.filter(a => a.status === 'Approved').length;
+    return { pending, external, approved };
+}
+
+function getGrantDistribution(apps) {
+    return ALL_GRANTS.map(function(grant) {
+        return apps.filter(function(a) { return a.grantTitle === grant; }).length;
+    });
+}
+
+// ============== VIEW FUNCTIONS WITH TABS ==============
+function viewApplicationDetails(appId) {
+    let foundApp = null;
+    for (let email in submissionsDB) {
+        let apps = submissionsDB[email];
+        if (Array.isArray(apps)) {
+            for (let i = 0; i < apps.length; i++) {
+                if (apps[i].id === appId) {
+                    foundApp = Object.assign({}, apps[i], { applicantEmail: email });
+                    break;
+                }
+            }
+        }
+        if (foundApp) break;
+    }
+
+    if (!foundApp) {
+        Swal.fire({ icon: 'error', title: 'Error', text: 'Application not found!' });
+        return;
+    }
+
+    let detailsHtml = `
+        <div style="max-height: 65vh; overflow-y: auto;">
+            <div class="detail-section">
+                <h4>📋 Application Information</h4>
+                <div class="detail-field"><strong>ID:</strong> ${foundApp.id}</div>
+                <div class="detail-field"><strong>Grant:</strong> ${escapeHtml(foundApp.grantTitle)}</div>
+                <div class="detail-field"><strong>Applicant:</strong> ${foundApp.applicantEmail}</div>
+                <div class="detail-field"><strong>Submitted:</strong> ${foundApp.submittedDate}</div>
+                <div class="detail-field"><strong>Status:</strong> <span class="status-badge ${foundApp.status === 'Approved' ? 'approved' : (foundApp.status === 'External Review' ? 'external' : 'pending')}">${foundApp.status}</span></div>
+            </div>
+            
+            <div class="modal-detail-tabs">
+                <button class="modal-detail-tab active" data-tab="form1">📝 XURG Form 1 (Research Proposal)</button>
+                <button class="modal-detail-tab" data-tab="form2">📋 XURG Form 2 (Endorsement Letter)</button>
+            </div>
+            
+            <div id="modalTabForm1" class="modal-tab-content active">
+                ${renderForm1Content(foundApp)}
+            </div>
+            
+            <div id="modalTabForm2" class="modal-tab-content">
+                ${renderForm2Content(foundApp)}
+            </div>
+        </div>
+    `;
+
+    Swal.fire({
+        title: 'Application Details',
+        html: detailsHtml,
+        width: '900px',
+        showConfirmButton: true,
+        confirmButtonColor: '#D4AF37',
+        confirmButtonText: 'Close',
+        didOpen: () => {
+            const tabs = document.querySelectorAll('.modal-detail-tab');
+            const tabContents = document.querySelectorAll('.modal-tab-content');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const targetTab = this.getAttribute('data-tab');
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+                    this.classList.add('active');
+                    document.getElementById(`modalTab${targetTab.charAt(0).toUpperCase() + targetTab.slice(1)}`).classList.add('active');
+                });
+            });
+        }
+    });
+}
+
+function renderForm1Content(foundApp) {
+    let html = '';
+    
+    html += '<div class="detail-section">';
+    html += '<h4>📌 Project Profile</h4>';
+    html += '<div class="detail-field"><strong>Project Title:</strong> ' + escapeHtml(foundApp.proposalTitle || 'N/A') + '</div>';
+    html += '<div class="detail-field"><strong>Principal Investigator:</strong> ' + escapeHtml(foundApp.piName || 'N/A') + '</div>';
+    html += '<div class="detail-field"><strong>Email:</strong> ' + escapeHtml(foundApp.piEmail || 'N/A') + '</div>';
+    html += '<div class="detail-field"><strong>Department:</strong> ' + escapeHtml(foundApp.dept || 'N/A') + '</div>';
+    html += '<div class="detail-field"><strong>School/College:</strong> ' + escapeHtml(foundApp.school || 'N/A') + '</div>';
+    html += '<div class="detail-field"><strong>Local Extension:</strong> ' + escapeHtml(foundApp.extension || 'N/A') + '</div>';
+    html += '<div class="detail-field"><strong>Project Duration:</strong> ' + escapeHtml(foundApp.duration || 'N/A') + '</div>';
+    html += '</div>';
+    
+    if (foundApp.rationale) {
+        html += '<div class="detail-section"><h4>📖 Rationale</h4><div class="detail-field">' + escapeHtml(foundApp.rationale) + '</div></div>';
+    }
+    if (foundApp.litReview) {
+        html += '<div class="detail-section"><h4>📚 Review of Literature</h4><div class="detail-field">' + escapeHtml(foundApp.litReview) + '</div></div>';
+    }
+    if (foundApp.objectives) {
+        html += '<div class="detail-section"><h4>🎯 Objectives</h4><div class="detail-field">' + escapeHtml(foundApp.objectives) + '</div></div>';
+    }
+    if (foundApp.methodology) {
+        html += '<div class="detail-section"><h4>🔬 Methodology</h4><div class="detail-field">' + escapeHtml(foundApp.methodology) + '</div></div>';
+    }
+    if (foundApp.outputs) {
+        html += '<div class="detail-section"><h4>📊 Expected Outputs</h4><div class="detail-field">' + escapeHtml(foundApp.outputs) + '</div></div>';
+    }
+    
+    if (foundApp.references && foundApp.references.length > 0) {
+        html += '<div class="detail-section"><h4>📑 Literature Cited</h4><ul>';
+        foundApp.references.forEach(function(ref) {
+            html += '<li>' + escapeHtml(ref) + '</li>';
+        });
+        html += '</ul></div>';
+    }
+    
+    if (foundApp.teamMembers && foundApp.teamMembers.length > 0) {
+        html += '<div class="detail-section"><h4>👥 Research Team Members</h4><ul>';
+        foundApp.teamMembers.forEach(function(member) {
+            html += '<li><strong>' + escapeHtml(member.name) + '</strong> - ' + escapeHtml(member.role) + '</li>';
+        });
+        html += '</ul></div>';
+    }
+    
+    if (foundApp.activities && foundApp.activities.length > 0) {
+        html += '<div class="detail-section"><h4>📅 Major Activities & Workplan</h4>';
+        foundApp.activities.forEach(function(act, idx) {
+            html += '<div style="margin-bottom:0.8rem; padding:0.5rem; background:white; border-radius:0.5rem; text-align:left;">';
+            html += '<strong>Activity ' + (idx+1) + ':</strong> ' + escapeHtml(act.name || '') + '<br>';
+            html += '<small>📅 ' + (act.startMonth || '') + ' ' + (act.startYear || '') + ' - ' + (act.endMonth || '') + ' ' + (act.endYear || '') + '</small><br>';
+            html += '<small>📝 ' + escapeHtml(act.description || '') + '</small><br>';
+            html += '<small>🎯 Objective: ' + escapeHtml(act.objective || '') + '</small><br>';
+            html += '<small>📦 Output: ' + escapeHtml(act.output || '') + '</small>';
+            html += '</div>';
+        });
+        html += '</div>';
+    }
+    
+    // Budget table - kept as proper table with right-aligned numbers
+    if (foundApp.budgetItems && foundApp.budgetItems.length > 0) {
+        let total = 0;
+        html += '<div class="detail-section"><h4>💰 Budgetary Requirements</h4>';
+        html += '<table class="budget-table"><thead><tr>';
+        html += '<th>Category</th><th>Item</th><th>Unit Cost</th><th>Qty</th><th>Total</th>';
+        html += '</tr></thead><tbody>';
+        foundApp.budgetItems.forEach(function(item) {
+            let itemTotal = (item.unitCost || 0) * (item.qty || 1);
+            total += itemTotal;
+            html += '<tr>';
+            html += '<td>' + escapeHtml(item.category || '') + '</td>';
+            html += '<td>' + escapeHtml(item.itemName || '') + '</td>';
+            html += '<td>₱' + (item.unitCost || 0).toLocaleString() + '</td>';
+            html += '<td>' + (item.qty || 1) + '</td>';
+            html += '<td>₱' + itemTotal.toLocaleString() + '</td>';
+            html += '</tr>';
+        });
+        html += '<tr style="background:#f0f0f0; font-weight:bold;"><td colspan="4">GRAND TOTAL</td><td>₱' + total.toLocaleString() + '</td></tr>';
+        html += '</tbody></table></div>';
+    }
+    
+    return html;
+}
+
+function renderForm2Content(foundApp) {
+    let html = '';
+    
+    // Show digital signature status
+    html += '<div class="detail-section">';
+    html += '<h4>🔐 Digital Signature Status</h4>';
+    
+    // Chair signature status
+    let chairStatus = foundApp.signatures?.chair?.signed ? '✅ Signed' : '⏳ Pending';
+    let chairDate = foundApp.signatures?.chair?.signedDate ? new Date(foundApp.signatures.chair.signedDate).toLocaleString() : '';
+    html += `<div class="detail-field"><strong>Department Chair:</strong> ${escapeHtml(foundApp.fromChair || 'N/A')}<br>
+             <small>Email: ${escapeHtml(foundApp.chairEmail || 'N/A')}</small><br>
+             <small>Status: ${chairStatus} ${chairDate ? 'on ' + chairDate : ''}</small></div>`;
+    
+    // Dean signature status
+    let deanStatus = foundApp.signatures?.dean?.signed ? '✅ Signed' : '⏳ Pending';
+    let deanDate = foundApp.signatures?.dean?.signedDate ? new Date(foundApp.signatures.dean.signedDate).toLocaleString() : '';
+    html += `<div class="detail-field"><strong>Dean:</strong> ${escapeHtml(foundApp.deanName || 'N/A')}<br>
+             <small>Email: ${escapeHtml(foundApp.deanEmail || 'N/A')}</small><br>
+             <small>Status: ${deanStatus} ${deanDate ? 'on ' + deanDate : ''}</small></div>`;
+    
+    // Coordinator signature status
+    let coordStatus = foundApp.signatures?.coordinator?.signed ? '✅ Signed' : '⏳ Pending';
+    let coordDate = foundApp.signatures?.coordinator?.signedDate ? new Date(foundApp.signatures.coordinator.signedDate).toLocaleString() : '';
+    html += `<div class="detail-field"><strong>Research Coordinator:</strong> ${escapeHtml(foundApp.coordName || 'N/A')}<br>
+             <small>Email: ${escapeHtml(foundApp.coordEmail || 'N/A')}</small><br>
+             <small>Status: ${coordStatus} ${coordDate ? 'on ' + coordDate : ''}</small></div>`;
+    html += '</div>';
+    
+    // Endorsement Information
+    html += '<div class="detail-section">';
+    html += '<h4>📌 Endorsement Information</h4>';
+    html += '<div class="detail-field"><strong>Date:</strong> ' + escapeHtml(foundApp.endorsementDate || 'N/A') + '</div>';
+    html += '<div class="detail-field"><strong>Department Chair:</strong> ' + escapeHtml(foundApp.fromChair || 'N/A') + '</div>';
+    html += '<div class="detail-field"><strong>Department:</strong> ' + escapeHtml(foundApp.endorseDept || 'N/A') + '</div>';
+    html += '<div class="detail-field"><strong>School/College:</strong> ' + escapeHtml(foundApp.endorseSchool || 'N/A') + '</div>';
+    html += '<div class="detail-field"><strong>School Year:</strong> ' + escapeHtml(foundApp.schoolYear || 'N/A') + '</div>';
+    html += '</div>';
+    
+    // Endorsement Letter Preview
+    html += '<div class="detail-section">';
+    html += '<h4>📄 Endorsement Letter Preview</h4>';
+    html += '<div style="background: white; padding: 1rem; border-radius: 0.5rem; border: 1px solid #ddd; font-family: serif; text-align: left;">';
+    html += '<p style="text-align: center; font-weight: bold; margin-bottom: 1rem;">XAVIER UNIVERSITY - ATENEO DE CAGAYAN</p>';
+    html += '<p style="text-align: center; margin-bottom: 1rem;">Kinaadman University Research Office (KURO)</p>';
+    html += '<hr style="margin: 0.5rem 0;">';
+    html += '<p style="margin: 1rem 0;">This certifies that the undersigned have reviewed the research proposal entitled:</p>';
+    html += '<p style="font-weight: bold; text-align: center; margin: 0.5rem 0;">"' + escapeHtml(foundApp.proposalTitle || foundApp.projectTitle || 'N/A') + '"</p>';
+    html += '<p>submitted by <strong>' + escapeHtml(foundApp.piName || 'N/A') + '</strong> from the Department of <strong>' + escapeHtml(foundApp.dept || 'N/A') + '</strong>, ' + escapeHtml(foundApp.school || 'N/A') + '.</p>';
+    html += '<p>The proposal has been evaluated and is hereby <strong>ENDORSED</strong> for funding consideration by the KURO Review Committee.</p>';
+    html += '<hr style="margin: 1rem 0;">';
+    
+    // Show signature indicators with checkmarks if signed
+    let chairSignature = foundApp.signatures?.chair?.signed ? '✅ ' + escapeHtml(foundApp.fromChair) : '_________________';
+    let deanSignature = foundApp.signatures?.dean?.signed ? '✅ ' + escapeHtml(foundApp.deanName) : '_________________';
+    let coordSignature = foundApp.signatures?.coordinator?.signed ? '✅ ' + escapeHtml(foundApp.coordName) : '_________________';
+    
+    html += '<div style="display: flex; justify-content: space-between; margin-top: 1rem; text-align: center;">';
+    html += '<div><strong>' + chairSignature + '</strong><br><small>Department Chair</small></div>';
+    html += '<div><strong>' + deanSignature + '</strong><br><small>Dean</small></div>';
+    html += '</div>';
+    html += '<div style="text-align: center; margin-top: 1rem;"><strong>' + coordSignature + '</strong><br><small>Research Coordinator</small></div>';
+    html += '</div></div>';
+    
+    return html;
+}
+
+function editApplication(appId) {
+    let foundEmail = null;
+    let foundApp = null;
+    let foundIndex = null;
+    
+    for (let email in submissionsDB) {
+        let apps = submissionsDB[email];
+        if (Array.isArray(apps)) {
+            for (let i = 0; i < apps.length; i++) {
+                if (apps[i].id === appId) {
+                    foundEmail = email;
+                    foundApp = apps[i];
+                    foundIndex = i;
+                    break;
+                }
+            }
+        }
+        if (foundApp) break;
+    }
+
+    if (!foundApp) {
+        Swal.fire({ icon: 'error', title: 'Error', text: 'Application not found!' });
+        return;
+    }
+
+    Swal.fire({
+        title: 'Edit Application',
+        html: `
+            <div style="text-align: left;">
+                <div class="detail-field" style="margin-bottom: 1rem;"><strong>ID:</strong> ${foundApp.id}</div>
+                <div class="detail-field" style="margin-bottom: 1rem;"><strong>Project Title:</strong> ${escapeHtml(foundApp.proposalTitle || foundApp.projectTitle || 'N/A')}</div>
+                <div class="detail-field" style="margin-bottom: 1rem;">
+                    <label><strong>Status:</strong></label>
+                    <select id="editStatus" style="width: 100%; padding: 0.5rem; margin-top: 0.3rem; border-radius: 0.5rem; border: 1px solid #ddd;">
+                        <option value="Under Review" ${foundApp.status === 'Under Review' ? 'selected' : ''}>Under Review</option>
+                        <option value="External Review" ${foundApp.status === 'External Review' ? 'selected' : ''}>External Review</option>
+                        <option value="Approved" ${foundApp.status === 'Approved' ? 'selected' : ''}>Approved</option>
+                    </select>
+                </div>
+                <div class="detail-field">
+                    <label><strong>Admin Notes:</strong></label>
+                    <textarea id="editNotes" rows="3" style="width: 100%; padding: 0.5rem; margin-top: 0.3rem; border-radius: 0.5rem; border: 1px solid #ddd;" placeholder="Add internal notes...">${escapeHtml(foundApp.adminNotes || '')}</textarea>
+                </div>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonColor: '#D4AF37',
+        confirmButtonText: 'Save Changes',
+        cancelButtonText: 'Cancel',
+        preConfirm: () => {
+            const newStatus = document.getElementById('editStatus').value;
+            const newNotes = document.getElementById('editNotes').value;
+            
+            submissionsDB[foundEmail][foundIndex].status = newStatus;
+            submissionsDB[foundEmail][foundIndex].adminNotes = newNotes;
+            submissionsDB[foundEmail][foundIndex].lastEdited = new Date().toISOString();
+            submissionsDB[foundEmail][foundIndex].editedBy = currentUser.email;
+            
+            saveToLocalStorage();
+            renderDashboard();
+            
+            Swal.fire({ icon: 'success', title: 'Updated!', text: 'Application has been updated.', confirmButtonColor: '#D4AF37' });
+        }
+    });
+}
+
+function deleteApplication(appId) {
+    Swal.fire({
+        title: 'Delete Application?',
+        text: 'This action cannot be undone!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#e74c3c',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            for (let email in submissionsDB) {
+                let apps = submissionsDB[email];
+                if (Array.isArray(apps)) {
+                    const newApps = apps.filter(function(a) { return a.id !== appId; });
+                    if (newApps.length !== apps.length) {
+                        submissionsDB[email] = newApps;
+                        saveToLocalStorage();
+                        renderDashboard();
+                        Swal.fire({ icon: 'success', title: 'Deleted!', text: 'Application has been deleted.', confirmButtonColor: '#D4AF37' });
+                        return;
+                    }
+                }
+            }
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Application not found!' });
+        }
+    });
+}
+
+// ============== RENDER DASHBOARD WITH CHARTS ==============
+function renderDashboard() {
+    const allApps = getAllApplications();
+    const monthlyData = getMonthlyData(allApps);
+    const statusDist = getStatusDistribution(allApps);
+    const grantData = getGrantDistribution(allApps);
+    
+    // Calculate stats
+    const total = allApps.length;
+    const pending = statusDist.pending + statusDist.external;
+    const approved = statusDist.approved;
+    const reviewers = Object.keys(reviewerTasks).length;
+    
+    // Calculate trend
+    const currentMonth = new Date().getMonth();
+    const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+    const trend = monthlyData[currentMonth] - monthlyData[lastMonth];
+    const trendText = trend >= 0 ? '+' + trend + ' from last month' : trend + ' from last month';
+    const trendClass = trend >= 0 ? '#2ecc71' : '#e74c3c';
+    
+    let html = `
+        <div class="dashboard-title">
+            <h2><i class="fas fa-chalkboard-user"></i> KURO Administrator Dashboard</h2>
+            <p>Manage faculty research grant applications</p>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card"><i class="fas fa-file-alt"></i><h3>${total}</h3><span>Total Applications</span><div style="font-size:0.7rem; margin-top:0.3rem; color: ${trendClass}">${trendText}</div></div>
+            <div class="stat-card"><i class="fas fa-hourglass-half"></i><h3>${pending}</h3><span>Pending Review</span><div style="font-size:0.65rem; margin-top:0.2rem;">${statusDist.pending} Under Review | ${statusDist.external} External</div></div>
+            <div class="stat-card"><i class="fas fa-check-circle"></i><h3>${approved}</h3><span>Approved</span></div>
+            <div class="stat-card"><i class="fas fa-users"></i><h3>${reviewers}</h3><span>External Reviewers</span></div>
+        </div>
+        
+        <div class="charts-row">
+            <div class="chart-card">
+                <h4><i class="fas fa-chart-line"></i> Applications by Month (${new Date().getFullYear()})</h4>
+                <div class="chart-container"><canvas id="trendChart"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <h4><i class="fas fa-chart-pie"></i> Application Status Distribution</h4>
+                <div class="chart-container"><canvas id="statusChart"></canvas></div>
+            </div>
+        </div>
+        
+        <div class="charts-row">
+            <div class="chart-card">
+                <h4><i class="fas fa-chart-bar"></i> Applications by Grant/Award</h4>
+                <div class="chart-container"><canvas id="grantChart"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <h4><i class="fas fa-chart-line"></i> Faculty Research Grants Breakdown</h4>
+                <div class="chart-container"><canvas id="facultyGrantsChart"></canvas></div>
+            </div>
+        </div>
+        
+        <div class="filter-bar">
+            <select id="grantFilter"><option value="all">All Grants</option>${ALL_GRANTS.map(function(g) { return '<option value="' + g + '">' + g + '</option>'; }).join('')}</select>
+            <select id="statusFilter"><option value="all">All Status</option><option value="Under Review">Under Review</option><option value="External Review">External Review</option><option value="Approved">Approved</option></select>
+            <input type="text" id="searchFilter" placeholder="Search by title or applicant..." style="flex:1; min-width:200px;">
+        </div>
+        
+        <h3 style="color: var(--primary); margin-bottom: 1rem;"><i class="fas fa-list-ul"></i> All Applications</h3>
+        <div id="applicationsList"></div>
+    `;
+    
+    document.getElementById('mainContent').innerHTML = html;
+    
+    // Render Charts
+    renderCharts(monthlyData, statusDist, grantData);
+    
+    // Render applications list
+    renderApplicationsList(allApps);
+    
+    // Add event listeners for filters
+    document.getElementById('grantFilter').addEventListener('change', function() { renderApplicationsList(allApps); });
+    document.getElementById('statusFilter').addEventListener('change', function() { renderApplicationsList(allApps); });
+    document.getElementById('searchFilter').addEventListener('input', function() { renderApplicationsList(allApps); });
+}
+
+function renderCharts(monthlyData, statusDist, grantData) {
+    // Trend Chart (Line)
+    const trendCtx = document.getElementById('trendChart')?.getContext('2d');
+    if (trendCtx) {
+        new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: MONTHS,
+                datasets: [{
+                    label: 'Applications',
+                    data: monthlyData,
+                    backgroundColor: 'rgba(40, 56, 113, 0.1)',
+                    borderColor: '#283871',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.3,
+                    pointBackgroundColor: '#D4AF37',
+                    pointBorderColor: '#283871',
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: { legend: { position: 'top' } }
+            }
+        });
+    }
+    
+    // Status Chart (Doughnut)
+    const statusCtx = document.getElementById('statusChart')?.getContext('2d');
+    if (statusCtx) {
+        new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Under Review', 'External Review', 'Approved'],
+                datasets: [{
+                    data: [statusDist.pending, statusDist.external, statusDist.approved],
+                    backgroundColor: ['#f39c12', '#3498db', '#2ecc71'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+    }
+    
+    // Grant Distribution Chart (Bar)
+    const grantCtx = document.getElementById('grantChart')?.getContext('2d');
+    if (grantCtx) {
+        new Chart(grantCtx, {
+            type: 'bar',
+            data: {
+                labels: ALL_GRANTS.map(g => g.length > 20 ? g.substring(0, 18) + '...' : g),
+                datasets: [{
+                    label: 'Number of Applications',
+                    data: grantData,
+                    backgroundColor: '#283871',
+                    borderRadius: 8,
+                    barPercentage: 0.7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, grid: { color: '#eee' } } }
+            }
+        });
+    }
+    
+    // Faculty Grants Only Chart (Pie) - first 4 grants
+    const facultyGrantsCtx = document.getElementById('facultyGrantsChart')?.getContext('2d');
+    if (facultyGrantsCtx) {
+        const facultyGrants = ALL_GRANTS.slice(0, 4);
+        const facultyData = grantData.slice(0, 4);
+        new Chart(facultyGrantsCtx, {
+            type: 'pie',
+            data: {
+                labels: facultyGrants.map(g => g.length > 25 ? g.substring(0, 22) + '...' : g),
+                datasets: [{
+                    data: facultyData,
+                    backgroundColor: ['#283871', '#D4AF37', '#3498db', '#2ecc71'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } }
+            }
+        });
+    }
+}
+
+function renderApplicationsList(allApps) {
+    const grantFilter = document.getElementById('grantFilter')?.value || 'all';
+    const statusFilter = document.getElementById('statusFilter')?.value || 'all';
+    const searchFilter = document.getElementById('searchFilter')?.value || '';
+    
+    let filtered = allApps.filter(function(app) {
+        if (grantFilter !== 'all' && app.grantTitle !== grantFilter) return false;
+        if (statusFilter !== 'all' && app.status !== statusFilter) return false;
+        if (searchFilter) {
+            const searchLower = searchFilter.toLowerCase();
+            const titleMatch = (app.proposalTitle || '').toLowerCase().includes(searchLower);
+            const applicantMatch = (app.applicantEmail || '').toLowerCase().includes(searchLower);
+            if (!titleMatch && !applicantMatch) return false;
+        }
+        return true;
+    });
+    
+    if (filtered.length === 0) {
+        document.getElementById('applicationsList').innerHTML = '<p style="text-align: center; padding: 2rem; color: #999;">No applications found.</p>';
+        return;
+    }
+    
+    // ADDED "Signatures" column in the header
+    let html = '<table class="applications-table"><thead><tr>';
+    html += '<th>Grant</th>';
+    html += '<th>Project Title</th>';
+    html += '<th>Applicant</th>';
+    html += '<th>Submitted</th>';
+    html += '<th>Signatures</th>';  // NEW COLUMN
+    html += '<th>Status</th>';
+    html += '<th>Actions</th>';
+    html += '</thead><tbody>';
+    
+    filtered.forEach(function(app) {
+        let statusClass = app.status === 'Under Review' ? 'pending' : (app.status === 'External Review' ? 'external' : 'approved');
+        
+        // Calculate signature progress
+        let signedCount = 0;
+        let signatureDetails = '';
+        if (app.signatures) {
+            if (app.signatures.chair?.signed) {
+                signedCount++;
+                signatureDetails += '📋 Chair ✓ ';
+            }
+            if (app.signatures.dean?.signed) {
+                signedCount++;
+                signatureDetails += '👑 Dean ✓ ';
+            }
+            if (app.signatures.coordinator?.signed) {
+                signedCount++;
+                signatureDetails += '📝 Coordinator ✓ ';
+            }
+        }
+        
+        // Determine signature badge color
+        let signatureColor = '';
+        let signatureText = '';
+        if (signedCount === 3) {
+            signatureText = `<span style="color: #2ecc71; font-weight: bold;">✓ ${signedCount}/3 Complete</span>`;
+        } else if (signedCount > 0) {
+            signatureText = `<span style="color: #f39c12;">⏳ ${signedCount}/3 Pending</span>`;
+        } else {
+            signatureText = `<span style="color: #e74c3c;">⏳ 0/3 Pending</span>`;
+        }
+        
+        html += `<tr>
+            <td style="font-weight:600;">${escapeHtml(app.grantTitle).substring(0, 35)}</td>
+            <td>${escapeHtml(app.proposalTitle || app.projectTitle || 'N/A').substring(0, 40)}</td>
+            <td>${app.applicantEmail}</td>
+            <td>${app.submittedDate}</td>
+            <td>${signatureText}</td>
+            <td><span class="status-badge ${statusClass}">${app.status}</span></td>
+            <td>
+                <button class="btn-sm view-btn" data-id="${app.id}"><i class="fas fa-eye"></i> View</button>
+                <button class="btn-sm edit-btn" data-id="${app.id}"><i class="fas fa-edit"></i> Edit</button>
+                <button class="btn-danger delete-btn" data-id="${app.id}"><i class="fas fa-trash"></i> Delete</button>
+            </td>
+        </tr>`;
+    });
+    
+    html += '</tbody></table>';
+    document.getElementById('applicationsList').innerHTML = html;
+    
+    document.querySelectorAll('.view-btn').forEach(btn => btn.addEventListener('click', function() { viewApplicationDetails(btn.getAttribute('data-id')); }));
+    document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', function() { editApplication(btn.getAttribute('data-id')); }));
+    document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', function() { deleteApplication(btn.getAttribute('data-id')); }));
+}
+
+// ============== LOGOUT ==============
+document.getElementById('logoutBtn').onclick = function() {
+    sessionStorage.clear();
+    window.location.href = "login.html";
+};
+
+// ============== INITIAL RENDER ==============
+renderDashboard();
+</script>
+</body>
+</html>
