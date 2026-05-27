@@ -4984,6 +4984,8 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                                     submittedDate: existingSubmittedDate,
                                     signatures: existingSignatures,
                                     signatureRequests: existingSignatureRequests,
+                                    userEmail: currentUser.email,
+                                    applicantEmail: currentUser.email,
                                     ...formData
                                 };
                                 
@@ -5036,6 +5038,8 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                                 submittedDate: new Date().toISOString().slice(0,10),
                                 signatures: { chair: { signed: false }, dean: { signed: false } },
                                 piCVStatus: 'pending',
+                                userEmail: currentUser.email, 
+                                applicantEmail: currentUser.email,
                                 ...formData
                             };
                             

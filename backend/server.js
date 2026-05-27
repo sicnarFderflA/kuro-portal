@@ -217,6 +217,13 @@ app.post('/api/faculty/drafts', async (req, res) => {
         draft.updatedAt = new Date();
         
         const db = mongoose.connection.db;
+        
+        // IMPORTANT: Remove _id if it exists to avoid immutable field error
+        if (draft._id) {
+            delete draft._id;
+        }
+        
+        // Use updateOne with $set to avoid _id issues
         const result = await db.collection('drafts').updateOne(
             { draftId: draft.draftId, userEmail: draft.userEmail },
             { $set: draft },
