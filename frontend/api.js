@@ -15,7 +15,6 @@ async function apiRequest(endpoint, options = {}) {
         headers['Authorization'] = `Bearer ${token}`;
     }
     
-    // Add user email to query params for GET requests if not already present
     let url = `${API_BASE_URL}${endpoint}`;
     if (user.email && options.method !== 'POST' && options.method !== 'PUT' && !url.includes('userEmail')) {
         const separator = url.includes('?') ? '&' : '?';
@@ -54,18 +53,12 @@ async function googleSignIn(credential, role) {
     
     const data = await response.json();
     
-    // Store token and user data
     if (data.token) {
         sessionStorage.setItem('kuro_token', data.token);
     }
     sessionStorage.setItem('kuro_user', JSON.stringify(data.user));
     
     return data;
-}
-
-async function logout() {
-    sessionStorage.removeItem('kuro_token');
-    sessionStorage.removeItem('kuro_user');
 }
 
 // ==================== NOTIFICATIONS API ====================
@@ -89,10 +82,6 @@ async function markAllNotificationsRead(userEmail) {
         method: 'PUT',
         body: JSON.stringify({ userEmail })
     });
-}
-
-async function deleteNotification(id) {
-    return apiRequest(`/notifications/${id}`, { method: 'DELETE' });
 }
 
 // ==================== APPLICATIONS API ====================
@@ -148,12 +137,6 @@ async function getSignatureStatus(appId) {
     return apiRequest(`/applications/${appId}/signature-status`);
 }
 
-async function markSignatureComplete(token) {
-    return apiRequest(`/signatures/${token}/complete`, {
-        method: 'PUT'
-    });
-}
-
 // ==================== DRAFTS API ====================
 async function saveFacultyDraft(draftData) {
     return apiRequest('/faculty/drafts', {
@@ -186,14 +169,12 @@ async function updateReviewerName(email, name) {
 window.KURO_API = {
     // Auth
     googleSignIn,
-    logout,
     
     // Notifications
     getNotifications,
     createNotification,
     markNotificationRead,
     markAllNotificationsRead,
-    deleteNotification,
     
     // Applications
     getApplication,
@@ -207,7 +188,6 @@ window.KURO_API = {
     generateSignatureLinks,
     sendSignatureEmails,
     getSignatureStatus,
-    markSignatureComplete,
     
     // Drafts
     saveFacultyDraft,
@@ -218,3 +198,5 @@ window.KURO_API = {
     getReviewerTasks,
     updateReviewerName
 };
+
+console.log('KURO_API loaded successfully');
