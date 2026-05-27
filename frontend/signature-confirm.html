@@ -195,33 +195,6 @@
         #statusMessage {
             font-size: 0.85rem;
         }
-        
-        /* Custom Google Button Styles to match theme */
-        .custom-google-btn {
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 40px;
-            padding: 0.7rem 1.5rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: 'Inter', sans-serif;
-            font-weight: 500;
-            font-size: 0.9rem;
-            color: #333;
-            width: 100%;
-            justify-content: center;
-        }
-        .custom-google-btn:hover {
-            background: #f8f9fa;
-            border-color: var(--xavier-gold);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .custom-google-btn i {
-            font-size: 1.2rem;
-        }
     </style>
 </head>
 <body>
@@ -258,6 +231,9 @@
 </div>
 
 <script>
+    // Force English language for Google
+    document.documentElement.lang = 'en';
+    
     // ==================== DOM ELEMENTS ====================
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
@@ -324,13 +300,22 @@
         }
         
         const container = document.getElementById('googleButtonContainer');
-        if (!container) return;
+        if (!container) {
+            console.error('Google button container not found');
+            return;
+        }
         
         // Clear container first to prevent duplicates
         container.innerHTML = '';
         
+        // Set language to English for the button
+        const meta = document.createElement('meta');
+        meta.name = 'google-signin-client';
+        meta.content = GOOGLE_CLIENT_ID;
+        document.head.appendChild(meta);
+        
         let attempts = 0;
-        const maxAttempts = 10;
+        const maxAttempts = 15;
         
         function tryInit() {
             if (typeof google !== 'undefined' && google.accounts) {
@@ -345,24 +330,31 @@
                     ux_mode: "popup"
                 });
                 
-                // Use custom button instead of Google's default to avoid language issues
-                const customButton = document.createElement('button');
-                customButton.className = 'custom-google-btn';
-                customButton.innerHTML = '<i class="fab fa-google"></i> Sign in with Google';
-                customButton.onclick = function() {
-                    google.accounts.id.prompt();
-                };
-                container.appendChild(customButton);
+                // Render the default Google button with English forced
+                google.accounts.id.renderButton(container, {
+                    theme: 'outline',
+                    size: 'large',
+                    width: '100%',
+                    text: 'signin_with',
+                    shape: 'pill',
+                    logo_alignment: 'center',
+                    type: 'standard',
+                    locale: 'en'
+                });
                 
                 googleInitialized = true;
-                console.log('Google Sign-In initialized with custom button');
+                console.log('Google Sign-In initialized with English button');
             } else {
                 attempts++;
                 if (attempts < maxAttempts) {
+                    console.log('Waiting for Google to load... Attempt ' + attempts);
                     setTimeout(tryInit, 500);
                 } else {
-                    console.error('Google failed to load');
+                    console.error('Google failed to load after ' + maxAttempts + ' attempts');
                     document.getElementById('statusMessage').innerHTML = '<span style="color: #e74c3c;">❌ Unable to load Google Sign-In. Please refresh the page.</span>';
+                    
+                    // Show fallback message
+                    container.innerHTML = '<p style="color: #999; font-size: 0.8rem;">Please refresh the page to try again.</p>';
                 }
             }
         }
@@ -428,7 +420,7 @@
         const signatureField = document.getElementById('signatureField');
         const confirmBtn = document.getElementById('confirmBtn');
         
-        // Remove existing listeners to prevent duplicates
+        // Remove existing listeners by cloning
         const newSignatureField = signatureField.cloneNode(true);
         signatureField.parentNode.replaceChild(newSignatureField, signatureField);
         
@@ -594,6 +586,7 @@
         initGoogleSignIn();
     }
     
+    // Start validation
     validateAndInit();
     
     const style = document.createElement('style');
