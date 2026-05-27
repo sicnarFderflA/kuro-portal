@@ -1754,37 +1754,17 @@ async function renderApplicant() {
         console.log('=== DEBUG INFO ===');
         console.log('1. Current user email:', currentUser.email);
         console.log('2. Raw mySubs from API:', mySubs);
-        console.log('3. Type of mySubs:', typeof mySubs);
-        console.log('4. Is array?', Array.isArray(mySubs));
-        console.log('5. Length:', mySubs?.length);
+        console.log('3. Length:', mySubs?.length);
         
-        // If mySubs has data, show each item's email
-        if (mySubs && mySubs.length > 0) {
-            console.log('6. First item emails:', {
-                userEmail: mySubs[0].userEmail,
-                applicantEmail: mySubs[0].applicantEmail
-            });
-        } else {
-            console.log('6. No items in mySubs - API returned empty or null');
-        }
-        
-        // Try direct API test
-        try {
-            const testApi = await fetch(`https://kuro-api-m4mb.onrender.com/api/faculty/applications?userEmail=${currentUser.email}`);
-            const testResult = await testApi.json();
-            console.log('7. Direct API test result:', testResult);
-        } catch(e) {
-            console.log('7. Direct API test failed:', e);
-        }
-        // ========== END DEBUG ==========
-        
+        // Filter applications for current user
         const filteredSubs = mySubs.filter(sub => 
             sub.applicantEmail === currentUser.email ||
             sub.userEmail === currentUser.email
         );
         console.log('Filtered applications:', filteredSubs);
-
-
+        console.log('Filtered count:', filteredSubs.length);
+        // ========== END DEBUG ==========
+        
         const hasReviewerTasks = reviewerTasksData.assignedTasks && reviewerTasksData.assignedTasks.length > 0;
         
         const switchBtn = document.getElementById('switchReviewerBtn');
@@ -1792,11 +1772,12 @@ async function renderApplicant() {
             hasReviewerTasks ? switchBtn.classList.remove('hidden') : switchBtn.classList.add('hidden');
         }
         
+        // USE filteredSubs for stats, NOT mySubs
         const stats = { 
-            pending: mySubs.filter(s => s.status !== "Approved" && s.status !== "Returned" && s.status !== "Awaiting Signatures").length,
-            approved: mySubs.filter(s => s.status === "Approved").length,
-            awaiting: mySubs.filter(s => s.status === "Awaiting Signatures").length,
-            returned: mySubs.filter(s => s.status === "Returned").length,
+            pending: filteredSubs.filter(s => s.status !== "Approved" && s.status !== "Returned" && s.status !== "Awaiting Signatures").length,
+            approved: filteredSubs.filter(s => s.status === "Approved").length,
+            awaiting: filteredSubs.filter(s => s.status === "Awaiting Signatures").length,
+            returned: filteredSubs.filter(s => s.status === "Returned").length,
             drafts: drafts.length 
         };
         
@@ -1810,12 +1791,14 @@ async function renderApplicant() {
         
         html += '<div class="section-header"><h3>My Submissions</h3><button class="btn-primary" id="newApplyBtn"><i class="fas fa-plus"></i> New Application</button></div>';
         
-        if (mySubs.length === 0 && drafts.length === 0) {
+        // USE filteredSubs for displaying submissions, NOT mySubs
+        if (filteredSubs.length === 0 && drafts.length === 0) {
             html += '<div class="demo-note" style="text-align:center;padding:2rem;"><i class="fas fa-info-circle"></i> No applications yet. Click "New Application" to start.</div>';
         } else {
             html += '<div class="applications-list">';
             
-            for (const sub of mySubs) {
+            // Loop through filteredSubs, NOT mySubs
+            for (const sub of filteredSubs) {
                 const cvStatus = getCVStatusSummary(sub);
                 let cvStatusText = '', cvStatusClass = '';
                 if (cvStatus.eligible === cvStatus.total) {
@@ -1915,7 +1898,7 @@ async function renderApplicant() {
                     </div>`;
             }
             
-            // Drafts
+            // Drafts loop (no changes needed here)
             for (let idx = 0; idx < drafts.length; idx++) {
                 const draft = drafts[idx];
                 html += `<div class="application-card draft">
@@ -1944,7 +1927,7 @@ async function renderApplicant() {
         
         document.getElementById('mainContent').innerHTML = html;
         
-        // Attach event listeners
+        // Event listeners remain the same, but use filteredSubs for lookups
         document.getElementById('newApplyBtn')?.addEventListener('click', () => { 
             editDraftId = null; 
             currentDraftData = null; 
@@ -1955,13 +1938,13 @@ async function renderApplicant() {
         
         document.querySelectorAll('.view-sub').forEach(btn => btn.addEventListener('click', async (e) => { 
             const id = btn.getAttribute('data-id'); 
-            const sub = mySubs.find(s => s.id === id); 
+            const sub = filteredSubs.find(s => s.id === id); 
             if(sub) await showDetails(sub); 
         }));
         
         document.querySelectorAll('.edit-sub').forEach(btn => btn.addEventListener('click', async (e) => { 
             const id = btn.getAttribute('data-id'); 
-            const sub = mySubs.find(s => s.id === id); 
+            const sub = filteredSubs.find(s => s.id === id); 
             if(sub && sub.status !== 'Approved') { 
                 isEditMode = true; 
                 editAppId = id; 
@@ -1977,7 +1960,7 @@ async function renderApplicant() {
         // Resubmit button handler
         document.querySelectorAll('.resubmit-sub').forEach(btn => btn.addEventListener('click', async (e) => { 
             const id = btn.getAttribute('data-id'); 
-            const sub = mySubs.find(s => s.id === id); 
+            const sub = filteredSubs.find(s => s.id === id); 
             if(sub) await resubmitApplication(sub); 
         }));
         
@@ -1992,7 +1975,7 @@ async function renderApplicant() {
             }
         }));
         
-        // Edit draft
+        // Edit draft (no changes needed)
         document.querySelectorAll('.edit-draft').forEach(btn => btn.addEventListener('click', async (e) => { 
             const idx = parseInt(btn.getAttribute('data-idx'));
             const draft = drafts[idx];
@@ -2021,7 +2004,7 @@ async function renderApplicant() {
         document.querySelectorAll('.resend-signature-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
                 const id = btn.getAttribute('data-id');
-                const sub = mySubs.find(s => s.id === id);
+                const sub = filteredSubs.find(s => s.id === id);
                 if(sub) await autoGenerateSignatureLinks(sub, id);
             });
         });
