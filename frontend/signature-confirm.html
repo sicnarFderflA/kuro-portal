@@ -4,11 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Digital Signature Confirmation | KURO</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://accounts.google.com/gsi/client" async></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --xavier-primary: #283871;
+            --xavier-primary-dark: #1e2b57;
+            --xavier-gold: #D4AF37;
+            --xavier-gold-dark: #b8942e;
+            --xavier-gray-text: #5A6E6B;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --light-bg: #f8f9fa;
+        }
         body {
             font-family: 'Inter', sans-serif;
             background: linear-gradient(135deg, #f0f2f5 0%, #e8ecef 100%);
@@ -20,8 +31,8 @@
         }
         .signature-card {
             background: white;
-            border-radius: 2rem;
-            max-width: 600px;
+            border-radius: 1.5rem;
+            max-width: 550px;
             width: 100%;
             padding: 2rem;
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
@@ -30,7 +41,7 @@
         .signature-icon {
             width: 80px;
             height: 80px;
-            background: #283871;
+            background: var(--xavier-primary);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -39,53 +50,61 @@
         }
         .signature-icon i {
             font-size: 2.5rem;
-            color: #D4AF37;
+            color: var(--xavier-gold);
         }
         h1 {
-            color: #283871;
+            color: var(--xavier-primary);
             margin-bottom: 0.5rem;
+            font-weight: 700;
         }
         .application-details {
-            background: #f8f9fa;
+            background: var(--light-bg);
             padding: 1rem;
-            border-radius: 1rem;
+            border-radius: 0.8rem;
             margin: 1.5rem 0;
             text-align: left;
+            border-left: 3px solid var(--xavier-gold);
+        }
+        .application-details strong {
+            color: var(--xavier-primary);
         }
         .signature-field {
             border: 2px solid #e0e0e0;
-            border-radius: 1rem;
+            border-radius: 0.8rem;
             padding: 1rem;
             margin: 1rem 0;
             cursor: pointer;
             transition: all 0.3s;
         }
         .signature-field:hover {
-            border-color: #D4AF37;
+            border-color: var(--xavier-gold);
             background: #fffef5;
         }
         .signature-field.signed {
             background: #e0f5e6;
-            border-color: #2ecc71;
+            border-color: var(--success);
         }
         .btn-confirm {
-            background: #D4AF37;
-            color: #283871;
+            background: var(--xavier-gold);
+            color: var(--xavier-primary);
             border: none;
             padding: 0.8rem 2rem;
-            border-radius: 50px;
+            border-radius: 40px;
             font-weight: 600;
             cursor: pointer;
             margin-top: 1rem;
             transition: 0.2s;
+            width: 100%;
+            font-size: 1rem;
         }
         .btn-confirm:hover {
-            background: #b8942e;
+            background: var(--xavier-gold-dark);
             color: white;
         }
         .btn-confirm:disabled {
             background: #ccc;
             cursor: not-allowed;
+            color: #666;
         }
         .status-badge {
             display: inline-block;
@@ -100,8 +119,24 @@
         .google-login {
             margin: 1rem 0;
             padding: 1rem;
-            background: #f8f9fa;
-            border-radius: 1rem;
+            background: var(--light-bg);
+            border-radius: 0.8rem;
+            text-align: center;
+        }
+        .google-login p {
+            margin-bottom: 1rem;
+            font-size: 0.85rem;
+            color: var(--xavier-gray-text);
+        }
+        .google-login p i {
+            color: var(--xavier-gold);
+            margin-right: 0.3rem;
+        }
+        #googleButtonContainer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
         }
         .user-info {
             display: flex;
@@ -109,25 +144,30 @@
             justify-content: center;
             gap: 1rem;
             margin-bottom: 1rem;
-            padding: 0.5rem;
+            padding: 0.75rem;
             background: #e8f0fe;
             border-radius: 0.8rem;
         }
         .user-avatar {
-            width: 40px;
-            height: 40px;
+            width: 45px;
+            height: 45px;
             border-radius: 50%;
-            background: #283871;
+            background: var(--xavier-primary);
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
+            font-size: 1.2rem;
         }
         footer {
-            margin-top: 2rem;
+            margin-top: 1.5rem;
             font-size: 0.7rem;
-            color: #999;
+            color: var(--xavier-gray-text);
+        }
+        footer i {
+            color: var(--xavier-gold);
+            margin-right: 0.3rem;
         }
         .warning {
             background: #fff3cd;
@@ -136,6 +176,7 @@
             border-radius: 0.8rem;
             margin: 1rem 0;
             font-size: 0.8rem;
+            border-left: 3px solid var(--warning);
         }
         .success {
             background: #d4edda;
@@ -143,16 +184,15 @@
             padding: 0.8rem;
             border-radius: 0.8rem;
             margin: 1rem 0;
+            border-left: 3px solid var(--success);
         }
-        .debug-info {
-            background: #f0f0f0;
-            padding: 0.5rem;
-            border-radius: 0.5rem;
-            font-size: 0.7rem;
-            margin-top: 1rem;
-            display: none;
-            text-align: left;
-            word-break: break-all;
+        h3 {
+            color: var(--xavier-primary);
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        #statusMessage {
+            font-size: 0.85rem;
         }
     </style>
 </head>
@@ -166,7 +206,7 @@
     
     <div id="loginSection" style="display: none;">
         <div class="google-login">
-            <p style="margin-bottom: 0.8rem;"><i class="fas fa-shield-alt"></i> Please sign in with your Xavier University email to continue.</p>
+            <p><i class="fas fa-shield-alt"></i> Please sign in with your Xavier University email to continue.</p>
             <div id="googleButtonContainer"></div>
         </div>
     </div>
@@ -186,8 +226,6 @@
         <button class="btn-confirm" id="confirmBtn" disabled>✍️ Confirm & Sign</button>
     </div>
     
-    <div id="debugInfo" class="debug-info"></div>
-    
     <footer><i class="fas fa-lock"></i> This is a legally binding digital signature</footer>
 </div>
 
@@ -198,23 +236,11 @@
     const role = urlParams.get('role');
     const appId = urlParams.get('id');
     
-    // Debug function
-    function debugLog(msg) {
-        console.log('[Signature]', msg);
-        const debugDiv = document.getElementById('debugInfo');
-        if (debugDiv) {
-            debugDiv.style.display = 'block';
-            debugDiv.innerHTML += '<div>' + new Date().toLocaleTimeString() + ': ' + escapeHtml(msg) + '</div>';
-        }
-    }
-    
     let signatureRequests = {};
     let request = null;
     let isSigned = false;
     let authenticatedUser = null;
     const GOOGLE_CLIENT_ID = "1074730624717-8u9auss3uqp5grgs7e4padhothotmfrf.apps.googleusercontent.com";
-    
-    debugLog('Page loaded. Token: ' + token + ', Role: ' + role + ', AppId: ' + appId);
     
     // ==================== HELPER FUNCTIONS ====================
     function escapeHtml(str) {
@@ -237,11 +263,12 @@
             font-size: 14px;
             z-index: 10000;
             animation: slideIn 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            font-family: 'Inter', sans-serif;
         `;
         errorDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
         document.body.appendChild(errorDiv);
         setTimeout(() => errorDiv.remove(), 5000);
-        debugLog('ERROR: ' + message);
     }
     
     function parseJwt(token) {
@@ -253,17 +280,14 @@
             }).join(''));
             return JSON.parse(jsonPayload);
         } catch (e) {
-            debugLog('JWT Parse error: ' + e.message);
+            console.error('JWT Parse error:', e);
             return null;
         }
     }
     
     function initGoogleSignIn() {
         const container = document.getElementById('googleButtonContainer');
-        if (!container) {
-            debugLog('Google button container not found');
-            return;
-        }
+        if (!container) return;
         
         // Wait for Google to be defined
         let attempts = 0;
@@ -271,34 +295,35 @@
         
         function tryInit() {
             if (typeof google !== 'undefined' && google.accounts) {
-                debugLog('Google loaded, initializing...');
+                console.log('Google loaded, initializing...');
                 
                 google.accounts.id.initialize({
                     client_id: GOOGLE_CLIENT_ID,
                     callback: handleGoogleSignIn,
                     auto_select: false,
                     cancel_on_tap_outside: true,
-                    context: "signin"
+                    context: "signin",
+                    ux_mode: "popup"
                 });
                 
                 google.accounts.id.renderButton(container, {
                     theme: 'outline',
                     size: 'large',
-                    width: '100%',
+                    width: '280px',
                     text: 'signin_with',
                     shape: 'pill',
+                    logo_alignment: 'center',
                     locale: 'en'
                 });
                 
                 google.accounts.id.prompt();
-                debugLog('Google Sign-In initialized');
+                console.log('Google Sign-In initialized');
             } else {
                 attempts++;
                 if (attempts < maxAttempts) {
-                    debugLog('Waiting for Google to load... Attempt ' + attempts);
                     setTimeout(tryInit, 500);
                 } else {
-                    debugLog('ERROR: Google failed to load after ' + maxAttempts + ' attempts');
+                    console.error('Google failed to load');
                     document.getElementById('statusMessage').innerHTML = '<span style="color: #e74c3c;">❌ Unable to load Google Sign-In. Please refresh the page.</span>';
                 }
             }
@@ -308,24 +333,21 @@
     }
     
     function handleGoogleSignIn(response) {
-        debugLog('Google Sign-In callback received');
+        console.log('Google Sign-In callback received');
         
         const payload = parseJwt(response.credential);
         if (!payload || !payload.email) {
             showError('Authentication failed. Please try again.');
-            debugLog('Invalid payload: ' + JSON.stringify(payload));
             return;
         }
         
         const userEmail = payload.email;
         const userName = payload.name;
         
-        debugLog('User authenticated: ' + userEmail);
-        debugLog('Expected signer: ' + (request ? request.signerEmail : 'No request found'));
+        console.log('User authenticated:', userEmail);
         
         if (!request) {
             showError('Signature request not found. Please refresh the page and try again.');
-            debugLog('Request is null! Token may be invalid.');
             return;
         }
         
@@ -341,7 +363,6 @@
                     Please sign in with the correct email address to continue.
                 </div>
             `;
-            debugLog('Email mismatch: ' + userEmail + ' vs ' + expectedEmail);
             return;
         }
         
@@ -376,7 +397,6 @@
                 document.getElementById('signatureStatus').className = 'status-badge signed';
                 isSigned = true;
                 confirmBtn.disabled = false;
-                debugLog('User clicked signature field');
             }
         });
         
@@ -385,8 +405,6 @@
                 showError('Please click the signature field to sign first.');
                 return;
             }
-            
-            debugLog('Confirming signature...');
             
             const submissionsDB = JSON.parse(localStorage.getItem('kuro_submissions')) || {};
             let found = false;
@@ -406,7 +424,6 @@
                             submissionsDB[email] = apps;
                             localStorage.setItem('kuro_submissions', JSON.stringify(submissionsDB));
                             found = true;
-                            debugLog('Signature saved for app: ' + appId);
                             break;
                         }
                     }
@@ -430,38 +447,25 @@
                 <button class="btn-confirm" onclick="window.close()">Close Window</button>
                 <footer><i class="fas fa-certificate"></i> Digital signature recorded at ${new Date().toLocaleString()}</footer>
             `;
-            
-            debugLog('Signature completed successfully');
         });
-        
-        debugLog('Signature section displayed');
     }
     
     // ==================== INITIAL VALIDATION ====================
     function validateAndInit() {
-        debugLog('Validating token and request...');
-        
         if (!token || !role || !appId) {
             document.getElementById('statusMessage').innerHTML = '<span style="color: #e74c3c;">❌ Invalid signature link. Missing parameters.</span>';
             document.getElementById('signatureIcon').style.background = '#e74c3c';
-            debugLog('Missing parameters');
             return;
         }
         
-        // Load signature requests from localStorage
         signatureRequests = JSON.parse(localStorage.getItem('kuro_signature_requests')) || {};
-        debugLog('Loaded signature requests: ' + Object.keys(signatureRequests).length);
-        
         request = signatureRequests[token];
         
         if (!request || request.appId !== appId) {
             document.getElementById('statusMessage').innerHTML = '<span style="color: #e74c3c;">❌ This signature link is invalid.</span><br><br>Please contact the KURO office for assistance.';
             document.getElementById('signatureIcon').style.background = '#e74c3c';
-            debugLog('Invalid token or appId mismatch');
             return;
         }
-        
-        debugLog('Request found for role: ' + request.role);
         
         if (request.revoked === true) {
             document.getElementById('statusMessage').innerHTML = `
@@ -473,7 +477,6 @@
                 </div>
             `;
             document.getElementById('signatureIcon').style.background = '#e74c3c';
-            debugLog('Request was revoked');
             return;
         }
         
@@ -486,7 +489,6 @@
                 </div>
             `;
             document.getElementById('signatureIcon').style.background = '#e74c3c';
-            debugLog('Request expired');
             return;
         }
         
@@ -498,7 +500,6 @@
                 </div>
             `;
             document.getElementById('signatureIcon').style.background = '#2ecc71';
-            debugLog('Request already completed');
             return;
         }
         
@@ -510,21 +511,16 @@
                 </div>
             `;
             document.getElementById('signatureIcon').style.background = '#e74c3c';
-            debugLog('Role mismatch: expected ' + request.role + ', got ' + role);
             return;
         }
         
-        // All checks passed
         document.getElementById('statusMessage').innerHTML = '<span style="color: #2ecc71;">✓ Valid signature request found. Please sign in to continue.</span>';
         document.getElementById('loginSection').style.display = 'block';
-        debugLog('Validation passed, showing login section');
         initGoogleSignIn();
     }
     
-    // Start the validation
     validateAndInit();
     
-    // Add CSS animation
     const style = document.createElement('style');
     style.textContent = `
         @keyframes slideIn {
