@@ -16,10 +16,14 @@ async function apiRequest(endpoint, options = {}) {
     }
     
     let url = `${API_BASE_URL}${endpoint}`;
+    
+    // Add user email to query params for GET requests if not already present
     if (user.email && options.method !== 'POST' && options.method !== 'PUT' && !url.includes('userEmail')) {
         const separator = url.includes('?') ? '&' : '?';
         url += `${separator}userEmail=${encodeURIComponent(user.email)}`;
     }
+    
+    console.log('API Request:', url);
     
     const response = await fetch(url, {
         ...options,
@@ -89,8 +93,10 @@ async function getApplication(appId) {
     return apiRequest(`/applications/${appId}`);
 }
 
+// IMPORTANT: Use the correct endpoint from server.js
+// In server.js, faculty applications are at /api/my-submissions
 async function getFacultyApplications() {
-    return apiRequest('/faculty/applications');
+    return apiRequest('/my-submissions');
 }
 
 async function createApplication(application) {
@@ -178,7 +184,7 @@ window.KURO_API = {
     
     // Applications
     getApplication,
-    getFacultyApplications,
+    getFacultyApplications,  // Now uses /my-submissions
     createApplication,
     updateApplication,
     deleteApplication,
