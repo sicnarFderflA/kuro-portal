@@ -165,30 +165,44 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationsRoutes);
 
 // ========== FACULTY ROUTES ==========
-
-// Get faculty's own applications
 app.get('/api/faculty/applications', async (req, res) => {
     try {
         const userEmail = req.query.userEmail;
+        console.log('📋 Faculty applications requested for:', userEmail);
+        
         if (!userEmail) {
             return res.status(400).json({ error: 'userEmail required' });
         }
         
         const db = mongoose.connection.db;
-        const submissions = await db.collection('submissions').find({ 
-            $or: [
-                { userEmail: userEmail },
-                { applicantEmail: userEmail }
-            ]
-        }).toArray();
         
-        res.json(submissions);
+        // Get all submissions first to see what's there
+        const allSubmissions = await db.collection('submissions').find({}).toArray();
+        console.log(`📊 Total submissions in DB: ${allSubmissions.length}`);
+        
+        // Filter for this user
+        const userSubmissions = allSubmissions.filter(sub => 
+            sub.userEmail === userEmail || 
+            sub.applicantEmail === userEmail
+        );
+        
+        console.log(`✅ Found ${userSubmissions.length} submissions for ${userEmail}`);
+        
+        if (userSubmissions.length > 0) {
+            console.log('First submission:', {
+                id: userSubmissions[0].id,
+                userEmail: userSubmissions[0].userEmail,
+                applicantEmail: userSubmissions[0].applicantEmail
+            });
+        }
+        
+        res.json(userSubmissions);
+        
     } catch (error) {
-        console.error('Error fetching faculty applications:', error);
-        res.json([]);
+        console.error('❌ Error fetching faculty applications:', error);
+        res.status(500).json({ error: error.message });
     }
 });
-
 // Get faculty drafts
 app.get('/api/faculty/drafts', async (req, res) => {
     try {
@@ -271,24 +285,29 @@ app.delete('/api/faculty/drafts/:draftId', async (req, res) => {
 app.get('/api/my-submissions', async (req, res) => {
     try {
         const userEmail = req.query.userEmail;
+        console.log('📋 My submissions requested for:', userEmail);
+        
         if (!userEmail) {
             return res.status(400).json({ error: 'userEmail required' });
         }
         
         const db = mongoose.connection.db;
-        // Search BOTH userEmail AND applicantEmail
-        const submissions = await db.collection('submissions').find({ 
-            $or: [
-                { userEmail: userEmail },
-                { applicantEmail: userEmail }
-            ]
-        }).toArray();
         
-        console.log(`Found ${submissions.length} submissions for ${userEmail}`);
-        res.json(submissions);
+        // Get all submissions
+        const allSubmissions = await db.collection('submissions').find({}).toArray();
+        
+        // Filter for this user
+        const userSubmissions = allSubmissions.filter(sub => 
+            sub.userEmail === userEmail || 
+            sub.applicantEmail === userEmail
+        );
+        
+        console.log(`✅ Found ${userSubmissions.length} submissions for ${userEmail}`);
+        res.json(userSubmissions);
+        
     } catch (error) {
-        console.error('Error fetching my submissions:', error);
-        res.json([]);
+        console.error('❌ Error fetching my submissions:', error);
+        res.status(500).json({ error: error.message });
     }
 });
 
