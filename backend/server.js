@@ -382,6 +382,58 @@ app.delete('/api/applications/:id', async (req, res) => {
     }
 });
 
+// ========== REVIEWER ROUTES ==========
+// Get reviewer tasks
+app.get('/api/reviewer/tasks', async (req, res) => {
+    try {
+        const userEmail = req.query.userEmail;
+        if (!userEmail) {
+            return res.status(400).json({ error: 'userEmail required' });
+        }
+        
+        const db = mongoose.connection.db;
+        
+        // Find applications assigned to this reviewer based on their checker role
+        // You'll need to define which applications go to which reviewer
+        let assignedTasks = [];
+        
+        // Check if user has a checker role
+        const user = usersDB[userEmail];
+        if (user && user.checkerRole) {
+            // For now, return empty array - implement based on your business logic
+            assignedTasks = await db.collection('submissions').find({
+                status: 'Pending Eligibility Check', // or whatever status
+                // Add logic to filter by checker role
+            }).toArray();
+        }
+        
+        res.json({ 
+            assignedTasks: assignedTasks,
+            checkerRole: user?.checkerRole || null
+        });
+        
+    } catch (error) {
+        console.error('Error fetching reviewer tasks:', error);
+        res.json({ assignedTasks: [] });
+    }
+});
+
+// Update reviewer name (sync from Google)
+app.put('/api/users/reviewer-name', async (req, res) => {
+    try {
+        const { email, name } = req.body;
+        
+        if (usersDB[email]) {
+            usersDB[email].name = name;
+        }
+        
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error updating reviewer name:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // ========== 404 HANDLER ==========
 app.use((req, res) => {
     res.status(404).json({ error: 'Route not found', path: req.url });

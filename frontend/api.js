@@ -94,9 +94,8 @@ async function getApplication(appId) {
 }
 
 // IMPORTANT: Use the correct endpoint from server.js
-// In server.js, faculty applications are at /api/my-submissions
 async function getFacultyApplications() {
-    return apiRequest('/my-submissions');
+    return apiRequest('/faculty/applications');  // ✅ This matches the new route
 }
 
 async function createApplication(application) {
