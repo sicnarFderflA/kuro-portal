@@ -14,7 +14,7 @@ app.use(cors({
 app.use(express.json());
 
 // MongoDB Connection
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://200520181_db_user:200520181_db_password@kuro-database.neg1meg.mongodb.net/?appName=KURO-Database';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://200520181_db_user:200520181_db_password@kuro-database.neg1meg.mongodb.net/kuro_portal?retryWrites=true&w=majority&appName=KURO-Database';
 
 mongoose.connect(MONGODB_URI)
     .then(() => console.log('✅ MongoDB Connected successfully'))
@@ -240,33 +240,6 @@ app.post('/api/faculty/drafts', async (req, res) => {
         res.json({ success: true, draftId: draft.draftId });
     } catch (error) {
         console.error('Error saving draft:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Delete faculty draft
-app.delete('/api/faculty/drafts/:draftId', async (req, res) => {
-    try {
-        const { draftId } = req.params;
-        const userEmail = req.query.userEmail;
-        
-        if (!userEmail) {
-            return res.status(400).json({ error: 'userEmail required' });
-        }
-        
-        const db = mongoose.connection.db;
-        const result = await db.collection('drafts').deleteOne({ 
-            draftId: draftId, 
-            userEmail: userEmail 
-        });
-        
-        if (result.deletedCount === 0) {
-            return res.status(404).json({ error: 'Draft not found' });
-        }
-        
-        res.json({ success: true });
-    } catch (error) {
-        console.error('Error deleting draft:', error);
         res.status(500).json({ error: error.message });
     }
 });
