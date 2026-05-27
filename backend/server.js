@@ -175,7 +175,6 @@ app.get('/api/faculty/applications', async (req, res) => {
         }
         
         const db = mongoose.connection.db;
-        // Search BOTH userEmail AND applicantEmail
         const submissions = await db.collection('submissions').find({ 
             $or: [
                 { userEmail: userEmail },
@@ -183,7 +182,6 @@ app.get('/api/faculty/applications', async (req, res) => {
             ]
         }).toArray();
         
-        console.log(`Found ${submissions.length} applications for ${userEmail}`);
         res.json(submissions);
     } catch (error) {
         console.error('Error fetching faculty applications:', error);
