@@ -1451,103 +1451,122 @@ function getTimeAgo(dateString) {
 }
 
 // Add notification function
-function addNotification(userEmail, type, title, message, appId, icon, color, tab = null) {
-    if (!notificationsDB[userEmail]) notificationsDB[userEmail] = [];
-    
-    const notification = {
-        id: 'notif_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
-        type: type,
-        title: title,
-        message: message,
-        appId: appId,
-        tab: tab,
-        icon: icon,
-        color: color,
-        isRead: false,
-        createdAt: new Date().toISOString()
-    };
-    
-    notificationsDB[userEmail].unshift(notification);
-    
-    if (notificationsDB[userEmail].length > 50) {
-        notificationsDB[userEmail] = notificationsDB[userEmail].slice(0, 50);
-    }
-    
-    localStorage.setItem('kuro_notifications', JSON.stringify(notificationsDB));
-    updateNotificationBadge(userEmail);
-    
-    return notification;
-}
-
-function updateNotificationBadge(userEmail) {
-    const notifications = notificationsDB[userEmail] || [];
-    const unreadCount = notifications.filter(n => !n.isRead).length;
-    const badge = document.getElementById('notificationBadge');
-    if (badge) {
-        if (unreadCount > 0) {
-            badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
-            badge.style.display = 'inline-block';
-        } else {
-            badge.style.display = 'none';
-        }
-    }
-}
-
-function renderNotificationDropdown(userEmail) {
-    const notifications = notificationsDB[userEmail] || [];
-    const container = document.getElementById('notificationList');
-    if (!container) return;
-    
-    if (notifications.length === 0) {
-        container.innerHTML = '<div style="padding: 2rem; text-align: center; color: #999;">No notifications yet</div>';
-        return;
-    }
-    
-    let html = '';
-    notifications.slice(0, 10).forEach(notif => {
-        const timeAgo = getTimeAgo(notif.createdAt);
-        html += `
-            <div class="notification-item ${!notif.isRead ? 'unread' : ''}" 
-                 data-id="${notif.id}" 
-                 data-app-id="${notif.appId || ''}">
-                <div style="display: flex; gap: 0.8rem; align-items: flex-start;">
-                    <div class="notification-icon" style="background: ${notif.color}20;">
-                        <span style="font-size: 1rem;">${notif.icon}</span>
-                    </div>
-                    <div class="notification-content">
-                        <div class="notification-title">${escapeHtml(notif.title)}</div>
-                        <div class="notification-message">${escapeHtml(notif.message)}</div>
-                        <div class="notification-time">${timeAgo}</div>
-                    </div>
-                    ${!notif.isRead ? '<div style="width: 8px; height: 8px; background: #D4AF37; border-radius: 50%;"></div>' : ''}
-                </div>
-            </div>
-        `;
-    });
-    
-    container.innerHTML = html;
-    
-    document.querySelectorAll('.notification-item').forEach(item => {
-        item.addEventListener('click', () => {
-            const id = item.dataset.id;
-            const appId = item.dataset.appId;
-            
-            const notif = (notificationsDB[userEmail] || []).find(n => n.id === id);
-            if (notif) notif.isRead = true;
-            localStorage.setItem('kuro_notifications', JSON.stringify(notificationsDB));
+async function addNotification(userEmail, type, title, message, appId, icon, color, tab = null) {
+    try {
+        const notification = {
+            userEmail: userEmail,
+            type: type,
+            title: title,
+            message: message,
+            appId: appId,
+            tab: tab,
+            icon: icon,
+            color: color,
+            isRead: false,
+            createdAt: new Date().toISOString()
+        };
+        
+        await KURO_API.createNotification(notification);
+        
+        // If this notification is for the current user, update the bell badge
+        const currentUser = JSON.parse(sessionStorage.getItem('kuro_user'));
+        if (currentUser && currentUser.email === userEmail) {
             updateNotificationBadge(userEmail);
-            
-            const dropdown = document.getElementById('notificationDropdown');
-            if (dropdown) dropdown.style.display = 'none';
-            
-            if (appId) {
-                viewApplicationDetails(appId);
+            showToast(icon, title, message, color);
+        }
+        
+        return notification;
+    } catch (error) {
+        console.error('Failed to save notification:', error);
+    }
+}
+
+async function getUserNotifications(userEmail) {
+    try {
+        return await KURO_API.getNotifications(userEmail);
+    } catch (error) {
+        console.error('Failed to load notifications:', error);
+        return [];
+    }
+}
+
+async function updateNotificationBadge(userEmail) {
+    try {
+        const notifications = await KURO_API.getNotifications(userEmail);
+        const unreadCount = notifications.filter(n => !n.isRead).length;
+        const badge = document.getElementById('notificationBadge');
+        if (badge) {
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                badge.style.display = 'inline-block';
+            } else {
+                badge.style.display = 'none';
             }
+        }
+    } catch (error) {
+        console.error('Failed to update badge:', error);
+    }
+}
+
+async function renderNotificationDropdown(userEmail) {
+    try {
+        const notifications = await KURO_API.getNotifications(userEmail);
+        const container = document.getElementById('notificationList');
+        if (!container) return;
+        
+        if (notifications.length === 0) {
+            container.innerHTML = '<div style="padding: 2rem; text-align: center; color: #999;">No notifications yet</div>';
+            return;
+        }
+        
+        let html = '';
+        notifications.slice(0, 10).forEach(notif => {
+            const timeAgo = getTimeAgo(notif.createdAt);
+            html += `
+                <div class="notification-item ${!notif.isRead ? 'unread' : ''}" 
+                     data-id="${notif._id}" 
+                     data-app-id="${notif.appId || ''}">
+                    <div style="display: flex; gap: 0.8rem; align-items: flex-start;">
+                        <div class="notification-icon" style="background: ${notif.color}20;">
+                            <span style="font-size: 1rem;">${notif.icon}</span>
+                        </div>
+                        <div class="notification-content">
+                            <div class="notification-title">${escapeHtml(notif.title)}</div>
+                            <div class="notification-message">${escapeHtml(notif.message)}</div>
+                            <div class="notification-time">${timeAgo}</div>
+                        </div>
+                        ${!notif.isRead ? '<div style="width: 8px; height: 8px; background: #D4AF37; border-radius: 50%;"></div>' : ''}
+                    </div>
+                </div>
+            `;
         });
-    });
+        
+        container.innerHTML = html;
+        
+        // Add click handlers
+        document.querySelectorAll('.notification-item').forEach(item => {
+            item.addEventListener('click', async () => {
+                const id = item.dataset.id;
+                const appId = item.dataset.appId;
+                
+                await KURO_API.markNotificationRead(id);
+                updateNotificationBadge(userEmail);
+                
+                const dropdown = document.getElementById('notificationDropdown');
+                if (dropdown) dropdown.style.display = 'none';
+                
+                if (appId) {
+                    viewApplicationDetails(appId);
+                }
+            });
+        });
+    } catch (error) {
+        console.error('Failed to render notifications:', error);
+    }
 }
 
 function initNotificationSystem() {
+    const currentUser = JSON.parse(sessionStorage.getItem('kuro_user'));
     if (currentUser && currentUser.email) {
         updateNotificationBadge(currentUser.email);
         
@@ -1555,28 +1574,27 @@ function initNotificationSystem() {
         const dropdown = document.getElementById('notificationDropdown');
         
         if (bell && dropdown) {
-            bell.addEventListener('click', (e) => {
+            bell.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 const isVisible = dropdown.style.display === 'block';
                 dropdown.style.display = isVisible ? 'none' : 'block';
                 if (!isVisible) {
-                    renderNotificationDropdown(currentUser.email);
+                    await renderNotificationDropdown(currentUser.email);
                 }
             });
         }
         
         const markAllBtn = document.getElementById('markAllReadBtn');
         if (markAllBtn) {
-            markAllBtn.addEventListener('click', (e) => {
+            markAllBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                const notifications = notificationsDB[currentUser.email] || [];
-                notifications.forEach(n => n.isRead = true);
-                localStorage.setItem('kuro_notifications', JSON.stringify(notificationsDB));
+                await KURO_API.markAllNotificationsRead(currentUser.email);
                 updateNotificationBadge(currentUser.email);
-                renderNotificationDropdown(currentUser.email);
+                await renderNotificationDropdown(currentUser.email);
             });
         }
         
+        // Close dropdown when clicking outside
         document.addEventListener('click', (e) => {
             if (dropdown && bell) {
                 if (!dropdown.contains(e.target) && !bell.contains(e.target)) {

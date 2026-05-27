@@ -28,3 +28,40 @@ async function googleSignIn(credential, role) {
 window.KURO_API = {
     googleSignIn
 };
+
+// ==================== NOTIFICATIONS API ====================
+async function getNotifications(userEmail) {
+    return apiRequest(`/notifications?userEmail=${encodeURIComponent(userEmail)}`);
+}
+
+async function createNotification(notification) {
+    return apiRequest('/notifications', {
+        method: 'POST',
+        body: JSON.stringify(notification)
+    });
+}
+
+async function markNotificationRead(id) {
+    return apiRequest(`/notifications/${id}/read`, { method: 'PUT' });
+}
+
+async function markAllNotificationsRead(userEmail) {
+    return apiRequest('/notifications/mark-all-read', {
+        method: 'PUT',
+        body: JSON.stringify({ userEmail })
+    });
+}
+
+async function deleteNotification(id) {
+    return apiRequest(`/notifications/${id}`, { method: 'DELETE' });
+}
+
+// Add to window.KURO_API
+window.KURO_API = {
+    // ... existing functions ...
+    getNotifications,
+    createNotification,
+    markNotificationRead,
+    markAllNotificationsRead,
+    deleteNotification,
+};

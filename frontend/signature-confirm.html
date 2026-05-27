@@ -242,27 +242,36 @@
         };
     }
 
-    function addNotification(userEmail, type, title, message, appId, icon, color, tab = null) {
-        let notificationsDB = JSON.parse(localStorage.getItem('kuro_notifications')) || {};
-        if (!notificationsDB[userEmail]) notificationsDB[userEmail] = [];
-        
-        const notification = {
-            id: 'notif_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
-            type: type,
-            title: title,
-            message: message,
-            appId: appId,
-            tab: tab,
-            icon: icon,
-            color: color,
-            isRead: false,
-            createdAt: new Date().toISOString()
-        };
-        
-        notificationsDB[userEmail].unshift(notification);
-        if (notificationsDB[userEmail].length > 50) notificationsDB[userEmail] = notificationsDB[userEmail].slice(0, 50);
-        localStorage.setItem('kuro_notifications', JSON.stringify(notificationsDB));
+        async function addNotification(userEmail, type, title, message, appId, icon, color, tab = null) {
+        try {
+            const notification = {
+                userEmail: userEmail,
+                type: type,
+                title: title,
+                message: message,
+                appId: appId,
+                tab: tab,
+                icon: icon,
+                color: color,
+                isRead: false,
+                createdAt: new Date().toISOString()
+            };
+            
+            await KURO_API.createNotification(notification);
+            
+            // If this notification is for the current user, update the bell badge
+            const currentUser = JSON.parse(sessionStorage.getItem('kuro_user'));
+            if (currentUser && currentUser.email === userEmail) {
+                updateNotificationBadge(userEmail);
+                showToast(icon, title, message, color);
+            }
+            
+            return notification;
+        } catch (error) {
+            console.error('Failed to save notification:', error);
+        }
     }
+
     // ==================== DOM ELEMENTS ====================
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
