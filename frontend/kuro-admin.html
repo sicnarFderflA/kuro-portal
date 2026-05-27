@@ -9,12 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
             --primary: #283871;
             --primary-dark: #1e2b57;
@@ -26,13 +21,9 @@
             --danger: #e74c3c;
             --light-bg: #f8f9fa;
         }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #f0f2f5;
-        }
-
-        /* Navigation */
+        body { font-family: 'Inter', sans-serif; background: #f0f2f5; }
+        
+        /* Top Navigation Styles - Matching Faculty Dashboard */
         .top-nav {
             background: var(--primary);
             padding: 0.8rem 2rem;
@@ -41,260 +32,399 @@
             align-items: center;
             border-bottom: 3px solid var(--gold);
             flex-wrap: wrap;
-        }
-
-        .logo-area {
-            display: flex;
-            align-items: center;
             gap: 1rem;
         }
-
-        .logo-area h2 {
-            color: white;
+        
+        .right-controls {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            font-size: 1.3rem;
+            gap: 1.5rem;
         }
-
-        .logo-area h2 i {
-            color: var(--gold);
-        }
-
-        .user-info {
+        
+        .logo-area { display: flex; align-items: center; gap: 1rem; }
+        .school-logo-header { height: 45px; width: auto; }
+        .logo-area h2 { color: white; display: flex; align-items: center; gap: 0.5rem; font-size: 1.3rem; }
+        .logo-area h2 i { color: var(--gold); }
+        
+        .user-section {
+            position: relative;
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 0.6rem;
+            cursor: pointer;
+            padding: 0.2rem 0.5rem;
+            border-radius: 40px;
+            transition: background 0.2s;
         }
-
-        .avatar {
-            width: 42px;
-            height: 42px;
+        
+        .user-section:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .user-avatar {
+            width: 38px;
+            height: 38px;
             border-radius: 50%;
-            background: var(--gold);
-            color: var(--primary);
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
-        }
-
-        .user-info div {
-            color: white;
-        }
-
-        .logout-nav {
-            background: rgba(255,255,255,0.15);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.3);
-            padding: 0.4rem 1rem;
-            border-radius: 30px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .logout-nav:hover {
-            background: rgba(255,255,255,0.25);
-        }
-
-        /* Main Content */
-        .main-content {
-            padding: 2rem;
-            max-width: 1400px;
-            margin: 1.5rem auto;
-            background: white;
-            border-radius: 1rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-
-        .dashboard-title h2 {
-            color: var(--gold);
-            font-size: 1.6rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .dashboard-title p {
-            color: var(--gray-text);
-        }
-
-        /* Stats Grid */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
-            background: var(--light-bg);
-            border-radius: 1rem;
-            padding: 1.2rem;
-            border-top: 4px solid var(--gold);
-            transition: transform 0.2s;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-3px);
-        }
-
-        .stat-card i {
-            color: var(--gold);
-            font-size: 1.8rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-card h3 {
-            font-size: 2rem;
-            color: var(--primary);
-        }
-
-        .stat-card span {
-            color: var(--gray-text);
-            font-size: 0.85rem;
-        }
-
-        /* Charts Row */
-        .charts-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .chart-card {
-            background: white;
-            border-radius: 1rem;
-            padding: 1rem;
-            border: 1px solid #eef2f0;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-
-        .chart-card h4 {
-            color: var(--primary);
-            margin-bottom: 1rem;
             font-size: 1rem;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        
+        .user-avatar.has-initial {
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            color: var(--primary);
+        }
+        
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .user-avatar .avatar-initial {
             display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .user-name-short {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: white;
+        }
+        
+        .user-hover-card {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 0.75rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            padding: 0.75rem 1rem;
+            min-width: 200px;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s ease;
+            pointer-events: none;
+        }
+        
+        .user-section:hover .user-hover-card {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .user-hover-card::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            right: 20px;
+            width: 12px;
+            height: 12px;
+            background: white;
+            transform: rotate(45deg);
+            box-shadow: -2px -2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .user-full-name {
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 0.85rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .user-full-email {
+            font-size: 0.7rem;
+            color: #666;
+            word-break: break-all;
+        }
+        
+        .user-hover-card hr {
+            margin: 0.5rem 0;
+            border: none;
+            border-top: 1px solid #eef2f0;
+        }
+        
+        .user-hover-role {
+            font-size: 0.65rem;
+            color: var(--gold);
+            font-weight: 600;
+        }
+        
+        .notification-wrapper {
+            position: relative;
+        }
+        
+        .notification-bell {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            position: relative;
+            padding: 0.3rem;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+        
+        .notification-bell:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -8px;
+            background: #e74c3c;
+            color: white;
+            font-size: 0.6rem;
+            border-radius: 50%;
+            padding: 2px 6px;
+            min-width: 18px;
+            text-align: center;
+            display: none;
+        }
+        
+        .notification-dropdown {
+            position: absolute;
+            top: 45px;
+            right: 0;
+            width: 380px;
+            max-height: 500px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            z-index: 1000;
+            overflow: hidden;
+            animation: slideDown 0.2s ease;
+        }
+        
+        .notification-dropdown::before {
+            content: '';
+            position: absolute;
+            top: -8px;
+            right: 15px;
+            width: 16px;
+            height: 16px;
+            background: white;
+            transform: rotate(45deg);
+            box-shadow: -2px -2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .notification-item {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid #eef2f0;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .notification-item:hover {
+            background: #f8f9fa;
+        }
+        
+        .notification-item.unread {
+            background: #fffef5;
+            border-left: 3px solid #D4AF37;
+        }
+        
+        .notification-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+        
+        .notification-content {
+            flex: 1;
+        }
+        
+        .notification-title {
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: #1A2E3F;
+            margin-bottom: 0.2rem;
+        }
+        
+        .notification-message {
+            font-size: 0.7rem;
+            color: #666;
+            margin-bottom: 0.2rem;
+        }
+        
+        .notification-time {
+            font-size: 0.6rem;
+            color: #999;
+        }
+        
+        .logout-nav {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 0.4rem 1rem;
+            border-radius: 40px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.2s;
+            display: inline-flex;
             align-items: center;
             gap: 0.5rem;
         }
-
-        .chart-card h4 i {
-            color: var(--gold);
+        
+        .logout-nav:hover {
+            background: rgba(231, 76, 60, 0.8);
+            border-color: rgba(231, 76, 60, 0.8);
+        }
+        
+        @keyframes slideDown {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+        
+        @keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+        
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @media (max-width: 768px) {
+            .top-nav {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .right-controls {
+                justify-content: flex-end;
+            }
+            .user-name-short {
+                display: none;
+            }
         }
 
-        .chart-container {
-            max-width: 100%;
-            height: 250px;
-            position: relative;
+        /* Check Stage Styles */
+        .check-stage-card {
+            background: #f8f9fa;
+            border-radius: 1rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid;
+            transition: all 0.2s;
         }
+        .check-stage-card.pending { border-left-color: #f39c12; background: #fffef5; }
+        .check-stage-card.completed { border-left-color: #2ecc71; background: #f0fff4; }
+        .check-stage-card.current { border-left-color: #3498db; background: #e8f0fe; }
 
-        /* Tables */
-        .applications-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
+        .check-stage-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
         }
-
-        .applications-table th {
-            background: var(--primary);
-            color: white;
-            padding: 0.8rem;
-            text-align: left;
-            font-size: 0.8rem;
+        .check-stage-title {
+            font-weight: 700;
+            font-size: 0.85rem;
         }
-
-        .applications-table td {
-            padding: 0.8rem;
-            border-bottom: 1px solid #eee;
-            font-size: 0.8rem;
-        }
-
-        .applications-table tr:hover {
-            background: #f5f5f5;
-        }
-
-        /* Status Badges */
-        .status-badge {
-            padding: 0.2rem 0.7rem;
-            border-radius: 40px;
+        .check-stage-status {
             font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+        }
+        .check-stage-status.pending { background: #fff3cd; color: #856404; }
+        .check-stage-status.completed { background: #d4edda; color: #155724; }
+        .check-stage-status.current { background: #cce5ff; color: #004085; }
+
+        .check-stage-actions {
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid #e0e0e0;
+        }
+        .check-stage-feedback {
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: #fff3cd;
+            border-radius: 0.5rem;
+            font-size: 0.7rem;
+            color: #856404;
+        }
+
+        /* Return Reason Badge */
+        .return-badge {
+            background: #e74c3c;
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 20px;
+            font-size: 0.6rem;
             font-weight: 600;
-            display: inline-block;
         }
 
-        .status-badge.pending {
-            background: #fff0db;
-            color: #b45f1b;
-        }
-
-        .status-badge.approved {
-            background: #e0f5e6;
-            color: #1e6f3f;
-        }
-
-        .status-badge.external {
-            background: #e3ecff;
-            color: #2c5f9a;
-        }
-
-        /* Buttons */
-        .btn-sm {
-            background: #eef2fa;
-            border: none;
-            padding: 0.3rem 0.8rem;
-            border-radius: 30px;
-            cursor: pointer;
-            font-size: 0.7rem;
-            margin: 0.1rem;
-            transition: 0.2s;
-        }
-
-        .btn-sm:hover {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-danger {
-            background: var(--danger);
+        /* Superuser Settings Button */
+        .superuser-settings-btn {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
             color: white;
             border: none;
-            padding: 0.3rem 0.8rem;
-            border-radius: 30px;
-            cursor: pointer;
-            font-size: 0.7rem;
-            margin: 0.1rem;
-        }
-
-        .btn-danger:hover {
-            background: #c0392b;
-        }
-
-        .btn-primary {
-            background: var(--gold);
-            color: var(--primary);
-            border: none;
-            padding: 0.5rem 1.2rem;
+            padding: 0.4rem 1rem;
             border-radius: 40px;
             cursor: pointer;
+            font-size: 0.75rem;
             font-weight: 600;
-            transition: 0.2s;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
 
-        .btn-primary:hover {
-            background: var(--gold-dark);
-            color: white;
+        .superuser-settings-btn:hover {
+            background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
 
-        /* Modal Tabs */
-        .modal-detail-tabs {
+        .superuser-settings-btn i {
+            font-size: 0.9rem;
+        }
+
+        /* Superuser Settings Modal Styles */
+        .superuser-modal .swal2-popup {
+            width: 800px !important;
+            max-width: 95vw !important;
+        }
+
+        .settings-tabs {
             display: flex;
             gap: 0.5rem;
             margin-bottom: 1.5rem;
             border-bottom: 2px solid #e0e0e0;
-            padding-bottom: 0;
+            flex-wrap: wrap;
         }
 
-        .modal-detail-tab {
+        .settings-tab {
             background: none;
             border: none;
             padding: 0.6rem 1.2rem;
@@ -304,590 +434,2371 @@
             cursor: pointer;
             border-radius: 8px 8px 0 0;
             transition: 0.2s;
-            position: relative;
         }
 
-        .modal-detail-tab.active {
+        .settings-tab.active {
             color: var(--primary);
             background: #f0f2f5;
+            border-bottom: 2px solid var(--gold);
         }
 
-        .modal-detail-tab.active::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: var(--gold);
-        }
-
-        .modal-detail-tab:hover:not(.active) {
-            background: #f5f5f5;
-            color: var(--primary);
-        }
-
-        .modal-tab-content {
+        .settings-tab-content {
             display: none;
         }
 
-        .modal-tab-content.active {
+        .settings-tab-content.active {
             display: block;
         }
 
-        /* Detail Sections */
-        .detail-section {
-            margin-bottom: 1rem;
+        .superuser-note {
+            background: #fff9e6;
+            border-left: 4px solid var(--gold);
             padding: 0.8rem;
-            background: var(--light-bg);
-            border-radius: 0.8rem;
-        }
-
-        .detail-section h4 {
-            color: var(--primary);
-            margin-bottom: 0.5rem;
-            font-size: 0.9rem;
-            border-left: 3px solid var(--gold);
-            padding-left: 0.5rem;
-        }
-
-        .detail-field {
-            margin-bottom: 0.3rem;
-            font-size: 0.8rem;
-        }
-
-        .detail-field strong {
-            color: var(--primary);
-        }
-
-        /* Filter Bar */
-        .filter-bar {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1rem;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        .filter-bar select, .filter-bar input {
-            padding: 0.5rem;
-            border: 1px solid #ddd;
             border-radius: 0.5rem;
-            font-size: 0.8rem;
-        }
-
-        footer {
-            text-align: center;
-            font-size: 0.65rem;
-            color: var(--gray-text);
-            padding: 1rem;
-            margin-top: 1rem;
-        }
-
-        .budget-table {
-            width: 100%;
-            font-size: 0.75rem;
-            border-collapse: collapse;
-        }
-
-        .budget-table th, .budget-table td {
-            padding: 0.5rem;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-
-        .budget-table th {
-            background: #e0e0e0;
-        }
-
-        @media (max-width: 768px) {
-            .main-content { padding: 1rem; }
-            .applications-table { font-size: 0.7rem; }
-            .btn-sm { padding: 0.2rem 0.5rem; font-size: 0.65rem; }
-            .charts-row { grid-template-columns: 1fr; }
-        }
-
-        .detail-section {
             margin-bottom: 1rem;
-            padding: 0.8rem;
-            background: var(--light-bg);
-            border-radius: 0.8rem;
-            text-align: left;
-        }
-
-        .detail-section h4 {
-            color: var(--primary);
-            margin-bottom: 0.5rem;
-            font-size: 0.9rem;
-            border-left: 3px solid var(--gold);
-            padding-left: 0.5rem;
-            text-align: left;
-        }
-
-        .detail-field {
-            margin-bottom: 0.3rem;
-            font-size: 0.8rem;
-            text-align: left;
-        }
-
-        .detail-field strong {
-            color: var(--primary);
-            display: inline-block;
-            min-width: 180px;
-        }
-
-        .detail-section ul, .detail-section ol {
-            margin-left: 1.5rem;
-            text-align: left;
-        }
-
-        .detail-section li {
-            text-align: left;
-            margin-bottom: 0.2rem;
-        }
-
-        .detail-section div[style*="margin-bottom:0.8rem"] {
-            text-align: left;
-        }
-
-        .budget-table {
-            width: 100%;
             font-size: 0.75rem;
-            border-collapse: collapse;
-            text-align: left;
+            color: #856404;
         }
 
-        .budget-table th, .budget-table td {
-            padding: 0.5rem;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
+        .audit-log-item {
+            background: #f8f9fa;
+            padding: 0.6rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.7rem;
+            border-left: 3px solid var(--gold);
         }
 
-        .budget-table th {
-            background: #e0e0e0;
-            text-align: left;
+        .audit-log-time {
+            color: #999;
+            font-size: 0.6rem;
         }
-
-        .budget-table td:last-child,
-        .budget-table th:last-child {
-            text-align: right;
+        
+        .main-content { padding: 2rem; max-width: 1400px; margin: 1.5rem auto; background: white; border-radius: 1rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .dashboard-title h2 { color: var(--gold); font-size: 1.6rem; margin-bottom: 0.5rem; }
+        .dashboard-title p { color: var(--gray-text); }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card { background: var(--light-bg); border-radius: 1rem; padding: 1.2rem; border-top: 4px solid var(--gold); transition: transform 0.2s; }
+        .stat-card:hover { transform: translateY(-3px); }
+        .stat-card i { color: var(--gold); font-size: 1.8rem; margin-bottom: 0.5rem; }
+        .stat-card h3 { font-size: 2rem; color: var(--primary); }
+        .stat-card span { color: var(--gray-text); font-size: 0.85rem; }
+        .charts-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .chart-card { background: white; border-radius: 1rem; padding: 1rem; border: 1px solid #eef2f0; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .chart-card h4 { color: var(--primary); margin-bottom: 1rem; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .chart-card h4 i { color: var(--gold); }
+        .chart-container { max-width: 100%; height: 250px; position: relative; }
+        .applications-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        .applications-table th { background: var(--primary); color: white; padding: 0.8rem; text-align: left; font-size: 0.8rem; }
+        .applications-table td { padding: 0.8rem; border-bottom: 1px solid #eee; font-size: 0.8rem; }
+        .applications-table tr:hover { background: #f5f5f5; }
+        .status-badge { padding: 0.2rem 0.7rem; border-radius: 40px; font-size: 0.7rem; font-weight: 600; display: inline-block; }
+        .status-badge.pending { background: #fff0db; color: #b45f1b; }
+        .status-badge.approved { background: #e0f5e6; color: #1e6f3f; }
+        .status-badge.external { background: #e3ecff; color: #2c5f9a; }
+        .cv-status-badge.eligible { background: #d4edda; color: #155724; }
+        .cv-status-badge.ineligible { background: #f8d7da; color: #721c24; }
+        .cv-status-badge.pending { background: #fff3cd; color: #856404; }
+        .cv-status-badge.missing { background: #e8e8e8; color: #666; }
+        .btn-sm { background: #eef2fa; border: none; padding: 0.3rem 0.8rem; border-radius: 30px; cursor: pointer; font-size: 0.7rem; margin: 0.1rem; transition: 0.2s; }
+        .btn-sm:hover { background: var(--primary); color: white; }
+        .btn-danger { background: var(--danger); color: white; border: none; padding: 0.3rem 0.8rem; border-radius: 30px; cursor: pointer; font-size: 0.7rem; margin: 0.1rem; }
+        .btn-primary { background: var(--gold); color: var(--primary); border: none; padding: 0.5rem 1.2rem; border-radius: 40px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+        .btn-primary:hover { background: var(--gold-dark); color: white; }
+        .filter-bar { display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; }
+        .filter-bar select, .filter-bar input { padding: 0.5rem; border: 1px solid #ddd; border-radius: 0.5rem; font-size: 0.8rem; }
+        footer { text-align: center; font-size: 0.65rem; color: var(--gray-text); padding: 1rem; margin-top: 1rem; }
+        .detail-section { margin-bottom: 1rem; padding: 0.8rem; background: var(--light-bg); border-radius: 0.8rem; text-align: left; }
+        .detail-section h4 { color: var(--primary); margin-bottom: 0.5rem; font-size: 0.9rem; border-left: 3px solid var(--gold); padding-left: 0.5rem; }
+        .detail-field { margin-bottom: 0.3rem; font-size: 0.8rem; text-align: left; }
+        .detail-field strong { color: var(--primary); display: inline-block; min-width: 180px; }
+        .modal-detail-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 2px solid #e0e0e0; flex-wrap: wrap; }
+        .modal-detail-tab { background: none; border: none; padding: 0.6rem 1.2rem; font-size: 0.85rem; font-weight: 600; color: var(--gray-text); cursor: pointer; border-radius: 8px 8px 0 0; transition: 0.2s; position: relative; }
+        .modal-detail-tab.active { color: var(--primary); background: #f0f2f5; }
+        .modal-detail-tab.active::after { content: ''; position: absolute; bottom: -2px; left: 0; right: 0; height: 2px; background: var(--gold); }
+        .modal-tab-content { display: none; }
+        .modal-tab-content.active { display: block; }
+        .cv-list { display: flex; flex-direction: column; gap: 0.5rem; }
+        .cv-item { background: white; border-radius: 0.5rem; padding: 0.8rem; border: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+        .cv-status-select { padding: 0.3rem 0.6rem; border-radius: 20px; border: 1px solid #ddd; font-size: 0.7rem; cursor: pointer; }
+        .cv-status-select.eligible { background: #d4edda; color: #155724; border-color: #2ecc71; }
+        .cv-status-select.ineligible { background: #f8d7da; color: #721c24; border-color: #e74c3c; }
+        .cv-status-select.pending { background: #fff3cd; color: #856404; border-color: #f39c12; }
+        .view-cv-btn { background: var(--gold); color: var(--primary); border: none; padding: 0.3rem 0.8rem; border-radius: 30px; cursor: pointer; font-size: 0.7rem; }
+        .view-cv-btn:hover { background: var(--gold-dark); color: white; }
+        .feedback-textarea { width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 0.5rem; font-size: 0.8rem; margin-top: 0.5rem; font-family: inherit; }
+        .budget-table { width: 100%; font-size: 0.75rem; border-collapse: collapse; text-align: left; }
+        .budget-table th, .budget-table td { padding: 0.5rem; text-align: left; border-bottom: 1px solid #ddd; }
+        .budget-table th { background: #e0e0e0; }
+        .budget-table td:last-child, .budget-table th:last-child { text-align: right; }
+        .pdf-viewer-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 10000; visibility: hidden; opacity: 0; transition: 0.2s; }
+        .pdf-viewer-modal.active { visibility: visible; opacity: 1; }
+        .pdf-viewer-container { background: white; border-radius: 1rem; width: 90%; max-width: 900px; height: 85vh; display: flex; flex-direction: column; overflow: hidden; }
+        .pdf-viewer-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: var(--primary); color: white; border-bottom: 2px solid var(--gold); }
+        .close-pdf-btn { background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
+        .pdf-viewer-body { flex: 1; overflow-y: auto; padding: 1rem; background: #f5f5f5; }
+        .endorsement-preview { background: white; padding: 1.5rem; border-radius: 0.5rem; border: 1px solid #ddd; font-family: 'Times New Roman', serif; }
+        .toast-notification {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            min-width: 320px;
+            max-width: 400px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            z-index: 10000;
+            animation: slideInRight 0.3s ease;
+            border-left: 4px solid;
+            overflow: hidden;
         }
-
-        .detail-section div[style*="font-family: serif"] {
-            text-align: left;
-        }
-
-        .detail-section div[style*="font-family: serif"] p {
-            text-align: left;
-        }
-
-        .detail-section div[style*="font-family: serif"] div {
-            text-align: center;
-        }
+        .toast-notification.success { border-left-color: #2ecc71; }
+        .toast-notification.warning { border-left-color: #f39c12; }
+        .toast-notification.info { border-left-color: #3498db; }
+        .toast-notification.error { border-left-color: #e74c3c; }
+        .toast-content { display: flex; align-items: flex-start; gap: 0.8rem; padding: 1rem; }
+        .toast-icon { font-size: 1.2rem; }
+        .toast-message { flex: 1; font-size: 0.8rem; color: #333; }
+        .toast-close { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #999; line-height: 1; }
+        .swal2-popup { max-height: 90vh !important; overflow-y: auto !important; }
+        .swal2-html-container { max-height: 70vh !important; overflow-y: auto !important; }
     </style>
 </head>
 <body>
 <div class="top-nav">
     <div class="logo-area">
         <img src="xu_logo.png" alt="Xavier University Logo" class="school-logo-header" style="height: 45px; width: auto;" onerror="this.onerror=null; this.style.display='none'">
-        <img src="kuro_logo.png" alt="KURO Logo" class="kuro-logo-header" style="height: 40px; width: auto; margin-left: 0.5rem;" onerror="this.onerror=null; this.style.display='none'">
-        <h2>KURO · Admin Console</h2>
+        <img src="kuro_logo.png" alt="KURO Logo" style="height: 40px; width: auto; margin-left: 0.5rem;" onerror="this.onerror=null; this.style.display='none'">
+        <h2><i class="fas fa-scroll"></i> KURO · Admin Console</h2>
     </div>
-    <div class="user-info">
-        <div class="avatar" id="userAvatar">A</div>
-        <div><div id="userName"></div><div id="userEmail" style="font-size:0.7rem;"></div></div>
-        <button id="logoutBtn" class="logout-nav"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    
+    <div class="right-controls">
+        <!-- User Section with Hover Card -->
+        <div class="user-section">
+            <div class="user-avatar" id="userAvatar">A</div>
+            <span class="user-name-short" id="userShortName"></span>
+            
+            <!-- Hover Tooltip Card -->
+            <div class="user-hover-card">
+                <div class="user-full-name" id="userFullName"></div>
+                <div class="user-full-email" id="userFullEmail"></div>
+                <hr>
+                <div class="user-hover-role">
+                    <i class="fas fa-shield-alt"></i> System Administrator
+                </div>
+            </div>
+        </div>
+        
+        <button id="superuserSettingsBtn" class="superuser-settings-btn" style="display: none;">
+            <i class="fas fa-shield-alt"></i> Admin Settings
+        </button>
+
+        <!-- Notification Bell -->
+        <div class="notification-wrapper">
+            <button id="notificationBell" class="notification-bell">
+                <i class="fas fa-bell"></i>
+                <span id="notificationBadge" class="notification-badge">0</span>
+            </button>
+            <div id="notificationDropdown" class="notification-dropdown" style="display: none;">
+                <div style="padding: 0.8rem 1rem; border-bottom: 1px solid #eef2f0; background: #f8f9fa;">
+                    <span style="font-weight: 600; color: #283871;">🔔 Notifications</span>
+                    <button id="markAllReadBtn" style="float: right; background: none; border: none; color: #999; font-size: 0.7rem; cursor: pointer;">Mark all read</button>
+                </div>
+                <div id="notificationList" style="max-height: 400px; overflow-y: auto;">
+                    <div style="padding: 2rem; text-align: center; color: #999;">No notifications yet</div>
+                </div>
+                <div style="padding: 0.5rem; border-top: 1px solid #eef2f0; text-align: center;">
+                    <a href="#" id="viewAllNotifications" style="font-size: 0.7rem; color: #D4AF37; text-decoration: none;">View all</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Logout Button -->
+        <button id="logoutBtn" class="logout-nav">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
     </div>
 </div>
 <div class="main-content" id="mainContent"></div>
 <footer><i class="fas fa-scroll"></i> Kinaadman University Research Office · Xavier University - Ateneo de Cagayan</footer>
 
+<!-- PDF Viewer Modal -->
+<div id="pdfViewerModal" class="pdf-viewer-modal">
+    <div class="pdf-viewer-container">
+        <div class="pdf-viewer-header">
+            <h3 id="pdfViewerTitle">CV Viewer</h3>
+            <button class="close-pdf-btn" onclick="closePDFViewer()">&times;</button>
+        </div>
+        <div class="pdf-viewer-body" id="pdfViewerBody">
+            <div class="pdf-placeholder" style="text-align:center; padding:2rem;">
+                <i class="fas fa-file-pdf" style="font-size:4rem; color:var(--gold);"></i>
+                <p>Select a CV to view</p>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
-const API_URL = 'https://kuro-api-m4mb.onrender.com';
+const EXEMPTED_EMAIL = '200520181@my.xu.edu.ph';
+const ADMIN_EMAILS = ['200520181@my.xu.edu.ph'];
 
-const currentUser = JSON.parse(sessionStorage.getItem('kuro_user'));
-if (!currentUser) window.location.href = "login.html";
-
-document.getElementById('userName').innerText = currentUser.name;
-document.getElementById('userEmail').innerText = currentUser.email;
-document.getElementById('userAvatar').innerText = currentUser.name ? currentUser.name.charAt(0) : 'A';
-
-// Load data from localStorage
-let submissionsDB = JSON.parse(localStorage.getItem('kuro_submissions')) || {};
-let reviewerTasks = JSON.parse(localStorage.getItem('kuro_reviewer_tasks')) || {};
-
-const ALL_GRANTS = [
-    "INSTITUTIONAL RESEARCH (IR) AWARD",
-    "MIGUEL BERNAD HUMANITIES RESEARCH (MBHR) AWARD",
-    "MINDANAO RESEARCH (MR) AWARD",
-    "MATTEO RICCI RESEARCH (MRR) AWARD",
-    "Publication Award",
-    "Madigan Award",
-    "Kinaadman Student Research Award (KSRA)"
+const SUPERUSER_EMAILS = [
+    '200520181@my.xu.edu.ph',      // Your superuser account
+    // Add more superuser emails here as needed
+    // 'director@xu.edu.ph',
+    // 'researchoffice@xu.edu.ph'
 ];
 
+function isSuperUser(email) {
+    return SUPERUSER_EMAILS.map(e => e.toLowerCase()).includes(email.toLowerCase());
+}
+
+function isExemptedAccount(email) {
+    return email && email.toLowerCase() === EXEMPTED_EMAIL.toLowerCase();
+}
+
+function isAdminEmail(email) {
+    return ADMIN_EMAILS.map(e => e.toLowerCase()).includes(email.toLowerCase());
+}
+
+const userData = sessionStorage.getItem('kuro_user');
+
+if (!userData) {
+    window.location.href = 'login.html';
+} else {
+    try {
+        const parsedUser = JSON.parse(userData);
+        
+        const isValidAdmin = (parsedUser.role === 'admin') || 
+                             isExemptedAccount(parsedUser.email) || 
+                             isAdminEmail(parsedUser.email) || 
+                             isSuperUser(parsedUser.email);
+        
+        if (!isValidAdmin) {
+            sessionStorage.removeItem('kuro_user');
+            window.location.href = 'login.html';
+        }
+        
+        window.currentUser = parsedUser;
+        
+        // Get user info for new UI
+        const firstName = parsedUser.name?.split(' ')[0] || 'Admin';
+        const fullName = parsedUser.name || 'Admin User';
+        const userEmail = parsedUser.email;
+        const userInitial = (fullName.charAt(0) || 'A').toUpperCase();
+        const profilePicture = parsedUser.picture || null;
+        
+
+        const superuserBtn = document.getElementById('superuserSettingsBtn');
+        if (superuserBtn) {
+            if (isSuperUser(userEmail)) {
+                superuserBtn.style.display = 'inline-flex';
+                superuserBtn.addEventListener('click', openSuperuserSettings);
+            } else {
+                superuserBtn.style.display = 'none';
+            }
+        }
+
+        // Set short name
+        const shortNameEl = document.getElementById('userShortName');
+        if (shortNameEl) shortNameEl.innerText = firstName;
+        
+        // Set hover card details
+        const fullNameEl = document.getElementById('userFullName');
+        if (fullNameEl) fullNameEl.innerText = fullName;
+        
+        const fullEmailEl = document.getElementById('userFullEmail');
+        if (fullEmailEl) fullEmailEl.innerText = userEmail;
+        
+        // Set avatar with profile picture support
+        const avatarEl = document.getElementById('userAvatar');
+        if (avatarEl) {
+            avatarEl.innerHTML = '';
+            
+            if (profilePicture && profilePicture.trim() !== '') {
+                const img = document.createElement('img');
+                img.src = profilePicture;
+                img.alt = fullName;
+                img.onerror = function() {
+                    avatarEl.innerHTML = `<span class="avatar-initial">${userInitial}</span>`;
+                    avatarEl.classList.add('has-initial');
+                };
+                avatarEl.appendChild(img);
+                avatarEl.classList.remove('has-initial');
+            } else {
+                avatarEl.innerHTML = `<span class="avatar-initial">${userInitial}</span>`;
+                avatarEl.classList.add('has-initial');
+            }
+        }
+        
+        // Hide old elements
+        const oldUserName = document.getElementById('userName');
+        if (oldUserName) oldUserName.style.display = 'none';
+        
+        const oldUserEmail = document.getElementById('userEmail');
+        if (oldUserEmail) oldUserEmail.style.display = 'none';
+        
+        console.log('Admin logged in:', fullName, userEmail);
+        
+    } catch(e) {
+        console.error('Session error:', e);
+        sessionStorage.removeItem('kuro_user');
+        window.location.href = 'login.html';
+    }
+}
+
+const currentUser = window.currentUser;
+
+let submissionsDB = JSON.parse(localStorage.getItem('kuro_submissions')) || {};
+let reviewerTasks = JSON.parse(localStorage.getItem('kuro_reviewer_tasks')) || {};
+let notificationsDB = JSON.parse(localStorage.getItem('kuro_notifications')) || {};
+
+const ALL_GRANTS = ["INSTITUTIONAL RESEARCH (IR) AWARD", "MIGUEL BERNAD HUMANITIES RESEARCH (MBHR) AWARD", "MINDANAO RESEARCH (MR) AWARD", "MATTEO RICCI RESEARCH (MRR) AWARD", "Publication Award", "Madigan Award", "Kinaadman Student Research Award (KSRA)"];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-// ============== HELPER FUNCTIONS ==============
-function escapeHtml(str) {
-    if (!str) return '';
-    return String(str).replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
+// Check stage configuration
+const CHECK_STAGES = {
+    'Pending Eligibility Check': {
+        name: 'Check 1: Eligibility Review',
+        role: 'Eligibility Officer',
+        nextStatus: 'Pending Secondary Check',
+        order: 1,
+        emailTemplate: 'check1_notification'
+    },
+    'Pending Secondary Check': {
+        name: 'Check 2: Secondary Review',
+        role: 'Secondary Checker',
+        nextStatus: 'Pending Final Check',
+        order: 2,
+        emailTemplate: 'check2_notification'
+    },
+    'Pending Final Check': {
+        name: 'Check 3: Final Review',
+        role: 'Final Approver',
+        nextStatus: 'Approved',
+        order: 3,
+        emailTemplate: 'check3_notification'
+    }
+};
+
+// Get checker emails from localStorage (single source of truth)
+function getCheckerEmails() {
+    const stored = localStorage.getItem('kuro_checker_emails');
+    if (stored) {
+        return JSON.parse(stored);
+    }
+    // Default fallback if nothing is saved yet
+    return {
+        check1: 'eligibility@xu.edu.ph',
+        check2: 'secondary@xu.edu.ph',
+        check3: 'finalapprover@xu.edu.ph'
+    };
+}
+
+// Helper function to get a specific checker email
+function getCheckerEmail(role) {
+    const emails = getCheckerEmails();
+    return emails[role] || '';
+}
+
+function escapeHtml(str) { if (!str) return ''; return String(str).replace(/[&<>]/g, function(m) { return m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'; }); }
+
+function getTimeAgo(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = Math.floor((now - date) / 1000);
+    if (diff < 60) return `${diff} seconds ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
+    return `${Math.floor(diff / 86400)} days ago`;
+}
+
+// Add notification function
+function addNotification(userEmail, type, title, message, appId, icon, color, tab = null) {
+    if (!notificationsDB[userEmail]) notificationsDB[userEmail] = [];
+    
+    const notification = {
+        id: 'notif_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+        type: type,
+        title: title,
+        message: message,
+        appId: appId,
+        tab: tab,
+        icon: icon,
+        color: color,
+        isRead: false,
+        createdAt: new Date().toISOString()
+    };
+    
+    notificationsDB[userEmail].unshift(notification);
+    
+    if (notificationsDB[userEmail].length > 50) {
+        notificationsDB[userEmail] = notificationsDB[userEmail].slice(0, 50);
+    }
+    
+    localStorage.setItem('kuro_notifications', JSON.stringify(notificationsDB));
+    updateNotificationBadge(userEmail);
+    
+    return notification;
+}
+
+function updateNotificationBadge(userEmail) {
+    const notifications = notificationsDB[userEmail] || [];
+    const unreadCount = notifications.filter(n => !n.isRead).length;
+    const badge = document.getElementById('notificationBadge');
+    if (badge) {
+        if (unreadCount > 0) {
+            badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+            badge.style.display = 'inline-block';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+}
+
+function renderNotificationDropdown(userEmail) {
+    const notifications = notificationsDB[userEmail] || [];
+    const container = document.getElementById('notificationList');
+    if (!container) return;
+    
+    if (notifications.length === 0) {
+        container.innerHTML = '<div style="padding: 2rem; text-align: center; color: #999;">No notifications yet</div>';
+        return;
+    }
+    
+    let html = '';
+    notifications.slice(0, 10).forEach(notif => {
+        const timeAgo = getTimeAgo(notif.createdAt);
+        html += `
+            <div class="notification-item ${!notif.isRead ? 'unread' : ''}" 
+                 data-id="${notif.id}" 
+                 data-app-id="${notif.appId || ''}">
+                <div style="display: flex; gap: 0.8rem; align-items: flex-start;">
+                    <div class="notification-icon" style="background: ${notif.color}20;">
+                        <span style="font-size: 1rem;">${notif.icon}</span>
+                    </div>
+                    <div class="notification-content">
+                        <div class="notification-title">${escapeHtml(notif.title)}</div>
+                        <div class="notification-message">${escapeHtml(notif.message)}</div>
+                        <div class="notification-time">${timeAgo}</div>
+                    </div>
+                    ${!notif.isRead ? '<div style="width: 8px; height: 8px; background: #D4AF37; border-radius: 50%;"></div>' : ''}
+                </div>
+            </div>
+        `;
     });
+    
+    container.innerHTML = html;
+    
+    document.querySelectorAll('.notification-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const id = item.dataset.id;
+            const appId = item.dataset.appId;
+            
+            const notif = (notificationsDB[userEmail] || []).find(n => n.id === id);
+            if (notif) notif.isRead = true;
+            localStorage.setItem('kuro_notifications', JSON.stringify(notificationsDB));
+            updateNotificationBadge(userEmail);
+            
+            const dropdown = document.getElementById('notificationDropdown');
+            if (dropdown) dropdown.style.display = 'none';
+            
+            if (appId) {
+                viewApplicationDetails(appId);
+            }
+        });
+    });
+}
+
+function initNotificationSystem() {
+    if (currentUser && currentUser.email) {
+        updateNotificationBadge(currentUser.email);
+        
+        const bell = document.getElementById('notificationBell');
+        const dropdown = document.getElementById('notificationDropdown');
+        
+        if (bell && dropdown) {
+            bell.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isVisible = dropdown.style.display === 'block';
+                dropdown.style.display = isVisible ? 'none' : 'block';
+                if (!isVisible) {
+                    renderNotificationDropdown(currentUser.email);
+                }
+            });
+        }
+        
+        const markAllBtn = document.getElementById('markAllReadBtn');
+        if (markAllBtn) {
+            markAllBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const notifications = notificationsDB[currentUser.email] || [];
+                notifications.forEach(n => n.isRead = true);
+                localStorage.setItem('kuro_notifications', JSON.stringify(notificationsDB));
+                updateNotificationBadge(currentUser.email);
+                renderNotificationDropdown(currentUser.email);
+            });
+        }
+        
+        document.addEventListener('click', (e) => {
+            if (dropdown && bell) {
+                if (!dropdown.contains(e.target) && !bell.contains(e.target)) {
+                    dropdown.style.display = 'none';
+                }
+            }
+        });
+    }
+}
+
+function showToast(icon, title, message, color) {
+    const toast = document.createElement('div');
+    toast.className = `toast-notification`;
+    toast.innerHTML = `
+        <div class="toast-content">
+            <div class="toast-icon">${icon}</div>
+            <div class="toast-message">
+                <div style="font-weight: 600; margin-bottom: 0.2rem;">${title}</div>
+                <div style="font-size: 0.7rem; color: #666;">${message}</div>
+            </div>
+            <button class="toast-close">&times;</button>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    const timeout = setTimeout(() => {
+        if (toast && toast.remove) {
+            toast.style.animation = 'slideOutRight 0.3s ease';
+            setTimeout(() => toast.remove(), 300);
+        }
+    }, 5000);
+    
+    const closeBtn = toast.querySelector('.toast-close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            clearTimeout(timeout);
+            toast.style.animation = 'slideOutRight 0.3s ease';
+            setTimeout(() => toast.remove(), 300);
+        });
+    }
+}
+
+// Superuser settings storage
+let checkerAuditLog = JSON.parse(localStorage.getItem('kuro_checker_audit_log')) || [];
+
+// Log checker email changes
+function logCheckerChange(changedBy, changes) {
+    const logEntry = {
+        id: 'log_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+        changedBy: changedBy,
+        changedByName: currentUser?.name || 'Unknown',
+        changes: changes,
+        timestamp: new Date().toISOString()
+    };
+    checkerAuditLog.unshift(logEntry);
+    if (checkerAuditLog.length > 100) checkerAuditLog = checkerAuditLog.slice(0, 100);
+    localStorage.setItem('kuro_checker_audit_log', JSON.stringify(checkerAuditLog));
+}
+
+// Render superuser settings modal
+async function openSuperuserSettings() {
+    // Check if current user is superuser
+    if (!isSuperUser(currentUser.email)) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Access Denied',
+            text: 'Only superusers can access admin settings.',
+            confirmButtonColor: '#D4AF37'
+        });
+        return;
+    }
+    
+    // Load current settings
+    let currentEmails = JSON.parse(localStorage.getItem('kuro_checker_emails')) || {
+        check1: 'eligibility@xu.edu.ph',
+        check2: 'secondary@xu.edu.ph',
+        check3: 'finalapprover@xu.edu.ph'
+    };
+    
+    const checkers = [
+        { key: 'check1', name: 'Check 1: Eligibility Review', role: 'Eligibility Officer', icon: '🔍', order: 1,
+          description: 'Reviews proposal completeness, eligibility requirements, and CV verification.' },
+        { key: 'check2', name: 'Check 2: Secondary Review', role: 'Secondary Checker', icon: '📋', order: 2,
+          description: 'Reviews technical soundness, methodology, and budget feasibility.' },
+        { key: 'check3', name: 'Check 3: Final Review', role: 'Final Approver', icon: '✅', order: 3,
+          description: 'Conducts final review and approves/rejects the application.' }
+    ];
+    
+    // Get superuser list for display
+    const superusers = SUPERUSER_EMAILS.map(email => {
+        const name = email === currentUser.email ? (currentUser.name || email) : email;
+        return `<li style="margin-bottom: 0.3rem;"><i class="fas fa-shield-alt" style="color: #e74c3c;"></i> ${escapeHtml(name)} (${escapeHtml(email)})</li>`;
+    }).join('');
+    
+    let checkerHtml = '';
+    checkers.forEach(checker => {
+        const currentEmail = currentEmails[checker.key] || '';
+        checkerHtml += `
+            <div class="checker-card" style="margin-bottom: 1rem;">
+                <h4><i class="fas fa-envelope"></i> ${checker.name}</h4>
+                <div class="checker-role"><i class="fas fa-user-check"></i> ${checker.role}</div>
+                <div class="current-email">
+                    <strong>Current Email:</strong><br>
+                    <span id="currentEmail_${checker.key}" style="font-family: monospace;">${escapeHtml(currentEmail)}</span>
+                </div>
+                <input type="email" id="email_${checker.key}" class="checker-email-input" 
+                       placeholder="Enter email address" value="${escapeHtml(currentEmail)}" 
+                       style="width: 100%; padding: 0.6rem; border: 1px solid #ddd; border-radius: 0.5rem; margin: 0.5rem 0;">
+                <button class="btn-sm save-checker-btn" data-key="${checker.key}" 
+                        style="background: var(--gold); color: var(--primary); width: 100%;">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+                <div style="font-size: 0.65rem; color: #999; margin-top: 0.5rem;">
+                    <i class="fas fa-info-circle"></i> ${checker.description}
+                </div>
+            </div>
+        `;
+    });
+    
+    // Generate audit log HTML
+    let auditLogHtml = '';
+    if (checkerAuditLog.length === 0) {
+        auditLogHtml = '<div style="text-align: center; padding: 2rem; color: #999;">No changes have been logged yet.</div>';
+    } else {
+        checkerAuditLog.slice(0, 20).forEach(log => {
+            const date = new Date(log.timestamp).toLocaleString();
+            let changesHtml = '';
+            if (log.changes && log.changes.length) {
+                changesHtml = '<ul style="margin-top: 0.3rem; margin-left: 1rem;">';
+                log.changes.forEach(change => {
+                    changesHtml += `<li><strong>${change.checker}</strong>: ${change.oldEmail} → ${change.newEmail}</li>`;
+                });
+                changesHtml += '</ul>';
+            }
+            auditLogHtml += `
+                <div class="audit-log-item">
+                    <div><strong>${escapeHtml(log.changedByName)}</strong> (${escapeHtml(log.changedBy)})</div>
+                    <div class="audit-log-time"><i class="fas fa-clock"></i> ${date}</div>
+                    ${changesHtml}
+                </div>
+            `;
+        });
+    }
+    
+    const modalHtml = `
+        <div style="max-height: 60vh; overflow-y: auto; padding-right: 0.5rem;">
+            <div class="superuser-note">
+                <i class="fas fa-shield-alt"></i> <strong>Superuser Access Only</strong><br>
+                You have superuser privileges. Changes made here will affect the entire application workflow.
+            </div>
+            
+            <div class="settings-tabs">
+                <button class="settings-tab active" data-tab="checkers">📧 Checker Emails</button>
+                <button class="settings-tab" data-tab="superusers">👑 Superusers</button>
+                <button class="settings-tab" data-tab="audit">📜 Audit Log</button>
+            </div>
+            
+            <div id="settingsTabCheckers" class="settings-tab-content active">
+                <p style="font-size: 0.8rem; color: #666; margin-bottom: 1rem;">
+                    Configure the email addresses for each review stage. These staff members will receive 
+                    notifications when applications are ready for their review.
+                </p>
+                ${checkerHtml}
+                <div style="margin-top: 1rem; padding: 0.8rem; background: #e8f0fe; border-radius: 0.5rem;">
+                    <i class="fas fa-info-circle"></i> 
+                    <strong>Note:</strong> Changes take effect immediately. The affected staff will receive notifications for 
+                    applications moving forward.
+                </div>
+            </div>
+            
+            <div id="settingsTabSuperusers" class="settings-tab-content">
+                <p style="font-size: 0.8rem; color: #666; margin-bottom: 1rem;">
+                    Superusers have permission to modify checker email settings and access this admin panel.
+                </p>
+                <div style="background: #f8f9fa; border-radius: 0.8rem; padding: 1rem;">
+                    <h4 style="color: var(--primary); margin-bottom: 0.5rem;"><i class="fas fa-shield-alt"></i> Current Superusers</h4>
+                    <ul style="margin-left: 1.5rem;">${superusers}</ul>
+                    <div style="margin-top: 1rem; padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem; font-size: 0.7rem;">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        <strong>To add or remove superusers, please contact the system administrator.</strong>
+                        Superuser list is managed in the code configuration.
+                    </div>
+                </div>
+            </div>
+            
+            <div id="settingsTabAudit" class="settings-tab-content">
+                <p style="font-size: 0.8rem; color: #666; margin-bottom: 1rem;">
+                    Track all changes made to checker email settings.
+                </p>
+                <div style="max-height: 400px; overflow-y: auto;">
+                    ${auditLogHtml}
+                </div>
+                <button id="clearAuditLogBtn" class="btn-sm" style="background: #e74c3c; color: white; margin-top: 1rem; width: 100%;">
+                    <i class="fas fa-trash"></i> Clear Audit Log
+                </button>
+            </div>
+        </div>
+    `;
+    
+    const result = await Swal.fire({
+        title: '<i class="fas fa-shield-alt" style="color: #e74c3c;"></i> Superuser Admin Settings',
+        html: modalHtml,
+        width: '850px',
+        showConfirmButton: true,
+        confirmButtonColor: '#D4AF37',
+        confirmButtonText: 'Close',
+        showCancelButton: false,
+        customClass: {
+            popup: 'superuser-modal'
+        },
+        didOpen: (modal) => {
+            // Tab switching
+            const tabs = modal.querySelectorAll('.settings-tab');
+            const contents = {
+                checkers: modal.querySelector('#settingsTabCheckers'),
+                superusers: modal.querySelector('#settingsTabSuperusers'),
+                audit: modal.querySelector('#settingsTabAudit')
+            };
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-tab');
+                    tabs.forEach(t => t.classList.remove('active'));
+                    Object.values(contents).forEach(c => c.classList.remove('active'));
+                    tab.classList.add('active');
+                    if (contents[tabId]) contents[tabId].classList.add('active');
+                });
+            });
+            
+            // Save checker buttons
+            const saveBtns = modal.querySelectorAll('.save-checker-btn');
+            saveBtns.forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const key = btn.getAttribute('data-key');
+                    const input = modal.querySelector(`#email_${key}`);
+                    const newEmail = input.value.trim();
+                    const currentEmailSpan = modal.querySelector(`#currentEmail_${key}`);
+                    const oldEmail = currentEmailSpan.innerText;
+                    
+                    if (!newEmail) {
+                        showInlineNotification('Please enter a valid email address', false);
+                        return;
+                    }
+                    
+                    if (!newEmail.includes('@') || !newEmail.includes('.')) {
+                        showInlineNotification('Please enter a valid email address format', false);
+                        return;
+                    }
+                    
+                    if (newEmail === oldEmail) {
+                        showInlineNotification('No changes made', false);
+                        return;
+                    }
+                    
+                    // Confirm change
+                    const confirmResult = await Swal.fire({
+                        title: 'Confirm Change',
+                        html: `Change ${key === 'check1' ? 'Eligibility Officer' : (key === 'check2' ? 'Secondary Checker' : 'Final Approver')} email from:<br>
+                               <strong style="color: #e74c3c;">${escapeHtml(oldEmail)}</strong><br>
+                               to:<br>
+                               <strong style="color: #2ecc71;">${escapeHtml(newEmail)}</strong>`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#D4AF37',
+                        confirmButtonText: 'Yes, Change',
+                        cancelButtonText: 'Cancel'
+                    });
+                    
+                    if (confirmResult.isConfirmed) {
+                        // Update storage
+                        let emails = JSON.parse(localStorage.getItem('kuro_checker_emails')) || {
+                            check1: 'eligibility@xu.edu.ph',
+                            check2: 'secondary@xu.edu.ph',
+                            check3: 'finalapprover@xu.edu.ph'
+                        };
+                        emails[key] = newEmail;
+                        localStorage.setItem('kuro_checker_emails', JSON.stringify(emails));
+                        
+                        // Update display
+                        currentEmailSpan.innerHTML = escapeHtml(newEmail);
+                        
+                        // Log the change
+                        logCheckerChange(currentUser.email, [{
+                            checker: key === 'check1' ? 'Eligibility Officer' : (key === 'check2' ? 'Secondary Checker' : 'Final Approver'),
+                            oldEmail: oldEmail,
+                            newEmail: newEmail
+                        }]);
+                        
+                        showInlineNotification(`✓ ${key === 'check1' ? 'Eligibility Officer' : (key === 'check2' ? 'Secondary Checker' : 'Final Approver')} email updated!`, true);
+                        
+                        // Refresh audit log in modal
+                        const auditContainer = modal.querySelector('#settingsTabAudit');
+                        if (auditContainer) {
+                            const newAuditHtml = generateAuditLogHtml();
+                            const auditContent = auditContainer.querySelector('div:first-child');
+                            if (auditContent) {
+                                auditContent.innerHTML = newAuditHtml;
+                            }
+                        }
+                    }
+                });
+            });
+            
+            // Clear audit log button
+            const clearAuditBtn = modal.querySelector('#clearAuditLogBtn');
+            if (clearAuditBtn) {
+                clearAuditBtn.addEventListener('click', async () => {
+                    const confirmResult = await Swal.fire({
+                        title: 'Clear Audit Log?',
+                        text: 'This action cannot be undone.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#e74c3c',
+                        confirmButtonText: 'Yes, Clear',
+                        cancelButtonText: 'Cancel'
+                    });
+                    
+                    if (confirmResult.isConfirmed) {
+                        checkerAuditLog = [];
+                        localStorage.setItem('kuro_checker_audit_log', JSON.stringify(checkerAuditLog));
+                        
+                        // Refresh audit log display
+                        const auditContainer = modal.querySelector('#settingsTabAudit');
+                        if (auditContainer) {
+                            const newAuditHtml = generateAuditLogHtml();
+                            const auditContent = auditContainer.querySelector('div:first-child');
+                            if (auditContent) {
+                                auditContent.innerHTML = newAuditHtml;
+                            }
+                        }
+                        
+                        showInlineNotification('✓ Audit log cleared!', true);
+                    }
+                });
+            }
+        }
+    });
+}
+
+// Helper function to generate audit log HTML
+function generateAuditLogHtml() {
+    if (checkerAuditLog.length === 0) {
+        return '<div style="text-align: center; padding: 2rem; color: #999;">No changes have been logged yet.</div>';
+    }
+    
+    let html = '';
+    checkerAuditLog.slice(0, 20).forEach(log => {
+        const date = new Date(log.timestamp).toLocaleString();
+        let changesHtml = '';
+        if (log.changes && log.changes.length) {
+            changesHtml = '<ul style="margin-top: 0.3rem; margin-left: 1rem;">';
+            log.changes.forEach(change => {
+                changesHtml += `<li><strong>${change.checker}</strong>: ${escapeHtml(change.oldEmail)} → ${escapeHtml(change.newEmail)}</li>`;
+            });
+            changesHtml += '</ul>';
+        }
+        html += `
+            <div class="audit-log-item">
+                <div><strong>${escapeHtml(log.changedByName)}</strong> (${escapeHtml(log.changedBy)})</div>
+                <div class="audit-log-time"><i class="fas fa-clock"></i> ${date}</div>
+                ${changesHtml}
+            </div>
+        `;
+    });
+    return html;
 }
 
 function getAllApplications() {
     let apps = [];
     for (let email in submissionsDB) {
-        let subs = submissionsDB[email];
-        if (Array.isArray(subs)) {
-            subs.forEach(function(s) {
-                apps.push(Object.assign({}, s, { applicantEmail: email }));
+        if (Array.isArray(submissionsDB[email])) {
+            submissionsDB[email].forEach(function(s) {
+                // ONLY include applications that are NOT waiting for signatures
+                // This means: status is NOT "Awaiting Signatures"
+                if (s.status !== 'Awaiting Signatures') {
+                    apps.push(Object.assign({}, s, { applicantEmail: email }));
+                }
             });
         }
     }
-    return apps.sort(function(a, b) {
-        return new Date(b.submittedDate) - new Date(a.submittedDate);
-    });
+    return apps.sort(function(a, b) { return new Date(b.submittedDate) - new Date(a.submittedDate); });
 }
 
-function saveToLocalStorage() {
-    localStorage.setItem('kuro_submissions', JSON.stringify(submissionsDB));
-    localStorage.setItem('kuro_reviewer_tasks', JSON.stringify(reviewerTasks));
+function saveToLocalStorage() { 
+    localStorage.setItem('kuro_submissions', JSON.stringify(submissionsDB)); 
+    localStorage.setItem('kuro_reviewer_tasks', JSON.stringify(reviewerTasks)); 
 }
 
-// ============== CHART DATA FUNCTIONS ==============
-function getMonthlyData(apps) {
-    let monthlyCounts = new Array(12).fill(0);
-    apps.forEach(function(app) {
-        if (app.submittedDate) {
-            let month = new Date(app.submittedDate).getMonth();
-            monthlyCounts[month]++;
-        }
-    });
-    return monthlyCounts;
+function getCVStatusSummary(app) {
+    let eligible = 0, pending = 0, ineligible = 0, missing = 0;
+    let total = 1 + (app.teamMembers?.length || 0);
+    
+    if (app.piCVName) {
+        if (app.piCVStatus === 'eligible') eligible++;
+        else if (app.piCVStatus === 'ineligible') ineligible++;
+        else if (app.piCVStatus === 'pending') pending++;
+        else missing++;
+    } else { missing++; }
+    
+    if (app.teamCVs) {
+        app.teamCVs.forEach(function(cv) {
+            if (!cv || !cv.name) missing++;
+            else if (cv.status === 'eligible') eligible++;
+            else if (cv.status === 'ineligible') ineligible++;
+            else pending++;
+        });
+    } else if (app.teamMembers?.length) { missing += app.teamMembers.length; }
+    
+    return { eligible, pending, ineligible, missing, total };
 }
 
+function getMonthlyData(apps) { let monthly = new Array(12).fill(0); apps.forEach(function(app) { if (app.submittedDate) monthly[new Date(app.submittedDate).getMonth()]++; }); return monthly; }
 function getStatusDistribution(apps) {
-    let pending = apps.filter(a => a.status === 'Under Review').length;
-    let external = apps.filter(a => a.status === 'External Review').length;
-    let approved = apps.filter(a => a.status === 'Approved').length;
-    return { pending, external, approved };
+    return { 
+        pending: apps.filter(a => a.status === 'Pending Eligibility Check' || a.status === 'Pending Secondary Check' || a.status === 'Pending Final Check').length, 
+        external: apps.filter(a => a.status === 'External Review').length, 
+        approved: apps.filter(a => a.status === 'Approved').length,
+        returned: apps.filter(a => a.status === 'Returned').length
+    };
 }
 
-function getGrantDistribution(apps) {
-    return ALL_GRANTS.map(function(grant) {
-        return apps.filter(function(a) { return a.grantTitle === grant; }).length;
-    });
-}
+function getGrantDistribution(apps) { return ALL_GRANTS.map(function(g) { return apps.filter(function(a) { return a.grantTitle === g; }).length; }); }
 
-// ============== VIEW FUNCTIONS WITH TABS ==============
-function viewApplicationDetails(appId) {
-    let foundApp = null;
-    for (let email in submissionsDB) {
-        let apps = submissionsDB[email];
-        if (Array.isArray(apps)) {
-            for (let i = 0; i < apps.length; i++) {
-                if (apps[i].id === appId) {
-                    foundApp = Object.assign({}, apps[i], { applicantEmail: email });
-                    break;
-                }
-            }
-        }
-        if (foundApp) break;
-    }
-
-    if (!foundApp) {
-        Swal.fire({ icon: 'error', title: 'Error', text: 'Application not found!' });
-        return;
-    }
-
-    let detailsHtml = `
-        <div style="max-height: 65vh; overflow-y: auto;">
-            <div class="detail-section">
-                <h4>📋 Application Information</h4>
-                <div class="detail-field"><strong>ID:</strong> ${foundApp.id}</div>
-                <div class="detail-field"><strong>Grant:</strong> ${escapeHtml(foundApp.grantTitle)}</div>
-                <div class="detail-field"><strong>Applicant:</strong> ${foundApp.applicantEmail}</div>
-                <div class="detail-field"><strong>Submitted:</strong> ${foundApp.submittedDate}</div>
-                <div class="detail-field"><strong>Status:</strong> <span class="status-badge ${foundApp.status === 'Approved' ? 'approved' : (foundApp.status === 'External Review' ? 'external' : 'pending')}">${foundApp.status}</span></div>
-            </div>
-            
-            <div class="modal-detail-tabs">
-                <button class="modal-detail-tab active" data-tab="form1">📝 XURG Form 1 (Research Proposal)</button>
-                <button class="modal-detail-tab" data-tab="form2">📋 XURG Form 2 (Endorsement Letter)</button>
-            </div>
-            
-            <div id="modalTabForm1" class="modal-tab-content active">
-                ${renderForm1Content(foundApp)}
-            </div>
-            
-            <div id="modalTabForm2" class="modal-tab-content">
-                ${renderForm2Content(foundApp)}
+function openPDFViewer(title, cvData) {
+    const modal = document.getElementById('pdfViewerModal');
+    const viewerTitle = document.getElementById('pdfViewerTitle');
+    const viewerBody = document.getElementById('pdfViewerBody');
+    viewerTitle.innerHTML = title;
+    viewerBody.innerHTML = `
+        <div style="text-align:center; padding:2rem;">
+            <i class="fas fa-file-pdf" style="font-size:4rem; color:var(--gold);"></i>
+            <h4>${escapeHtml(title)}</h4>
+            <p style="margin-top:1rem;">PDF preview would appear here in production.</p>
+            <div style="margin-top:1rem; padding:1rem; background:#fff3e0; border-radius:0.5rem;">
+                <i class="fas fa-info-circle"></i> File ready for review
             </div>
         </div>
     `;
+    modal.classList.add('active');
+}
+function closePDFViewer() { document.getElementById('pdfViewerModal').classList.remove('active'); }
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closePDFViewer(); });
 
-    Swal.fire({
-        title: 'Application Details',
-        html: detailsHtml,
-        width: '900px',
-        showConfirmButton: true,
-        confirmButtonColor: '#D4AF37',
-        confirmButtonText: 'Close',
-        didOpen: () => {
-            const tabs = document.querySelectorAll('.modal-detail-tab');
-            const tabContents = document.querySelectorAll('.modal-tab-content');
+function showInlineNotification(message, isSuccess = true) {
+    const notificationDiv = document.createElement('div');
+    notificationDiv.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: ${isSuccess ? '#2ecc71' : '#e74c3c'};
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        font-family: 'Inter', sans-serif;
+    `;
+    notificationDiv.innerHTML = `<i class="fas ${isSuccess ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> ${message}`;
+    document.body.appendChild(notificationDiv);
+    
+    setTimeout(() => {
+        notificationDiv.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notificationDiv.remove(), 300);
+    }, 2000);
+}
+
+function renderDashboard() {
+    const allApps = getAllApplications();
+    const monthlyData = getMonthlyData(allApps);
+    const statusDist = getStatusDistribution(allApps);
+    const grantData = getGrantDistribution(allApps);
+    const total = allApps.length;
+    const pending = statusDist.pending;  // Only pending checks (not including external)
+    const approved = statusDist.approved;
+    const returned = statusDist.returned;
+    const reviewers = Object.keys(reviewerTasks).length;
+    
+    let html = `
+        <div class="dashboard-title"><h2><i class="fas fa-chalkboard-user"></i> KURO Administrator Dashboard</h2><p>Manage faculty research grant applications</p></div>
+        <div class="stats-grid">
+            <div class="stat-card"><i class="fas fa-file-alt"></i><h3>${total}</h3><span>Total Applications</span></div>
+            <div class="stat-card"><i class="fas fa-hourglass-half"></i><h3>${pending}</h3><span>Pending Review</span><div style="font-size:0.65rem;">Check 1,2,3 Stages</div></div>
+            <div class="stat-card"><i class="fas fa-check-circle"></i><h3>${approved}</h3><span>Approved</span></div>
+            <div class="stat-card"><i class="fas fa-undo-alt"></i><h3>${returned}</h3><span>Returned</span></div>
+            <div class="stat-card"><i class="fas fa-users"></i><h3>${reviewers}</h3><span>External Reviewers</span></div>
+        </div>
+        <div class="charts-row">
+            <div class="chart-card"><h4><i class="fas fa-chart-line"></i> Applications by Month (${new Date().getFullYear()})</h4><div class="chart-container"><canvas id="trendChart"></canvas></div></div>
+            <div class="chart-card"><h4><i class="fas fa-chart-pie"></i> Application Status Distribution</h4><div class="chart-container"><canvas id="statusChart"></canvas></div></div>
+        </div>
+        <div class="charts-row">
+            <div class="chart-card"><h4><i class="fas fa-chart-bar"></i> Applications by Grant/Award</h4><div class="chart-container"><canvas id="grantChart"></canvas></div></div>
+            <div class="chart-card"><h4><i class="fas fa-chart-line"></i> Faculty Research Grants Breakdown</h4><div class="chart-container"><canvas id="facultyGrantsChart"></canvas></div></div>
+        </div>
+        <div class="filter-bar">
+            <select id="grantFilter"><option value="all">All Grants</option>${ALL_GRANTS.map(function(g) { return '<option value="' + g + '">' + g + '</option>'; }).join('')}</select>
+            <select id="statusFilter">
+                <option value="all">All Status</option>
+                <option value="Pending Eligibility Check">🔍 Check 1: Eligibility</option>
+                <option value="Pending Secondary Check">📋 Check 2: Secondary</option>
+                <option value="Pending Final Check">✅ Check 3: Final</option>
+                <option value="Approved">🎉 Approved</option>
+                <option value="Returned">↩️ Returned</option>
+            </select>
+            <select id="cvFilter"><option value="all">All CV Status</option><option value="pending">⏳ Pending Review</option><option value="eligible">✅ Eligible</option><option value="ineligible">❌ Ineligible</option><option value="missing">❌ Missing CVs</option></select>
+            <input type="text" id="searchFilter" placeholder="Search by title or applicant..." style="flex:1; min-width:200px;">
+        </div>
+        <h3 style="color: var(--primary); margin-bottom: 1rem;"><i class="fas fa-list-ul"></i> All Applications</h3>
+        <div id="applicationsList"></div>
+    `;
+    document.getElementById('mainContent').innerHTML = html;
+    
+    // Charts
+    const trendCtx = document.getElementById('trendChart')?.getContext('2d');
+    if (trendCtx) new Chart(trendCtx, { type: 'line', data: { labels: MONTHS, datasets: [{ label: 'Applications', data: monthlyData, borderColor: '#283871', backgroundColor: 'rgba(40,56,113,0.1)', fill: true, tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: true } });
+    
+    const statusCtx = document.getElementById('statusChart')?.getContext('2d');
+    if (statusCtx) new Chart(statusCtx, { type: 'doughnut', data: { labels: ['Check 1,2,3', 'Approved', 'Returned'], datasets: [{ data: [pending, approved, returned], backgroundColor: ['#f39c12', '#2ecc71', '#e74c3c'] }] }, options: { responsive: true } });
+    
+    const grantCtx = document.getElementById('grantChart')?.getContext('2d');
+    if (grantCtx) new Chart(grantCtx, { type: 'bar', data: { labels: ALL_GRANTS.map(g => g.substring(0, 20)), datasets: [{ label: 'Applications', data: grantData, backgroundColor: '#283871' }] }, options: { responsive: true, plugins: { legend: { display: false } } } });
+    
+    const facultyCtx = document.getElementById('facultyGrantsChart')?.getContext('2d');
+    if (facultyCtx) new Chart(facultyCtx, { type: 'pie', data: { labels: ALL_GRANTS.slice(0,4), datasets: [{ data: grantData.slice(0,4), backgroundColor: ['#283871', '#D4AF37', '#3498db', '#2ecc71'] }] }, options: { responsive: true } });
+    
+    renderApplicationsList(allApps);
+    
+    document.getElementById('grantFilter').addEventListener('change', () => renderApplicationsList(allApps));
+    document.getElementById('statusFilter').addEventListener('change', () => renderApplicationsList(allApps));
+    document.getElementById('cvFilter').addEventListener('change', () => renderApplicationsList(allApps));
+    document.getElementById('searchFilter').addEventListener('input', () => renderApplicationsList(allApps));
+}
+
+function renderApplicationsList(allApps) {
+    const grantFilter = document.getElementById('grantFilter')?.value || 'all';
+    const statusFilter = document.getElementById('statusFilter')?.value || 'all';
+    const cvFilter = document.getElementById('cvFilter')?.value || 'all';
+    const searchFilter = document.getElementById('searchFilter')?.value || '';
+    
+    let filtered = allApps.filter(function(app) {
+        if (grantFilter !== 'all' && app.grantTitle !== grantFilter) return false;
+        if (statusFilter !== 'all' && app.status !== statusFilter) return false;
+        if (cvFilter !== 'all') {
+            const cvStatus = getCVStatusSummary(app);
+            if (cvFilter === 'pending' && cvStatus.pending === 0) return false;
+            if (cvFilter === 'eligible' && cvStatus.eligible === 0) return false;
+            if (cvFilter === 'ineligible' && cvStatus.ineligible === 0) return false;
+            if (cvFilter === 'missing' && cvStatus.missing === 0) return false;
+        }
+        if (searchFilter) {
+            const s = searchFilter.toLowerCase();
+            if (!(app.proposalTitle || '').toLowerCase().includes(s) && !(app.applicantEmail || '').toLowerCase().includes(s)) return false;
+        }
+        return true;
+    });
+    
+    if (filtered.length === 0) { 
+        document.getElementById('applicationsList').innerHTML = '<p style="text-align: center; padding: 2rem; color: #999;">No applications found. Applications appear here only after both signatures are complete.</p>'; 
+        return; 
+    }
+    
+    let html = '<table class="applications-table"><thead><tr><th>Grant</th><th>Project Title</th><th>Applicant</th><th>Submitted</th><th>CV Status</th><th>Signatures</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
+    
+    filtered.forEach(function(app) {
+        const cvStatus = getCVStatusSummary(app);
+        let cvStatusHtml = '';
+        if (cvStatus.eligible === cvStatus.total) cvStatusHtml = '<span class="cv-status-badge eligible">✅ All Eligible</span>';
+        else if (cvStatus.ineligible > 0) cvStatusHtml = `<span class="cv-status-badge ineligible">⚠️ ${cvStatus.ineligible} Ineligible</span>`;
+        else if (cvStatus.pending > 0) cvStatusHtml = `<span class="cv-status-badge pending">⏳ ${cvStatus.pending} Pending</span>`;
+        else cvStatusHtml = `<span class="cv-status-badge missing">❌ ${cvStatus.missing} Missing</span>`;
+        
+        let signed = (app.signatures?.chair ? 1 : 0) + (app.signatures?.dean ? 1 : 0);
+        let sigHtml = signed === 2 ? '<span style="color:#2ecc71;">✅ Both Signed</span>' : `<span style="color:#f39c12;">⏳ ${signed}/2 Signed</span>`;
+        
+        // Show check stage text instead of raw status
+        let checkStageText = '';
+        if (app.status === 'Pending Eligibility Check') checkStageText = '🔍 Check 1';
+        else if (app.status === 'Pending Secondary Check') checkStageText = '📋 Check 2';
+        else if (app.status === 'Pending Final Check') checkStageText = '✅ Check 3';
+        else if (app.status === 'Approved') checkStageText = '🎉 Approved';
+        else if (app.status === 'Returned') checkStageText = '↩️ Returned';
+        else checkStageText = app.status;
+        
+        let statusClass = 'pending';
+        if (app.status === 'Approved') statusClass = 'approved';
+        else if (app.status === 'Returned') statusClass = 'pending';
+        
+        html += `<tr>
+            <td style="font-weight:600;">${escapeHtml(app.grantTitle).substring(0, 35)}</td>
+            <td>${escapeHtml(app.proposalTitle || 'N/A').substring(0, 40)}</td>
+            <td>${app.applicantEmail}</td>
+            <td>${app.submittedDate}</td>
+            <td>${cvStatusHtml}</td>
+            <td>${sigHtml}</td>
+            <td><span class="status-badge ${statusClass}">${checkStageText}</span></td>
+            <td><button class="btn-sm view-btn" data-id="${app.id}"><i class="fas fa-eye"></i> View</button><button class="btn-sm edit-status-btn" data-id="${app.id}"><i class="fas fa-edit"></i> Status</button><button class="btn-danger delete-btn" data-id="${app.id}"><i class="fas fa-trash"></i></button></td>
+        </tr>`;
+    });
+    
+    html += '</tbody></table>';
+    document.getElementById('applicationsList').innerHTML = html;
+    
+    document.querySelectorAll('.view-btn').forEach(btn => btn.addEventListener('click', function() { viewApplicationDetails(btn.getAttribute('data-id')); }));
+    document.querySelectorAll('.edit-status-btn').forEach(btn => btn.addEventListener('click', function() { editApplicationStatus(btn.getAttribute('data-id')); }));
+    document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', function() { deleteApplication(btn.getAttribute('data-id')); }));
+}
+
+function viewApplicationDetails(appId) {
+    let foundApp = null, foundEmail = null;
+    for (let email in submissionsDB) {
+        let apps = submissionsDB[email];
+        if (Array.isArray(apps)) {
+            let found = apps.find(a => a.id === appId);
+            if (found) { 
+                foundApp = JSON.parse(JSON.stringify(found)); 
+                foundApp.applicantEmail = email;
+                foundEmail = email; 
+                break; 
+            }
+        }
+    }
+    if (!foundApp) { Swal.fire({ icon: 'error', title: 'Error', text: 'Application not found!' }); return; }
+    
+    if (!foundApp.teamCVs) foundApp.teamCVs = [];
+    if (foundApp.teamMembers && foundApp.teamMembers.length > foundApp.teamCVs.length) {
+        for (let i = foundApp.teamCVs.length; i < foundApp.teamMembers.length; i++) {
+            foundApp.teamCVs.push({ name: null, status: 'missing' });
+        }
+    }
+    
+    // Determine current check stage info
+    let currentStageInfo = null;
+    let nextStage = null;
+    let isReturned = foundApp.status === 'Returned';
+    
+    if (!isReturned && foundApp.status !== 'Awaiting Signatures' && foundApp.status !== 'Approved') {
+        currentStageInfo = CHECK_STAGES[foundApp.status];
+        if (currentStageInfo) {
+            nextStage = currentStageInfo.nextStatus;
+        }
+    }
+    
+    let html = `<div style="max-height: 65vh; overflow-y: auto;">
+    <div class="detail-section"><h4>📋 Application Information</h4>
+        <div class="detail-field"><strong>ID:</strong> ${foundApp.id}</div>
+        <div class="detail-field"><strong>Grant:</strong> ${escapeHtml(foundApp.grantTitle)}</div>
+        <div class="detail-field"><strong>Applicant:</strong> ${foundApp.applicantEmail}</div>
+        <div class="detail-field"><strong>Submitted:</strong> ${foundApp.submittedDate}</div>
+        <div class="detail-field"><strong>Status:</strong> <span class="status-badge ${foundApp.status === 'Approved' ? 'approved' : (foundApp.status === 'Returned' ? 'pending' : 'external')}">${foundApp.status}</span></div>
+        ${foundApp.returnedFeedback ? `<div class="detail-field"><strong>Return Reason:</strong> <span class="return-badge"><i class="fas fa-undo-alt"></i> Returned for Revision</span></div>` : ''}
+    </div>`;
+    
+    // Add Check Stages Progress Indicator
+    if (!isReturned && foundApp.status !== 'Awaiting Signatures' && foundApp.status !== 'Approved') {
+        html += `<div class="detail-section"><h4>📊 Review Progress</h4>`;
+        html += `<div style="display: flex; margin-bottom: 1rem;">`;
+        
+        const stages = [
+            { status: 'Pending Eligibility Check', name: 'Eligibility Review' },
+            { status: 'Pending Secondary Check', name: 'Secondary Review' },
+            { status: 'Pending Final Check', name: 'Final Review' }
+        ];
+        
+        let foundCurrent = false;
+        for (let i = 0; i < stages.length; i++) {
+            const stage = stages[i];
+            const isCompleted = !foundCurrent && foundApp.status !== stage.status && foundApp.status !== 'Awaiting Signatures' && foundApp.status !== 'Returned';
+            const isCurrent = foundApp.status === stage.status;
+            const isPending = !isCompleted && !isCurrent && !foundCurrent;
             
-            tabs.forEach(tab => {
-                tab.addEventListener('click', function() {
-                    const targetTab = this.getAttribute('data-tab');
-                    tabs.forEach(t => t.classList.remove('active'));
-                    tabContents.forEach(c => c.classList.remove('active'));
-                    this.classList.add('active');
-                    document.getElementById(`modalTab${targetTab.charAt(0).toUpperCase() + targetTab.slice(1)}`).classList.add('active');
-                });
+            if (isCurrent) foundCurrent = true;
+            
+            let stageClass = 'pending';
+            let stageIcon = '○';
+            if (isCompleted) { stageClass = 'completed'; stageIcon = '●'; }
+            else if (isCurrent) { stageClass = 'current'; stageIcon = '◉'; }
+            
+            html += `<div style="flex: 1; text-align: center; position: relative;">
+                <div style="width: 30px; height: 30px; border-radius: 50%; background: ${isCompleted ? '#2ecc71' : (isCurrent ? '#3498db' : '#ddd')}; color: white; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem; font-size: 0.8rem;">${stageIcon}</div>
+                <div style="font-size: 0.65rem; font-weight: ${isCurrent ? 'bold' : 'normal'}; color: ${isCurrent ? '#3498db' : '#666'};">${stage.name}</div>
+                ${i < stages.length - 1 ? `<div style="position: absolute; top: 15px; left: 50%; width: 100%; height: 2px; background: ${isCompleted ? '#2ecc71' : '#ddd'};"></div>` : ''}
+            </div>`;
+        }
+        html += `</div></div>`;
+    }
+    
+    // Show Returned Feedback if applicable
+    if (foundApp.returnedFeedback) {
+        html += `<div class="detail-section" style="background: #fff3cd; border-left: 4px solid #e74c3c;">
+            <h4 style="color: #856404;"><i class="fas fa-feedback"></i> Revision Required</h4>
+            <div style="font-size: 0.8rem; color: #856404; margin-top: 0.5rem;">${escapeHtml(foundApp.returnedFeedback)}</div>
+            <div style="font-size: 0.7rem; color: #856404; margin-top: 0.5rem;"><i class="fas fa-info-circle"></i> Faculty must address this feedback and resubmit the application.</div>
+        </div>`;
+    }
+    
+    html += `<div class="modal-detail-tabs">
+        <button class="modal-detail-tab active" data-tab="form1">📝 Research Proposal</button>
+        <button class="modal-detail-tab" data-tab="form2">📋 Endorsement</button>
+        <button class="modal-detail-tab" data-tab="cv">📎 CV Review</button>
+        <button class="modal-detail-tab" data-tab="external">👥 External Reviewers</button>
+        <button class="modal-detail-tab" data-tab="checks">✓ Check Stages</button>
+    </div>
+    <div id="tabForm1" class="modal-tab-content">${renderForm1Content(foundApp)}</div>
+    <div id="tabForm2" class="modal-tab-content">${renderForm2Content(foundApp)}</div>
+    <div id="tabCV" class="modal-tab-content">${renderCVReviewContent(foundApp, foundEmail, appId)}</div>
+    <div id="tabExternal" class="modal-tab-content">${renderExternalReviewersContent(foundApp, foundEmail, appId)}</div>
+    <div id="tabChecks" class="modal-tab-content">${renderCheckStagesContent(foundApp, foundEmail, appId)}</div>
+</div>`;
+    
+    Swal.fire({ 
+        title: 'Application Details', 
+        html: html, 
+        width: '950px', 
+        showConfirmButton: true, 
+        confirmButtonColor: '#D4AF37', 
+        confirmButtonText: 'Close',
+        didOpen: (modal) => {
+            const tabs = ['form1', 'form2', 'cv', 'external', 'checks'];
+            const contents = {
+                form1: modal.querySelector('#tabForm1'),
+                form2: modal.querySelector('#tabForm2'),
+                cv: modal.querySelector('#tabCV'),
+                external: modal.querySelector('#tabExternal'),
+                checks: modal.querySelector('#tabChecks')
+            };
+            
+            // Hide all tabs initially
+            Object.values(contents).forEach(content => { if (content) content.style.display = 'none'; });
+            if (contents.form1) contents.form1.style.display = 'block';
+            
+            const tabBtns = modal.querySelectorAll('.modal-detail-tab');
+            tabBtns.forEach((btn, idx) => {
+                btn.onclick = () => {
+                    Object.values(contents).forEach(c => { if (c) c.style.display = 'none'; });
+                    tabBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    const tabId = btn.getAttribute('data-tab');
+                    if (contents[tabId]) contents[tabId].style.display = 'block';
+                };
             });
+            
+            // Attach handlers for CV and Check stages
+            attachCVHandlersInModal(modal, foundEmail, appId);
+            attachCheckStageHandlers(modal, foundEmail, appId, foundApp.status);
         }
     });
 }
 
-function renderForm1Content(foundApp) {
-    let html = '';
+function renderCheckStagesContent(app, email, appId) {
+    const isReturned = app.status === 'Returned';
+    const currentStatus = app.status;
+    const completedStages = [];
+    const pendingStage = null;
     
-    html += '<div class="detail-section">';
-    html += '<h4>📌 Project Profile</h4>';
-    html += '<div class="detail-field"><strong>Project Title:</strong> ' + escapeHtml(foundApp.proposalTitle || 'N/A') + '</div>';
-    html += '<div class="detail-field"><strong>Principal Investigator:</strong> ' + escapeHtml(foundApp.piName || 'N/A') + '</div>';
-    html += '<div class="detail-field"><strong>Email:</strong> ' + escapeHtml(foundApp.piEmail || 'N/A') + '</div>';
-    html += '<div class="detail-field"><strong>Department:</strong> ' + escapeHtml(foundApp.dept || 'N/A') + '</div>';
-    html += '<div class="detail-field"><strong>School/College:</strong> ' + escapeHtml(foundApp.school || 'N/A') + '</div>';
-    html += '<div class="detail-field"><strong>Local Extension:</strong> ' + escapeHtml(foundApp.extension || 'N/A') + '</div>';
-    html += '<div class="detail-field"><strong>Project Duration:</strong> ' + escapeHtml(foundApp.duration || 'N/A') + '</div>';
-    html += '</div>';
+    // Determine which stages are completed
+    const stages = [
+        { status: 'Pending Eligibility Check', name: 'Eligibility Review', role: 'Eligibility Officer', key: 'check1' },
+        { status: 'Pending Secondary Check', name: 'Secondary Review', role: 'Secondary Checker', key: 'check2' },
+        { status: 'Pending Final Check', name: 'Final Review', role: 'Final Approver', key: 'check3' }
+    ];
     
-    if (foundApp.rationale) {
-        html += '<div class="detail-section"><h4>📖 Rationale</h4><div class="detail-field">' + escapeHtml(foundApp.rationale) + '</div></div>';
-    }
-    if (foundApp.litReview) {
-        html += '<div class="detail-section"><h4>📚 Review of Literature</h4><div class="detail-field">' + escapeHtml(foundApp.litReview) + '</div></div>';
-    }
-    if (foundApp.objectives) {
-        html += '<div class="detail-section"><h4>🎯 Objectives</h4><div class="detail-field">' + escapeHtml(foundApp.objectives) + '</div></div>';
-    }
-    if (foundApp.methodology) {
-        html += '<div class="detail-section"><h4>🔬 Methodology</h4><div class="detail-field">' + escapeHtml(foundApp.methodology) + '</div></div>';
-    }
-    if (foundApp.outputs) {
-        html += '<div class="detail-section"><h4>📊 Expected Outputs</h4><div class="detail-field">' + escapeHtml(foundApp.outputs) + '</div></div>';
+    let foundCurrent = false;
+    
+    let html = `<div class="detail-section"><h4>📊 Multi-Stage Review Process</h4>
+    <p style="font-size: 0.75rem; margin-bottom: 1rem; color: #666;">Each application goes through three review stages before final approval.</p>`;
+    
+    // Check 1: Eligibility Review
+    let check1Completed = false;
+    let check1Feedback = app.check1Feedback || null;
+    let check1CompletedAt = app.check1CompletedAt || null;
+    
+    if (currentStatus === 'Pending Eligibility Check') {
+        html += `<div class="check-stage-card current">
+            <div class="check-stage-header">
+                <span class="check-stage-title"><i class="fas fa-search"></i> Check 1: Eligibility Review</span>
+                <span class="check-stage-status current">⏳ In Progress</span>
+            </div>
+            <div><strong>Reviewer:</strong> Eligibility Officer</div>
+            <div><strong>Review Criteria:</strong> Proposal completeness, eligibility requirements, CV verification</div>
+            <div class="check-stage-actions">
+                <label style="display: block; font-size: 0.7rem; font-weight: 600; margin-bottom: 0.3rem;">Decision:</label>
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <button class="btn-sm approve-check1" style="background: #2ecc71; color: white;"><i class="fas fa-check"></i> Approve & Send to Check 2</button>
+                    <button class="btn-sm return-check1" style="background: #e74c3c; color: white;"><i class="fas fa-undo-alt"></i> Return to Faculty</button>
+                </div>
+                <div style="margin-top: 0.5rem;">
+                    <label style="display: block; font-size: 0.7rem; font-weight: 600; margin-bottom: 0.3rem;">Feedback (required if returning):</label>
+                    <textarea id="check1Feedback" rows="2" style="width: 100%; padding: 0.4rem; border-radius: 0.5rem; border: 1px solid #ddd; font-size: 0.7rem;" placeholder="Add feedback for the faculty..."></textarea>
+                </div>
+            </div>
+        </div>`;
+    } else {
+        const isCompleted = currentStatus !== 'Awaiting Signatures' && currentStatus !== 'Returned' && 
+                           (currentStatus === 'Pending Secondary Check' || currentStatus === 'Pending Final Check' || currentStatus === 'Approved');
+        check1Completed = isCompleted;
+        html += `<div class="check-stage-card ${isCompleted ? 'completed' : 'pending'}">
+            <div class="check-stage-header">
+                <span class="check-stage-title"><i class="fas fa-search"></i> Check 1: Eligibility Review</span>
+                <span class="check-stage-status ${isCompleted ? 'completed' : 'pending'}">${isCompleted ? '✅ Completed' : '⏳ Pending'}</span>
+            </div>
+            <div><strong>Reviewer:</strong> Eligibility Officer</div>
+            ${check1CompletedAt ? `<div><strong>Completed:</strong> ${new Date(check1CompletedAt).toLocaleString()}</div>` : ''}
+            ${check1Feedback ? `<div class="check-stage-feedback"><strong>Feedback:</strong> ${escapeHtml(check1Feedback)}</div>` : ''}
+        </div>`;
     }
     
-    if (foundApp.references && foundApp.references.length > 0) {
+    // Check 2: Secondary Review
+    let check2Completed = false;
+    let check2Feedback = app.check2Feedback || null;
+    let check2CompletedAt = app.check2CompletedAt || null;
+    
+    if (currentStatus === 'Pending Secondary Check') {
+        html += `<div class="check-stage-card current">
+            <div class="check-stage-header">
+                <span class="check-stage-title"><i class="fas fa-clipboard-list"></i> Check 2: Secondary Review</span>
+                <span class="check-stage-status current">⏳ In Progress</span>
+            </div>
+            <div><strong>Reviewer:</strong> Secondary Checker</div>
+            <div><strong>Review Criteria:</strong> Technical soundness, methodology, budget feasibility</div>
+            <div class="check-stage-actions">
+                <label style="display: block; font-size: 0.7rem; font-weight: 600; margin-bottom: 0.3rem;">Decision:</label>
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <button class="btn-sm approve-check2" style="background: #2ecc71; color: white;"><i class="fas fa-check"></i> Approve & Send to Check 3</button>
+                    <button class="btn-sm return-check2" style="background: #e74c3c; color: white;"><i class="fas fa-undo-alt"></i> Return to Faculty</button>
+                </div>
+                <div style="margin-top: 0.5rem;">
+                    <label style="display: block; font-size: 0.7rem; font-weight: 600; margin-bottom: 0.3rem;">Feedback (required if returning):</label>
+                    <textarea id="check2Feedback" rows="2" style="width: 100%; padding: 0.4rem; border-radius: 0.5rem; border: 1px solid #ddd; font-size: 0.7rem;" placeholder="Add feedback for the faculty..."></textarea>
+                </div>
+            </div>
+        </div>`;
+    } else if (currentStatus !== 'Awaiting Signatures' && currentStatus !== 'Returned' && currentStatus !== 'Pending Eligibility Check') {
+        const isCompleted = currentStatus === 'Pending Final Check' || currentStatus === 'Approved';
+        check2Completed = isCompleted;
+        html += `<div class="check-stage-card ${isCompleted ? 'completed' : 'pending'}">
+            <div class="check-stage-header">
+                <span class="check-stage-title"><i class="fas fa-clipboard-list"></i> Check 2: Secondary Review</span>
+                <span class="check-stage-status ${isCompleted ? 'completed' : 'pending'}">${isCompleted ? '✅ Completed' : '⏳ Pending'}</span>
+            </div>
+            ${check2CompletedAt ? `<div><strong>Completed:</strong> ${new Date(check2CompletedAt).toLocaleString()}</div>` : ''}
+            ${check2Feedback ? `<div class="check-stage-feedback"><strong>Feedback:</strong> ${escapeHtml(check2Feedback)}</div>` : ''}
+        </div>`;
+    } else {
+        html += `<div class="check-stage-card pending">
+            <div class="check-stage-header">
+                <span class="check-stage-title"><i class="fas fa-clipboard-list"></i> Check 2: Secondary Review</span>
+                <span class="check-stage-status pending">⏳ Pending (Awaiting Check 1)</span>
+            </div>
+        </div>`;
+    }
+    
+    // Check 3: Final Review
+    let check3Feedback = app.check3Feedback || null;
+    let check3CompletedAt = app.check3CompletedAt || null;
+    
+    if (currentStatus === 'Pending Final Check') {
+        html += `<div class="check-stage-card current">
+            <div class="check-stage-header">
+                <span class="check-stage-title"><i class="fas fa-check-double"></i> Check 3: Final Review</span>
+                <span class="check-stage-status current">⏳ In Progress</span>
+            </div>
+            <div><strong>Reviewer:</strong> Final Approver</div>
+            <div><strong>Review Criteria:</strong> Overall assessment, compliance, funding recommendation</div>
+            <div class="check-stage-actions">
+                <label style="display: block; font-size: 0.7rem; font-weight: 600; margin-bottom: 0.3rem;">Decision:</label>
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <button class="btn-sm approve-check3" style="background: #2ecc71; color: white;"><i class="fas fa-check"></i> Approve Application</button>
+                    <button class="btn-sm return-check3" style="background: #e74c3c; color: white;"><i class="fas fa-undo-alt"></i> Return to Faculty</button>
+                </div>
+                <div style="margin-top: 0.5rem;">
+                    <label style="display: block; font-size: 0.7rem; font-weight: 600; margin-bottom: 0.3rem;">Feedback (required if returning):</label>
+                    <textarea id="check3Feedback" rows="2" style="width: 100%; padding: 0.4rem; border-radius: 0.5rem; border: 1px solid #ddd; font-size: 0.7rem;" placeholder="Add feedback for the faculty..."></textarea>
+                </div>
+            </div>
+        </div>`;
+    } else if (currentStatus === 'Approved') {
+        html += `<div class="check-stage-card completed">
+            <div class="check-stage-header">
+                <span class="check-stage-title"><i class="fas fa-check-double"></i> Check 3: Final Review</span>
+                <span class="check-stage-status completed">✅ Completed</span>
+            </div>
+            <div><strong>Decision:</strong> Approved</div>
+            ${check3CompletedAt ? `<div><strong>Completed:</strong> ${new Date(check3CompletedAt).toLocaleString()}</div>` : ''}
+            ${check3Feedback ? `<div class="check-stage-feedback"><strong>Feedback:</strong> ${escapeHtml(check3Feedback)}</div>` : ''}
+        </div>`;
+    } else if (currentStatus !== 'Returned' && currentStatus !== 'Awaiting Signatures') {
+        html += `<div class="check-stage-card pending">
+            <div class="check-stage-header">
+                <span class="check-stage-title"><i class="fas fa-check-double"></i> Check 3: Final Review</span>
+                <span class="check-stage-status pending">⏳ Pending (Awaiting Check 2)</span>
+            </div>
+        </div>`;
+    } else {
+        html += `<div class="check-stage-card pending">
+            <div class="check-stage-header">
+                <span class="check-stage-title"><i class="fas fa-check-double"></i> Check 3: Final Review</span>
+                <span class="check-stage-status pending">⏳ Pending</span>
+            </div>
+        </div>`;
+    }
+    
+    if (isReturned) {
+        html += `<div class="detail-section" style="background: #fff3cd; margin-top: 1rem;">
+            <h4 style="color: #856404;"><i class="fas fa-undo-alt"></i> Application Returned</h4>
+            <p style="font-size: 0.75rem;">This application has been returned to the faculty for revision. Once resubmitted, the review process will restart from Check 1.</p>
+        </div>`;
+    }
+    
+    html += `<div class="demo-note" style="margin-top: 1rem; text-align: left;">
+        <i class="fas fa-info-circle"></i> <strong>Review Process Flow:</strong> Check 1 (Eligibility) → Check 2 (Secondary) → Check 3 (Final) → Approval
+    </div></div>`;
+    
+    return html;
+}
+
+function attachCheckStageHandlers(modal, email, appId, currentStatus) {
+    
+    // Check 1 Approve (Eligibility Officer)
+    const approveCheck1 = modal.querySelector('.approve-check1');
+    if (approveCheck1) {
+        approveCheck1.onclick = async () => {
+            const feedback = modal.querySelector('#check1Feedback')?.value || '';
+            
+            const result = await Swal.fire({
+                title: 'Approve Check 1?',
+                text: 'This will move the application to Secondary Review (Check 2). The Secondary Checker will be notified.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#2ecc71',
+                confirmButtonText: 'Yes, Approve',
+                cancelButtonText: 'Cancel'
+            });
+            
+            if (result.isConfirmed) {
+                let apps = submissionsDB[email];
+                if (apps) {
+                    let appIndex = apps.findIndex(a => a.id === appId);
+                    if (appIndex !== -1) {
+                        submissionsDB[email][appIndex].status = 'Pending Secondary Check';
+                        submissionsDB[email][appIndex].check1Feedback = feedback;
+                        submissionsDB[email][appIndex].check1CompletedAt = new Date().toISOString();
+                        saveToLocalStorage();
+                        
+                        // Get current checker emails from settings
+                        let currentEmails = JSON.parse(localStorage.getItem('kuro_checker_emails')) || {
+                            check1: 'eligibility@xu.edu.ph',
+                            check2: 'secondary@xu.edu.ph',
+                            check3: 'finalapprover@xu.edu.ph'
+                        };
+                        
+                        const checkerEmails = getCheckerEmails();
+
+                        // Notify the Check 2 staff via in-app notification
+                        addNotification(checkerEmails.check2, 'review_request', '📋 New Application for Review', 
+                            `Application "${submissionsDB[email][appIndex].proposalTitle}" is ready for Secondary Review.`, 
+                            appId, '📋', '#3498db', 'checks');
+                        
+                        // Notify the Check 3 staff via in-app notification
+                        addNotification(checkerEmails.check3, 'review_request', '📋 Final Review Required', 
+                            `Application "${submissionsDB[email][appIndex].proposalTitle}" is ready for Final Review.`, 
+                            appId, '📋', '#9b59b6', 'checks');
+                        
+                        showInlineNotification('✓ Application moved to Secondary Review. Check 2 staff notified.', true);
+                        Swal.close();
+                        renderDashboard();
+                    }
+                }
+            }
+        };
+    }
+    
+    // Check 1 Return
+    const returnCheck1 = modal.querySelector('.return-check1');
+    if (returnCheck1) {
+        returnCheck1.onclick = async () => {
+            const feedback = modal.querySelector('#check1Feedback')?.value;
+            if (!feedback) {
+                showInlineNotification('Please provide feedback explaining why the application is being returned.', false);
+                return;
+            }
+            
+            const result = await Swal.fire({
+                title: 'Return Application?',
+                text: 'This will return the application to the faculty for revision.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e74c3c',
+                confirmButtonText: 'Yes, Return',
+                cancelButtonText: 'Cancel'
+            });
+            
+            if (result.isConfirmed) {
+                let apps = submissionsDB[email];
+                if (apps) {
+                    let appIndex = apps.findIndex(a => a.id === appId);
+                    if (appIndex !== -1) {
+                        submissionsDB[email][appIndex].status = 'Returned';
+                        submissionsDB[email][appIndex].returnedFeedback = feedback;
+                        submissionsDB[email][appIndex].returnedFromStage = 'check1';
+                        submissionsDB[email][appIndex].returnedAt = new Date().toISOString();
+                        saveToLocalStorage();
+                        
+                        // Notify faculty that their application was returned
+                        addNotification(email, 'application_returned', '↩️ Application Returned', 
+                            `Your application requires revision: ${feedback.substring(0, 100)}...`, 
+                            appId, '↩️', '#e74c3c');
+                        
+                        showInlineNotification('✓ Application returned to faculty', true);
+                        Swal.close();
+                        renderDashboard();
+                    }
+                }
+            }
+        };
+    }
+    
+    // Check 2 Approve (Secondary Checker)
+    const approveCheck2 = modal.querySelector('.approve-check2');
+    if (approveCheck2) {
+        approveCheck2.onclick = async () => {
+            const feedback = modal.querySelector('#check2Feedback')?.value || '';
+            
+            const result = await Swal.fire({
+                title: 'Approve Check 2?',
+                text: 'This will move the application to Final Review (Check 3). The Final Approver will be notified.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#2ecc71',
+                confirmButtonText: 'Yes, Approve',
+                cancelButtonText: 'Cancel'
+            });
+            
+            if (result.isConfirmed) {
+                let apps = submissionsDB[email];
+                if (apps) {
+                    let appIndex = apps.findIndex(a => a.id === appId);
+                    if (appIndex !== -1) {
+                        submissionsDB[email][appIndex].status = 'Pending Final Check';
+                        submissionsDB[email][appIndex].check2Feedback = feedback;
+                        submissionsDB[email][appIndex].check2CompletedAt = new Date().toISOString();
+                        saveToLocalStorage();
+                        
+                        // Get current checker emails from settings
+                        let currentEmails = JSON.parse(localStorage.getItem('kuro_checker_emails')) || {
+                            check1: 'eligibility@xu.edu.ph',
+                            check2: 'secondary@xu.edu.ph',
+                            check3: 'finalapprover@xu.edu.ph'
+                        };
+                        
+                        // Notify faculty that their application passed Check 2
+                        addNotification(email, 'check_completed', '✅ Check 2 Completed', 
+                            'Your application has passed the Secondary Review and moved to Final Review.', 
+                            appId, '✅', '#2ecc71');
+                        
+                        // Notify the Check 3 staff via in-app notification
+                        addNotification(currentEmails.check3, 'review_request', '📋 Final Review Required', 
+                            `Application "${submissionsDB[email][appIndex].proposalTitle}" is ready for Final Review.`, 
+                            appId, '📋', '#9b59b6', 'checks');
+                        
+                        showInlineNotification('✓ Application moved to Final Review. Final Approver notified.', true);
+                        Swal.close();
+                        renderDashboard();
+                    }
+                }
+            }
+        };
+    }
+    
+    // Check 2 Return
+    const returnCheck2 = modal.querySelector('.return-check2');
+    if (returnCheck2) {
+        returnCheck2.onclick = async () => {
+            const feedback = modal.querySelector('#check2Feedback')?.value;
+            if (!feedback) {
+                showInlineNotification('Please provide feedback explaining why the application is being returned.', false);
+                return;
+            }
+            
+            const result = await Swal.fire({
+                title: 'Return Application?',
+                text: 'This will return the application to the faculty for revision.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e74c3c',
+                confirmButtonText: 'Yes, Return',
+                cancelButtonText: 'Cancel'
+            });
+            
+            if (result.isConfirmed) {
+                let apps = submissionsDB[email];
+                if (apps) {
+                    let appIndex = apps.findIndex(a => a.id === appId);
+                    if (appIndex !== -1) {
+                        submissionsDB[email][appIndex].status = 'Returned';
+                        submissionsDB[email][appIndex].returnedFeedback = feedback;
+                        submissionsDB[email][appIndex].returnedFromStage = 'check2';
+                        submissionsDB[email][appIndex].returnedAt = new Date().toISOString();
+                        saveToLocalStorage();
+                        
+                        addNotification(email, 'application_returned', '↩️ Application Returned', 
+                            `Your application requires revision: ${feedback.substring(0, 100)}...`, 
+                            appId, '↩️', '#e74c3c');
+                        
+                        showInlineNotification('✓ Application returned to faculty', true);
+                        Swal.close();
+                        renderDashboard();
+                    }
+                }
+            }
+        };
+    }
+    
+    // Check 3 Approve (Final Approval)
+    const approveCheck3 = modal.querySelector('.approve-check3');
+    if (approveCheck3) {
+        approveCheck3.onclick = async () => {
+            const feedback = modal.querySelector('#check3Feedback')?.value || '';
+            
+            const result = await Swal.fire({
+                title: 'Final Approval?',
+                text: 'This will mark the application as APPROVED. The faculty will be notified.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#2ecc71',
+                confirmButtonText: 'Yes, Approve',
+                cancelButtonText: 'Cancel'
+            });
+            
+            if (result.isConfirmed) {
+                let apps = submissionsDB[email];
+                if (apps) {
+                    let appIndex = apps.findIndex(a => a.id === appId);
+                    if (appIndex !== -1) {
+                        submissionsDB[email][appIndex].status = 'Approved';
+                        submissionsDB[email][appIndex].check3Feedback = feedback;
+                        submissionsDB[email][appIndex].check3CompletedAt = new Date().toISOString();
+                        submissionsDB[email][appIndex].approvedAt = new Date().toISOString();
+                        saveToLocalStorage();
+                        
+                        // Notify faculty that their application is approved
+                        addNotification(email, 'application_approved', '🎉 Application Approved!', 
+                            `Your application "${submissionsDB[email][appIndex].proposalTitle}" has been approved by the Final Approver.`, 
+                            appId, '🎉', '#2ecc71');
+                        
+                        showInlineNotification('✓ Application approved! Faculty notified.', true);
+                        Swal.close();
+                        renderDashboard();
+                    }
+                }
+            }
+        };
+    }
+    
+    // Check 3 Return
+    const returnCheck3 = modal.querySelector('.return-check3');
+    if (returnCheck3) {
+        returnCheck3.onclick = async () => {
+            const feedback = modal.querySelector('#check3Feedback')?.value;
+            if (!feedback) {
+                showInlineNotification('Please provide feedback explaining why the application is being returned.', false);
+                return;
+            }
+            
+            const result = await Swal.fire({
+                title: 'Return Application?',
+                text: 'This will return the application to the faculty for revision.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e74c3c',
+                confirmButtonText: 'Yes, Return',
+                cancelButtonText: 'Cancel'
+            });
+            
+            if (result.isConfirmed) {
+                let apps = submissionsDB[email];
+                if (apps) {
+                    let appIndex = apps.findIndex(a => a.id === appId);
+                    if (appIndex !== -1) {
+                        submissionsDB[email][appIndex].status = 'Returned';
+                        submissionsDB[email][appIndex].returnedFeedback = feedback;
+                        submissionsDB[email][appIndex].returnedFromStage = 'check3';
+                        submissionsDB[email][appIndex].returnedAt = new Date().toISOString();
+                        saveToLocalStorage();
+                        
+                        addNotification(email, 'application_returned', '↩️ Application Returned', 
+                            `Your application requires revision: ${feedback.substring(0, 100)}...`, 
+                            appId, '↩️', '#e74c3c');
+                        
+                        showInlineNotification('✓ Application returned to faculty', true);
+                        Swal.close();
+                        renderDashboard();
+                    }
+                }
+            }
+        };
+    }
+}
+
+function attachCVHandlersInModal(modal, email, appId) {
+    // Copy the existing CV handler logic from renderCVReviewContent
+    const cvSelects = modal.querySelectorAll('.cv-status-change');
+    cvSelects.forEach(select => {
+        select.onchange = function() {
+            const type = this.getAttribute('data-type');
+            const idx = parseInt(this.getAttribute('data-idx')) || 0;
+            const newStatus = this.value;
+            
+            let apps = submissionsDB[email];
+            if (apps) {
+                let appIndex = apps.findIndex(a => a.id === appId);
+                if (appIndex !== -1) {
+                    if (type === 'pi') {
+                        submissionsDB[email][appIndex].piCVStatus = newStatus;
+                    } else if (type === 'team') {
+                        if (!submissionsDB[email][appIndex].teamCVs) submissionsDB[email][appIndex].teamCVs = [];
+                        if (!submissionsDB[email][appIndex].teamCVs[idx]) submissionsDB[email][appIndex].teamCVs[idx] = {};
+                        submissionsDB[email][appIndex].teamCVs[idx].status = newStatus;
+                    }
+                    saveToLocalStorage();
+                    
+                    const cvType = type === 'pi' ? 'Principal Investigator' : 'Team Member';
+                    addNotification(email, 'cv_status', '📄 CV Status Updated', `Your ${cvType} CV has been marked as ${newStatus}.`, appId, newStatus === 'eligible' ? '✅' : (newStatus === 'ineligible' ? '❌' : '⏳'), newStatus === 'eligible' ? '#2ecc71' : (newStatus === 'ineligible' ? '#e74c3c' : '#f39c12'), 'cv');
+                }
+            }
+            
+            if (newStatus === 'eligible') {
+                this.style.background = '#d4edda';
+                this.style.color = '#155724';
+            } else if (newStatus === 'ineligible') {
+                this.style.background = '#f8d7da';
+                this.style.color = '#721c24';
+            } else {
+                this.style.background = '#fff3cd';
+                this.style.color = '#856404';
+            }
+            
+            showInlineNotification(`✓ CV status changed to ${newStatus}`, true);
+            renderDashboard();
+        };
+    });
+    
+    // Save feedback button handler
+    const saveFeedbackBtn = modal.querySelector('.save-feedback-btn');
+    if (saveFeedbackBtn) {
+        saveFeedbackBtn.onclick = function() {
+            const feedback = modal.querySelector('#cvFeedbackText')?.value || '';
+            let apps = submissionsDB[email];
+            if (apps) {
+                let appIndex = apps.findIndex(a => a.id === appId);
+                if (appIndex !== -1) {
+                    submissionsDB[email][appIndex].uploadFeedback = feedback;
+                    saveToLocalStorage();
+                    addNotification(email, 'feedback', '💬 New Feedback', `The research office has left feedback on your CV submissions.`, appId, '💬', '#3498db', 'cv');
+                }
+            }
+            showInlineNotification('✓ Feedback saved!', true);
+        };
+    }
+}
+
+function renderForm1Content(app) {
+    let html = '<div class="detail-section"><h4>📌 Project Profile</h4>';
+    html += `<div class="detail-field"><strong>Project Title:</strong> ${escapeHtml(app.proposalTitle || 'N/A')}</div>`;
+    html += `<div class="detail-field"><strong>Principal Investigator:</strong> ${escapeHtml(app.piName || 'N/A')}</div>`;
+    html += `<div class="detail-field"><strong>Email:</strong> ${escapeHtml(app.piEmail || 'N/A')}</div>`;
+    html += `<div class="detail-field"><strong>Department:</strong> ${escapeHtml(app.dept || 'N/A')}</div>`;
+    html += `<div class="detail-field"><strong>School/College:</strong> ${escapeHtml(app.school || 'N/A')}</div>`;
+    html += `<div class="detail-field"><strong>Local Extension:</strong> ${escapeHtml(app.extension || 'N/A')}</div>`;
+    html += `<div class="detail-field"><strong>Project Duration:</strong> ${escapeHtml(app.duration || 'N/A')}</div></div>`;
+    
+    if (app.rationale) html += `<div class="detail-section"><h4>📖 Rationale</h4><div>${escapeHtml(app.rationale)}</div></div>`;
+    if (app.litReview) html += `<div class="detail-section"><h4>📚 Review of Literature</h4><div>${escapeHtml(app.litReview)}</div></div>`;
+    if (app.objectives) html += `<div class="detail-section"><h4>🎯 Objectives</h4><div>${escapeHtml(app.objectives)}</div></div>`;
+    if (app.methodology) html += `<div class="detail-section"><h4>🔬 Methodology</h4><div>${escapeHtml(app.methodology)}</div></div>`;
+    if (app.outputs) html += `<div class="detail-section"><h4>📊 Expected Outputs</h4><div>${escapeHtml(app.outputs)}</div></div>`;
+    
+    if (app.references && app.references.length) {
         html += '<div class="detail-section"><h4>📑 Literature Cited</h4><ul>';
-        foundApp.references.forEach(function(ref) {
-            html += '<li>' + escapeHtml(ref) + '</li>';
-        });
+        app.references.forEach(ref => html += `<li>${escapeHtml(ref)}</li>`);
         html += '</ul></div>';
     }
     
-    if (foundApp.teamMembers && foundApp.teamMembers.length > 0) {
+    if (app.teamMembers && app.teamMembers.length) {
         html += '<div class="detail-section"><h4>👥 Research Team Members</h4><ul>';
-        foundApp.teamMembers.forEach(function(member) {
-            html += '<li><strong>' + escapeHtml(member.name) + '</strong> - ' + escapeHtml(member.role) + '</li>';
-        });
+        app.teamMembers.forEach(m => html += `<li><strong>${escapeHtml(m.name)}</strong> - ${escapeHtml(m.role)}</li>`);
         html += '</ul></div>';
     }
     
-    if (foundApp.activities && foundApp.activities.length > 0) {
+    if (app.activities && app.activities.length) {
         html += '<div class="detail-section"><h4>📅 Major Activities & Workplan</h4>';
-        foundApp.activities.forEach(function(act, idx) {
-            html += '<div style="margin-bottom:0.8rem; padding:0.5rem; background:white; border-radius:0.5rem; text-align:left;">';
-            html += '<strong>Activity ' + (idx+1) + ':</strong> ' + escapeHtml(act.name || '') + '<br>';
-            html += '<small>📅 ' + (act.startMonth || '') + ' ' + (act.startYear || '') + ' - ' + (act.endMonth || '') + ' ' + (act.endYear || '') + '</small><br>';
-            html += '<small>📝 ' + escapeHtml(act.description || '') + '</small><br>';
-            html += '<small>🎯 Objective: ' + escapeHtml(act.objective || '') + '</small><br>';
-            html += '<small>📦 Output: ' + escapeHtml(act.output || '') + '</small>';
-            html += '</div>';
+        app.activities.forEach(function(act, idx) {
+            html += `<div style="margin-bottom:0.8rem; padding:0.5rem; background:white; border-radius:0.5rem;">
+                <strong>Activity ${idx+1}:</strong> ${escapeHtml(act.name)}<br>
+                <small>📅 ${act.startDate || act.startMonth + ' ' + act.startYear} - ${act.endDate || act.endMonth + ' ' + act.endYear}</small><br>
+                <small>📝 ${escapeHtml(act.description)}</small><br>
+                <small>🎯 ${escapeHtml(act.objective)}</small><br>
+                <small>📦 ${escapeHtml(act.output)}</small>
+            </div>`;
         });
         html += '</div>';
     }
     
-    // Budget table - kept as proper table with right-aligned numbers
-    if (foundApp.budgetItems && foundApp.budgetItems.length > 0) {
+    if (app.budgetItems && app.budgetItems.length) {
         let total = 0;
-        html += '<div class="detail-section"><h4>💰 Budgetary Requirements</h4>';
-        html += '<table class="budget-table"><thead><tr>';
-        html += '<th>Category</th><th>Item</th><th>Unit Cost</th><th>Qty</th><th>Total</th>';
-        html += '</tr></thead><tbody>';
-        foundApp.budgetItems.forEach(function(item) {
-            let itemTotal = (item.unitCost || 0) * (item.qty || 1);
-            total += itemTotal;
-            html += '<tr>';
-            html += '<td>' + escapeHtml(item.category || '') + '</td>';
-            html += '<td>' + escapeHtml(item.itemName || '') + '</td>';
-            html += '<td>₱' + (item.unitCost || 0).toLocaleString() + '</td>';
-            html += '<td>' + (item.qty || 1) + '</td>';
-            html += '<td>₱' + itemTotal.toLocaleString() + '</td>';
-            html += '</tr>';
+        html += '<div class="detail-section"><h4>💰 Budgetary Requirements</h4><table class="budget-table"><thead><tr><th>Category</th><th>Item</th><th>Specifications</th><th>Unit Cost</th><th>Qty</th><th>Total</th></tr></thead><tbody>';
+        app.budgetItems.forEach(function(item) {
+            let it = (item.unitCost || 0) * (item.qty || 1);
+            total += it;
+            html += `<tr>
+                <td>${escapeHtml(item.category)}</td><td>${escapeHtml(item.itemName)}</td><td>${escapeHtml(item.specs || '')}</td>
+                <td style="text-align:right;">₱${(item.unitCost || 0).toLocaleString()}</td>
+                <td style="text-align:center;">${item.qty || 1}</td>
+                <td style="text-align:right;">₱${it.toLocaleString()}</td>
+            </tr>`;
         });
-        html += '<tr style="background:#f0f0f0; font-weight:bold;"><td colspan="4">GRAND TOTAL</td><td>₱' + total.toLocaleString() + '</td></tr>';
+        html += `<tr style="background:#f0f0f0; font-weight:bold;"><td colspan="5" style="text-align:right;">GRAND TOTAL</td><td style="text-align:right;">₱${total.toLocaleString()}</td></tr>`;
         html += '</tbody></table></div>';
+    }
+    return html;
+}
+
+function renderForm2Content(app) {
+    let chairSigned = app.signatures?.chair ? '✅ Signed' : '⏳ Pending';
+    let deanSigned = app.signatures?.dean ? '✅ Signed' : '⏳ Pending';
+    let chairDate = app.signatures?.chair?.signedDate ? new Date(app.signatures.chair.signedDate).toLocaleDateString() : '';
+    let deanDate = app.signatures?.dean?.signedDate ? new Date(app.signatures.dean.signedDate).toLocaleDateString() : '';
+    
+    let html = `
+        <div class="detail-section">
+            <h4>📌 Endorsement Information</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                <div class="detail-field"><strong>Date:</strong> ${escapeHtml(app.endorsementDate || 'N/A')}</div>
+                <div class="detail-field"><strong>School Year:</strong> ${escapeHtml(app.schoolYear || 'N/A')}</div>
+                <div class="detail-field"><strong>Department:</strong> ${escapeHtml(app.endorseDept || 'N/A')}</div>
+                <div class="detail-field"><strong>School/College:</strong> ${escapeHtml(app.endorseSchool || 'N/A')}</div>
+            </div>
+        </div>
+        
+        <div class="detail-section">
+            <h4>✍️ Digital Signatures</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div style="background: white; border-radius: 0.8rem; padding: 1rem; border-left: 4px solid var(--gold); box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.8rem;">
+                        <i class="fas fa-user-tie" style="color: var(--gold); font-size: 1.2rem;"></i>
+                        <strong style="color: var(--primary);">Department Chair</strong>
+                    </div>
+                    <div class="detail-field"><strong>Name:</strong> ${escapeHtml(app.fromChair || 'N/A')}</div>
+                    <div class="detail-field"><strong>Email:</strong> ${escapeHtml(app.chairEmail || 'N/A')}</div>
+                    <div class="detail-field" style="margin-top: 0.5rem;">
+                        <strong>Status:</strong> 
+                        <span class="status-badge ${app.signatures?.chair ? 'approved' : 'pending'}" style="font-size: 0.7rem;">
+                            ${chairSigned}
+                        </span>
+                        ${chairDate ? `<span style="font-size: 0.7rem; color: #666; margin-left: 0.5rem;">📅 ${chairDate}</span>` : ''}
+                    </div>
+                </div>
+                
+                <div style="background: white; border-radius: 0.8rem; padding: 1rem; border-left: 4px solid var(--gold); box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.8rem;">
+                        <i class="fas fa-university" style="color: var(--gold); font-size: 1.2rem;"></i>
+                        <strong style="color: var(--primary);">Dean</strong>
+                    </div>
+                    <div class="detail-field"><strong>Name:</strong> ${escapeHtml(app.deanName || 'N/A')}</div>
+                    <div class="detail-field"><strong>Email:</strong> ${escapeHtml(app.deanEmail || 'N/A')}</div>
+                    <div class="detail-field" style="margin-top: 0.5rem;">
+                        <strong>Status:</strong> 
+                        <span class="status-badge ${app.signatures?.dean ? 'approved' : 'pending'}" style="font-size: 0.7rem;">
+                            ${deanSigned}
+                        </span>
+                        ${deanDate ? `<span style="font-size: 0.7rem; color: #666; margin-left: 0.5rem;">📅 ${deanDate}</span>` : ''}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    html += `
+        <div class="detail-section">
+            <h4 style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;" onclick="toggleEndorsementPreview()">
+                📄 Endorsement Letter Preview
+                <i class="fas fa-chevron-down" id="previewToggleIcon"></i>
+            </h4>
+            <div id="endorsementPreview" style="display: none; margin-top: 1rem;">
+                <div class="endorsement-preview" style="background: white; padding: 1.5rem; border-radius: 0.5rem; border: 1px solid #ddd; font-family: 'Times New Roman', serif;">
+                    <p style="text-align: center; font-weight: bold; margin-bottom: 1rem;">XAVIER UNIVERSITY - ATENEO DE CAGAYAN</p>
+                    <p style="text-align: center; margin-bottom: 1rem;">Kinaadman University Research Office (KURO)</p>
+                    <hr style="margin: 0.5rem 0;">
+                    <p style="margin: 1rem 0;">This certifies that the undersigned have reviewed the research proposal entitled:</p>
+                    <p style="font-weight: bold; text-align: center; margin: 0.5rem 0;">"${escapeHtml(app.proposalTitle || app.projectTitle || 'N/A')}"</p>
+                    <p>submitted by <strong>${escapeHtml(app.piName || 'N/A')}</strong> from the Department of <strong>${escapeHtml(app.dept || 'N/A')}</strong>, ${escapeHtml(app.school || 'N/A')}.</p>
+                    <p>The proposal has been evaluated and is hereby <strong>ENDORSED</strong> for funding consideration by the KURO Review Committee.</p>
+                    <hr style="margin: 1rem 0;">
+                    <div style="display: flex; justify-content: space-between; margin-top: 1rem;">
+                        <div style="text-align: center;">
+                            <div style="font-weight: bold; margin-bottom: 0.3rem;">${app.signatures?.chair ? '✅ ' + escapeHtml(app.fromChair) : '_________________'}</div>
+                            <small>Department Chair</small>
+                            ${chairDate ? `<div><small>${chairDate}</small></div>` : ''}
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-weight: bold; margin-bottom: 0.3rem;">${app.signatures?.dean ? '✅ ' + escapeHtml(app.deanName) : '_________________'}</div>
+                            <small>Dean</small>
+                            ${deanDate ? `<div><small>${deanDate}</small></div>` : ''}
+                        </div>
+                    </div>
+                    <p style="text-align: center; margin-top: 1.5rem; font-size: 0.7rem; color: #666;">
+                        <i class="fas fa-certificate"></i> Digitally generated document - KURO System
+                    </p>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    if (!window.toggleEndorsementPreview) {
+        window.toggleEndorsementPreview = function() {
+            const preview = document.getElementById('endorsementPreview');
+            const icon = document.getElementById('previewToggleIcon');
+            if (preview) {
+                if (preview.style.display === 'none' || preview.style.display === '') {
+                    preview.style.display = 'block';
+                    if (icon) icon.className = 'fas fa-chevron-up';
+                } else {
+                    preview.style.display = 'none';
+                    if (icon) icon.className = 'fas fa-chevron-down';
+                }
+            }
+        };
     }
     
     return html;
 }
 
-function renderForm2Content(foundApp) {
-    let html = '';
+function renderCVReviewContent(app, email, appId) {
+    let html = '<div class="detail-section"><h4>📎 CV Review & Eligibility Status</h4>';
+    html += '<p style="font-size:0.75rem; margin-bottom:1rem;">Review each CV and mark as Eligible, Ineligible, or Pending.</p>';
     
-    // Show digital signature status
-    html += '<div class="detail-section">';
-    html += '<h4>🔐 Digital Signature Status</h4>';
+    if (app.piCVName && app.piCVName.trim() !== '') {
+        let piStatus = app.piCVStatus || 'pending';
+        let bgColor = piStatus === 'eligible' ? '#d4edda' : (piStatus === 'ineligible' ? '#f8d7da' : '#fff3cd');
+        
+        html += `<div style="background: white; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; border-left: 4px solid var(--gold);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <i class="fas fa-user-tie" style="font-size: 1.5rem; color: var(--gold);"></i>
+                    <strong>Principal Investigator:</strong> ${escapeHtml(app.piName || 'PI')}<br>
+                    <small><i class="fas fa-file-pdf"></i> ${escapeHtml(app.piCVName)}</small>
+                </div>
+                <div>
+                    <select class="cv-status-change" data-type="pi" data-idx="0" style="padding: 0.4rem 0.8rem; border-radius: 20px; background: ${bgColor};">
+                        <option value="pending" ${piStatus === 'pending' ? 'selected' : ''}>⏳ Pending</option>
+                        <option value="eligible" ${piStatus === 'eligible' ? 'selected' : ''}>✅ Eligible</option>
+                        <option value="ineligible" ${piStatus === 'ineligible' ? 'selected' : ''}>❌ Ineligible</option>
+                    </select>
+                    <button class="view-cv-btn" data-cv-name="${escapeHtml(app.piCVName)}" style="margin-left: 0.5rem; padding: 0.3rem 0.8rem; background: var(--gold); border: none; border-radius: 20px; cursor: pointer;">
+                        <i class="fas fa-eye"></i> View
+                    </button>
+                </div>
+            </div>
+        </div>`;
+    } else {
+        html += `<div style="background: #f8f9fa; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; border-left: 4px solid #e74c3c;">
+            <i class="fas fa-exclamation-triangle"></i> <strong>PI CV:</strong> Not uploaded
+        </div>`;
+    }
     
-    // Chair signature status
-    let chairStatus = foundApp.signatures?.chair?.signed ? '✅ Signed' : '⏳ Pending';
-    let chairDate = foundApp.signatures?.chair?.signedDate ? new Date(foundApp.signatures.chair.signedDate).toLocaleString() : '';
-    html += `<div class="detail-field"><strong>Department Chair:</strong> ${escapeHtml(foundApp.fromChair || 'N/A')}<br>
-             <small>Email: ${escapeHtml(foundApp.chairEmail || 'N/A')}</small><br>
-             <small>Status: ${chairStatus} ${chairDate ? 'on ' + chairDate : ''}</small></div>`;
+    if (app.teamMembers && app.teamMembers.length > 0) {
+        html += `<h4 style="margin-top: 1rem;"><i class="fas fa-users"></i> Research Team (${app.teamMembers.length})</h4>`;
+        
+        for (let i = 0; i < app.teamMembers.length; i++) {
+            const member = app.teamMembers[i];
+            let cv = app.teamCVs && app.teamCVs[i] ? app.teamCVs[i] : null;
+            const hasCV = cv && cv.name && cv.name.trim() !== '';
+            let cvStatus = (cv && cv.status) ? cv.status : 'pending';
+            let bgColor = cvStatus === 'eligible' ? '#d4edda' : (cvStatus === 'ineligible' ? '#f8d7da' : '#fff3cd');
+            
+            html += `<div style="background: white; border-radius: 12px; padding: 1rem; margin-bottom: 0.8rem; border-left: 4px solid ${hasCV ? 'var(--gold)' : '#e74c3c'};">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <i class="fas fa-user"></i>
+                        <strong>${escapeHtml(member.name)}</strong>
+                        ${member.role ? `<span style="color: #666; font-size: 0.75rem;">(${escapeHtml(member.role)})</span>` : ''}<br>
+                        ${hasCV ? `<small><i class="fas fa-file-pdf"></i> ${escapeHtml(cv.name)}</small>` : '<small style="color: #e74c3c;">❌ No CV uploaded</small>'}
+                    </div>
+                    <div>
+                        ${hasCV ? `
+                            <select class="cv-status-change" data-type="team" data-idx="${i}" style="padding: 0.3rem 0.8rem; border-radius: 20px; background: ${bgColor};">
+                                <option value="pending" ${cvStatus === 'pending' ? 'selected' : ''}>⏳ Pending</option>
+                                <option value="eligible" ${cvStatus === 'eligible' ? 'selected' : ''}>✅ Eligible</option>
+                                <option value="ineligible" ${cvStatus === 'ineligible' ? 'selected' : ''}>❌ Ineligible</option>
+                            </select>
+                            <button class="view-cv-btn" data-cv-name="${escapeHtml(cv.name)}" style="margin-left: 0.5rem; padding: 0.3rem 0.8rem; background: var(--gold); border: none; border-radius: 20px; cursor: pointer;">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                        ` : '<span style="color: #999;">No CV to review</span>'}
+                    </div>
+                </div>
+            </div>`;
+        }
+    }
     
-    // Dean signature status
-    let deanStatus = foundApp.signatures?.dean?.signed ? '✅ Signed' : '⏳ Pending';
-    let deanDate = foundApp.signatures?.dean?.signedDate ? new Date(foundApp.signatures.dean.signedDate).toLocaleString() : '';
-    html += `<div class="detail-field"><strong>Dean:</strong> ${escapeHtml(foundApp.deanName || 'N/A')}<br>
-             <small>Email: ${escapeHtml(foundApp.deanEmail || 'N/A')}</small><br>
-             <small>Status: ${deanStatus} ${deanDate ? 'on ' + deanDate : ''}</small></div>`;
+    html += `<div style="margin-top: 1.5rem; background: #fff9e6; border-radius: 12px; padding: 1rem; border-left: 4px solid var(--gold);">
+        <h4><i class="fas fa-comment-dots"></i> Reviewer Feedback on CVs</h4>
+        <p style="font-size: 0.7rem; color: #666; margin-bottom: 0.5rem;">Faculty will see these comments in their dashboard.</p>
+        <textarea id="cvFeedbackText" rows="3" class="feedback-textarea" placeholder="Leave feedback about CV submissions...">${escapeHtml(app.uploadFeedback || '')}</textarea>
+        <button class="save-feedback-btn btn-primary" style="margin-top: 0.5rem;"><i class="fas fa-save"></i> Save Feedback</button>
+    </div>`;
     
-    // Coordinator signature status
-    let coordStatus = foundApp.signatures?.coordinator?.signed ? '✅ Signed' : '⏳ Pending';
-    let coordDate = foundApp.signatures?.coordinator?.signedDate ? new Date(foundApp.signatures.coordinator.signedDate).toLocaleString() : '';
-    html += `<div class="detail-field"><strong>Research Coordinator:</strong> ${escapeHtml(foundApp.coordName || 'N/A')}<br>
-             <small>Email: ${escapeHtml(foundApp.coordEmail || 'N/A')}</small><br>
-             <small>Status: ${coordStatus} ${coordDate ? 'on ' + coordDate : ''}</small></div>`;
     html += '</div>';
-    
-    // Endorsement Information
-    html += '<div class="detail-section">';
-    html += '<h4>📌 Endorsement Information</h4>';
-    html += '<div class="detail-field"><strong>Date:</strong> ' + escapeHtml(foundApp.endorsementDate || 'N/A') + '</div>';
-    html += '<div class="detail-field"><strong>Department Chair:</strong> ' + escapeHtml(foundApp.fromChair || 'N/A') + '</div>';
-    html += '<div class="detail-field"><strong>Department:</strong> ' + escapeHtml(foundApp.endorseDept || 'N/A') + '</div>';
-    html += '<div class="detail-field"><strong>School/College:</strong> ' + escapeHtml(foundApp.endorseSchool || 'N/A') + '</div>';
-    html += '<div class="detail-field"><strong>School Year:</strong> ' + escapeHtml(foundApp.schoolYear || 'N/A') + '</div>';
-    html += '</div>';
-    
-    // Endorsement Letter Preview
-    html += '<div class="detail-section">';
-    html += '<h4>📄 Endorsement Letter Preview</h4>';
-    html += '<div style="background: white; padding: 1rem; border-radius: 0.5rem; border: 1px solid #ddd; font-family: serif; text-align: left;">';
-    html += '<p style="text-align: center; font-weight: bold; margin-bottom: 1rem;">XAVIER UNIVERSITY - ATENEO DE CAGAYAN</p>';
-    html += '<p style="text-align: center; margin-bottom: 1rem;">Kinaadman University Research Office (KURO)</p>';
-    html += '<hr style="margin: 0.5rem 0;">';
-    html += '<p style="margin: 1rem 0;">This certifies that the undersigned have reviewed the research proposal entitled:</p>';
-    html += '<p style="font-weight: bold; text-align: center; margin: 0.5rem 0;">"' + escapeHtml(foundApp.proposalTitle || foundApp.projectTitle || 'N/A') + '"</p>';
-    html += '<p>submitted by <strong>' + escapeHtml(foundApp.piName || 'N/A') + '</strong> from the Department of <strong>' + escapeHtml(foundApp.dept || 'N/A') + '</strong>, ' + escapeHtml(foundApp.school || 'N/A') + '.</p>';
-    html += '<p>The proposal has been evaluated and is hereby <strong>ENDORSED</strong> for funding consideration by the KURO Review Committee.</p>';
-    html += '<hr style="margin: 1rem 0;">';
-    
-    // Show signature indicators with checkmarks if signed
-    let chairSignature = foundApp.signatures?.chair?.signed ? '✅ ' + escapeHtml(foundApp.fromChair) : '_________________';
-    let deanSignature = foundApp.signatures?.dean?.signed ? '✅ ' + escapeHtml(foundApp.deanName) : '_________________';
-    let coordSignature = foundApp.signatures?.coordinator?.signed ? '✅ ' + escapeHtml(foundApp.coordName) : '_________________';
-    
-    html += '<div style="display: flex; justify-content: space-between; margin-top: 1rem; text-align: center;">';
-    html += '<div><strong>' + chairSignature + '</strong><br><small>Department Chair</small></div>';
-    html += '<div><strong>' + deanSignature + '</strong><br><small>Dean</small></div>';
-    html += '</div>';
-    html += '<div style="text-align: center; margin-top: 1rem;"><strong>' + coordSignature + '</strong><br><small>Research Coordinator</small></div>';
-    html += '</div></div>';
-    
     return html;
 }
 
-function editApplication(appId) {
-    let foundEmail = null;
-    let foundApp = null;
-    let foundIndex = null;
+function renderExternalReviewersContent(app, email, appId) {
+    let assignedReviewers = app.assignedReviewers || [];
+    let reviewerFeedbacks = app.reviewerFeedbacks || {};
+    let finalReportReviews = app.finalReportReview?.reviewerFeedbacks || {};
     
-    for (let email in submissionsDB) {
-        let apps = submissionsDB[email];
-        if (Array.isArray(apps)) {
-            for (let i = 0; i < apps.length; i++) {
-                if (apps[i].id === appId) {
-                    foundEmail = email;
-                    foundApp = apps[i];
-                    foundIndex = i;
+    // Only exempt your specific test email
+    const EXEMPTED_TEST_EMAIL = '200520181@my.xu.edu.ph';
+    const EXEMPTED_FACULTY_EMAIL = '200520181@xu.edu.ph';
+    
+    function emailsMatch(email1, email2) {
+        if (!email1 || !email2) return false;
+        if (email1 === email2) return true;
+        if ((email1 === EXEMPTED_TEST_EMAIL && email2 === EXEMPTED_FACULTY_EMAIL) ||
+            (email1 === EXEMPTED_FACULTY_EMAIL && email2 === EXEMPTED_TEST_EMAIL)) {
+            return true;
+        }
+        return false;
+    }
+    
+    let html = '<div class="detail-section"><h4>👥 External Reviewers</h4>';
+    html += '<p style="font-size:0.75rem; margin-bottom:1rem;">Assign external reviewers by email. They must have a valid @xu.edu.ph Google account.</p>';
+    
+    if (assignedReviewers.length > 0) {
+        html += '<h4 style="color: var(--primary); margin-bottom: 0.5rem;">📋 Assigned Reviewers</h4>';
+        for (let i = 0; i < assignedReviewers.length; i++) {
+            const reviewer = assignedReviewers[i];
+            const reviewerEmail = reviewer.email;
+            
+            let feedback = null;
+            let finalReview = null;
+            
+            for (let fbEmail in reviewerFeedbacks) {
+                if (emailsMatch(reviewerEmail, fbEmail)) {
+                    feedback = reviewerFeedbacks[fbEmail];
+                    break;
+                }
+            }
+            
+            if (app.finalReportReview?.reviewerFeedbacks) {
+                for (let frEmail in app.finalReportReview.reviewerFeedbacks) {
+                    if (emailsMatch(reviewerEmail, frEmail)) {
+                        finalReview = app.finalReportReview.reviewerFeedbacks[frEmail];
+                        break;
+                    }
+                }
+            }
+            
+            const hasReview = feedback !== null || finalReview !== null;
+            const status = hasReview ? 'Completed' : 'Pending';
+            const statusColor = hasReview ? '#2ecc71' : '#f39c12';
+            
+            let reviewType = 'none';
+            if (finalReview) reviewType = 'final';
+            else if (feedback) reviewType = 'initial';
+            
+            html += `<div style="background: white; border-radius: 12px; padding: 0.8rem; margin-bottom: 0.8rem; border: 1px solid #e0e0e0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                    <div style="flex: 1;">
+                        <i class="fas fa-user-check" style="color: ${statusColor};"></i>
+                        <strong>${escapeHtml(reviewer.name || reviewer.email.split('@')[0])}</strong><br>
+                        <small>${escapeHtml(reviewer.email)}</small>
+                        <div><span style="background: ${statusColor}20; color: ${statusColor}; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.7rem;">${status}</span></div>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="view-evaluation-btn" data-reviewer-email="${escapeHtml(reviewer.email)}" data-reviewer-name="${escapeHtml(reviewer.name || reviewer.email.split('@')[0])}" data-type="${reviewType}" style="background: ${hasReview ? 'var(--gold)' : '#6c757d'}; color: ${hasReview ? 'var(--primary)' : 'white'}; border: none; padding: 0.3rem 0.8rem; border-radius: 20px; cursor: pointer;">
+                            <i class="fas fa-star"></i> ${hasReview ? 'View Evaluation' : 'No Review Yet'}
+                        </button>
+                        <button class="remove-reviewer-btn" data-reviewer-email="${escapeHtml(reviewer.email)}" data-reviewer-name="${escapeHtml(reviewer.name || reviewer.email.split('@')[0])}" style="background: #e74c3c; color: white; border: none; padding: 0.3rem 0.8rem; border-radius: 20px; cursor: pointer;">
+                            <i class="fas fa-trash"></i> Remove
+                        </button>
+                    </div>
+                </div>`;
+            
+            if (feedback) {
+                html += `<div style="margin-top: 0.5rem; padding: 0.6rem; background: #f0f7ff; border-radius: 8px;">
+                    <small><i class="fas fa-chart-simple"></i> <strong>Initial Review:</strong> Score ${feedback.score}/10 | Recommendation: ${feedback.recommendation || 'N/A'}</small>
+                </div>`;
+            }
+            
+            if (finalReview) {
+                html += `<div style="margin-top: 0.3rem; padding: 0.6rem; background: #e8f5e9; border-radius: 8px;">
+                    <small><i class="fas fa-file-alt"></i> <strong>Final Report Review:</strong> ${finalReview.recommendation || 'N/A'}</small>
+                </div>`;
+            }
+            
+            html += `</div>`;
+        }
+    } else {
+        html += '<div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; text-align: center; color: #666;">';
+        html += '<i class="fas fa-info-circle"></i> No external reviewers assigned yet.';
+        html += '</div>';
+    }
+    
+    html += '<div style="margin-top: 1.5rem; background: white; border-radius: 12px; padding: 1rem; border-left: 4px solid var(--gold);">';
+    html += '<h4 style="color: var(--primary); margin-bottom: 0.8rem;">➕ Assign New Reviewer</h4>';
+    html += '<div style="margin-bottom: 0.8rem;">';
+    html += '<label style="display: block; font-size: 0.7rem; font-weight: 600; color: var(--primary); margin-bottom: 0.2rem;">Reviewer Email (must be @xu.edu.ph)</label>';
+    html += '<input type="email" id="newReviewerEmail" placeholder="faculty@xu.edu.ph" style="width: 100%; padding: 0.5rem; border-radius: 8px; border: 1px solid #ddd;">';
+    html += '</div>';
+    html += '<small style="display: block; margin-bottom: 0.8rem; color: #666;"><i class="fas fa-info-circle"></i> The reviewer\'s name will be automatically populated from their Google account when they log in.</small>';
+    html += '<button id="addManualReviewerBtn" class="btn-primary" style="margin-top: 0.5rem; padding: 0.3rem 0.8rem;"><i class="fas fa-user-plus"></i> Assign Reviewer</button>';
+    html += '</div>';
+    
+    html += '</div>';
+    return html;
+}
+
+function viewReviewerEvaluation(reviewerEmail, reviewerName, evaluationType, appData) {
+    // Only exempt your specific test email
+    const EXEMPTED_TEST_EMAIL = '200520181@my.xu.edu.ph';
+    const EXEMPTED_FACULTY_EMAIL = '200520181@xu.edu.ph';
+    
+    function emailsMatch(email1, email2) {
+        if (!email1 || !email2) return false;
+        // Direct match
+        if (email1 === email2) return true;
+        // Exempted test email match (only for 200520181)
+        if ((email1 === EXEMPTED_TEST_EMAIL && email2 === EXEMPTED_FACULTY_EMAIL) ||
+            (email1 === EXEMPTED_FACULTY_EMAIL && email2 === EXEMPTED_TEST_EMAIL)) {
+            return true;
+        }
+        return false;
+    }
+    
+    // Handle case where no review exists
+    if (evaluationType === 'none') {
+        Swal.fire({
+            icon: 'info',
+            title: 'No Review Submitted',
+            html: `<div class="detail-section">
+                <h4>${escapeHtml(reviewerName)}</h4>
+                <p><strong>Email:</strong> ${escapeHtml(reviewerEmail)}</p>
+                <p style="margin-top: 1rem;">This reviewer has not submitted any evaluation yet.</p>
+                <p style="margin-top: 1rem; padding: 0.8rem; background: #f8f9fa; border-radius: 8px;">
+                    <i class="fas fa-clock"></i> Once they submit their review, it will appear here.
+                </p>
+            </div>`,
+            confirmButtonColor: '#D4AF37',
+            confirmButtonText: 'Close'
+        });
+        return;
+    }
+    
+    let feedback = null;
+    let title = '';
+    
+    // Find feedback by email matching (with exemption for test email)
+    if (evaluationType === 'final') {
+        if (appData.finalReportReview?.reviewerFeedbacks) {
+            for (let email in appData.finalReportReview.reviewerFeedbacks) {
+                if (emailsMatch(reviewerEmail, email)) {
+                    feedback = appData.finalReportReview.reviewerFeedbacks[email];
                     break;
                 }
             }
         }
-        if (foundApp) break;
+        title = `📋 Final Report Review from ${reviewerName}`;
+    } else {
+        if (appData.reviewerFeedbacks) {
+            for (let email in appData.reviewerFeedbacks) {
+                if (emailsMatch(reviewerEmail, email)) {
+                    feedback = appData.reviewerFeedbacks[email];
+                    break;
+                }
+            }
+        }
+        title = `📝 Initial Review from ${reviewerName}`;
     }
-
-    if (!foundApp) {
-        Swal.fire({ icon: 'error', title: 'Error', text: 'Application not found!' });
+    
+    if (!feedback) {
+        Swal.fire({ 
+            icon: 'info', 
+            title: 'No Review', 
+            text: 'This reviewer has not submitted an evaluation yet.', 
+            confirmButtonColor: '#D4AF37' 
+        });
         return;
     }
-
-    Swal.fire({
-        title: 'Edit Application',
-        html: `
-            <div style="text-align: left;">
-                <div class="detail-field" style="margin-bottom: 1rem;"><strong>ID:</strong> ${foundApp.id}</div>
-                <div class="detail-field" style="margin-bottom: 1rem;"><strong>Project Title:</strong> ${escapeHtml(foundApp.proposalTitle || foundApp.projectTitle || 'N/A')}</div>
-                <div class="detail-field" style="margin-bottom: 1rem;">
-                    <label><strong>Status:</strong></label>
-                    <select id="editStatus" style="width: 100%; padding: 0.5rem; margin-top: 0.3rem; border-radius: 0.5rem; border: 1px solid #ddd;">
-                        <option value="Under Review" ${foundApp.status === 'Under Review' ? 'selected' : ''}>Under Review</option>
-                        <option value="External Review" ${foundApp.status === 'External Review' ? 'selected' : ''}>External Review</option>
-                        <option value="Approved" ${foundApp.status === 'Approved' ? 'selected' : ''}>Approved</option>
-                    </select>
-                </div>
-                <div class="detail-field">
-                    <label><strong>Admin Notes:</strong></label>
-                    <textarea id="editNotes" rows="3" style="width: 100%; padding: 0.5rem; margin-top: 0.3rem; border-radius: 0.5rem; border: 1px solid #ddd;" placeholder="Add internal notes...">${escapeHtml(foundApp.adminNotes || '')}</textarea>
-                </div>
+    
+    let html = `<div style="max-height: 60vh; overflow-y: auto;">`;
+    
+    // Check if this is a final report review (has evaluations object)
+    if (feedback.evaluations) {
+        // Final Report Review (FORM G style)
+        html += `
+            <div class="detail-section" style="background: linear-gradient(135deg, #283871 0%, #1e2b57 100%); color: white;">
+                <h4 style="color: var(--gold);">📋 Final Report Review</h4>
+                <div><strong>Reviewer:</strong> ${escapeHtml(feedback.reviewerName || reviewerName)}</div>
+                <div><strong>Email:</strong> ${escapeHtml(reviewerEmail)}</div>
+                <div><strong>Submitted:</strong> ${new Date(feedback.submittedDate).toLocaleString()}</div>
+                <div><strong>Recommendation:</strong> ${feedback.recommendation || 'N/A'}</div>
             </div>
-        `,
-        showCancelButton: true,
+        `;
+        
+        // Show evaluation criteria summary if available
+        if (feedback.evaluations) {
+            html += `<div class="detail-section">
+                <h4><i class="fas fa-check-double"></i> Evaluation Summary</h4>
+                <table style="width: 100%; font-size: 0.75rem; border-collapse: collapse;">
+                    <thead><tr style="background: #f0f0f0;"><th style="padding: 0.5rem; text-align: left;">Section</th><th style="padding: 0.5rem; text-align: center;">Rated</th><th style="padding: 0.5rem; text-align: center;">Total</th><th style="padding: 0.5rem; text-align: left;">Status</th></tr></thead>
+                    <tbody>`;
+            
+            for (let [sectionId, sectionData] of Object.entries(feedback.evaluations)) {
+                const rated = sectionData.ratings?.filter(r => r === 'yes' || r === 'no' || r === 'partial').length || 0;
+                const total = sectionData.ratings?.length || 0;
+                const status = rated === total ? '✅ Complete' : (rated > 0 ? '⚠️ Partial' : '❌ Not Started');
+                const sectionName = sectionId.charAt(0).toUpperCase() + sectionId.slice(1);
+                html += `<tr><td style="padding: 0.4rem;">${escapeHtml(sectionName)}</td>
+                          <td style="padding: 0.4rem; text-align: center;">${rated}</td>
+                          <td style="padding: 0.4rem; text-align: center;">${total}</td>
+                          <td style="padding: 0.4rem;">${status}</td>
+                        </tr>`;
+            }
+            html += `</tbody>}</div>`;
+        }
+        
+        // Narrative Feedback
+        if (feedback.narrativeFeedback) {
+            html += `<div class="detail-section">
+                <h4><i class="fas fa-comment-dots"></i> Narrative Feedback for Author/s</h4>
+                <div style="background: #f8f9fa; padding: 0.8rem; border-radius: 0.5rem; white-space: pre-wrap;">${escapeHtml(feedback.narrativeFeedback)}</div>
+            </div>`;
+        }
+        
+        // Revision reasons
+        if (feedback.revisionReasons && feedback.revisionReasons.length) {
+            html += `<div class="detail-section">
+                <h4><i class="fas fa-edit"></i> Revision Reasons</h4>
+                <ul>`;
+            feedback.revisionReasons.forEach(reason => {
+                html += `<li>${escapeHtml(reason)}</li>`;
+            });
+            html += `</ul></div>`;
+        }
+        
+    } else {
+        // Initial Review (Proposal Review)
+        html += `
+            <div class="detail-section" style="background: linear-gradient(135deg, #283871 0%, #1e2b57 100%); color: white;">
+                <h4 style="color: var(--gold);">📝 Initial Proposal Review</h4>
+                <div><strong>Reviewer:</strong> ${escapeHtml(feedback.reviewerName || reviewerName)}</div>
+                <div><strong>Email:</strong> ${escapeHtml(reviewerEmail)}</div>
+                <div><strong>Submitted:</strong> ${new Date(feedback.submittedDate).toLocaleString()}</div>
+            </div>
+        `;
+        
+        // Score and Recommendation
+        html += `<div class="detail-section">
+            <h4><i class="fas fa-star"></i> Score & Recommendation</h4>
+            <div class="detail-field"><strong>Overall Score:</strong> ${feedback.score}/10</div>
+            <div class="detail-field"><strong>Recommendation:</strong> ${feedback.recommendation || 'N/A'}</div>
+        </div>`;
+        
+        // Strengths
+        if (feedback.strengths) {
+            html += `<div class="detail-section">
+                <h4><i class="fas fa-thumbs-up"></i> Strengths</h4>
+                <div style="background: #e8f5e9; padding: 0.8rem; border-radius: 0.5rem; white-space: pre-wrap;">${escapeHtml(feedback.strengths)}</div>
+            </div>`;
+        }
+        
+        // Weaknesses
+        if (feedback.weaknesses) {
+            html += `<div class="detail-section">
+                <h4><i class="fas fa-thumbs-down"></i> Areas for Improvement</h4>
+                <div style="background: #fff3e0; padding: 0.8rem; border-radius: 0.5rem; white-space: pre-wrap;">${escapeHtml(feedback.weaknesses)}</div>
+            </div>`;
+        }
+        
+        // Comments
+        if (feedback.comments) {
+            html += `<div class="detail-section">
+                <h4><i class="fas fa-comment-dots"></i> Detailed Comments</h4>
+                <div style="background: #f8f9fa; padding: 0.8rem; border-radius: 0.5rem; white-space: pre-wrap;">${escapeHtml(feedback.comments)}</div>
+            </div>`;
+        }
+        
+        // Admin Notes (only visible to admin)
+        if (feedback.adminNotes) {
+            html += `<div class="detail-section" style="background: #fff9e6;">
+                <h4><i class="fas fa-lock"></i> Confidential Notes to Admin</h4>
+                <div style="padding: 0.8rem; border-radius: 0.5rem; white-space: pre-wrap;">${escapeHtml(feedback.adminNotes)}</div>
+                <small><i class="fas fa-info-circle"></i> These notes are only visible to administrators.</small>
+            </div>`;
+        }
+    }
+    
+    html += `</div>`;
+    
+    Swal.fire({
+        title: title,
+        html: html,
+        width: '800px',
         confirmButtonColor: '#D4AF37',
-        confirmButtonText: 'Save Changes',
-        cancelButtonText: 'Cancel',
+        confirmButtonText: 'Close'
+    });
+}
+
+function editApplicationStatus(appId) {
+    let foundEmail = null, foundApp = null, foundIndex = null;
+    for (let email in submissionsDB) {
+        let apps = submissionsDB[email];
+        if (Array.isArray(apps)) {
+            for (let i = 0; i < apps.length; i++) {
+                if (apps[i].id === appId) { foundEmail = email; foundApp = apps[i]; foundIndex = i; break; }
+            }
+        }
+        if (foundApp) break;
+    }
+    if (!foundApp) { Swal.fire({ icon: 'error', title: 'Error', text: 'Application not found!' }); return; }
+    
+    Swal.fire({
+        title: 'Update Application Status',
+        html: `<select id="newStatus" style="width:100%; padding:0.5rem; border-radius:0.5rem;">
+            <option value="Awaiting Signatures" ${foundApp.status === 'Awaiting Signatures' ? 'selected' : ''}>Awaiting Signatures</option>
+            <option value="Under Review" ${foundApp.status === 'Under Review' ? 'selected' : ''}>Under Review</option>
+            <option value="External Review" ${foundApp.status === 'External Review' ? 'selected' : ''}>External Review</option>
+            <option value="Approved" ${foundApp.status === 'Approved' ? 'selected' : ''}>Approved</option>
+        </select>`,
+        showCancelButton: true, confirmButtonColor: '#D4AF37', confirmButtonText: 'Update',
         preConfirm: () => {
-            const newStatus = document.getElementById('editStatus').value;
-            const newNotes = document.getElementById('editNotes').value;
-            
+            const newStatus = document.getElementById('newStatus').value;
+            const oldStatus = foundApp.status;
             submissionsDB[foundEmail][foundIndex].status = newStatus;
-            submissionsDB[foundEmail][foundIndex].adminNotes = newNotes;
-            submissionsDB[foundEmail][foundIndex].lastEdited = new Date().toISOString();
-            submissionsDB[foundEmail][foundIndex].editedBy = currentUser.email;
-            
             saveToLocalStorage();
-            renderDashboard();
             
-            Swal.fire({ icon: 'success', title: 'Updated!', text: 'Application has been updated.', confirmButtonColor: '#D4AF37' });
+            // Notify faculty about status change
+            let icon = '📋', color = '#3498db';
+            if (newStatus === 'Approved') { icon = '✅'; color = '#2ecc71'; }
+            else if (newStatus === 'Under Review') { icon = '🔍'; color = '#f39c12'; }
+            
+            addNotification(foundEmail, 'status_change', `📋 Application Status Updated`, `Your application status has changed from "${oldStatus}" to "${newStatus}".`, appId, icon, color);
+            
+            renderDashboard();
+            Swal.fire({ icon: 'success', title: 'Updated!', text: 'Application status updated and faculty notified.', confirmButtonColor: '#D4AF37', timer: 1500, showConfirmButton: false });
         }
     });
 }
 
 function deleteApplication(appId) {
-    Swal.fire({
-        title: 'Delete Application?',
-        text: 'This action cannot be undone!',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#e74c3c',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Yes, delete it!'
-    }).then((result) => {
+    Swal.fire({ title: 'Delete Application?', text: 'This cannot be undone!', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e74c3c', confirmButtonText: 'Yes, delete' }).then((result) => {
         if (result.isConfirmed) {
             for (let email in submissionsDB) {
                 let apps = submissionsDB[email];
                 if (Array.isArray(apps)) {
-                    const newApps = apps.filter(function(a) { return a.id !== appId; });
+                    let newApps = apps.filter(a => a.id !== appId);
                     if (newApps.length !== apps.length) {
                         submissionsDB[email] = newApps;
                         saveToLocalStorage();
@@ -897,284 +2808,14 @@ function deleteApplication(appId) {
                     }
                 }
             }
-            Swal.fire({ icon: 'error', title: 'Error', text: 'Application not found!' });
         }
     });
 }
 
-// ============== RENDER DASHBOARD WITH CHARTS ==============
-function renderDashboard() {
-    const allApps = getAllApplications();
-    const monthlyData = getMonthlyData(allApps);
-    const statusDist = getStatusDistribution(allApps);
-    const grantData = getGrantDistribution(allApps);
-    
-    // Calculate stats
-    const total = allApps.length;
-    const pending = statusDist.pending + statusDist.external;
-    const approved = statusDist.approved;
-    const reviewers = Object.keys(reviewerTasks).length;
-    
-    // Calculate trend
-    const currentMonth = new Date().getMonth();
-    const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-    const trend = monthlyData[currentMonth] - monthlyData[lastMonth];
-    const trendText = trend >= 0 ? '+' + trend + ' from last month' : trend + ' from last month';
-    const trendClass = trend >= 0 ? '#2ecc71' : '#e74c3c';
-    
-    let html = `
-        <div class="dashboard-title">
-            <h2><i class="fas fa-chalkboard-user"></i> KURO Administrator Dashboard</h2>
-            <p>Manage faculty research grant applications</p>
-        </div>
-        
-        <div class="stats-grid">
-            <div class="stat-card"><i class="fas fa-file-alt"></i><h3>${total}</h3><span>Total Applications</span><div style="font-size:0.7rem; margin-top:0.3rem; color: ${trendClass}">${trendText}</div></div>
-            <div class="stat-card"><i class="fas fa-hourglass-half"></i><h3>${pending}</h3><span>Pending Review</span><div style="font-size:0.65rem; margin-top:0.2rem;">${statusDist.pending} Under Review | ${statusDist.external} External</div></div>
-            <div class="stat-card"><i class="fas fa-check-circle"></i><h3>${approved}</h3><span>Approved</span></div>
-            <div class="stat-card"><i class="fas fa-users"></i><h3>${reviewers}</h3><span>External Reviewers</span></div>
-        </div>
-        
-        <div class="charts-row">
-            <div class="chart-card">
-                <h4><i class="fas fa-chart-line"></i> Applications by Month (${new Date().getFullYear()})</h4>
-                <div class="chart-container"><canvas id="trendChart"></canvas></div>
-            </div>
-            <div class="chart-card">
-                <h4><i class="fas fa-chart-pie"></i> Application Status Distribution</h4>
-                <div class="chart-container"><canvas id="statusChart"></canvas></div>
-            </div>
-        </div>
-        
-        <div class="charts-row">
-            <div class="chart-card">
-                <h4><i class="fas fa-chart-bar"></i> Applications by Grant/Award</h4>
-                <div class="chart-container"><canvas id="grantChart"></canvas></div>
-            </div>
-            <div class="chart-card">
-                <h4><i class="fas fa-chart-line"></i> Faculty Research Grants Breakdown</h4>
-                <div class="chart-container"><canvas id="facultyGrantsChart"></canvas></div>
-            </div>
-        </div>
-        
-        <div class="filter-bar">
-            <select id="grantFilter"><option value="all">All Grants</option>${ALL_GRANTS.map(function(g) { return '<option value="' + g + '">' + g + '</option>'; }).join('')}</select>
-            <select id="statusFilter"><option value="all">All Status</option><option value="Under Review">Under Review</option><option value="External Review">External Review</option><option value="Approved">Approved</option></select>
-            <input type="text" id="searchFilter" placeholder="Search by title or applicant..." style="flex:1; min-width:200px;">
-        </div>
-        
-        <h3 style="color: var(--primary); margin-bottom: 1rem;"><i class="fas fa-list-ul"></i> All Applications</h3>
-        <div id="applicationsList"></div>
-    `;
-    
-    document.getElementById('mainContent').innerHTML = html;
-    
-    // Render Charts
-    renderCharts(monthlyData, statusDist, grantData);
-    
-    // Render applications list
-    renderApplicationsList(allApps);
-    
-    // Add event listeners for filters
-    document.getElementById('grantFilter').addEventListener('change', function() { renderApplicationsList(allApps); });
-    document.getElementById('statusFilter').addEventListener('change', function() { renderApplicationsList(allApps); });
-    document.getElementById('searchFilter').addEventListener('input', function() { renderApplicationsList(allApps); });
-}
+document.getElementById('logoutBtn').onclick = () => { sessionStorage.clear(); window.location.href = "login.html"; };
 
-function renderCharts(monthlyData, statusDist, grantData) {
-    // Trend Chart (Line)
-    const trendCtx = document.getElementById('trendChart')?.getContext('2d');
-    if (trendCtx) {
-        new Chart(trendCtx, {
-            type: 'line',
-            data: {
-                labels: MONTHS,
-                datasets: [{
-                    label: 'Applications',
-                    data: monthlyData,
-                    backgroundColor: 'rgba(40, 56, 113, 0.1)',
-                    borderColor: '#283871',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.3,
-                    pointBackgroundColor: '#D4AF37',
-                    pointBorderColor: '#283871',
-                    pointRadius: 5,
-                    pointHoverRadius: 7
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: { legend: { position: 'top' } }
-            }
-        });
-    }
-    
-    // Status Chart (Doughnut)
-    const statusCtx = document.getElementById('statusChart')?.getContext('2d');
-    if (statusCtx) {
-        new Chart(statusCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Under Review', 'External Review', 'Approved'],
-                datasets: [{
-                    data: [statusDist.pending, statusDist.external, statusDist.approved],
-                    backgroundColor: ['#f39c12', '#3498db', '#2ecc71'],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: { legend: { position: 'bottom' } }
-            }
-        });
-    }
-    
-    // Grant Distribution Chart (Bar)
-    const grantCtx = document.getElementById('grantChart')?.getContext('2d');
-    if (grantCtx) {
-        new Chart(grantCtx, {
-            type: 'bar',
-            data: {
-                labels: ALL_GRANTS.map(g => g.length > 20 ? g.substring(0, 18) + '...' : g),
-                datasets: [{
-                    label: 'Number of Applications',
-                    data: grantData,
-                    backgroundColor: '#283871',
-                    borderRadius: 8,
-                    barPercentage: 0.7
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true, grid: { color: '#eee' } } }
-            }
-        });
-    }
-    
-    // Faculty Grants Only Chart (Pie) - first 4 grants
-    const facultyGrantsCtx = document.getElementById('facultyGrantsChart')?.getContext('2d');
-    if (facultyGrantsCtx) {
-        const facultyGrants = ALL_GRANTS.slice(0, 4);
-        const facultyData = grantData.slice(0, 4);
-        new Chart(facultyGrantsCtx, {
-            type: 'pie',
-            data: {
-                labels: facultyGrants.map(g => g.length > 25 ? g.substring(0, 22) + '...' : g),
-                datasets: [{
-                    data: facultyData,
-                    backgroundColor: ['#283871', '#D4AF37', '#3498db', '#2ecc71'],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } }
-            }
-        });
-    }
-}
-
-function renderApplicationsList(allApps) {
-    const grantFilter = document.getElementById('grantFilter')?.value || 'all';
-    const statusFilter = document.getElementById('statusFilter')?.value || 'all';
-    const searchFilter = document.getElementById('searchFilter')?.value || '';
-    
-    let filtered = allApps.filter(function(app) {
-        if (grantFilter !== 'all' && app.grantTitle !== grantFilter) return false;
-        if (statusFilter !== 'all' && app.status !== statusFilter) return false;
-        if (searchFilter) {
-            const searchLower = searchFilter.toLowerCase();
-            const titleMatch = (app.proposalTitle || '').toLowerCase().includes(searchLower);
-            const applicantMatch = (app.applicantEmail || '').toLowerCase().includes(searchLower);
-            if (!titleMatch && !applicantMatch) return false;
-        }
-        return true;
-    });
-    
-    if (filtered.length === 0) {
-        document.getElementById('applicationsList').innerHTML = '<p style="text-align: center; padding: 2rem; color: #999;">No applications found.</p>';
-        return;
-    }
-    
-    // ADDED "Signatures" column in the header
-    let html = '<table class="applications-table"><thead><tr>';
-    html += '<th>Grant</th>';
-    html += '<th>Project Title</th>';
-    html += '<th>Applicant</th>';
-    html += '<th>Submitted</th>';
-    html += '<th>Signatures</th>';  // NEW COLUMN
-    html += '<th>Status</th>';
-    html += '<th>Actions</th>';
-    html += '</thead><tbody>';
-    
-    filtered.forEach(function(app) {
-        let statusClass = app.status === 'Under Review' ? 'pending' : (app.status === 'External Review' ? 'external' : 'approved');
-        
-        // Calculate signature progress
-        let signedCount = 0;
-        let signatureDetails = '';
-        if (app.signatures) {
-            if (app.signatures.chair?.signed) {
-                signedCount++;
-                signatureDetails += '📋 Chair ✓ ';
-            }
-            if (app.signatures.dean?.signed) {
-                signedCount++;
-                signatureDetails += '👑 Dean ✓ ';
-            }
-            if (app.signatures.coordinator?.signed) {
-                signedCount++;
-                signatureDetails += '📝 Coordinator ✓ ';
-            }
-        }
-        
-        // Determine signature badge color
-        let signatureColor = '';
-        let signatureText = '';
-        if (signedCount === 3) {
-            signatureText = `<span style="color: #2ecc71; font-weight: bold;">✓ ${signedCount}/3 Complete</span>`;
-        } else if (signedCount > 0) {
-            signatureText = `<span style="color: #f39c12;">⏳ ${signedCount}/3 Pending</span>`;
-        } else {
-            signatureText = `<span style="color: #e74c3c;">⏳ 0/3 Pending</span>`;
-        }
-        
-        html += `<tr>
-            <td style="font-weight:600;">${escapeHtml(app.grantTitle).substring(0, 35)}</td>
-            <td>${escapeHtml(app.proposalTitle || app.projectTitle || 'N/A').substring(0, 40)}</td>
-            <td>${app.applicantEmail}</td>
-            <td>${app.submittedDate}</td>
-            <td>${signatureText}</td>
-            <td><span class="status-badge ${statusClass}">${app.status}</span></td>
-            <td>
-                <button class="btn-sm view-btn" data-id="${app.id}"><i class="fas fa-eye"></i> View</button>
-                <button class="btn-sm edit-btn" data-id="${app.id}"><i class="fas fa-edit"></i> Edit</button>
-                <button class="btn-danger delete-btn" data-id="${app.id}"><i class="fas fa-trash"></i> Delete</button>
-            </td>
-        </tr>`;
-    });
-    
-    html += '</tbody></table>';
-    document.getElementById('applicationsList').innerHTML = html;
-    
-    document.querySelectorAll('.view-btn').forEach(btn => btn.addEventListener('click', function() { viewApplicationDetails(btn.getAttribute('data-id')); }));
-    document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', function() { editApplication(btn.getAttribute('data-id')); }));
-    document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', function() { deleteApplication(btn.getAttribute('data-id')); }));
-}
-
-// ============== LOGOUT ==============
-document.getElementById('logoutBtn').onclick = function() {
-    sessionStorage.clear();
-    window.location.href = "login.html";
-};
-
-// ============== INITIAL RENDER ==============
+// Initialize notification system and render dashboard
+initNotificationSystem();
 renderDashboard();
 </script>
 </body>

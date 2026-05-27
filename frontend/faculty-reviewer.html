@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KURO · Reviewer Dashboard | Xavier University - Ateneo de Cagayan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #283871;
+            --primary-dark: #1e2b57;
+            --gold: #D4AF37;
+            --gold-dark: #b8942e;
+            --gray-text: #5A6E6B;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --light-bg: #f8f9fa;
+        }
+        body { font-family: 'Inter', sans-serif; background: #f0f2f5; }
+        
+        .top-nav {
+            background: var(--primary);
+            padding: 0.8rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid var(--gold);
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .right-controls {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        
+        .logo-area { display: flex; align-items: center; gap: 1rem; }
+        .logo-area h2 { color: white; display: flex; align-items: center; gap: 0.5rem; font-size: 1.3rem; }
+        .logo-area h2 i { color: var(--gold); }
+        
+        .user-section {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            cursor: pointer;
+            padding: 0.2rem 0.5rem;
+            border-radius: 40px;
+            transition: background 0.2s;
+        }
+        
+        .user-section:hover { background: rgba(255,255,255,0.1); }
+        
+        .user-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1rem;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        
+        .user-avatar.has-initial {
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            color: var(--primary);
+        }
+        
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .user-name-short {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: white;
+        }
+        
+        .user-hover-card {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 0.75rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            padding: 0.75rem 1rem;
+            min-width: 200px;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s ease;
+            pointer-events: none;
+        }
+        
+        .user-section:hover .user-hover-card {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .user-hover-card::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            right: 20px;
+            width: 12px;
+            height: 12px;
+            background: white;
+            transform: rotate(45deg);
+            box-shadow: -2px -2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .user-full-name {
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 0.85rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .user-full-email {
+            font-size: 0.7rem;
+            color: #666;
+            word-break: break-all;
+        }
+        
+        .user-hover-card hr {
+            margin: 0.5rem 0;
+            border: none;
+            border-top: 1px solid #eef2f0;
+        }
+        
+        .user-hover-role {
+            font-size: 0.65rem;
+            color: var(--gold);
+            font-weight: 600;
+        }
+        
+        .notification-wrapper {
+            position: relative;
+        }
+        
+        .notification-bell {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            position: relative;
+            padding: 0.3rem;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+        
+        .notification-bell:hover { background: rgba(255,255,255,0.1); }
+        
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -8px;
+            background: #e74c3c;
+            color: white;
+            font-size: 0.6rem;
+            border-radius: 50%;
+            padding: 2px 6px;
+            min-width: 18px;
+            text-align: center;
+            display: none;
+        }
+        
+        .notification-dropdown {
+            position: absolute;
+            top: 45px;
+            right: 0;
+            width: 380px;
+            max-height: 500px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            z-index: 1000;
+            overflow: hidden;
+            animation: slideDown 0.2s ease;
+        }
+        
+        .notification-item {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid #eef2f0;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .notification-item:hover { background: #f8f9fa; }
+        .notification-item.unread { background: #fffef5; border-left: 3px solid #D4AF37; }
+        
+        .logout-nav {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 0.4rem 1rem;
+            border-radius: 40px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .logout-nav:hover {
+            background: rgba(231, 76, 60, 0.8);
+            border-color: rgba(231, 76, 60, 0.8);
+        }
+        
+        .main-content { padding: 2rem; max-width: 1200px; margin: 1.5rem auto; background: white; border-radius: 1rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .dashboard-title { margin-bottom: 1.5rem; }
+        .dashboard-title h2 { color: var(--gold); font-size: 1.6rem; font-weight: 600; }
+        .dashboard-title p { color: var(--gray-text); margin-top: 0.3rem; font-size: 0.85rem; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card { background: #f8f9fa; border-radius: 1rem; padding: 1.2rem; border-top: 4px solid var(--gold); }
+        .stat-card i { color: var(--gold); font-size: 1.5rem; margin-bottom: 0.5rem; }
+        .stat-card h3 { font-size: 1.8rem; color: var(--primary); font-weight: 700; }
+        .stat-card span { color: var(--gray-text); font-size: 0.8rem; }
+        
+        .tasks-table { width: 100%; background: white; border-radius: 0.8rem; border-collapse: collapse; overflow: hidden; border: 1px solid #eef2f0; }
+        .tasks-table th { background: var(--primary); color: white; padding: 1rem; text-align: left; font-weight: 600; font-size: 0.85rem; }
+        .tasks-table td { padding: 1rem; text-align: left; border-bottom: 1px solid #ecf3e8; font-size: 0.85rem; }
+        .tasks-table tr:last-child td { border-bottom: none; }
+        
+        .status { padding: 0.2rem 0.7rem; border-radius: 40px; font-size: 0.7rem; font-weight: 600; display: inline-block; }
+        .status.pending { background: #fff0db; color: #b45f1b; }
+        .status.completed { background: #e0f5e6; color: #1e6f3f; }
+        
+        .btn-sm { background: #eef2fa; border: none; padding: 0.3rem 1rem; border-radius: 30px; cursor: pointer; font-size: 0.75rem; transition: 0.2s; }
+        .btn-sm:hover { background: var(--primary); color: white; }
+        .btn-primary { background: var(--gold); color: var(--primary); border: none; padding: 0.5rem 1.2rem; border-radius: 40px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+        .btn-primary:hover { background: var(--gold-dark); color: white; }
+        
+        .demo-note { font-size: 0.7rem; background: #f3f7ef; padding: 0.8rem 1rem; border-radius: 28px; margin-top: 1rem; text-align: center; border: 1px solid #e8ecd9; }
+        
+        .detail-section { margin-bottom: 1rem; padding: 0.8rem; background: var(--light-bg); border-radius: 0.8rem; text-align: left; }
+        .detail-section h4 { color: var(--primary); margin-bottom: 0.5rem; font-size: 0.9rem; border-left: 3px solid var(--gold); padding-left: 0.5rem; }
+        .detail-field { margin-bottom: 0.3rem; font-size: 0.8rem; text-align: left; }
+        .detail-field strong { color: var(--primary); display: inline-block; min-width: 180px; }
+        
+        .review-form-section { margin-bottom: 1.5rem; padding: 1rem; background: white; border-radius: 0.8rem; border: 1px solid #e0e0e0; }
+        .review-form-section h4 { color: var(--primary); margin-bottom: 0.8rem; font-size: 0.9rem; }
+        .review-form-section label { display: block; font-size: 0.75rem; font-weight: 600; color: var(--primary); margin-bottom: 0.3rem; }
+        .review-form-section input, .review-form-section select, .review-form-section textarea { width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px; font-size: 0.8rem; font-family: inherit; }
+        .score-option { display: inline-block; margin: 0.2rem; }
+        .score-btn { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #ddd; background: white; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .score-btn.selected { background: var(--gold); color: var(--primary); border-color: var(--gold); }
+        .score-btn:hover { border-color: var(--gold); }
+        
+        @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+        @keyframes slideOutRight { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        
+        @media (max-width: 768px) {
+            .top-nav { flex-direction: column; align-items: stretch; }
+            .right-controls { justify-content: flex-end; }
+            .user-name-short { display: none; }
+        }
+
+        .switch-reviewer-btn, .switch-to-faculty-btn {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border: 1px solid var(--gold);
+            padding: 0.4rem 1rem;
+            border-radius: 40px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .switch-reviewer-btn:hover, .switch-to-faculty-btn:hover {
+            background: var(--gold);
+            color: var(--primary);
+        }
+
+        .switch-reviewer-btn i, .switch-to-faculty-btn i {
+            font-size: 0.7rem;
+        }
+
+        /* Hide the button if user has no reviewer tasks (optional) */
+        .switch-reviewer-btn.hidden {
+            display: none;
+        }
+        
+        footer { text-align: center; font-size: 0.65rem; color: var(--gray-text); padding: 1rem; background: transparent; }
+        footer i { color: var(--gold); margin-right: 0.3rem; }
+    </style>
+</head>
+<body>
+<div class="top-nav">
+    <div class="logo-area">
+        <img src="xu_logo.png" alt="Xavier University Logo" class="school-logo-header" style="height: 45px; width: auto;" onerror="this.onerror=null; this.style.display='none'">
+        <img src="kuro_logo.png" alt="KURO Logo" style="height: 40px; width: auto; margin-left: 0.5rem;" onerror="this.onerror=null; this.style.display='none'">
+        <h2><i class="fas fa-scroll"></i> KURO · Reviewer Portal</h2>
+    </div>
+    
+    <div class="right-controls">
+        <a href="faculty-dashboard.html" class="switch-to-faculty-btn" style="text-decoration: none;">
+            <i class="fas fa-user-graduate"></i> Switch to Faculty
+        </a>
+        <div class="user-section">
+            <div class="user-avatar" id="userAvatar">R</div>
+            <span class="user-name-short" id="userShortName"></span>
+            <div class="user-hover-card">
+                <div class="user-full-name" id="userFullName"></div>
+                <div class="user-full-email" id="userFullEmail"></div>
+                <hr>
+                <div class="user-hover-role">
+                    <i class="fas fa-star"></i> External Reviewer
+                </div>
+            </div>
+        </div>
+        
+        <div class="notification-wrapper">
+            <button id="notificationBell" class="notification-bell">
+                <i class="fas fa-bell"></i>
+                <span id="notificationBadge" class="notification-badge">0</span>
+            </button>
+            <div id="notificationDropdown" class="notification-dropdown" style="display: none;">
+                <div style="padding: 0.8rem 1rem; border-bottom: 1px solid #eef2f0; background: #f8f9fa;">
+                    <span style="font-weight: 600; color: #283871;">🔔 Notifications</span>
+                    <button id="markAllReadBtn" style="float: right; background: none; border: none; color: #999; font-size: 0.7rem; cursor: pointer;">Mark all read</button>
+                </div>
+                <div id="notificationList" style="max-height: 400px; overflow-y: auto;">
+                    <div style="padding: 2rem; text-align: center; color: #999;">No notifications yet</div>
+                </div>
+                <div style="padding: 0.5rem; border-top: 1px solid #eef2f0; text-align: center;">
+                    <a href="#" id="viewAllNotifications" style="font-size: 0.7rem; color: #D4AF37; text-decoration: none;">View all</a>
+                </div>
+            </div>
+        </div>
+        
+        <button id="logoutBtn" class="logout-nav">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+    </div>
+</div>
+<div class="main-content" id="mainContent"></div>
+<footer><i class="fas fa-scroll"></i> Kinaadman University Research Office · Xavier University - Ateneo de Cagayan</footer>
+
+<script>
+const EXEMPTED_EMAIL = '200520181@my.xu.edu.ph';
+
+function isExemptedAccount(email) {
+    return email && email.toLowerCase() === EXEMPTED_EMAIL.toLowerCase();
+}
+
+const userData = sessionStorage.getItem('kuro_user');
+
+if (!userData) {
+    window.location.href = 'login.html';
+} else {
+    try {
+        const parsedUser = JSON.parse(userData);
+        
+        window.currentUser = parsedUser;
+        
+        const firstName = parsedUser.name?.split(' ')[0] || 'Reviewer';
+        const fullName = parsedUser.name || 'External Reviewer';
+        const userEmail = parsedUser.email;
+        const userInitial = (fullName.charAt(0) || 'R').toUpperCase();
+        const profilePicture = parsedUser.picture || null;
+        
+        const shortNameEl = document.getElementById('userShortName');
+        if (shortNameEl) shortNameEl.innerText = firstName;
+        
+        const fullNameEl = document.getElementById('userFullName');
+        if (fullNameEl) fullNameEl.innerText = fullName;
+        
+        const fullEmailEl = document.getElementById('userFullEmail');
+        if (fullEmailEl) fullEmailEl.innerText = userEmail;
+        
+        const avatarEl = document.getElementById('userAvatar');
+        if (avatarEl) {
+            avatarEl.innerHTML = '';
+            if (profilePicture && profilePicture.trim() !== '') {
+                const img = document.createElement('img');
+                img.src = profilePicture;
+                img.alt = fullName;
+                img.onerror = function() {
+                    avatarEl.innerHTML = `<span class="avatar-initial">${userInitial}</span>`;
+                    avatarEl.classList.add('has-initial');
+                };
+                avatarEl.appendChild(img);
+                avatarEl.classList.remove('has-initial');
+            } else {
+                avatarEl.innerHTML = `<span class="avatar-initial">${userInitial}</span>`;
+                avatarEl.classList.add('has-initial');
+            }
+        }
+        
+        console.log('Reviewer logged in:', fullName, userEmail);
+        
+    } catch(e) {
+        console.error('Session error:', e);
+        sessionStorage.removeItem('kuro_user');
+        window.location.href = 'login.html';
+    }
+}
+
+const currentUser = window.currentUser;
+
+let submissionsDB = JSON.parse(localStorage.getItem('kuro_submissions')) || {};
+let reviewerTasks = JSON.parse(localStorage.getItem('kuro_reviewer_tasks')) || {};
+let notificationsDB = JSON.parse(localStorage.getItem('kuro_notifications')) || {};
+
+function escapeHtml(str) { if (!str) return ''; return String(str).replace(/[&<>]/g, function(m) { return m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'; }); }
+
+function getTimeAgo(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = Math.floor((now - date) / 1000);
+    if (diff < 60) return `${diff} seconds ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)} minutes ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
+    return `${Math.floor(diff / 86400)} days ago`;
+}
+
+function addNotification(userEmail, type, title, message, appId, icon, color, tab = null) {
+    if (!notificationsDB[userEmail]) notificationsDB[userEmail] = [];
+    
+    const notification = {
+        id: 'notif_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+        type: type,
+        title: title,
+        message: message,
+        appId: appId,
+        tab: tab,
+        icon: icon,
+        color: color,
+        isRead: false,
+        createdAt: new Date().toISOString()
+    };
+    
+    notificationsDB[userEmail].unshift(notification);
+    if (notificationsDB[userEmail].length > 50) notificationsDB[userEmail] = notificationsDB[userEmail].slice(0, 50);
+    localStorage.setItem('kuro_notifications', JSON.stringify(notificationsDB));
+    updateNotificationBadge(userEmail);
+    return notification;
+}
+
+function updateNotificationBadge(userEmail) {
+    const notifications = notificationsDB[userEmail] || [];
+    const unreadCount = notifications.filter(n => !n.isRead).length;
+    const badge = document.getElementById('notificationBadge');
+    if (badge) {
+        if (unreadCount > 0) {
+            badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+            badge.style.display = 'inline-block';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+}
+
+function renderNotificationDropdown(userEmail) {
+    const notifications = notificationsDB[userEmail] || [];
+    const container = document.getElementById('notificationList');
+    if (!container) return;
+    
+    if (notifications.length === 0) {
+        container.innerHTML = '<div style="padding: 2rem; text-align: center; color: #999;">No notifications yet</div>';
+        return;
+    }
+    
+    let html = '';
+    notifications.slice(0, 10).forEach(notif => {
+        const timeAgo = getTimeAgo(notif.createdAt);
+        html += `
+            <div class="notification-item ${!notif.isRead ? 'unread' : ''}" data-id="${notif.id}" data-app-id="${notif.appId || ''}">
+                <div style="display: flex; gap: 0.8rem; align-items: flex-start;">
+                    <div class="notification-icon" style="background: ${notif.color}20; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <span style="font-size: 1rem;">${notif.icon}</span>
+                    </div>
+                    <div class="notification-content" style="flex: 1;">
+                        <div class="notification-title" style="font-weight: 600; font-size: 0.8rem;">${escapeHtml(notif.title)}</div>
+                        <div class="notification-message" style="font-size: 0.7rem;">${escapeHtml(notif.message)}</div>
+                        <div class="notification-time" style="font-size: 0.6rem;">${timeAgo}</div>
+                    </div>
+                    ${!notif.isRead ? '<div style="width: 8px; height: 8px; background: #D4AF37; border-radius: 50%;"></div>' : ''}
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+    
+    document.querySelectorAll('.notification-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const id = item.dataset.id;
+            const appId = item.dataset.appId;
+            const notif = (notificationsDB[userEmail] || []).find(n => n.id === id);
+            if (notif) notif.isRead = true;
+            localStorage.setItem('kuro_notifications', JSON.stringify(notificationsDB));
+            updateNotificationBadge(userEmail);
+            const dropdown = document.getElementById('notificationDropdown');
+            if (dropdown) dropdown.style.display = 'none';
+            if (appId) viewApplicationDetails(appId);
+        });
+    });
+}
+
+function initNotificationSystem() {
+    if (currentUser && currentUser.email) {
+        updateNotificationBadge(currentUser.email);
+        
+        const bell = document.getElementById('notificationBell');
+        const dropdown = document.getElementById('notificationDropdown');
+        
+        if (bell && dropdown) {
+            bell.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isVisible = dropdown.style.display === 'block';
+                dropdown.style.display = isVisible ? 'none' : 'block';
+                if (!isVisible) renderNotificationDropdown(currentUser.email);
+            });
+        }
+        
+        const markAllBtn = document.getElementById('markAllReadBtn');
+        if (markAllBtn) {
+            markAllBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const notifications = notificationsDB[currentUser.email] || [];
+                notifications.forEach(n => n.isRead = true);
+                localStorage.setItem('kuro_notifications', JSON.stringify(notificationsDB));
+                updateNotificationBadge(currentUser.email);
+                renderNotificationDropdown(currentUser.email);
+            });
+        }
+        
+        document.addEventListener('click', (e) => {
+            if (dropdown && bell) {
+                if (!dropdown.contains(e.target) && !bell.contains(e.target)) {
+                    dropdown.style.display = 'none';
+                }
+            }
+        });
+    }
+}
+
+function getMyAssignedTasks() {
+    const tasks = reviewerTasks[currentUser.email];
+    if (!tasks || !tasks.assignedTasks) return [];
+    
+    // Add application details to each task
+    return tasks.assignedTasks.map(task => {
+        let app = null;
+        for (let email in submissionsDB) {
+            const found = submissionsDB[email]?.find(a => a.id === task.applicationId);
+            if (found) {
+                app = found;
+                app.applicantEmail = email;
+                break;
+            }
+        }
+        return { ...task, application: app };
+    });
+}
+
+function renderDashboard() {
+    const tasks = getMyAssignedTasks();
+    const pending = tasks.filter(t => t.status !== 'completed').length;
+    const completed = tasks.filter(t => t.status === 'completed').length;
+    
+    let html = `
+        <div class="dashboard-title">
+            <h2>External Reviewer Dashboard</h2>
+            <p>Review assigned grant proposals and provide feedback</p>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card"><i class="fas fa-clipboard-list"></i><h3>${tasks.length}</h3><span>Assigned Reviews</span></div>
+            <div class="stat-card"><i class="fas fa-hourglass-half"></i><h3>${pending}</h3><span>Pending Review</span></div>
+            <div class="stat-card"><i class="fas fa-check-circle"></i><h3>${completed}</h3><span>Completed</span></div>
+        </div>
+    `;
+    
+    if (tasks.length === 0) {
+        html += `<div class="demo-note"><i class="fas fa-info-circle"></i> No review assignments at this time. You will be notified when assigned.</div>`;
+    } else {
+        html += `
+            <h3 style="color: var(--primary); margin-bottom: 1rem;"><i class="fas fa-tasks"></i> My Review Tasks</h3>
+            <table class="tasks-table">
+                <thead>
+                    <tr><th>Grant/Award</th><th>Proposal Title</th><th>Applicant</th><th>Assigned Date</th><th>Due Date</th><th>Status</th><th>Action</th></tr>
+                </thead>
+                <tbody>
+        `;
+        
+        tasks.forEach(task => {
+            const assignedDate = task.assignedDate ? new Date(task.assignedDate).toLocaleDateString() : 'N/A';
+            const dueDate = task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'Not set';
+            const statusClass = task.status === 'completed' ? 'completed' : 'pending';
+            const statusText = task.status === 'completed' ? 'Completed' : 'Pending';
+            
+            html += `
+                <tr>
+                    <td><strong>${escapeHtml(task.grantTitle)}</strong></td>
+                    <td>${escapeHtml(task.proposalTitle || 'N/A')}</td>
+                    <td>${escapeHtml(task.applicantEmail)}</td>
+                    <td>${assignedDate}</td>
+                    <td>${dueDate}</td>
+                    <td><span class="status ${statusClass}">${statusText}</span></td>
+                    <td><button class="btn-sm review-task" data-id="${task.applicationId}">${task.status === 'completed' ? '<i class="fas fa-eye"></i> View Review' : '<i class="fas fa-pen"></i> Review'}</button></td>
+                </tr>
+            `;
+        });
+        
+        html += `</tbody></table>`;
+    }
+    
+    document.getElementById('mainContent').innerHTML = html;
+    
+    document.querySelectorAll('.review-task').forEach(btn => {
+        btn.addEventListener('click', () => viewApplicationDetails(btn.getAttribute('data-id')));
+    });
+}
+
+async function viewApplicationDetails(appId) {
+    let foundApp = null, foundEmail = null;
+    for (let email in submissionsDB) {
+        let apps = submissionsDB[email];
+        if (Array.isArray(apps)) {
+            let found = apps.find(a => a.id === appId);
+            if (found) {
+                foundApp = JSON.parse(JSON.stringify(found));
+                foundApp.applicantEmail = email;
+                foundEmail = email;
+                break;
+            }
+        }
+    }
+    if (!foundApp) { 
+        await Swal.fire({ icon: 'error', title: 'Error', text: 'Application not found!' }); 
+        return; 
+    }
+    
+    // Check if already reviewed
+    const myTask = getMyAssignedTasks().find(t => t.applicationId === appId);
+    const isReviewed = myTask?.status === 'completed';
+    
+    // Load existing review data if any
+    let savedReview = null;
+    if (foundApp.finalReportReview?.reviewerFeedbacks?.[currentUser.email]) {
+        savedReview = foundApp.finalReportReview.reviewerFeedbacks[currentUser.email];
+    }
+    
+    // ========== DEFINE SECTIONS WITH MAPPED FIELDS ==========
+    const evaluationSections = [
+        {
+            id: "abstract",
+            title: "📖 1. ABSTRACT",
+            criteria: [
+                "Accurately reflects the content of the research project",
+                "Clearly states the nature, scope, findings and conclusions",
+                "Is short (250-300 words) and informative enough to stand on its own",
+                "Contains keywords that are good descriptors of the content"
+            ],
+            mappedFields: [
+                { label: "Rationale / Abstract", content: foundApp.rationale || foundApp.abstract || "No abstract/rationale provided." }
+            ]
+        },
+        {
+            id: "introduction",
+            title: "📝 2. INTRODUCTION",
+            criteria: [
+                "Rationale and clear background of the research project",
+                "Theoretical/Conceptual framework is clearly presented",
+                "Objectives are clearly stated",
+                "Hypothesis (if needed) is present",
+                "Significance and relevance of the research project",
+                "Definition of terms is provided"
+            ],
+            mappedFields: [
+                { label: "Rationale & Background", content: foundApp.rationale || "No rationale provided." },
+                { label: "Objectives", content: foundApp.objectives || "No objectives provided." },
+                { label: "Theoretical Framework", content: foundApp.litReview ? foundApp.litReview.substring(0, 800) : "No theoretical framework provided." }
+            ]
+        },
+        {
+            id: "literature",
+            title: "📚 3. LITERATURE REVIEW",
+            criteria: [
+                "Provides enough literature citing sources that are original, authoritative, important, and recent"
+            ],
+            mappedFields: [
+                { label: "Review of Literature", content: foundApp.litReview || "No literature review provided." },
+                { label: "Literature Cited / References", content: (foundApp.references && foundApp.references.length) ? foundApp.references.join("\n") : "No references provided." }
+            ]
+        },
+        {
+            id: "methodology",
+            title: "🔬 4. RESEARCH DESIGN AND METHODS",
+            criteria: [
+                "Provides sufficient information on design, sampling procedure, data collection, and data analysis",
+                "Clearly describes the subjects/unit of analysis and research instruments",
+                "Describes steps undertaken to address ethical concerns",
+                "If quantitative, states appropriate and robust statistics used"
+            ],
+            mappedFields: [
+                { label: "Methodology", content: foundApp.methodology || "No methodology provided." }
+            ]
+        },
+        {
+            id: "results",
+            title: "📊 5. RESULTS AND DISCUSSION",
+            criteria: [
+                "Presents data in graphs/tables in same order with objectives; consistent with methodology",
+                "Graphs/tables are self-explanatory with captions that stand apart from text",
+                "Shows tables/figures valuable for conveying large amounts of information",
+                "Provides enough details and adequate statistical information",
+                "Clearly indicates findings with coherent evaluation and interpretation",
+                "Interprets results to build a case based on data and literature",
+                "Has strong support in terms of citations of other scientific studies",
+                "If qualitative, clearly defined approach or theory and linkage with primary material"
+            ],
+            mappedFields: [
+                { label: "Methodology (for reference)", content: foundApp.methodology || "No methodology provided." },
+                { label: "Expected Outputs / Results", content: foundApp.outputs || foundApp.results || "No results provided." },
+                { label: "Literature Review (for citations)", content: foundApp.litReview ? foundApp.litReview.substring(0, 600) : "No literature review provided." },
+                { label: "References Cited", content: (foundApp.references && foundApp.references.length) ? foundApp.references.join("\n") : "No references provided." }
+            ]
+        },
+        {
+            id: "conclusion",
+            title: "✅ 6. SUMMARY AND CONCLUSION/S",
+            criteria: [
+                "Provides brief summary of research results (by objective) and highlights of the study",
+                "Describes implications to theory, research or practice"
+            ],
+            mappedFields: [
+                { label: "Conclusion / Summary", content: foundApp.conclusion || "No conclusion provided." }
+            ]
+        },
+        {
+            id: "recommendations",
+            title: "💡 7. RECOMMENDATIONS",
+            criteria: [
+                "Briefly outlines recommendations based on the findings"
+            ],
+            mappedFields: [
+                { label: "Recommendations", content: foundApp.recommendations || "No recommendations provided." }
+            ]
+        },
+        {
+            id: "references",
+            title: "📌 8. REFERENCES",
+            criteria: [
+                "Are properly cited in the text",
+                "Are up-to-date (generally not earlier than 2000)",
+                "Follow consistent citation style (APA 6th or CSE/CBE 7th)"
+            ],
+            mappedFields: [
+                { label: "Literature Cited", content: (foundApp.references && foundApp.references.length) ? foundApp.references.join("\n") : "No references provided." }
+            ]
+        },
+        {
+            id: "ethical",
+            title: "⚖️ 9. ETHICAL ISSUES",
+            criteria: [
+                "The manuscript is free from ethical issues"
+            ],
+            mappedFields: [
+                { label: "Ethical Statement", content: foundApp.ethicalStatement || "No ethical statement provided." }
+            ]
+        }
+    ];
+    
+    // Load saved evaluations if they exist
+    if (savedReview?.evaluations) {
+        for (let section of evaluationSections) {
+            const savedSection = savedReview.evaluations[section.id];
+            if (savedSection) {
+                section.savedRatings = savedSection.ratings || [];
+                section.savedRemarks = savedSection.remarks || [];
+            }
+        }
+    }
+    
+    // Calculate progress
+    function calculateProgress() {
+        let completed = 0;
+        let totalCriteria = 0;
+        for (let section of evaluationSections) {
+            for (let i = 0; i < section.criteria.length; i++) {
+                totalCriteria++;
+                const rating = (section.savedRatings && section.savedRatings[i]) ? section.savedRatings[i] : null;
+                if (rating === 'yes' || rating === 'no') completed++;
+            }
+        }
+        return totalCriteria > 0 ? Math.round((completed / totalCriteria) * 100) : 0;
+    }
+    
+    // Generate HTML for each section with mapped fields display
+    function generateSectionHTML(section, sectionIdx) {
+        const isExpanded = sectionIdx === 0;
+        const ratings = section.savedRatings || [];
+        const remarks = section.savedRemarks || [];
+        
+        // Build mapped fields display
+        let mappedFieldsHtml = '';
+        for (let field of section.mappedFields) {
+            mappedFieldsHtml += `
+                <div style="margin-bottom: 1rem;">
+                    <div style="font-weight: 600; color: var(--primary); margin-bottom: 0.3rem; font-size: 0.75rem;">📄 ${field.label}:</div>
+                    <div style="background: white; padding: 0.8rem; border-radius: 0.5rem; border-left: 3px solid var(--gold); font-size: 0.8rem; line-height: 1.5; max-height: 200px; overflow-y: auto; white-space: pre-wrap;">
+                        ${escapeHtml(field.content)}
+                    </div>
+                </div>
+            `;
+        }
+        
+        let criteriaHtml = '';
+        for (let i = 0; i < section.criteria.length; i++) {
+            const criterion = section.criteria[i];
+            const savedRating = ratings[i];
+            const savedRemark = remarks[i] || '';
+            
+            criteriaHtml += `
+                <div style="border-bottom: 1px solid #eef2f0; padding: 0.75rem 0;" data-criterion-index="${i}">
+                    <div style="font-weight: 500; font-size: 0.8rem; margin-bottom: 0.5rem; color: #333;">${escapeHtml(criterion)}</div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; margin-bottom: 0.5rem;">
+                        <label style="display: inline-flex; align-items: center; gap: 0.3rem; cursor: pointer;">
+                            <input type="radio" name="${section.id}_c${i}" value="yes" class="rating-radio" data-section="${section.id}" data-criterion="${i}" ${savedRating === 'yes' ? 'checked' : ''}> 
+                            <span style="color: #2ecc71;">✅ Yes</span>
+                        </label>
+                        <label style="display: inline-flex; align-items: center; gap: 0.3rem; cursor: pointer;">
+                            <input type="radio" name="${section.id}_c${i}" value="no" class="rating-radio" data-section="${section.id}" data-criterion="${i}" ${savedRating === 'no' ? 'checked' : ''}> 
+                            <span style="color: #e74c3c;">❌ No</span>
+                        </label>
+                        <label style="display: inline-flex; align-items: center; gap: 0.3rem; cursor: pointer;">
+                            <input type="radio" name="${section.id}_c${i}" value="partial" class="rating-radio" data-section="${section.id}" data-criterion="${i}" ${savedRating === 'partial' ? 'checked' : ''}> 
+                            <span style="color: #f39c12;">⚠️ Partial</span>
+                        </label>
+                    </div>
+                    <div>
+                        <input type="text" class="remark-input" data-section="${section.id}" data-criterion="${i}" placeholder="Remarks / specific suggestions..." value="${escapeHtml(savedRemark)}" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px; font-size: 0.75rem;">
+                    </div>
+                </div>
+            `;
+        }
+        
+        return `
+            <div class="review-section" data-section-id="${section.id}" style="margin-bottom: 1rem; border: 1px solid #e0e0e0; border-radius: 0.8rem; overflow: hidden;">
+                <div class="section-header" style="background: var(--primary); color: white; padding: 0.8rem 1rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center;" onclick="toggleReviewSection('${section.id}')">
+                    <span style="font-weight: 600;">${section.title}</span>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <span id="${section.id}_status" style="font-size: 0.7rem; background: rgba(255,255,255,0.2); padding: 0.2rem 0.5rem; border-radius: 20px;">${ratings.filter(r => r === 'yes' || r === 'no' || r === 'partial').length}/${section.criteria.length}</span>
+                        <i class="fas fa-chevron-down" id="${section.id}_icon" style="transition: transform 0.2s;"></i>
+                    </div>
+                </div>
+                <div id="${section.id}_content" class="section-content" style="display: ${isExpanded ? 'block' : 'none'}; padding: 1rem;">
+                    <!-- Applicant's Relevant Fields -->
+                    <div style="background: #f0f7ff; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+                        <div style="font-weight: 600; color: var(--primary); margin-bottom: 0.5rem;">
+                            <i class="fas fa-file-alt"></i> Applicant's Submission (Relevant Sections):
+                        </div>
+                        ${mappedFieldsHtml}
+                    </div>
+                    
+                    <!-- Evaluation Criteria -->
+                    <div style="font-weight: 600; color: var(--primary); margin-bottom: 0.75rem;">
+                        <i class="fas fa-check-double"></i> Evaluation Criteria:
+                    </div>
+                    <div id="${section.id}_criteria">
+                        ${criteriaHtml}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Build the entire modal HTML
+    let sectionsHtml = '';
+    for (let i = 0; i < evaluationSections.length; i++) {
+        sectionsHtml += generateSectionHTML(evaluationSections[i], i);
+    }
+    
+    // Load existing final recommendation
+    const savedRecommendation = savedReview?.recommendation || '';
+    const savedNarrativeFeedback = savedReview?.narrativeFeedback || '';
+    
+    let html = `
+        <div style="max-height: 75vh; overflow-y: auto; padding-right: 10px;">
+            <!-- Header -->
+            <div style="background: linear-gradient(135deg, #283871 0%, #1e2b57 100%); color: white; padding: 1rem; border-radius: 1rem; margin-bottom: 1.5rem;">
+                <h3 style="color: var(--gold); margin-bottom: 0.5rem;"><i class="fas fa-file-alt"></i> FINAL REPORT REVIEW</h3>
+                <div><strong>Grant:</strong> ${escapeHtml(foundApp.grantTitle)}</div>
+                <div><strong>Proposal Title:</strong> ${escapeHtml(foundApp.proposalTitle || 'N/A')}</div>
+                <div><strong>Applicant:</strong> ${escapeHtml(foundApp.piName || foundApp.applicantEmail)}</div>
+                <div><strong>Submitted:</strong> ${foundApp.submittedDate || 'N/A'}</div>
+            </div>
+            
+            <!-- Reviewer Info & Progress -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div style="background: #f8f9fa; padding: 0.8rem; border-radius: 0.8rem;">
+                    <div><strong><i class="fas fa-user-check"></i> Reviewer:</strong> ${escapeHtml(currentUser.name)}</div>
+                    <div><strong><i class="fas fa-calendar"></i> Date:</strong> ${new Date().toLocaleDateString()}</div>
+                </div>
+                <div style="background: #f8f9fa; padding: 0.8rem; border-radius: 0.8rem;">
+                    <div><strong><i class="fas fa-chart-line"></i> Review Progress</strong></div>
+                    <div style="background: #e0e0e0; border-radius: 10px; height: 8px; margin-top: 0.3rem;">
+                        <div id="progressFill" style="width: ${calculateProgress()}%; background: var(--gold); height: 100%; border-radius: 10px;"></div>
+                    </div>
+                    <div id="progressText" style="font-size: 0.7rem; margin-top: 0.3rem;">${calculateProgress()}% complete</div>
+                </div>
+            </div>
+            
+            <!-- Evaluation Sections -->
+            <div id="reviewSectionsContainer">
+                ${sectionsHtml}
+            </div>
+            
+            <!-- Final Recommendation -->
+            <div style="margin: 1.5rem 0; border: 1px solid #e0e0e0; border-radius: 0.8rem; overflow: hidden;">
+                <div style="background: var(--primary); color: white; padding: 0.8rem 1rem;">
+                    <span style="font-weight: 600;"><i class="fas fa-gavel"></i> II. Recommendation to KURO</span>
+                </div>
+                <div style="padding: 1rem;">
+                    <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="radio" name="finalRecommendation" value="Accepted as is" ${savedRecommendation === 'Accepted as is' ? 'checked' : ''}> 
+                            <span><strong>✅ Accepted as is</strong></span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="radio" name="finalRecommendation" value="Accepted with minor changes" ${savedRecommendation === 'Accepted with minor changes' ? 'checked' : ''}> 
+                            <span><strong>📝 Accepted with minor changes</strong> - Will NOT need another round of review</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="radio" name="finalRecommendation" value="Returned for revision" ${savedRecommendation === 'Returned for revision' ? 'checked' : ''}> 
+                            <span><strong>🔄 Returned for revision</strong> - Needs another round of review</span>
+                        </label>
+                    </div>
+                    
+                    <!-- Revision reasons (shown only if Returned for revision selected) -->
+                    <div id="revisionReasons" style="display: ${savedRecommendation === 'Returned for revision' ? 'block' : 'none'}; margin-top: 1rem; padding: 1rem; background: #fff8e7; border-radius: 0.5rem;">
+                        <label style="font-weight: 600;">Reason(s) for revision:</label>
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;">
+                            <label><input type="checkbox" class="revision-reason" value="Objectives not clearly addressed"> Objectives were not clearly addressed in the findings</label>
+                            <label><input type="checkbox" class="revision-reason" value="Inadequate writing, citation, and presentation"> Inadequate writing, citation, and presentation</label>
+                            <label><input type="checkbox" class="revision-reason" value="Others"> Others (please specify)</label>
+                            <input type="text" id="revisionOtherText" placeholder="Specify other reasons..." style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px; margin-top: 0.3rem; display: none;">
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 1rem;">
+                        <label style="font-weight: 600; color: var(--primary);"><i class="fas fa-comment-dots"></i> III. Narrative Feedback for Author/s:</label>
+                        <textarea id="narrativeFeedback" rows="5" style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 0.5rem; margin-top: 0.3rem; font-family: inherit;" placeholder="Please provide a straightforward assessment of the importance of the ideas and/or results presented. The author(s) will benefit from your thoughtful appraisal of the paper's strengths and weaknesses along with any specific suggestions for improvement.">${escapeHtml(savedNarrativeFeedback)}</textarea>
+                        <small style="font-size: 0.65rem; color: #666;"><i class="fas fa-info-circle"></i> This feedback will be shared with the author(s).</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="demo-note" style="margin-top: 1rem;">
+                <i class="fas fa-save"></i> Your progress is automatically saved as you fill out the form.
+            </div>
+        </div>
+    `;
+    
+    // Show the modal
+    const result = await Swal.fire({
+        title: '<div style="display: flex; justify-content: space-between; align-items: center;"><span>📋 Final Report Review Form (FORM G)</span><button id="customCloseBtn" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999;">&times;</button></div>',
+        html: html,
+        width: '1000px',
+        showConfirmButton: true,
+        showCancelButton: true,
+        confirmButtonText: isReviewed ? 'Close' : 'Submit Final Review',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#D4AF37',
+        cancelButtonColor: '#6c757d',
+        didOpen: (modal) => {
+            // Close button handler
+            const closeBtn = modal.querySelector('#customCloseBtn');
+            if (closeBtn) closeBtn.onclick = () => Swal.close();
+            
+            // Show/hide revision reasons
+            const finalRadios = modal.querySelectorAll('input[name="finalRecommendation"]');
+            const revisionReasonsDiv = modal.querySelector('#revisionReasons');
+            const revisionOtherCheckbox = modal.querySelector('#revisionReasons input[value="Others"]');
+            const revisionOtherText = modal.querySelector('#revisionOtherText');
+            
+            finalRadios.forEach(radio => {
+                radio.addEventListener('change', () => {
+                    if (radio.value === 'Returned for revision') {
+                        revisionReasonsDiv.style.display = 'block';
+                    } else {
+                        revisionReasonsDiv.style.display = 'none';
+                    }
+                });
+            });
+            
+            if (revisionOtherCheckbox) {
+                revisionOtherCheckbox.addEventListener('change', () => {
+                    if (revisionOtherText) revisionOtherText.style.display = revisionOtherCheckbox.checked ? 'block' : 'none';
+                });
+            }
+            
+            // Auto-save function
+            function autoSaveReview() {
+                const evaluations = {};
+                for (let section of evaluationSections) {
+                    const ratings = [];
+                    const remarks = [];
+                    for (let i = 0; i < section.criteria.length; i++) {
+                        const radioYes = modal.querySelector(`input[name="${section.id}_c${i}"][value="yes"]`);
+                        const radioNo = modal.querySelector(`input[name="${section.id}_c${i}"][value="no"]`);
+                        const radioPartial = modal.querySelector(`input[name="${section.id}_c${i}"][value="partial"]`);
+                        const remarkInput = modal.querySelector(`.remark-input[data-section="${section.id}"][data-criterion="${i}"]`);
+                        
+                        let rating = null;
+                        if (radioYes?.checked) rating = 'yes';
+                        else if (radioNo?.checked) rating = 'no';
+                        else if (radioPartial?.checked) rating = 'partial';
+                        ratings.push(rating);
+                        remarks.push(remarkInput?.value || '');
+                    }
+                    evaluations[section.id] = { ratings, remarks };
+                }
+                
+                const finalRecommendation = modal.querySelector('input[name="finalRecommendation"]:checked')?.value || '';
+                const narrativeFeedback = modal.querySelector('#narrativeFeedback')?.value || '';
+                const revisionReasons = [];
+                if (finalRecommendation === 'Returned for revision') {
+                    modal.querySelectorAll('.revision-reason:checked').forEach(cb => {
+                        if (cb.value === 'Others') {
+                            const otherText = modal.querySelector('#revisionOtherText')?.value;
+                            if (otherText) revisionReasons.push(otherText);
+                        } else {
+                            revisionReasons.push(cb.value);
+                        }
+                    });
+                }
+                
+                // Update progress display
+                let completed = 0;
+                let totalCriteria = 0;
+                for (let section of evaluationSections) {
+                    for (let i = 0; i < section.criteria.length; i++) {
+                        totalCriteria++;
+                        const rating = evaluations[section.id].ratings[i];
+                        if (rating === 'yes' || rating === 'no' || rating === 'partial') completed++;
+                    }
+                }
+                const progress = totalCriteria > 0 ? Math.round((completed / totalCriteria) * 100) : 0;
+                const progressFill = modal.querySelector('#progressFill');
+                const progressText = modal.querySelector('#progressText');
+                if (progressFill) progressFill.style.width = `${progress}%`;
+                if (progressText) progressText.innerText = `${progress}% complete`;
+                
+                // Update section status badges
+                for (let section of evaluationSections) {
+                    const statusSpan = modal.querySelector(`#${section.id}_status`);
+                    if (statusSpan) {
+                        const rated = evaluations[section.id].ratings.filter(r => r === 'yes' || r === 'no' || r === 'partial').length;
+                        statusSpan.innerText = `${rated}/${section.criteria.length}`;
+                    }
+                }
+                
+                // Save to temporary variable
+                window.tempReviewData = {
+                    evaluations,
+                    finalRecommendation,
+                    narrativeFeedback,
+                    revisionReasons,
+                    lastSaved: new Date().toISOString()
+                };
+            }
+            
+            // Attach auto-save listeners
+            const attachListeners = () => {
+                const radios = modal.querySelectorAll('.rating-radio');
+                const remarkInputs = modal.querySelectorAll('.remark-input');
+                const finalRadios = modal.querySelectorAll('input[name="finalRecommendation"]');
+                const narrative = modal.querySelector('#narrativeFeedback');
+                const revisionCheckboxes = modal.querySelectorAll('.revision-reason');
+                const revisionOther = modal.querySelector('#revisionOtherText');
+                
+                const saveHandler = () => autoSaveReview();
+                
+                radios.forEach(r => r.addEventListener('change', saveHandler));
+                remarkInputs.forEach(r => r.addEventListener('input', saveHandler));
+                finalRadios.forEach(r => r.addEventListener('change', saveHandler));
+                if (narrative) narrative.addEventListener('input', saveHandler);
+                revisionCheckboxes.forEach(cb => cb.addEventListener('change', saveHandler));
+                if (revisionOther) revisionOther.addEventListener('input', saveHandler);
+            };
+            
+            attachListeners();
+            
+            // Initialize auto-save
+            setTimeout(() => autoSaveReview(), 100);
+        },
+        preConfirm: () => {
+            if (isReviewed) return true;
+            
+            // Validate before submit
+            const finalRecommendation = document.querySelector('input[name="finalRecommendation"]:checked')?.value;
+            const narrativeFeedback = document.querySelector('#narrativeFeedback')?.value;
+            
+            if (!finalRecommendation) {
+                Swal.showValidationMessage('Please select a final recommendation');
+                return false;
+            }
+            
+            if (!narrativeFeedback || narrativeFeedback.trim() === '') {
+                Swal.showValidationMessage('Please provide narrative feedback for the author(s)');
+                return false;
+            }
+            
+            if (finalRecommendation === 'Returned for revision') {
+                const hasRevisionReason = document.querySelector('.revision-reason:checked');
+                if (!hasRevisionReason) {
+                    Swal.showValidationMessage('Please select at least one reason for revision');
+                    return false;
+                }
+            }
+            
+            // Check if all criteria are rated
+            let allRated = true;
+            let missingSections = [];
+            for (let section of evaluationSections) {
+                for (let i = 0; i < section.criteria.length; i++) {
+                    const radioYes = document.querySelector(`input[name="${section.id}_c${i}"][value="yes"]`);
+                    const radioNo = document.querySelector(`input[name="${section.id}_c${i}"][value="no"]`);
+                    const radioPartial = document.querySelector(`input[name="${section.id}_c${i}"][value="partial"]`);
+                    if (!radioYes?.checked && !radioNo?.checked && !radioPartial?.checked) {
+                        allRated = false;
+                        if (!missingSections.includes(section.title)) missingSections.push(section.title);
+                    }
+                }
+            }
+            
+            if (!allRated) {
+                Swal.showValidationMessage(`Please complete all criteria in: ${missingSections.join(', ')}`);
+                return false;
+            }
+            
+            return window.tempReviewData || { evaluations: {}, finalRecommendation, narrativeFeedback };
+        }
+    });
+    
+    if (result.isConfirmed && result.value && !isReviewed) {
+        // Save final review
+        const reviewData = result.value;
+        
+        for (let email in submissionsDB) {
+            const appIndex = submissionsDB[email]?.findIndex(a => a.id === appId);
+            if (appIndex !== -1 && appIndex !== undefined) {
+                if (!submissionsDB[email][appIndex].finalReportReview) {
+                    submissionsDB[email][appIndex].finalReportReview = {};
+                }
+                if (!submissionsDB[email][appIndex].finalReportReview.reviewerFeedbacks) {
+                    submissionsDB[email][appIndex].finalReportReview.reviewerFeedbacks = {};
+                }
+                
+                submissionsDB[email][appIndex].finalReportReview.reviewerFeedbacks[currentUser.email] = {
+                    evaluations: reviewData.evaluations,
+                    recommendation: reviewData.finalRecommendation,
+                    narrativeFeedback: reviewData.narrativeFeedback,
+                    revisionReasons: reviewData.revisionReasons || [],
+                    submittedDate: new Date().toISOString(),
+                    reviewerName: currentUser.name,
+                    reviewerEmail: currentUser.email
+                };
+                
+                // Mark task as completed
+                const taskIndex = reviewerTasks[currentUser.email]?.assignedTasks?.findIndex(t => t.applicationId === appId);
+                if (taskIndex !== -1 && taskIndex !== undefined) {
+                    reviewerTasks[currentUser.email].assignedTasks[taskIndex].status = 'completed';
+                    reviewerTasks[currentUser.email].assignedTasks[taskIndex].submittedDate = new Date().toISOString();
+                }
+                
+                localStorage.setItem('kuro_submissions', JSON.stringify(submissionsDB));
+                localStorage.setItem('kuro_reviewer_tasks', JSON.stringify(reviewerTasks));
+                
+                // Notify admin
+                addNotification(email, 'review_completed', '📋 Final Report Review Completed', `Reviewer ${currentUser.name} has submitted their final report review for "${submissionsDB[email][appIndex].proposalTitle}".`, appId, '📋', '#D4AF37');
+                
+                break;
+            }
+        }
+        
+        await Swal.fire({
+            icon: 'success',
+            title: 'Review Submitted!',
+            text: 'Thank you for your valuable feedback. The author will be notified.',
+            confirmButtonColor: '#D4AF37',
+            timer: 2500,
+            showConfirmButton: false
+        });
+        
+        renderDashboard();
+    }
+}
+
+// Toggle function for accordion sections
+window.toggleReviewSection = function(sectionId) {
+    const content = document.getElementById(`${sectionId}_content`);
+    const icon = document.getElementById(`${sectionId}_icon`);
+    if (content) {
+        if (content.style.display === 'none' || content.style.display === '') {
+            content.style.display = 'block';
+            if (icon) icon.style.transform = 'rotate(0deg)';
+        } else {
+            content.style.display = 'none';
+            if (icon) icon.style.transform = 'rotate(-90deg)';
+        }
+    }
+};
+
+// Toggle function for accordion sections
+window.toggleReviewSection = function(sectionId) {
+    const content = document.getElementById(`${sectionId}_content`);
+    const icon = document.getElementById(`${sectionId}_icon`);
+    if (content) {
+        if (content.style.display === 'none' || content.style.display === '') {
+            content.style.display = 'block';
+            if (icon) icon.style.transform = 'rotate(0deg)';
+        } else {
+            content.style.display = 'none';
+            if (icon) icon.style.transform = 'rotate(-90deg)';
+        }
+    }
+};
+
+// Toggle section function for collapsible content
+window.toggleSection = function(sectionId) {
+    const section = document.getElementById(sectionId);
+    const icon = document.getElementById(sectionId.replace('Section', 'Icon'));
+    if (section) {
+        if (section.style.display === 'none' || section.style.display === '') {
+            section.style.display = 'block';
+            if (icon) icon.className = 'fas fa-chevron-up';
+        } else {
+            section.style.display = 'none';
+            if (icon) icon.className = 'fas fa-chevron-down';
+        }
+    }
+};
+
+document.getElementById('logoutBtn').onclick = () => { sessionStorage.clear(); window.location.href = 'login.html'; };
+
+initNotificationSystem();
+renderDashboard();
+</script>
+</body>
+</html>

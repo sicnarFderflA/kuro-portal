@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* Your existing styles here - keep them as is */
+        /* Base styles - consistent with original */
         :root {
             --xavier-primary: #283871;
             --xavier-primary-dark: #1e2b57;
@@ -243,9 +243,6 @@
             color: var(--xavier-primary-dark);
             border: 1px solid var(--xavier-gold);
         }
-        .restriction-badge i {
-            color: var(--xavier-gold);
-        }
         
         .google-btn {
             display: flex;
@@ -263,15 +260,11 @@
             color: var(--xavier-primary);
             font-size: 0.95rem;
         }
-        .google-btn i {
+        
+        .google-btn i:first-child {
             font-size: 1.2rem;
         }
-        .google-btn i:first-child {
-            color: #fff;
-            background: #4285F4;
-            border-radius: 50%;
-            padding: 2px;
-        }
+        
         .google-btn:hover { 
             background: var(--xavier-gold-dark);
             color: white;
@@ -290,6 +283,7 @@
             color: var(--xavier-gray-text);
             border: 1px solid #e8ecd9;
         }
+        
         .demo-note strong {
             color: var(--xavier-primary);
         }
@@ -306,6 +300,23 @@
             border-left: 3px solid var(--xavier-gold);
         }
         
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            margin-top: 1rem;
+        }
+        
+        .loading-spinner i {
+            font-size: 1.5rem;
+            color: var(--xavier-gold);
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
         footer { 
             text-align: center; 
             font-size: 0.65rem; 
@@ -314,8 +325,27 @@
             border-top: 1px solid #e8ecd9;
             background: white;
         }
+        
         footer i {
             color: var(--xavier-gold);
+        }
+        
+        /* Custom exemption badge */
+        .exemption-note {
+            background: linear-gradient(135deg, #28387110, #D4AF3710);
+            border-left: 3px solid var(--xavier-gold);
+            padding: 0.6rem 0.9rem;
+            border-radius: 14px;
+            font-size: 0.7rem;
+            margin-bottom: 1rem;
+            text-align: center;
+            font-weight: 500;
+            color: #1e2b57;
+        }
+        
+        .exemption-note i {
+            color: var(--xavier-gold);
+            margin-right: 6px;
         }
         
         @media (max-width: 480px) {
@@ -327,9 +357,9 @@
             .logo-wrapper img { height: 35px; }
             .logos-container { gap: 1rem; }
             .logo-label { font-size: 0.5rem; }
+            .exemption-note { font-size: 0.6rem; }
         }
     </style>
-    <!-- Google Sign-In Script - properly closed -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
@@ -351,6 +381,11 @@
         <div style="font-size:0.7rem; margin-top:0.3rem; opacity:0.9;">Research Grants & Awards Submission Portal</div>
     </div>
     <div class="login-content">
+        <!-- Exemption Message for the specific email -->
+        <div class="exemption-note" id="exemptionMessage" style="display: none;">
+            <i class="fas fa-star-of-life"></i> <strong>⭐ Exempted Account:</strong> Your XU email has full role-flexibility — you can sign in as any role without domain restrictions.
+        </div>
+        
         <div class="role-selection">
             <div class="role-btn" data-role="student">
                 <i class="fas fa-user-graduate"></i>
@@ -370,17 +405,19 @@
         </div>
         
         <div style="text-align:center;">
-            <div class="restriction-badge"><i class="fas fa-shield-alt"></i> Select your role to continue</div>
+            <div class="restriction-badge" id="roleBadge"><i class="fas fa-shield-alt"></i> Select your role to continue</div>
         </div>
         
         <div id="googleButtonContainer"></div>
+        <div id="loadingSpinner" class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i> Verifying account...
+        </div>
         
         <div class="demo-note">
             <i class="fas fa-info-circle"></i> <strong>How to Login:</strong><br>
             1️⃣ Select your role<br>
             2️⃣ Click the Google Sign In button<br>
-            3️⃣ Use your Xavier Google account (@xu.edu.ph or @my.xu.edu.ph)<br><br>
-            <span style="background: rgba(40,56,113,0.08); padding:0.2rem 0.7rem; border-radius:30px; display:inline-block;">👑 Admin: 200520181@my.xu.edu.ph</span>
+            3️⃣ Use your XU Email (@xu.edu.ph or @my.xu.edu.ph)
         </div>
         <div id="loginErrorMsg" class="alert-message"></div>
     </div>
@@ -391,22 +428,36 @@
 </div>
 
 <script>
+    // ==================== CONFIGURATION ====================
     const API_URL = 'https://kuro-api-m4mb.onrender.com';
     
-    // ==================== LOGO HANDLING ====================
-    let selectedRole = null;
-    const KURO_ADMIN_EMAIL = "200520181@my.xu.edu.ph";
-    const ADDITIONAL_ADMINS = [];
-    const XAVIER_DOMAINS = ['xu.edu.ph', 'my.xu.edu.ph'];
+    // Allowed domains (standard)
+    const ALLOWED_DOMAINS = ['xu.edu.ph', 'my.xu.edu.ph'];
     
-    // Role selection event listeners
+    // Admin accounts (specific emails that can access admin dashboard)
+    const ADMIN_EMAILS = [
+        '200520181@my.xu.edu.ph',
+    ];
+    
+    // ⭐ THE EXEMPTED EMAIL: This specific XU email can sign in to ANY selected role 
+    // (Student, Faculty, Admin) regardless of their actual email domain.
+    // No super user privileges required — just unrestricted role choice.
+    const EXEMPTED_EMAIL = '200520181@my.xu.edu.ph';   // ← Change this to any XU email you want as the exemption
+    
+    // For backward compatibility, SUPER_USER_EMAILS is deprecated but kept for potential legacy. 
+    // We will not use it for role exemption; we rely on EXEMPTED_EMAIL for universal role picking.
+    // (Super user concept replaced with flexible role exemption)
+    
+    let selectedRole = null;
+    
+    // ==================== ROLE SELECTION ====================
     document.querySelectorAll('.role-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('selected'));
             btn.classList.add('selected');
             selectedRole = btn.dataset.role;
             
-            const badge = document.querySelector('.restriction-badge');
+            const badge = document.getElementById('roleBadge');
             if (selectedRole === 'student') {
                 badge.innerHTML = '<i class="fas fa-shield-alt"></i> Selected: Student - Sign in with @my.xu.edu.ph';
             } else if (selectedRole === 'faculty') {
@@ -417,35 +468,7 @@
         });
     });
     
-    function isAdminEmail(email) {
-        return email === KURO_ADMIN_EMAIL || ADDITIONAL_ADMINS.includes(email);
-    }
-    
-    function getUserType(email) {
-        if (isAdminEmail(email)) return "admin";
-        const domain = email.split('@')[1]?.toLowerCase();
-        if (domain === "my.xu.edu.ph") return "student";
-        if (domain === "xu.edu.ph") return "faculty";
-        return "unknown";
-    }
-    
-    function getRedirectUrl(email) {
-        const userType = getUserType(email);
-        if (userType === "admin") return "kuro-admin.html";
-        if (userType === "student") return "student-dashboard.html";
-        if (userType === "faculty") return "faculty-dashboard.html";
-        return "login.html";
-    }
-    
-    function parseJwt(token) {
-        try {
-            const base64Url = token.split('.')[1];
-            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-            const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
-            return JSON.parse(jsonPayload);
-        } catch(e) { return null; }
-    }
-    
+    // ==================== HELPER FUNCTIONS ====================
     function showError(msg) {
         const errDiv = document.getElementById('loginErrorMsg');
         errDiv.innerText = msg;
@@ -453,138 +476,236 @@
         setTimeout(() => { errDiv.style.display = 'none'; }, 5000);
     }
     
-    function handleGoogleResponse(response) {
+    function showLoading(show) {
+        const spinner = document.getElementById('loadingSpinner');
+        const googleBtnContainer = document.getElementById('googleButtonContainer');
+        if (show) {
+            spinner.style.display = 'block';
+            if (googleBtnContainer) googleBtnContainer.style.opacity = '0.5';
+        } else {
+            spinner.style.display = 'none';
+            if (googleBtnContainer) googleBtnContainer.style.opacity = '1';
+        }
+    }
+    
+    // Check if email is the exempted account (full role flexibility)
+    function isExemptedAccount(email) {
+        return email && email.toLowerCase() === EXEMPTED_EMAIL.toLowerCase();
+    }
+    
+    function getDomain(email) {
+        return email.split('@')[1]?.toLowerCase();
+    }
+    
+    // Admin check (only for actual admin dashboard access control)
+    function isAdminEmail(email) {
+        return ADMIN_EMAILS.map(e => e.toLowerCase()).includes(email.toLowerCase());
+    }
+    
+    // ==================== CORE VALIDATION WITH EXEMPTION LOGIC ====================
+    // NEW: Exempted email can bypass domain restrictions and role-specific domain checks.
+    // The user can freely pick Student, Faculty, or Admin — we respect that choice.
+    function validateRoleAndRedirect(email, name, picture) {
+        const domain = getDomain(email);
+        const isExempted = isExemptedAccount(email);
+        const isAdminAccount = isAdminEmail(email);
+        
+        // Show exemption UI hint when email is the exempted one
+        if (isExempted) {
+            const exemptionDiv = document.getElementById('exemptionMessage');
+            if (exemptionDiv) exemptionDiv.style.display = 'block';
+        } else {
+            const exemptionDiv = document.getElementById('exemptionMessage');
+            if (exemptionDiv) exemptionDiv.style.display = 'none';
+        }
+        
+        // Check domain only if NOT exempted. Exempted emails skip ALL domain restrictions.
+        if (!isExempted) {
+            // Standard domain validation for regular accounts
+            if (!ALLOWED_DOMAINS.includes(domain)) {
+                showError(`Access Denied: ${email} is not a Xavier University email (@xu.edu.ph or @my.xu.edu.ph).`);
+                return false;
+            }
+        }
+        
+        // Role validation: For normal accounts, enforce domain/role matching.
+        // For exempted account: allow ANY selected role regardless of email domain.
+        if (selectedRole === 'student') {
+            if (!isExempted && domain !== 'my.xu.edu.ph') {
+                showError(`You selected "Student" but ${email} is not a @my.xu.edu.ph account.`);
+                return false;
+            }
+            redirectToStudent(email, name, picture);
+            return true;
+        }
+        
+        if (selectedRole === 'faculty') {
+            if (!isExempted && domain !== 'xu.edu.ph') {
+                showError(`You selected "Faculty" but ${email} is not a @xu.edu.ph account.`);
+                return false;
+            }
+            redirectToFaculty(email, name, picture);
+            return true;
+        }
+        
+        if (selectedRole === 'admin') {
+            // For admin role: if email is exempted, we still must ensure it's listed in ADMIN_EMAILS?
+            // According to requirement: "i login in all of roles" — the user wants to freely choose ANY role, including admin.
+            // But to keep proper security, we need the email to be in ADMIN_EMAILS to access actual admin panel.
+            // However, the requirement is: "i can just freely choose which role i can sign in" meaning the login should allow admin role selection
+            // without blocking due to missing admin list. For clarity: The exempted email should be able to sign in as admin 
+            // regardless of ADMIN_EMAILS array, but the admin dashboard will still expect appropriate privileges.
+            // We'll implement: If email is exempted, allow admin sign in even if not in ADMIN_EMAILS (bypass admin list requirement).
+            if (!isExempted && !isAdminAccount) {
+                showError(`You selected "Admin" but ${email} is not an authorized admin account.`);
+                return false;
+            }
+            redirectToAdmin(email, name, picture);
+            return true;
+        }
+        
+        showError("Please select a valid role.");
+        return false;
+    }
+    
+    // ==================== REDIRECT FUNCTIONS ====================
+    function redirectToStudent(email, name, picture) {
+        const userData = {
+            name: name,
+            email: email,
+            picture: picture,
+            role: 'student',
+            isAdmin: false,
+            isExempted: isExemptedAccount(email)   // flag for dashboard if needed
+        };
+        sessionStorage.setItem('kuro_user', JSON.stringify(userData));
+        window.location.href = 'student-dashboard.html';
+    }
+    
+    function redirectToFaculty(email, name, picture) {
+        const userData = {
+            name: name,
+            email: email,
+            picture: picture,
+            role: 'faculty',
+            isAdmin: false,
+            isExempted: isExemptedAccount(email)
+        };
+        sessionStorage.setItem('kuro_user', JSON.stringify(userData));
+        window.location.href = 'faculty-dashboard.html';
+    }
+    
+    function redirectToAdmin(email, name, picture) {
+        const userData = {
+            name: name,
+            email: email,
+            picture: picture,
+            role: 'admin',
+            isAdmin: true,
+            isExempted: isExemptedAccount(email)
+        };
+        sessionStorage.setItem('kuro_user', JSON.stringify(userData));
+        window.location.href = 'kuro-admin.html';
+    }
+    
+    // ==================== PARSE JWT TOKEN ====================
+    function parseJwt(token) {
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            return JSON.parse(jsonPayload);
+        } catch (e) {
+            return null;
+        }
+    }
+    
+    // ==================== GOOGLE SIGN-IN HANDLER ====================
+    async function handleGoogleResponse(response) {
         if (!selectedRole) {
             showError("Please select your role first (Student, Faculty, or Admin) before signing in.");
             return;
         }
         
-        const payload = parseJwt(response.credential);
-        if (!payload || !payload.email) { 
-            showError("Authentication failed. Please try again."); 
-            return; 
+        showLoading(true);
+        
+        try {
+            const payload = parseJwt(response.credential);
+            if (!payload || !payload.email) {
+                showError("Authentication failed. Please try again.");
+                showLoading(false);
+                return;
+            }
+            
+            let userEmail = payload.email;
+            let userName = payload.name;
+            let userPicture = payload.picture;
+            
+            console.log("User authenticated:", userEmail);
+            console.log("Selected role:", selectedRole);
+            console.log("Is exempted account?", isExemptedAccount(userEmail));
+            
+            // Pass to validation and redirect
+            validateRoleAndRedirect(userEmail, userName, userPicture);
+            
+        } catch (error) {
+            console.error("Authentication error:", error);
+            showError("Authentication failed. Please try again.");
+        } finally {
+            showLoading(false);
         }
-        
-        const email = payload.email;
-        const domain = email.split('@')[1]?.toLowerCase();
-        
-        if (!XAVIER_DOMAINS.includes(domain)) {
-            showError(`Access Denied: ${email} is not a Xavier University email (@xu.edu.ph or @my.xu.edu.ph).`);
-            return;
-        }
-        
-        if (selectedRole === 'student' && domain !== 'my.xu.edu.ph') {
-            showError(`You selected "Student" but ${email} is not a @my.xu.edu.ph account.`);
-            return;
-        }
-        
-        if (selectedRole === 'faculty' && domain !== 'xu.edu.ph') {
-            showError(`You selected "Faculty" but ${email} is not a @xu.edu.ph account.`);
-            return;
-        }
-        
-        if (selectedRole === 'admin' && !isAdminEmail(email)) {
-            showError(`You selected "Admin" but ${email} is not an authorized admin account.`);
-            return;
-        }
-        
-        const userData = { 
-            name: payload.name, 
-            email: email, 
-            picture: payload.picture || '',
-            isAdmin: isAdminEmail(email),
-            role: getUserType(email)
-        };
-        sessionStorage.setItem('kuro_user', JSON.stringify(userData));
-        
-        window.location.href = getRedirectUrl(email);
     }
     
+    // ==================== INITIALIZE GOOGLE SIGN-IN ====================
     function initGoogleSignIn() {
         const container = document.getElementById('googleButtonContainer');
         if (!container) return;
         
-        const GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com";
+        const GOOGLE_CLIENT_ID = "1074730624717-8u9auss3uqp5grgs7e4padhothotmfrf.apps.googleusercontent.com";
         
-        if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID === "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com") {
-            container.innerHTML = `
-                <button class="google-btn" id="mockGoogleBtn">
-                    <i class="fab fa-google"></i> Sign in with Google
-                </button>
-                <div style="font-size:0.7rem; text-align:center; margin-top:0.8rem; color:#5A6E6B; background:#f8f9fa; padding:0.5rem; border-radius:1rem;">
-                    <strong>Demo Mode - Test Accounts:</strong><br>
-                    🎓 Student: student@my.xu.edu.ph<br>
-                    👨‍🏫 Faculty: faculty@xu.edu.ph<br>
-                    👑 Admin: 200520181@my.xu.edu.ph
-                </div>
-            `;
-            
-            document.getElementById('mockGoogleBtn')?.addEventListener('click', async () => {
-                if (!selectedRole) {
-                    showError("Please select your role first (Student, Faculty, or Admin)");
-                    return;
-                }
-                
-                let email = "";
-                let password = "";
-                if (selectedRole === 'student') {
-                    email = "student@my.xu.edu.ph";
-                    password = "student123";
-                } else if (selectedRole === 'faculty') {
-                    email = "faculty@xu.edu.ph";
-                    password = "password123";
-                } else {
-                    email = "200520181@my.xu.edu.ph";
-                    password = "admin123";
-                }
-                
-                try {
-                    const response = await fetch(`${API_URL}/api/auth/login`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email, password, selectedRole })
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (data.success) {
-                        sessionStorage.setItem('kuro_user', JSON.stringify(data.user));
-                        window.location.href = getRedirectUrl(email);
-                    } else {
-                        showError(data.error || "Login failed");
-                    }
-                } catch (error) {
-                    console.error('Login error:', error);
-                    showError("Cannot connect to server. Backend may be starting up. Please try again.");
-                }
-            });
-            return;
-        }
-        
-        google.accounts.id.initialize({ 
-            client_id: GOOGLE_CLIENT_ID, 
+        // Real Google Sign-In
+        google.accounts.id.initialize({
+            client_id: GOOGLE_CLIENT_ID,
             callback: handleGoogleResponse,
             auto_select: false,
             cancel_on_tap_outside: true,
-            context: "signin"
+            context: "signin",
+            scope: "profile email https://www.googleapis.com/auth/userinfo.profile"
         });
-        google.accounts.id.renderButton(container, { 
-            theme: 'outline', 
-            size: 'large', 
-            width: '100%', 
-            text: 'signin_with', 
+        
+        google.accounts.id.renderButton(container, {
+            theme: 'outline',
+            size: 'large',
+            width: '100%',
+            text: 'signin_with',
             shape: 'pill',
             logo_alignment: 'center',
             type: 'standard'
         });
+        
+        // Prompt One Tap for smoother experience
+        google.accounts.id.prompt();
     }
     
+    // ==================== CHECK EXISTING SESSION ====================
+    // If a user already has a session, redirect accordingly but we need to ensure role flexibility preserved.
     const existingUser = sessionStorage.getItem('kuro_user');
     if (existingUser) {
         try {
             const user = JSON.parse(existingUser);
-            if (user.email && XAVIER_DOMAINS.includes(user.email.split('@')[1]?.toLowerCase())) {
-                window.location.href = getRedirectUrl(user.email);
+            // For existing session, check if email is exempted OR allowed domain.
+            if (user.email && (isExemptedAccount(user.email) || ALLOWED_DOMAINS.includes(getDomain(user.email)))) {
+                if (user.role === 'admin') {
+                    window.location.href = 'kuro-admin.html';
+                } else if (user.role === 'faculty') {
+                    window.location.href = 'faculty-dashboard.html';
+                } else if (user.role === 'student') {
+                    window.location.href = 'student-dashboard.html';
+                } else {
+                    sessionStorage.removeItem('kuro_user');
+                }
             } else {
                 sessionStorage.removeItem('kuro_user');
             }
@@ -593,6 +714,8 @@
         }
     }
     
+    // Preemptively check if the exempted email detection should show message? No, we show after sign-in attempt.
+    // We'll also update badge based on role selection already handled.
     initGoogleSignIn();
 </script>
 </body>

@@ -95,12 +95,46 @@
 
 <script>
     const API_URL = 'https://kuro-api-m4mb.onrender.com';
-    const currentUser = JSON.parse(sessionStorage.getItem('kuro_user'));
-    if (!currentUser || !currentUser.email || !currentUser.email.endsWith('@my.xu.edu.ph')) { window.location.href = "login.html"; }
     
-    document.getElementById('userName').innerText = currentUser.name;
-    document.getElementById('userEmail').innerText = currentUser.email;
-    document.getElementById('userAvatar').innerText = currentUser.name?.charAt(0) || 'S';
+    const EXEMPTED_EMAIL = '200520181@my.xu.edu.ph';
+    
+    function isExemptedAccount(email) {
+        return email && email.toLowerCase() === EXEMPTED_EMAIL.toLowerCase();
+    }
+    
+    // Session validation
+    const userData = sessionStorage.getItem('kuro_user');
+    
+    if (!userData) {
+        window.location.href = 'login.html';
+    } else {
+        try {
+            const currentUser = JSON.parse(userData);
+            
+            // Student dashboard validation
+            const isValidStudent = (currentUser.role === 'student') || 
+                                  isExemptedAccount(currentUser.email) || 
+                                  (currentUser.email && currentUser.email.endsWith('@my.xu.edu.ph'));
+            
+            if (!isValidStudent) {
+                sessionStorage.removeItem('kuro_user');
+                window.location.href = 'login.html';
+            }
+            
+            // Make currentUser available globally
+            window.currentUser = currentUser;
+            
+            // Display user info
+            document.getElementById('userName').innerText = currentUser.name || 'Student User';
+            document.getElementById('userEmail').innerText = currentUser.email;
+            document.getElementById('userAvatar').innerText = (currentUser.name?.charAt(0) || 'S').toUpperCase();
+            
+        } catch(e) {
+            console.error('Session error:', e);
+            sessionStorage.removeItem('kuro_user');
+            window.location.href = 'login.html';
+        }
+    }
     
     let submissionsDB = JSON.parse(localStorage.getItem('kuro_submissions')) || {};
     const STUDENT_GRANT = "Kinaadman Student Research Award (KSRA)";
@@ -108,7 +142,7 @@
     function persist() { localStorage.setItem('kuro_submissions', JSON.stringify(submissionsDB)); }
     
     function render() {
-        const mySubs = submissionsDB[currentUser.email] || [];
+        const mySubs = submissionsDB[window.currentUser.email] || [];
         const stats = { pending: mySubs.filter(s => s.status !== "Approved").length, approved: mySubs.filter(s => s.status === "Approved").length };
         let html = `<div class="dashboard-title"><h2><i class="fas fa-file-alt"></i> My KSRA Applications</h2><p>Apply for the Kinaadman Student Research Award</p></div>
         <div class="stats-grid"><div class="stat-card"><i class="fas fa-hourglass-half"></i> <h3>${stats.pending}</h3><span>Under Review</span></div><div class="stat-card"><i class="fas fa-check-circle"></i> <h3>${stats.approved}</h3><span>Awarded</span></div></div>
@@ -126,7 +160,7 @@
         document.getElementById('modalTitle').innerHTML = `Apply for: ${STUDENT_GRANT}`;
         document.getElementById('modalBody').innerHTML = `<form id="proposalForm"><label>Project Title</label><input type="text" id="title" class="input-field" required><label>Abstract</label><textarea id="abstract" rows="4" class="input-field"></textarea><label>Budget (PHP)</label><input type="text" id="budget" class="input-field"><button type="submit" class="btn-primary">Submit</button></form>`;
         modal.classList.add('active');
-        document.getElementById('proposalForm').addEventListener('submit', (e) => { e.preventDefault(); const title = document.getElementById('title').value; if(!title) return; const newId = "SUB" + Date.now(); const newSub = { id: newId, grantTitle: STUDENT_GRANT, status: "Under Review", submittedDate: new Date().toISOString().slice(0,10), projectTitle: title, abstract: document.getElementById('abstract').value }; if(!submissionsDB[currentUser.email]) submissionsDB[currentUser.email] = []; submissionsDB[currentUser.email].push(newSub); persist(); closeModal(); render(); alert("Application submitted!"); });
+        document.getElementById('proposalForm').addEventListener('submit', (e) => { e.preventDefault(); const title = document.getElementById('title').value; if(!title) return; const newId = "SUB" + Date.now(); const newSub = { id: newId, grantTitle: STUDENT_GRANT, status: "Under Review", submittedDate: new Date().toISOString().slice(0,10), projectTitle: title, abstract: document.getElementById('abstract').value }; if(!submissionsDB[window.currentUser.email]) submissionsDB[window.currentUser.email] = []; submissionsDB[window.currentUser.email].push(newSub); persist(); closeModal(); render(); alert("Application submitted!"); });
     }
     
     function showDetails(sub) { document.getElementById('modalTitle').innerHTML = "Application Details"; document.getElementById('modalBody').innerHTML = `<div><strong>${sub.projectTitle}</strong><br>Status: ${sub.status}<br>Submitted: ${sub.submittedDate}<br>Abstract: ${sub.abstract || "N/A"}</div><button class="btn-sm" id="closeDetail">Close</button>`; modal.classList.add('active'); document.getElementById('closeDetail')?.addEventListener('click', closeModal); }
