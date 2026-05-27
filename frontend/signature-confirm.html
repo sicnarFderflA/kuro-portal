@@ -12,22 +12,17 @@
         :root {
             --xavier-primary: #283871;
             --xavier-primary-dark: #1e2b57;
-            --xavier-primary-light: #3e5090;
             --xavier-gold: #D4AF37;
             --xavier-gold-dark: #b8942e;
-            --xavier-gold-light: #e6c86a;
-            --xavier-cream: #F9F6F0;
-            --xavier-dark-text: #1A2E3F;
             --xavier-gray-text: #5A6E6B;
-            --xavier-bg-light: #f8f9fa;
-            --xavier-border: #eef2f0;
             --success: #2ecc71;
             --warning: #f39c12;
             --danger: #e74c3c;
+            --light-bg: #f8f9fa;
         }
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #1b2352 0%, var(--xavier-primary) 50%, #10183a 100%);
+            background: linear-gradient(135deg, #f0f2f5 0%, #e8ecef 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -36,46 +31,11 @@
         }
         .signature-card {
             background: white;
-            border-radius: 1rem;
+            border-radius: 1.5rem;
             max-width: 550px;
             width: 100%;
-            overflow: hidden;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-            border: none;
-        }
-        /* Header Section */
-        .signature-header {
-            background: var(--xavier-primary);
-            padding: 1.5rem;
-            text-align: center;
-            border-bottom: 3px solid var(--xavier-gold);
-        }
-        .logos-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 1.5rem;
-            margin-bottom: 1rem;
-            flex-wrap: wrap;
-        }
-        .logo-wrapper img {
-            height: 50px;
-            width: auto;
-        }
-        .signature-header h2 {
-            color: var(--xavier-gold);
-            font-size: 1.3rem;
-            margin: 0.5rem 0 0.2rem;
-            font-weight: 700;
-        }
-        .signature-header p {
-            color: white;
-            font-size: 0.7rem;
-            opacity: 0.9;
-        }
-        /* Content Section */
-        .signature-content {
             padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
             text-align: center;
         }
         .signature-icon {
@@ -86,7 +46,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 1rem;
+            margin: 0 auto 1.5rem;
         }
         .signature-icon i {
             font-size: 2.5rem;
@@ -96,10 +56,9 @@
             color: var(--xavier-primary);
             margin-bottom: 0.5rem;
             font-weight: 700;
-            font-size: 1.5rem;
         }
         .application-details {
-            background: var(--xavier-bg-light);
+            background: var(--light-bg);
             padding: 1rem;
             border-radius: 0.8rem;
             margin: 1.5rem 0;
@@ -160,7 +119,7 @@
         .google-login {
             margin: 1rem 0;
             padding: 1rem;
-            background: var(--xavier-bg-light);
+            background: var(--light-bg);
             border-radius: 0.8rem;
             text-align: center;
         }
@@ -173,7 +132,7 @@
             color: var(--xavier-gold);
             margin-right: 0.3rem;
         }
-        .google-btn-wrapper {
+        #googleButtonContainer {
             display: flex;
             justify-content: center;
             align-items: center;
@@ -205,10 +164,6 @@
             margin-top: 1.5rem;
             font-size: 0.7rem;
             color: var(--xavier-gray-text);
-            text-align: center;
-            padding: 1rem;
-            border-top: 1px solid var(--xavier-border);
-            background: white;
         }
         footer i {
             color: var(--xavier-gold);
@@ -243,55 +198,71 @@
 </head>
 <body>
 <div class="signature-card" id="signatureCard">
-    <!-- Header with Xavier colors -->
-    <div class="signature-header">
-        <div class="logos-container">
-            <div class="logo-wrapper">
-                <img src="xu_logo.png" alt="Xavier University" onerror="this.style.display='none'">
-            </div>
-            <div class="logo-wrapper">
-                <img src="kuro_logo.png" alt="KURO" onerror="this.style.display='none'">
-            </div>
+    <div class="signature-icon">
+        <i class="fas fa-signature"></i>
+    </div>
+    <h1>Digital Signature Request</h1>
+    <p id="statusMessage">Loading signature request...</p>
+    
+    <div id="loginSection" style="display: none;">
+        <div class="google-login">
+            <p><i class="fas fa-shield-alt"></i> Please sign in with your Xavier University email to continue.</p>
+            <div id="googleButtonContainer"></div>
         </div>
-        <h2>XAVIER UNIVERSITY - ATENEO DE CAGAYAN</h2>
-        <p>Kinaadman University Research Office (KURO)</p>
     </div>
     
-    <!-- Content -->
-    <div class="signature-content">
-        <div class="signature-icon">
-            <i class="fas fa-signature"></i>
-        </div>
-        <h1>Digital Signature Request</h1>
-        <p id="statusMessage">Loading signature request...</p>
+    <div id="signSection" style="display: none;">
+        <div class="user-info" id="userInfo"></div>
+        <div class="application-details" id="appDetails"></div>
         
-        <div id="loginSection" style="display: none;">
-            <div class="google-login">
-                <p><i class="fas fa-shield-alt"></i> Please sign in with your Xavier University email to continue.</p>
-                <div class="google-btn-wrapper" id="googleButtonContainer"></div>
+        <h3>Your Signature</h3>
+        <div class="signature-field" id="signatureField">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span><i class="fas fa-pen"></i> Click to sign digitally</span>
+                <span class="status-badge pending" id="signatureStatus">Pending</span>
             </div>
         </div>
         
-        <div id="signSection" style="display: none;">
-            <div class="user-info" id="userInfo"></div>
-            <div class="application-details" id="appDetails"></div>
-            
-            <h3>Your Signature</h3>
-            <div class="signature-field" id="signatureField">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span><i class="fas fa-pen"></i> Click to sign digitally</span>
-                    <span class="status-badge pending" id="signatureStatus">Pending</span>
-                </div>
-            </div>
-            
-            <button class="btn-confirm" id="confirmBtn" disabled>✍️ Confirm & Sign</button>
-        </div>
+        <button class="btn-confirm" id="confirmBtn" disabled>✍️ Confirm & Sign</button>
     </div>
     
     <footer><i class="fas fa-lock"></i> This is a legally binding digital signature</footer>
 </div>
 
 <script>
+        function getCheckerEmails() {
+        const stored = localStorage.getItem('kuro_checker_emails');
+        if (stored) {
+            return JSON.parse(stored);
+        }
+        return {
+            check1: 'eligibility@xu.edu.ph',
+            check2: 'secondary@xu.edu.ph',
+            check3: 'finalapprover@xu.edu.ph'
+        };
+    }
+
+    function addNotification(userEmail, type, title, message, appId, icon, color, tab = null) {
+        let notificationsDB = JSON.parse(localStorage.getItem('kuro_notifications')) || {};
+        if (!notificationsDB[userEmail]) notificationsDB[userEmail] = [];
+        
+        const notification = {
+            id: 'notif_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+            type: type,
+            title: title,
+            message: message,
+            appId: appId,
+            tab: tab,
+            icon: icon,
+            color: color,
+            isRead: false,
+            createdAt: new Date().toISOString()
+        };
+        
+        notificationsDB[userEmail].unshift(notification);
+        if (notificationsDB[userEmail].length > 50) notificationsDB[userEmail] = notificationsDB[userEmail].slice(0, 50);
+        localStorage.setItem('kuro_notifications', JSON.stringify(notificationsDB));
+    }
     // ==================== DOM ELEMENTS ====================
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
@@ -303,8 +274,6 @@
     let isSigned = false;
     let authenticatedUser = null;
     const GOOGLE_CLIENT_ID = "1074730624717-8u9auss3uqp5grgs7e4padhothotmfrf.apps.googleusercontent.com";
-    
-    let googleInitialized = false;
     
     // ==================== HELPER FUNCTIONS ====================
     function escapeHtml(str) {
@@ -350,21 +319,12 @@
     }
     
     function initGoogleSignIn() {
-        if (googleInitialized) {
-            console.log('Google Sign-In already initialized');
-            return;
-        }
-        
         const container = document.getElementById('googleButtonContainer');
-        if (!container) {
-            console.error('Google button container not found');
-            return;
-        }
+        if (!container) return;
         
-        container.innerHTML = '';
-        
+        // Wait for Google to be defined
         let attempts = 0;
-        const maxAttempts = 20;
+        const maxAttempts = 10;
         
         function tryInit() {
             if (typeof google !== 'undefined' && google.accounts) {
@@ -382,24 +342,22 @@
                 google.accounts.id.renderButton(container, {
                     theme: 'outline',
                     size: 'large',
-                    width: 280,
+                    width: '280px',
                     text: 'signin_with',
                     shape: 'pill',
                     logo_alignment: 'center',
-                    type: 'standard',
                     locale: 'en'
                 });
                 
-                googleInitialized = true;
+                google.accounts.id.prompt();
                 console.log('Google Sign-In initialized');
             } else {
                 attempts++;
                 if (attempts < maxAttempts) {
-                    console.log('Waiting for Google... Attempt ' + attempts);
                     setTimeout(tryInit, 500);
                 } else {
                     console.error('Google failed to load');
-                    container.innerHTML = '<p style="color: #999;">Please refresh the page to sign in.</p>';
+                    document.getElementById('statusMessage').innerHTML = '<span style="color: #e74c3c;">❌ Unable to load Google Sign-In. Please refresh the page.</span>';
                 }
             }
         }
@@ -422,7 +380,7 @@
         console.log('User authenticated:', userEmail);
         
         if (!request) {
-            showError('Signature request not found. Please refresh the page.');
+            showError('Signature request not found. Please refresh the page and try again.');
             return;
         }
         
@@ -433,9 +391,9 @@
                 <div class="warning">
                     <i class="fas fa-exclamation-triangle"></i> 
                     <strong>Email Mismatch!</strong><br>
-                    This request was sent to <strong>${escapeHtml(expectedEmail)}</strong><br>
-                    You signed in as <strong>${escapeHtml(userEmail)}</strong><br><br>
-                    Please sign in with the correct email address.
+                    This signature request was sent to <strong>${escapeHtml(expectedEmail)}</strong><br>
+                    You are signed in as <strong>${escapeHtml(userEmail)}</strong><br><br>
+                    Please sign in with the correct email address to continue.
                 </div>
             `;
             return;
@@ -456,7 +414,7 @@
         
         const app = request.application;
         document.getElementById('appDetails').innerHTML = `
-            <strong>Project Title:</strong> ${escapeHtml(app.proposalTitle || 'N/A')}<br>
+            <strong>Project Title:</strong> ${escapeHtml(app.proposalTitle || app.projectTitle || 'N/A')}<br>
             <strong>Principal Investigator:</strong> ${escapeHtml(app.piName || 'N/A')}<br>
             <strong>Grant:</strong> ${escapeHtml(app.grantTitle)}<br>
             <strong>Your Role:</strong> ${role === 'chair' ? 'Department Chair' : 'Dean'}
@@ -465,10 +423,7 @@
         const signatureField = document.getElementById('signatureField');
         const confirmBtn = document.getElementById('confirmBtn');
         
-        const newSignatureField = signatureField.cloneNode(true);
-        signatureField.parentNode.replaceChild(newSignatureField, signatureField);
-        
-        newSignatureField.addEventListener('click', function() {
+        signatureField.addEventListener('click', function() {
             if (!isSigned) {
                 this.classList.add('signed');
                 document.getElementById('signatureStatus').innerText = 'Signed';
@@ -480,11 +435,9 @@
         
         confirmBtn.addEventListener('click', function() {
             if (!isSigned) {
-                showError('Click the signature field to sign first.');
+                showError('Please click the signature field to sign first.');
                 return;
             }
-            
-            console.log('Confirming signature...');
             
             const submissionsDB = JSON.parse(localStorage.getItem('kuro_submissions')) || {};
             let found = false;
@@ -501,14 +454,6 @@
                                 signerEmail: authenticatedUser.email,
                                 signerName: authenticatedUser.name
                             };
-                            
-                            const chairSigned = apps[i].signatures.chair?.signed || false;
-                            const deanSigned = apps[i].signatures.dean?.signed || false;
-                            
-                            if (chairSigned && deanSigned && apps[i].status === 'Awaiting Signatures') {
-                                apps[i].status = 'Pending Eligibility Check';
-                            }
-                            
                             submissionsDB[email] = apps;
                             localStorage.setItem('kuro_submissions', JSON.stringify(submissionsDB));
                             found = true;
@@ -519,44 +464,53 @@
                 if (found) break;
             }
             
-            if (!found) {
-                showError('Application not found.');
-                return;
-            }
-            
             signatureRequests[token].completed = true;
             signatureRequests[token].signedDate = new Date().toISOString();
-            localStorage.setItem('kuro_signature_requests', JSON.stringify(signatureRequests));
+            signatureRequests[token].signerName = authenticatedUser.name;
             localStorage.setItem('kuro_signature_updated', Date.now().toString());
+            localStorage.setItem('kuro_signature_requests', JSON.stringify(signatureRequests));
             
             document.getElementById('signSection').style.display = 'none';
             document.getElementById('signatureCard').innerHTML = `
-                <div class="signature-header" style="background: #283871;">
-                    <div class="logos-container">
-                        <div class="logo-wrapper"><img src="xu_logo.png" onerror="this.style.display='none'"></div>
-                        <div class="logo-wrapper"><img src="kuro_logo.png" onerror="this.style.display='none'"></div>
-                    </div>
-                    <h2>XAVIER UNIVERSITY - ATENEO DE CAGAYAN</h2>
-                    <p>Kinaadman University Research Office (KURO)</p>
+                <div class="signature-icon"><i class="fas fa-check-circle"></i></div>
+                <h1>Thank You!</h1>
+                <div class="success">
+                    <i class="fas fa-check"></i> You have successfully signed the endorsement letter.
                 </div>
-                <div class="signature-content">
-                    <div class="signature-icon"><i class="fas fa-check-circle"></i></div>
-                    <h1>Thank You!</h1>
-                    <div class="success">
-                        <i class="fas fa-check"></i> You have successfully signed the endorsement letter.
-                    </div>
-                    <p>The application will now reflect your digital signature.</p>
-                    <button class="btn-confirm" onclick="window.close()">Close Window</button>
-                </div>
+                <p>The application will now reflect your digital signature.</p>
+                <button class="btn-confirm" onclick="window.close()">Close Window</button>
                 <footer><i class="fas fa-certificate"></i> Digital signature recorded at ${new Date().toLocaleString()}</footer>
             `;
+            // In the confirm button handler, after saving signature, add:
+
+            // Add notification for faculty
+            addNotification(applicantEmail, 'signature_received', '✍️ Signature Received', 
+                `${role === 'chair' ? 'Department Chair' : 'Dean'} ${authenticatedUser.name} has signed the endorsement letter.`, 
+                appId, '✍️', '#2ecc71');
+
+            // Check if both signatures are complete
+            const chairSigned = submissionsDB[email][appIndex].signatures.chair?.signed || false;
+            const deanSigned = submissionsDB[email][appIndex].signatures.dean?.signed || false;
+
+            if (chairSigned && deanSigned) {
+                // Notify faculty that both signatures are complete
+                addNotification(applicantEmail, 'signatures_complete', '✅ Signatures Complete', 
+                    'Both Department Chair and Dean have signed the endorsement letter. Your application is now pending review.', 
+                    appId, '✅', '#2ecc71');
+                
+                // Notify admin (Check 1 staff) that application is ready for review
+                const checkerEmails = getCheckerEmails();
+                addNotification(checkerEmails.check1, 'application_ready', '📋 New Application Ready for Review', 
+                    `Application "${submissionsDB[email][appIndex].proposalTitle}" has been signed and is ready for Check 1 review.`, 
+                    appId, '📋', '#3498db', 'checks');
+            }
         });
     }
     
     // ==================== INITIAL VALIDATION ====================
     function validateAndInit() {
         if (!token || !role || !appId) {
-            document.getElementById('statusMessage').innerHTML = '<span style="color: #e74c3c;">❌ Invalid signature link.</span>';
+            document.getElementById('statusMessage').innerHTML = '<span style="color: #e74c3c;">❌ Invalid signature link. Missing parameters.</span>';
             document.getElementById('signatureIcon').style.background = '#e74c3c';
             return;
         }
@@ -565,35 +519,73 @@
         request = signatureRequests[token];
         
         if (!request || request.appId !== appId) {
-            document.getElementById('statusMessage').innerHTML = '<span style="color: #e74c3c;">❌ This signature link is invalid.</span>';
+            document.getElementById('statusMessage').innerHTML = '<span style="color: #e74c3c;">❌ This signature link is invalid.</span><br><br>Please contact the KURO office for assistance.';
+            document.getElementById('signatureIcon').style.background = '#e74c3c';
+            return;
+        }
+        
+        if (request.revoked === true) {
+            document.getElementById('statusMessage').innerHTML = `
+                <div class="warning">
+                    <i class="fas fa-ban" style="color: #e74c3c;"></i> 
+                    <strong>⚠️ This signature link has been revoked!</strong><br><br>
+                    The applicant has generated a new signature request. 
+                    Please use the most recent link sent to you.
+                </div>
+            `;
+            document.getElementById('signatureIcon').style.background = '#e74c3c';
+            return;
+        }
+        
+        if (request.expiresAt && new Date(request.expiresAt) < new Date()) {
+            document.getElementById('statusMessage').innerHTML = `
+                <div class="warning">
+                    <i class="fas fa-hourglass-end" style="color: #e74c3c;"></i> 
+                    <strong>⏰ This signature link has expired!</strong><br><br>
+                    Please ask the applicant to resend the request.
+                </div>
+            `;
             document.getElementById('signatureIcon').style.background = '#e74c3c';
             return;
         }
         
         if (request.completed === true) {
-            document.getElementById('statusMessage').innerHTML = '<div class="success"><i class="fas fa-check-circle"></i> Signature already completed!</div>';
+            document.getElementById('statusMessage').innerHTML = `
+                <div class="success">
+                    <i class="fas fa-check-circle"></i> 
+                    <strong>✅ Signature Already Completed!</strong>
+                </div>
+            `;
             document.getElementById('signatureIcon').style.background = '#2ecc71';
             return;
         }
         
-        if (request.expiresAt && new Date(request.expiresAt) < new Date()) {
-            document.getElementById('statusMessage').innerHTML = '<div class="warning">⏰ This link has expired. Please ask the applicant to resend.</div>';
-            document.getElementById('signatureIcon').style.background = '#e74c3c';
-            return;
-        }
-        
         if (request.role !== role) {
-            document.getElementById('statusMessage').innerHTML = '<div class="warning">🔐 This link is for a different role.</div>';
+            document.getElementById('statusMessage').innerHTML = `
+                <div class="warning">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    <strong>🔐 This signature link is for a different role.</strong>
+                </div>
+            `;
             document.getElementById('signatureIcon').style.background = '#e74c3c';
             return;
         }
         
-        document.getElementById('statusMessage').innerHTML = '<span style="color: #2ecc71;">✓ Valid signature request. Please sign in.</span>';
+        document.getElementById('statusMessage').innerHTML = '<span style="color: #2ecc71;">✓ Valid signature request found. Please sign in to continue.</span>';
         document.getElementById('loginSection').style.display = 'block';
         initGoogleSignIn();
     }
     
     validateAndInit();
+    
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    `;
+    document.head.appendChild(style);
 </script>
 </body>
 </html>

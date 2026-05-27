@@ -1925,6 +1925,7 @@ function renderApplicant() {
             
             // Show Resubmit button only for Returned status
             if (sub.status === 'Returned') {
+                html += `<button class="card-action-btn edit-sub" data-id="${sub.id}"><i class="fas fa-edit"></i> Edit</button>`;
                 html += `<button class="card-action-btn warning resubmit-sub" data-id="${sub.id}"><i class="fas fa-paper-plane"></i> Resubmit</button>`;
             } else if (sub.status !== 'Approved') {
                 html += `<button class="card-action-btn edit-sub" data-id="${sub.id}"><i class="fas fa-edit"></i> Edit</button>`;
@@ -5747,6 +5748,15 @@ document.getElementById('logoutBtn').onclick = () => { sessionStorage.clear(); w
 
 // Initialize notification system
 initNotificationSystem();
+
+window.addEventListener('storage', function(e) {
+    if (e.key === 'kuro_submissions' || e.key === 'kuro_signature_updated') {
+        console.log('Storage changed, refreshing dashboard...');
+        // Reload submissions from localStorage
+        submissionsDB = JSON.parse(localStorage.getItem('kuro_submissions')) || {};
+        renderApplicant();
+    }
+});
 
 renderApplicant();
 </script>

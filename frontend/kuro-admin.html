@@ -473,6 +473,515 @@
             color: #999;
             font-size: 0.6rem;
         }
+        /* Test Account Management Styles */
+        .test-accounts-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        .test-accounts-table th,
+        .test-accounts-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .test-accounts-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        .test-accounts-table tr:hover {
+            background: #f8f9fa;
+        }
+        .role-badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        .role-badge.faculty { background: #3498db; color: white; }
+        .role-badge.check1 { background: #f39c12; color: white; }
+        .role-badge.check2 { background: #9b59b6; color: white; }
+        .role-badge.check3 { background: #1abc9c; color: white; }
+        .role-badge.admin { background: #e74c3c; color: white; }
+        .add-test-form {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 0.8rem;
+            margin-top: 1rem;
+        }
+        .add-test-form h4 {
+            color: var(--primary);
+            margin-bottom: 0.8rem;
+        }
+        .add-test-row {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+        .add-test-row input,
+        .add-test-row select {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 0.5rem;
+            font-size: 0.8rem;
+        }
+        .add-test-row button {
+            padding: 0.5rem 1rem;
+        }
+
+        /* Compact Dashboard Styles */
+        .dashboard-container {
+            padding: 0;
+        }
+
+        /* Compact Stats Cards */
+        .stats-compact-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-compact-card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid #eef2f0;
+        }
+
+        .stat-compact-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .stat-compact-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .stat-compact-icon.blue { background: #e8f0fe; color: #283871; }
+        .stat-compact-icon.orange { background: #fff3e0; color: #f39c12; }
+        .stat-compact-icon.green { background: #e0f5e6; color: #2ecc71; }
+        .stat-compact-icon.red { background: #fee; color: #e74c3c; }
+        .stat-compact-icon.purple { background: #f3e8ff; color: #9b59b6; }
+
+        .stat-compact-info {
+            flex: 1;
+        }
+
+        .stat-compact-value {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--primary);
+            line-height: 1.2;
+        }
+
+        .stat-compact-label {
+            font-size: 0.7rem;
+            color: #666;
+            margin-top: 0.1rem;
+        }
+
+        .stat-compact-trend {
+            font-size: 0.6rem;
+            color: #2ecc71;
+            margin-top: 0.2rem;
+        }
+
+        .stat-compact-trend.green { color: #2ecc71; }
+        .stat-compact-sub {
+            font-size: 0.6rem;
+            color: #999;
+            margin-top: 0.2rem;
+        }
+
+        /* Progress Bar */
+        .progress-row {
+            background: #f8f9fa;
+            border-radius: 0.75rem;
+            padding: 0.8rem 1rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #eef2f0;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.4rem;
+        }
+
+        .progress-bar-container {
+            background: #e0e0e0;
+            border-radius: 10px;
+            height: 6px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #283871, #D4AF37);
+            border-radius: 10px;
+            transition: width 0.3s;
+        }
+
+        /* Charts Grid */
+        .charts-compact-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-compact-card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 0.8rem;
+            border: 1px solid #eef2f0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+        }
+
+        .chart-header h4 {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin: 0;
+        }
+
+        .chart-year, .chart-badge {
+            font-size: 0.6rem;
+            background: #f0f2f5;
+            padding: 0.2rem 0.5rem;
+            border-radius: 20px;
+            color: #666;
+        }
+
+        .chart-container-sm {
+            height: 180px;
+            position: relative;
+        }
+
+        /* Filter Bar */
+        .filter-compact-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            padding: 0.8rem 0;
+            margin-bottom: 1.2rem;
+            border-bottom: 1px solid #eef2f0;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: #f8f9fa;
+            padding: 0.3rem 0.8rem;
+            border-radius: 30px;
+            border: 1px solid #eef2f0;
+        }
+
+        .filter-group i {
+            font-size: 0.7rem;
+            color: #999;
+        }
+
+        .filter-select {
+            border: none;
+            background: transparent;
+            font-size: 0.75rem;
+            padding: 0.3rem 0;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .filter-search {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: #f8f9fa;
+            padding: 0.3rem 0.8rem;
+            border-radius: 30px;
+            border: 1px solid #eef2f0;
+            flex: 1;
+            max-width: 250px;
+        }
+
+        .filter-search i {
+            font-size: 0.7rem;
+            color: #999;
+        }
+
+        .filter-search input {
+            border: none;
+            background: transparent;
+            font-size: 0.75rem;
+            outline: none;
+            width: 100%;
+        }
+
+        /* Applications Section */
+        .applications-section {
+            margin-top: 0.5rem;
+        }
+
+        .section-header-compact {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .section-header-compact h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin: 0;
+        }
+
+        .app-count {
+            font-size: 0.7rem;
+            background: #f0f2f5;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            color: #666;
+        }
+
+        /* Compact Table */
+        .applications-table-compact {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.75rem;
+        }
+
+        .applications-table-compact th {
+            text-align: left;
+            padding: 0.7rem 0.5rem;
+            background: #f8f9fa;
+            color: var(--primary);
+            font-weight: 600;
+            border-bottom: 2px solid #eef2f0;
+        }
+
+        .applications-table-compact td {
+            padding: 0.6rem 0.5rem;
+            border-bottom: 1px solid #eef2f0;
+            vertical-align: middle;
+        }
+
+        .app-row:hover {
+            background: #fafbfc;
+        }
+
+        /* Table Cell Styles */
+        .grant-tag {
+            background: #f0f2f5;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .title-cell {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: #333;
+        }
+
+        .applicant-cell, .date-cell {
+            color: #666;
+        }
+
+        /* CV and Signature Icons */
+        .cv-icon {
+            font-size: 1rem;
+        }
+        .cv-icon.eligible { color: #2ecc71; }
+        .cv-icon.ineligible { color: #e74c3c; }
+        .cv-icon.pending { color: #f39c12; }
+        .cv-icon.missing { color: #999; }
+
+        .sig-icon {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.4rem;
+            border-radius: 20px;
+            background: #f0f2f5;
+        }
+        .sig-icon.complete { color: #2ecc71; background: #e0f5e6; }
+        .sig-icon.partial { color: #f39c12; background: #fff3e0; }
+
+        /* Status Badges Compact */
+        .status-compact {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.2rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 20px;
+            font-size: 0.65rem;
+            font-weight: 500;
+        }
+
+        .status-check1 { background: #fff3e0; color: #f39c12; }
+        .status-check2 { background: #e8f0fe; color: #3498db; }
+        .status-check3 { background: #e0f5e6; color: #2ecc71; }
+        .status-approved { background: #d4edda; color: #155724; }
+        .status-returned { background: #fee; color: #e74c3c; }
+
+        /* Action Buttons */
+        .actions-cell {
+            display: flex;
+            gap: 0.3rem;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            padding: 0.3rem 0.5rem;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.7rem;
+            color: #666;
+        }
+
+        .action-btn:hover {
+            background: #f0f2f5;
+        }
+
+        .view-btn:hover { color: #3498db; }
+        .edit-status-btn:hover { color: #f39c12; }
+        .delete-btn:hover { color: #e74c3c; background: #fee; }
+
+        /* Pagination */
+        .pagination-controls {
+            margin-top: 1.2rem;
+            padding-top: 0.8rem;
+            border-top: 1px solid #eef2f0;
+        }
+
+        .pagination {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            flex-wrap: wrap;
+        }
+
+        .page-btn {
+            background: white;
+            border: 1px solid #eef2f0;
+            padding: 0.3rem 0.7rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            transition: 0.2s;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            background: var(--gold);
+            border-color: var(--gold);
+            color: var(--primary);
+        }
+
+        .page-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .page-dots {
+            padding: 0 0.2rem;
+            color: #999;
+        }
+
+        .page-info {
+            margin-left: 0.8rem;
+            font-size: 0.7rem;
+            color: #666;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: #999;
+        }
+
+        .empty-state i {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: 0.8rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .empty-state small {
+            font-size: 0.65rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 1000px) {
+            .stats-compact-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-compact-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .charts-compact-grid {
+                grid-template-columns: 1fr;
+            }
+            .filter-compact-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .filter-search {
+                max-width: 100%;
+            }
+            .applications-table-compact {
+                font-size: 0.65rem;
+            }
+            .actions-cell {
+                flex-direction: column;
+                gap: 0.2rem;
+            }
+        }
         
         .main-content { padding: 2rem; max-width: 1400px; margin: 1.5rem auto; background: white; border-radius: 1rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         .dashboard-title h2 { color: var(--gold); font-size: 1.6rem; margin-bottom: 0.5rem; }
@@ -749,6 +1258,108 @@ if (!userData) {
 
 const currentUser = window.currentUser;
 
+// ==================== CHECKER ROLE MANAGEMENT ====================
+
+// Load checker role assignments from localStorage
+// Super Admin assigns these via the Superuser Settings
+let CHECKER_ROLES = JSON.parse(localStorage.getItem('kuro_checker_roles')) || {
+    'check1': '',  // Email for Check 1 (Eligibility Reviewer)
+    'check2': '',  // Email for Check 2 (Secondary Reviewer)
+    'check3': ''   // Email for Check 3 (Final Reviewer + External Assigner)
+};
+
+// Save checker roles to localStorage (called by Superuser Settings)
+function saveCheckerRoles(roles) {
+    CHECKER_ROLES = roles;
+    localStorage.setItem('kuro_checker_roles', JSON.stringify(CHECKER_ROLES));
+}
+
+// Get user's checker role based on their email
+function getUserCheckerRole(email) {
+    const emailLower = email.toLowerCase();
+    
+    if (CHECKER_ROLES.check1 && CHECKER_ROLES.check1.toLowerCase() === emailLower) {
+        return 'check1';
+    }
+    if (CHECKER_ROLES.check2 && CHECKER_ROLES.check2.toLowerCase() === emailLower) {
+        return 'check2';
+    }
+    if (CHECKER_ROLES.check3 && CHECKER_ROLES.check3.toLowerCase() === emailLower) {
+        return 'check3';
+    }
+    return null;
+}
+
+// Check if user can act on a specific stage
+function canUserActOnStage(userEmail, stageNumber) {
+    const role = getUserCheckerRole(userEmail);
+    
+    switch(role) {
+        case 'check1': return stageNumber === 1;
+        case 'check2': return stageNumber === 2;
+        case 'check3': return stageNumber === 3;
+        default: return false;
+    }
+}
+
+// Check if user can assign external reviewers (only Check 3)
+function canAssignExternalReviewers(userEmail) {
+    const role = getUserCheckerRole(userEmail);
+    return role === 'check3';
+}
+
+// Get stage number from status
+function getStageNumberFromStatus(status) {
+    if (status === 'Pending Eligibility Check') return 1;
+    if (status === 'Pending Secondary Check') return 2;
+    if (status === 'Pending Final Check') return 3;
+    return null;
+}
+
+// Store user's role from current session
+const currentUserEmail = currentUser.email;
+const userRole = getUserCheckerRole(currentUserEmail);
+const isSuperAdmin = currentUserEmail === '200520181@my.xu.edu.ph';
+
+window.userRole = userRole;
+window.isCheck1 = userRole === 'check1';
+window.isCheck2 = userRole === 'check2';
+window.isCheck3 = userRole === 'check3';
+window.isSuperAdmin = isSuperAdmin;
+window.canAssignReviewers = canAssignExternalReviewers(currentUserEmail);
+
+console.log('User Role Assignment:', { 
+    email: currentUserEmail, 
+    role: userRole || 'No role assigned (view only)',
+    isSuperAdmin: isSuperAdmin
+});
+
+// Add role badge to dashboard (call this in renderDashboard)
+function showRoleBadge() {
+    const roleNames = {
+        'check1': '🔍 Check 1: Eligibility Reviewer (Can approve/reject Check 1 only)',
+        'check2': '📋 Check 2: Secondary Reviewer (Can approve/reject Check 2 only)',
+        'check3': '✅ Check 3: Final Reviewer (Can approve/reject Check 3 + Assign External Reviewers)'
+    };
+    
+    // Check for Super Admin first
+    if (window.isSuperAdmin) {
+        return `<div class="exemption-note" style="margin-bottom: 1rem; background: linear-gradient(135deg, #e74c3c20, #c0392b20); border-left-color: #e74c3c;">
+            <i class="fas fa-crown" style="color: #e74c3c;"></i> <strong>Super Admin:</strong> You have full access to approve/reject ALL check stages (Check 1, Check 2, Check 3) and assign external reviewers.
+        </div>`;
+    }
+    
+    if (userRole && roleNames[userRole]) {
+        return `<div class="exemption-note" style="margin-bottom: 1rem; background: #28387110;">
+            <i class="fas fa-user-tag"></i> <strong>Your Role:</strong> ${roleNames[userRole]}
+        </div>`;
+    }
+    
+    return `<div class="exemption-note" style="margin-bottom: 1rem; background: #fff3cd;">
+        <i class="fas fa-eye"></i> <strong>View Only:</strong> You can view applications but cannot approve/reject any stage.
+    </div>`;
+}
+
 let submissionsDB = JSON.parse(localStorage.getItem('kuro_submissions')) || {};
 let reviewerTasks = JSON.parse(localStorage.getItem('kuro_reviewer_tasks')) || {};
 let notificationsDB = JSON.parse(localStorage.getItem('kuro_notifications')) || {};
@@ -1000,148 +1611,159 @@ function logCheckerChange(changedBy, changes) {
     localStorage.setItem('kuro_checker_audit_log', JSON.stringify(checkerAuditLog));
 }
 
-// Render superuser settings modal
 async function openSuperuserSettings() {
-    // Check if current user is superuser
-    if (!isSuperUser(currentUser.email)) {
+    // Check if current user is superadmin
+    if (!isSuperAdmin) {
         Swal.fire({
             icon: 'error',
             title: 'Access Denied',
-            text: 'Only superusers can access admin settings.',
+            text: 'Only the Super Admin can access these settings.',
             confirmButtonColor: '#D4AF37'
         });
         return;
     }
     
-    // Load current settings
-    let currentEmails = JSON.parse(localStorage.getItem('kuro_checker_emails')) || {
-        check1: 'eligibility@xu.edu.ph',
-        check2: 'secondary@xu.edu.ph',
-        check3: 'finalapprover@xu.edu.ph'
+    // Load current role assignments
+    let currentRoles = JSON.parse(localStorage.getItem('kuro_checker_roles')) || {
+        check1: '',
+        check2: '',
+        check3: ''
     };
     
-    const checkers = [
-        { key: 'check1', name: 'Check 1: Eligibility Review', role: 'Eligibility Officer', icon: '🔍', order: 1,
-          description: 'Reviews proposal completeness, eligibility requirements, and CV verification.' },
-        { key: 'check2', name: 'Check 2: Secondary Review', role: 'Secondary Checker', icon: '📋', order: 2,
-          description: 'Reviews technical soundness, methodology, and budget feasibility.' },
-        { key: 'check3', name: 'Check 3: Final Review', role: 'Final Approver', icon: '✅', order: 3,
-          description: 'Conducts final review and approves/rejects the application.' }
+    // Get list of all admin emails from login.html config
+    // These are the emails that can log in as admin
+    const ADMIN_EMAILS = [
+        '200520181@my.xu.edu.ph',
+        'alfredrabanes@gmail.com',
+        'rabanes.francisalfred@gmail.com',
+        'excitegaming04@gmail.com'
     ];
     
-    // Get superuser list for display
-    const superusers = SUPERUSER_EMAILS.map(email => {
-        const name = email === currentUser.email ? (currentUser.name || email) : email;
-        return `<li style="margin-bottom: 0.3rem;"><i class="fas fa-shield-alt" style="color: #e74c3c;"></i> ${escapeHtml(name)} (${escapeHtml(email)})</li>`;
-    }).join('');
-    
-    let checkerHtml = '';
-    checkers.forEach(checker => {
-        const currentEmail = currentEmails[checker.key] || '';
-        checkerHtml += `
-            <div class="checker-card" style="margin-bottom: 1rem;">
-                <h4><i class="fas fa-envelope"></i> ${checker.name}</h4>
-                <div class="checker-role"><i class="fas fa-user-check"></i> ${checker.role}</div>
-                <div class="current-email">
-                    <strong>Current Email:</strong><br>
-                    <span id="currentEmail_${checker.key}" style="font-family: monospace;">${escapeHtml(currentEmail)}</span>
-                </div>
-                <input type="email" id="email_${checker.key}" class="checker-email-input" 
-                       placeholder="Enter email address" value="${escapeHtml(currentEmail)}" 
-                       style="width: 100%; padding: 0.6rem; border: 1px solid #ddd; border-radius: 0.5rem; margin: 0.5rem 0;">
-                <button class="btn-sm save-checker-btn" data-key="${checker.key}" 
-                        style="background: var(--gold); color: var(--primary); width: 100%;">
-                    <i class="fas fa-save"></i> Save Changes
-                </button>
-                <div style="font-size: 0.65rem; color: #999; margin-top: 0.5rem;">
-                    <i class="fas fa-info-circle"></i> ${checker.description}
-                </div>
+    // Role Management HTML
+    let roleHtml = `
+        <div style="margin-bottom: 1rem;">
+            <p style="font-size: 0.8rem; color: #666; margin-bottom: 1rem;">
+                Assign which admin email addresses will be responsible for each check stage. 
+                Only admins with assigned roles will see the approve/reject buttons.
+            </p>
+            <div style="background: #fff9e6; border-left: 4px solid var(--gold); padding: 0.8rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+                <i class="fas fa-info-circle"></i> 
+                <strong>How it works:</strong><br>
+                • <strong>Check 1</strong> - Can approve/reject CVs and Check 1 stage only<br>
+                • <strong>Check 2</strong> - Can approve/reject Check 2 stage only<br>
+                • <strong>Check 3</strong> - Can approve/reject Check 3 stage AND assign external reviewers<br>
+                • <strong>No role assigned</strong> - View-only access (can see all applications but no approve buttons)
             </div>
-        `;
-    });
-    
-    // Generate audit log HTML
-    let auditLogHtml = '';
-    if (checkerAuditLog.length === 0) {
-        auditLogHtml = '<div style="text-align: center; padding: 2rem; color: #999;">No changes have been logged yet.</div>';
-    } else {
-        checkerAuditLog.slice(0, 20).forEach(log => {
-            const date = new Date(log.timestamp).toLocaleString();
-            let changesHtml = '';
-            if (log.changes && log.changes.length) {
-                changesHtml = '<ul style="margin-top: 0.3rem; margin-left: 1rem;">';
-                log.changes.forEach(change => {
-                    changesHtml += `<li><strong>${change.checker}</strong>: ${change.oldEmail} → ${change.newEmail}</li>`;
-                });
-                changesHtml += '</ul>';
-            }
-            auditLogHtml += `
-                <div class="audit-log-item">
-                    <div><strong>${escapeHtml(log.changedByName)}</strong> (${escapeHtml(log.changedBy)})</div>
-                    <div class="audit-log-time"><i class="fas fa-clock"></i> ${date}</div>
-                    ${changesHtml}
-                </div>
-            `;
-        });
-    }
+        </div>
+        <div style="background: #f8f9fa; border-radius: 0.8rem; padding: 1rem;">
+            <div class="superuser-note" style="margin-bottom: 1rem;">
+                <i class="fas fa-envelope"></i> <strong>Available Admin Emails (from login.html):</strong><br>
+                ${ADMIN_EMAILS.map(email => `<span style="display: inline-block; background: #e0e0e0; padding: 0.2rem 0.5rem; border-radius: 20px; margin: 0.2rem; font-size: 0.7rem;">${escapeHtml(email)}</span>`).join('')}
+            </div>
+            
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 2px solid #ddd;">
+                        <th style="text-align: left; padding: 0.5rem;">Check Stage</th>
+                        <th style="text-align: left; padding: 0.5rem;">Assigned Admin Email</th>
+                        <th style="text-align: left; padding: 0.5rem;">Current Assignee</th>
+                        <th style="text-align: left; padding: 0.5rem;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 0.8rem 0.5rem;">
+                            <strong>🔍 Check 1</strong><br>
+                            <small style="color: #666;">Eligibility Review</small>
+                        </td>
+                        <td style="padding: 0.8rem 0.5rem;">
+                            <select id="roleSelect_check1" style="width: 100%; padding: 0.5rem; border-radius: 0.5rem; border: 1px solid #ddd;">
+                                <option value="">-- Select Admin Email --</option>
+                                ${ADMIN_EMAILS.map(email => `<option value="${escapeHtml(email)}" ${currentRoles.check1 === email ? 'selected' : ''}>${escapeHtml(email)}</option>`).join('')}
+                            </select>
+                        </td>
+                        <td style="padding: 0.8rem 0.5rem;">
+                            ${currentRoles.check1 ? `<span style="background: #3498db20; color: #3498db; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.7rem;">${escapeHtml(currentRoles.check1)}</span>` : '<span style="color: #999;">Not assigned</span>'}
+                        </td>
+                        <td style="padding: 0.8rem 0.5rem;">
+                            <button class="btn-sm save-role-btn" data-role="check1" style="background: var(--gold);">
+                                <i class="fas fa-save"></i> Assign
+                            </button>
+                            ${currentRoles.check1 ? `<button class="btn-sm remove-role-btn" data-role="check1" style="background: #e74c3c; color: white; margin-left: 0.5rem;">
+                                <i class="fas fa-trash"></i> Remove
+                            </button>` : ''}
+                        </td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 0.8rem 0.5rem;">
+                            <strong>📋 Check 2</strong><br>
+                            <small style="color: #666;">Secondary Review</small>
+                        </td>
+                        <td style="padding: 0.8rem 0.5rem;">
+                            <select id="roleSelect_check2" style="width: 100%; padding: 0.5rem; border-radius: 0.5rem; border: 1px solid #ddd;">
+                                <option value="">-- Select Admin Email --</option>
+                                ${ADMIN_EMAILS.map(email => `<option value="${escapeHtml(email)}" ${currentRoles.check2 === email ? 'selected' : ''}>${escapeHtml(email)}</option>`).join('')}
+                            </select>
+                        </td>
+                        <td style="padding: 0.8rem 0.5rem;">
+                            ${currentRoles.check2 ? `<span style="background: #f39c1220; color: #f39c12; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.7rem;">${escapeHtml(currentRoles.check2)}</span>` : '<span style="color: #999;">Not assigned</span>'}
+                        </td>
+                        <td style="padding: 0.8rem 0.5rem;">
+                            <button class="btn-sm save-role-btn" data-role="check2" style="background: var(--gold);">
+                                <i class="fas fa-save"></i> Assign
+                            </button>
+                            ${currentRoles.check2 ? `<button class="btn-sm remove-role-btn" data-role="check2" style="background: #e74c3c; color: white; margin-left: 0.5rem;">
+                                <i class="fas fa-trash"></i> Remove
+                            </button>` : ''}
+                        </td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 0.8rem 0.5rem;">
+                            <strong>✅ Check 3</strong><br>
+                            <small style="color: #666;">Final Review + External Reviewer Assigner</small>
+                        </td>
+                        <td style="padding: 0.8rem 0.5rem;">
+                            <select id="roleSelect_check3" style="width: 100%; padding: 0.5rem; border-radius: 0.5rem; border: 1px solid #ddd;">
+                                <option value="">-- Select Admin Email --</option>
+                                ${ADMIN_EMAILS.map(email => `<option value="${escapeHtml(email)}" ${currentRoles.check3 === email ? 'selected' : ''}>${escapeHtml(email)}</option>`).join('')}
+                            </select>
+                        </td>
+                        <td style="padding: 0.8rem 0.5rem;">
+                            ${currentRoles.check3 ? `<span style="background: #9b59b620; color: #9b59b6; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.7rem;">${escapeHtml(currentRoles.check3)}</span>` : '<span style="color: #999;">Not assigned</span>'}
+                        </td>
+                        <td style="padding: 0.8rem 0.5rem;">
+                            <button class="btn-sm save-role-btn" data-role="check3" style="background: var(--gold);">
+                                <i class="fas fa-save"></i> Assign
+                            </button>
+                            ${currentRoles.check3 ? `<button class="btn-sm remove-role-btn" data-role="check3" style="background: #e74c3c; color: white; margin-left: 0.5rem;">
+                                <i class="fas fa-trash"></i> Remove
+                            </button>` : ''}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    `;
     
     const modalHtml = `
         <div style="max-height: 60vh; overflow-y: auto; padding-right: 0.5rem;">
             <div class="superuser-note">
-                <i class="fas fa-shield-alt"></i> <strong>Superuser Access Only</strong><br>
-                You have superuser privileges. Changes made here will affect the entire application workflow.
+                <i class="fas fa-shield-alt"></i> <strong>Super Admin Access Only</strong><br>
+                You can assign which admin emails are responsible for each check stage.
             </div>
             
             <div class="settings-tabs">
-                <button class="settings-tab active" data-tab="checkers">📧 Checker Emails</button>
-                <button class="settings-tab" data-tab="superusers">👑 Superusers</button>
-                <button class="settings-tab" data-tab="audit">📜 Audit Log</button>
+                <button class="settings-tab active" data-tab="roles">👥 Checker Role Assignment</button>
             </div>
             
-            <div id="settingsTabCheckers" class="settings-tab-content active">
-                <p style="font-size: 0.8rem; color: #666; margin-bottom: 1rem;">
-                    Configure the email addresses for each review stage. These staff members will receive 
-                    notifications when applications are ready for their review.
-                </p>
-                ${checkerHtml}
-                <div style="margin-top: 1rem; padding: 0.8rem; background: #e8f0fe; border-radius: 0.5rem;">
-                    <i class="fas fa-info-circle"></i> 
-                    <strong>Note:</strong> Changes take effect immediately. The affected staff will receive notifications for 
-                    applications moving forward.
-                </div>
-            </div>
-            
-            <div id="settingsTabSuperusers" class="settings-tab-content">
-                <p style="font-size: 0.8rem; color: #666; margin-bottom: 1rem;">
-                    Superusers have permission to modify checker email settings and access this admin panel.
-                </p>
-                <div style="background: #f8f9fa; border-radius: 0.8rem; padding: 1rem;">
-                    <h4 style="color: var(--primary); margin-bottom: 0.5rem;"><i class="fas fa-shield-alt"></i> Current Superusers</h4>
-                    <ul style="margin-left: 1.5rem;">${superusers}</ul>
-                    <div style="margin-top: 1rem; padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem; font-size: 0.7rem;">
-                        <i class="fas fa-exclamation-triangle"></i> 
-                        <strong>To add or remove superusers, please contact the system administrator.</strong>
-                        Superuser list is managed in the code configuration.
-                    </div>
-                </div>
-            </div>
-            
-            <div id="settingsTabAudit" class="settings-tab-content">
-                <p style="font-size: 0.8rem; color: #666; margin-bottom: 1rem;">
-                    Track all changes made to checker email settings.
-                </p>
-                <div style="max-height: 400px; overflow-y: auto;">
-                    ${auditLogHtml}
-                </div>
-                <button id="clearAuditLogBtn" class="btn-sm" style="background: #e74c3c; color: white; margin-top: 1rem; width: 100%;">
-                    <i class="fas fa-trash"></i> Clear Audit Log
-                </button>
+            <div id="settingsTabRoles" class="settings-tab-content active">
+                ${roleHtml}
             </div>
         </div>
     `;
     
     const result = await Swal.fire({
-        title: '<i class="fas fa-shield-alt" style="color: #e74c3c;"></i> Superuser Admin Settings',
+        title: '<i class="fas fa-shield-alt" style="color: #e74c3c;"></i> Super Admin Settings',
         html: modalHtml,
         width: '850px',
         showConfirmButton: true,
@@ -1152,130 +1774,82 @@ async function openSuperuserSettings() {
             popup: 'superuser-modal'
         },
         didOpen: (modal) => {
-            // Tab switching
-            const tabs = modal.querySelectorAll('.settings-tab');
-            const contents = {
-                checkers: modal.querySelector('#settingsTabCheckers'),
-                superusers: modal.querySelector('#settingsTabSuperusers'),
-                audit: modal.querySelector('#settingsTabAudit')
-            };
-            
-            tabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    const tabId = tab.getAttribute('data-tab');
-                    tabs.forEach(t => t.classList.remove('active'));
-                    Object.values(contents).forEach(c => c.classList.remove('active'));
-                    tab.classList.add('active');
-                    if (contents[tabId]) contents[tabId].classList.add('active');
-                });
-            });
-            
-            // Save checker buttons
-            const saveBtns = modal.querySelectorAll('.save-checker-btn');
-            saveBtns.forEach(btn => {
+            // Save role assignment buttons
+            const saveRoleBtns = modal.querySelectorAll('.save-role-btn');
+            saveRoleBtns.forEach(btn => {
                 btn.addEventListener('click', async () => {
-                    const key = btn.getAttribute('data-key');
-                    const input = modal.querySelector(`#email_${key}`);
-                    const newEmail = input.value.trim();
-                    const currentEmailSpan = modal.querySelector(`#currentEmail_${key}`);
-                    const oldEmail = currentEmailSpan.innerText;
+                    const role = btn.getAttribute('data-role');
+                    const select = modal.querySelector(`#roleSelect_${role}`);
+                    const newEmail = select.value;
                     
                     if (!newEmail) {
-                        showInlineNotification('Please enter a valid email address', false);
+                        Swal.fire('Error', 'Please select an email address', 'error');
                         return;
                     }
                     
-                    if (!newEmail.includes('@') || !newEmail.includes('.')) {
-                        showInlineNotification('Please enter a valid email address format', false);
-                        return;
+                    // Load current roles
+                    let roles = JSON.parse(localStorage.getItem('kuro_checker_roles')) || {
+                        check1: '', check2: '', check3: ''
+                    };
+                    
+                    // Check if email is already assigned to another role
+                    let conflict = false;
+                    let conflictRole = '';
+                    for (let [r, email] of Object.entries(roles)) {
+                        if (email && email.toLowerCase() === newEmail.toLowerCase() && r !== role) {
+                            conflict = true;
+                            conflictRole = r === 'check1' ? 'Check 1' : (r === 'check2' ? 'Check 2' : 'Check 3');
+                            break;
+                        }
                     }
                     
-                    if (newEmail === oldEmail) {
-                        showInlineNotification('No changes made', false);
-                        return;
-                    }
-                    
-                    // Confirm change
-                    const confirmResult = await Swal.fire({
-                        title: 'Confirm Change',
-                        html: `Change ${key === 'check1' ? 'Eligibility Officer' : (key === 'check2' ? 'Secondary Checker' : 'Final Approver')} email from:<br>
-                               <strong style="color: #e74c3c;">${escapeHtml(oldEmail)}</strong><br>
-                               to:<br>
-                               <strong style="color: #2ecc71;">${escapeHtml(newEmail)}</strong>`,
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#D4AF37',
-                        confirmButtonText: 'Yes, Change',
-                        cancelButtonText: 'Cancel'
-                    });
-                    
-                    if (confirmResult.isConfirmed) {
-                        // Update storage
-                        let emails = JSON.parse(localStorage.getItem('kuro_checker_emails')) || {
-                            check1: 'eligibility@xu.edu.ph',
-                            check2: 'secondary@xu.edu.ph',
-                            check3: 'finalapprover@xu.edu.ph'
-                        };
-                        emails[key] = newEmail;
-                        localStorage.setItem('kuro_checker_emails', JSON.stringify(emails));
+                    if (conflict) {
+                        const confirmResult = await Swal.fire({
+                            title: 'Role Conflict',
+                            text: `${newEmail} is already assigned as ${conflictRole}. Do you want to move them to ${role === 'check1' ? 'Check 1' : (role === 'check2' ? 'Check 2' : 'Check 3')}?`,
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#D4AF37',
+                            confirmButtonText: 'Yes, Reassign'
+                        });
                         
-                        // Update display
-                        currentEmailSpan.innerHTML = escapeHtml(newEmail);
+                        if (!confirmResult.isConfirmed) return;
                         
-                        // Log the change
-                        logCheckerChange(currentUser.email, [{
-                            checker: key === 'check1' ? 'Eligibility Officer' : (key === 'check2' ? 'Secondary Checker' : 'Final Approver'),
-                            oldEmail: oldEmail,
-                            newEmail: newEmail
-                        }]);
-                        
-                        showInlineNotification(`✓ ${key === 'check1' ? 'Eligibility Officer' : (key === 'check2' ? 'Secondary Checker' : 'Final Approver')} email updated!`, true);
-                        
-                        // Refresh audit log in modal
-                        const auditContainer = modal.querySelector('#settingsTabAudit');
-                        if (auditContainer) {
-                            const newAuditHtml = generateAuditLogHtml();
-                            const auditContent = auditContainer.querySelector('div:first-child');
-                            if (auditContent) {
-                                auditContent.innerHTML = newAuditHtml;
+                        // Remove from other roles
+                        for (let [r, email] of Object.entries(roles)) {
+                            if (email && email.toLowerCase() === newEmail.toLowerCase()) {
+                                roles[r] = '';
                             }
                         }
                     }
+                    
+                    roles[role] = newEmail;
+                    localStorage.setItem('kuro_checker_roles', JSON.stringify(roles));
+                    
+                    Swal.fire('Success', `${newEmail} assigned as ${role === 'check1' ? 'Check 1' : (role === 'check2' ? 'Check 2' : 'Check 3')}!`, 'success');
+                    Swal.close();
+                    openSuperuserSettings();
                 });
             });
             
-            // Clear audit log button
-            const clearAuditBtn = modal.querySelector('#clearAuditLogBtn');
-            if (clearAuditBtn) {
-                clearAuditBtn.addEventListener('click', async () => {
-                    const confirmResult = await Swal.fire({
-                        title: 'Clear Audit Log?',
-                        text: 'This action cannot be undone.',
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#e74c3c',
-                        confirmButtonText: 'Yes, Clear',
-                        cancelButtonText: 'Cancel'
-                    });
+            // Remove role buttons
+            const removeRoleBtns = modal.querySelectorAll('.remove-role-btn');
+            removeRoleBtns.forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const role = btn.getAttribute('data-role');
+                    let roles = JSON.parse(localStorage.getItem('kuro_checker_roles')) || {
+                        check1: '', check2: '', check3: ''
+                    };
                     
-                    if (confirmResult.isConfirmed) {
-                        checkerAuditLog = [];
-                        localStorage.setItem('kuro_checker_audit_log', JSON.stringify(checkerAuditLog));
-                        
-                        // Refresh audit log display
-                        const auditContainer = modal.querySelector('#settingsTabAudit');
-                        if (auditContainer) {
-                            const newAuditHtml = generateAuditLogHtml();
-                            const auditContent = auditContainer.querySelector('div:first-child');
-                            if (auditContent) {
-                                auditContent.innerHTML = newAuditHtml;
-                            }
-                        }
-                        
-                        showInlineNotification('✓ Audit log cleared!', true);
-                    }
+                    const removedEmail = roles[role];
+                    roles[role] = '';
+                    localStorage.setItem('kuro_checker_roles', JSON.stringify(roles));
+                    
+                    Swal.fire('Removed', `${escapeHtml(removedEmail)} removed from ${role === 'check1' ? 'Check 1' : (role === 'check2' ? 'Check 2' : 'Check 3')}`, 'success');
+                    Swal.close();
+                    openSuperuserSettings();
                 });
-            }
+            });
         }
     });
 }
@@ -1409,80 +1983,373 @@ function showInlineNotification(message, isSuccess = true) {
     }, 2000);
 }
 
+function getCurrentUserRole() {
+    const user = JSON.parse(sessionStorage.getItem('kuro_user'));
+    if (!user) return 'unknown';
+    
+    const email = user.email.toLowerCase();
+    
+    // Check for Super Admin first (full access)
+    if (email === '200520181@my.xu.edu.ph') {
+        return 'superadmin';
+    }
+    
+    // Check if this is a test checker account
+    const testEmails = {
+        check1: ['check1@test.com', 'eligibility@test.com'],
+        check2: ['check2@test.com', 'secondary@test.com'],
+        check3: ['check3@test.com', 'final@test.com']
+    };
+    
+    if (testEmails.check1.includes(email)) return 'check1';
+    if (testEmails.check2.includes(email)) return 'check2';
+    if (testEmails.check3.includes(email)) return 'check3';
+    if (user.isAdmin || user.role === 'admin') return 'admin';
+    if (user.role === 'faculty') return 'faculty';
+    
+    return 'unknown';
+}
+
+// Update getAllApplications to filter by role
+function getAllApplications() {
+    let apps = [];
+    const userRole = getCurrentUserRole();
+    
+    for (let email in submissionsDB) {
+        if (Array.isArray(submissionsDB[email])) {
+            submissionsDB[email].forEach(function(s) {
+                if (s.status !== 'Awaiting Signatures') {
+                    // Super Admin sees ALL applications
+                    if (userRole === 'superadmin') {
+                        apps.push(Object.assign({}, s, { applicantEmail: email }));
+                    } 
+                    // Admin sees ALL applications
+                    else if (userRole === 'admin') {
+                        apps.push(Object.assign({}, s, { applicantEmail: email }));
+                    } 
+                    // Check 1 sees only Pending Eligibility Check
+                    else if (userRole === 'check1' && s.status === 'Pending Eligibility Check') {
+                        apps.push(Object.assign({}, s, { applicantEmail: email }));
+                    } 
+                    // Check 2 sees only Pending Secondary Check
+                    else if (userRole === 'check2' && s.status === 'Pending Secondary Check') {
+                        apps.push(Object.assign({}, s, { applicantEmail: email }));
+                    } 
+                    // Check 3 sees only Pending Final Check
+                    else if (userRole === 'check3' && s.status === 'Pending Final Check') {
+                        apps.push(Object.assign({}, s, { applicantEmail: email }));
+                    }
+                }
+            });
+        }
+    }
+    return apps.sort(function(a, b) { return new Date(b.submittedDate) - new Date(a.submittedDate); });
+}
+
+// Also update renderDashboard to show appropriate title
 function renderDashboard() {
     const allApps = getAllApplications();
     const monthlyData = getMonthlyData(allApps);
     const statusDist = getStatusDistribution(allApps);
     const grantData = getGrantDistribution(allApps);
     const total = allApps.length;
-    const pending = statusDist.pending;  // Only pending checks (not including external)
+    const pending = statusDist.pending;
     const approved = statusDist.approved;
     const returned = statusDist.returned;
     const reviewers = Object.keys(reviewerTasks).length;
     
+    // Calculate percentage for progress bar
+    const completionRate = total > 0 ? Math.round((approved / total) * 100) : 0;
+    
     let html = `
-        <div class="dashboard-title"><h2><i class="fas fa-chalkboard-user"></i> KURO Administrator Dashboard</h2><p>Manage faculty research grant applications</p></div>
-        <div class="stats-grid">
-            <div class="stat-card"><i class="fas fa-file-alt"></i><h3>${total}</h3><span>Total Applications</span></div>
-            <div class="stat-card"><i class="fas fa-hourglass-half"></i><h3>${pending}</h3><span>Pending Review</span><div style="font-size:0.65rem;">Check 1,2,3 Stages</div></div>
-            <div class="stat-card"><i class="fas fa-check-circle"></i><h3>${approved}</h3><span>Approved</span></div>
-            <div class="stat-card"><i class="fas fa-undo-alt"></i><h3>${returned}</h3><span>Returned</span></div>
-            <div class="stat-card"><i class="fas fa-users"></i><h3>${reviewers}</h3><span>External Reviewers</span></div>
+        <div class="dashboard-container">
+            ${showRoleBadge()}
+            
+            <!-- Compact Stats Cards -->
+            <div class="stats-compact-grid">
+                <div class="stat-compact-card">
+                    <div class="stat-compact-icon blue"><i class="fas fa-file-alt"></i></div>
+                    <div class="stat-compact-info">
+                        <div class="stat-compact-value">${total}</div>
+                        <div class="stat-compact-label">Total Applications</div>
+                        <div class="stat-compact-trend"><i class="fas fa-arrow-up"></i> +${Math.floor(total * 0.33)} from last month</div>
+                    </div>
+                </div>
+                <div class="stat-compact-card">
+                    <div class="stat-compact-icon orange"><i class="fas fa-hourglass-half"></i></div>
+                    <div class="stat-compact-info">
+                        <div class="stat-compact-value">${pending}</div>
+                        <div class="stat-compact-label">Pending Review</div>
+                        <div class="stat-compact-sub">Check 1: ${allApps.filter(a => a.status === 'Pending Eligibility Check').length} | Check 2: ${allApps.filter(a => a.status === 'Pending Secondary Check').length} | Check 3: ${allApps.filter(a => a.status === 'Pending Final Check').length}</div>
+                    </div>
+                </div>
+                <div class="stat-compact-card">
+                    <div class="stat-compact-icon green"><i class="fas fa-check-circle"></i></div>
+                    <div class="stat-compact-info">
+                        <div class="stat-compact-value">${approved}</div>
+                        <div class="stat-compact-label">Approved</div>
+                        <div class="stat-compact-trend green"><i class="fas fa-trophy"></i> ${Math.floor((approved / total) * 100) || 0}% approval rate</div>
+                    </div>
+                </div>
+                <div class="stat-compact-card">
+                    <div class="stat-compact-icon red"><i class="fas fa-undo-alt"></i></div>
+                    <div class="stat-compact-info">
+                        <div class="stat-compact-value">${returned}</div>
+                        <div class="stat-compact-label">Returned</div>
+                        <div class="stat-compact-sub">Needs revision</div>
+                    </div>
+                </div>
+                <div class="stat-compact-card">
+                    <div class="stat-compact-icon purple"><i class="fas fa-users"></i></div>
+                    <div class="stat-compact-info">
+                        <div class="stat-compact-value">${reviewers}</div>
+                        <div class="stat-compact-label">Reviewers</div>
+                        <div class="stat-compact-sub">External reviewers</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Progress Bar Row -->
+            <div class="progress-row">
+                <div class="progress-label">
+                    <span><i class="fas fa-chart-line"></i> Overall Completion</span>
+                    <span>${completionRate}% (${approved}/${total} approved)</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" style="width: ${completionRate}%;"></div>
+                </div>
+            </div>
+            
+            <!-- Charts Grid 2x2 -->
+            <div class="charts-compact-grid">
+                <div class="chart-compact-card">
+                    <div class="chart-header">
+                        <h4><i class="fas fa-chart-line" style="color: var(--gold);"></i> Applications by Month</h4>
+                        <span class="chart-year">${new Date().getFullYear()}</span>
+                    </div>
+                    <div class="chart-container-sm">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-compact-card">
+                    <div class="chart-header">
+                        <h4><i class="fas fa-chart-pie" style="color: var(--gold);"></i> Status Distribution</h4>
+                        <span class="chart-badge">Total: ${total}</span>
+                    </div>
+                    <div class="chart-container-sm">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-compact-card">
+                    <div class="chart-header">
+                        <h4><i class="fas fa-chart-bar" style="color: var(--gold);"></i> Applications by Grant</h4>
+                        <span class="chart-badge">${ALL_GRANTS.length} Grants</span>
+                    </div>
+                    <div class="chart-container-sm">
+                        <canvas id="grantChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-compact-card">
+                    <div class="chart-header">
+                        <h4><i class="fas fa-chart-simple" style="color: var(--gold);"></i> Grants Breakdown</h4>
+                        <span class="chart-badge">Distribution</span>
+                    </div>
+                    <div class="chart-container-sm">
+                        <canvas id="facultyGrantsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Compact Filter Bar -->
+            <div class="filter-compact-bar">
+                <div class="filter-group">
+                    <i class="fas fa-filter"></i>
+                    <select id="grantFilter" class="filter-select">
+                        <option value="all">All Grants</option>
+                        ${ALL_GRANTS.map(g => `<option value="${g}">${g.substring(0, 25)}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <i class="fas fa-tag"></i>
+                    <select id="statusFilter" class="filter-select">
+                        <option value="all">All Status</option>
+                        <option value="Pending Eligibility Check">🔍 Check 1: Eligibility</option>
+                        <option value="Pending Secondary Check">📋 Check 2: Secondary</option>
+                        <option value="Pending Final Check">✅ Check 3: Final</option>
+                        <option value="Approved">🎉 Approved</option>
+                        <option value="Returned">↩️ Returned</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <i class="fas fa-file-pdf"></i>
+                    <select id="cvFilter" class="filter-select">
+                        <option value="all">All CV Status</option>
+                        <option value="pending">⏳ Pending Review</option>
+                        <option value="eligible">✅ Eligible</option>
+                        <option value="ineligible">❌ Ineligible</option>
+                        <option value="missing">📄 Missing CVs</option>
+                    </select>
+                </div>
+                <div class="filter-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchFilter" placeholder="Search by title or applicant...">
+                </div>
+            </div>
+            
+            <!-- Applications Table -->
+            <div class="applications-section">
+                <div class="section-header-compact">
+                    <h3><i class="fas fa-list-ul"></i> All Applications</h3>
+                    <span class="app-count">${total} total</span>
+                </div>
+                <div id="applicationsList"></div>
+                
+                <!-- Pagination -->
+                <div id="paginationControls" class="pagination-controls"></div>
+            </div>
         </div>
-        <div class="charts-row">
-            <div class="chart-card"><h4><i class="fas fa-chart-line"></i> Applications by Month (${new Date().getFullYear()})</h4><div class="chart-container"><canvas id="trendChart"></canvas></div></div>
-            <div class="chart-card"><h4><i class="fas fa-chart-pie"></i> Application Status Distribution</h4><div class="chart-container"><canvas id="statusChart"></canvas></div></div>
-        </div>
-        <div class="charts-row">
-            <div class="chart-card"><h4><i class="fas fa-chart-bar"></i> Applications by Grant/Award</h4><div class="chart-container"><canvas id="grantChart"></canvas></div></div>
-            <div class="chart-card"><h4><i class="fas fa-chart-line"></i> Faculty Research Grants Breakdown</h4><div class="chart-container"><canvas id="facultyGrantsChart"></canvas></div></div>
-        </div>
-        <div class="filter-bar">
-            <select id="grantFilter"><option value="all">All Grants</option>${ALL_GRANTS.map(function(g) { return '<option value="' + g + '">' + g + '</option>'; }).join('')}</select>
-            <select id="statusFilter">
-                <option value="all">All Status</option>
-                <option value="Pending Eligibility Check">🔍 Check 1: Eligibility</option>
-                <option value="Pending Secondary Check">📋 Check 2: Secondary</option>
-                <option value="Pending Final Check">✅ Check 3: Final</option>
-                <option value="Approved">🎉 Approved</option>
-                <option value="Returned">↩️ Returned</option>
-            </select>
-            <select id="cvFilter"><option value="all">All CV Status</option><option value="pending">⏳ Pending Review</option><option value="eligible">✅ Eligible</option><option value="ineligible">❌ Ineligible</option><option value="missing">❌ Missing CVs</option></select>
-            <input type="text" id="searchFilter" placeholder="Search by title or applicant..." style="flex:1; min-width:200px;">
-        </div>
-        <h3 style="color: var(--primary); margin-bottom: 1rem;"><i class="fas fa-list-ul"></i> All Applications</h3>
-        <div id="applicationsList"></div>
     `;
+    
     document.getElementById('mainContent').innerHTML = html;
     
-    // Charts
+    // Charts with improved options
     const trendCtx = document.getElementById('trendChart')?.getContext('2d');
-    if (trendCtx) new Chart(trendCtx, { type: 'line', data: { labels: MONTHS, datasets: [{ label: 'Applications', data: monthlyData, borderColor: '#283871', backgroundColor: 'rgba(40,56,113,0.1)', fill: true, tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: true } });
+    if (trendCtx) {
+        new Chart(trendCtx, { 
+            type: 'line', 
+            data: { 
+                labels: MONTHS, 
+                datasets: [{ 
+                    label: 'Applications', 
+                    data: monthlyData, 
+                    borderColor: '#283871', 
+                    backgroundColor: 'rgba(40,56,113,0.05)',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#D4AF37',
+                    pointBorderColor: '#283871',
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    fill: true,
+                    tension: 0.3
+                }] 
+            }, 
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#eef2f0' } },
+                    x: { grid: { display: false } }
+                }
+            } 
+        });
+    }
     
     const statusCtx = document.getElementById('statusChart')?.getContext('2d');
-    if (statusCtx) new Chart(statusCtx, { type: 'doughnut', data: { labels: ['Check 1,2,3', 'Approved', 'Returned'], datasets: [{ data: [pending, approved, returned], backgroundColor: ['#f39c12', '#2ecc71', '#e74c3c'] }] }, options: { responsive: true } });
+    if (statusCtx) {
+        new Chart(statusCtx, { 
+            type: 'doughnut', 
+            data: { 
+                labels: ['Pending Check', 'Approved', 'Returned'], 
+                datasets: [{ 
+                    data: [pending, approved, returned], 
+                    backgroundColor: ['#f39c12', '#2ecc71', '#e74c3c'],
+                    borderWidth: 0,
+                    hoverOffset: 5
+                }] 
+            }, 
+            options: { 
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom', labels: { font: { size: 10 } } }
+                }
+            } 
+        });
+    }
     
     const grantCtx = document.getElementById('grantChart')?.getContext('2d');
-    if (grantCtx) new Chart(grantCtx, { type: 'bar', data: { labels: ALL_GRANTS.map(g => g.substring(0, 20)), datasets: [{ label: 'Applications', data: grantData, backgroundColor: '#283871' }] }, options: { responsive: true, plugins: { legend: { display: false } } } });
+    if (grantCtx) {
+        new Chart(grantCtx, { 
+            type: 'bar', 
+            data: { 
+                labels: ALL_GRANTS.map(g => g.substring(0, 12)), 
+                datasets: [{ 
+                    label: 'Applications', 
+                    data: grantData, 
+                    backgroundColor: '#283871',
+                    borderRadius: 4,
+                    barPercentage: 0.7
+                }] 
+            }, 
+            options: { 
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: (ctx) => `${ctx.raw} applications` } }
+                },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#eef2f0' } },
+                    x: { ticks: { font: { size: 9 } } }
+                }
+            } 
+        });
+    }
     
     const facultyCtx = document.getElementById('facultyGrantsChart')?.getContext('2d');
-    if (facultyCtx) new Chart(facultyCtx, { type: 'pie', data: { labels: ALL_GRANTS.slice(0,4), datasets: [{ data: grantData.slice(0,4), backgroundColor: ['#283871', '#D4AF37', '#3498db', '#2ecc71'] }] }, options: { responsive: true } });
+    if (facultyCtx) {
+        const topGrants = ALL_GRANTS.slice(0, 4);
+        const topData = grantData.slice(0, 4);
+        new Chart(facultyCtx, { 
+            type: 'pie', 
+            data: { 
+                labels: topGrants.map(g => g.substring(0, 15)), 
+                datasets: [{ 
+                    data: topData,
+                    backgroundColor: ['#283871', '#D4AF37', '#3498db', '#2ecc71'],
+                    borderWidth: 0,
+                    hoverOffset: 5
+                }] 
+            }, 
+            options: { 
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom', labels: { font: { size: 9 } } }
+                }
+            } 
+        });
+    }
     
-    renderApplicationsList(allApps);
+    // Set up filter listeners and render table
+    renderApplicationsListWithPagination(allApps);
     
-    document.getElementById('grantFilter').addEventListener('change', () => renderApplicationsList(allApps));
-    document.getElementById('statusFilter').addEventListener('change', () => renderApplicationsList(allApps));
-    document.getElementById('cvFilter').addEventListener('change', () => renderApplicationsList(allApps));
-    document.getElementById('searchFilter').addEventListener('input', () => renderApplicationsList(allApps));
+    document.getElementById('grantFilter').addEventListener('change', () => {
+        const filtered = filterApplications(allApps);
+        renderApplicationsListWithPagination(filtered);
+    });
+    document.getElementById('statusFilter').addEventListener('change', () => {
+        const filtered = filterApplications(allApps);
+        renderApplicationsListWithPagination(filtered);
+    });
+    document.getElementById('cvFilter').addEventListener('change', () => {
+        const filtered = filterApplications(allApps);
+        renderApplicationsListWithPagination(filtered);
+    });
+    document.getElementById('searchFilter').addEventListener('input', () => {
+        const filtered = filterApplications(allApps);
+        renderApplicationsListWithPagination(filtered);
+    });
 }
 
-function renderApplicationsList(allApps) {
+// Helper function to filter applications
+function filterApplications(allApps) {
     const grantFilter = document.getElementById('grantFilter')?.value || 'all';
     const statusFilter = document.getElementById('statusFilter')?.value || 'all';
     const cvFilter = document.getElementById('cvFilter')?.value || 'all';
     const searchFilter = document.getElementById('searchFilter')?.value || '';
     
-    let filtered = allApps.filter(function(app) {
+    return allApps.filter(function(app) {
         if (grantFilter !== 'all' && app.grantTitle !== grantFilter) return false;
         if (statusFilter !== 'all' && app.status !== statusFilter) return false;
         if (cvFilter !== 'all') {
@@ -1494,57 +2361,148 @@ function renderApplicationsList(allApps) {
         }
         if (searchFilter) {
             const s = searchFilter.toLowerCase();
-            if (!(app.proposalTitle || '').toLowerCase().includes(s) && !(app.applicantEmail || '').toLowerCase().includes(s)) return false;
+            if (!(app.proposalTitle || '').toLowerCase().includes(s) && 
+                !(app.applicantEmail || '').toLowerCase().includes(s) &&
+                !(app.piName || '').toLowerCase().includes(s)) return false;
         }
         return true;
     });
+}
+
+// Pagination variables
+let currentPage = 1;
+let rowsPerPage = 10;
+let currentFilteredApps = [];
+
+function renderApplicationsListWithPagination(filteredApps) {
+    currentFilteredApps = filteredApps;
+    currentPage = 1;
+    renderApplicationsPage();
+}
+
+function renderApplicationsPage() {
+    const start = (currentPage - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    const pageApps = currentFilteredApps.slice(start, end);
+    const totalPages = Math.ceil(currentFilteredApps.length / rowsPerPage);
     
+    renderCompactApplicationsList(pageApps);
+    renderPaginationControls(currentPage, totalPages);
+}
+
+function renderPaginationControls(currentPage, totalPages) {
+    const container = document.getElementById('paginationControls');
+    if (!container) return;
+    
+    if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    let html = '<div class="pagination">';
+    html += `<button class="page-btn" data-page="prev" ${currentPage === 1 ? 'disabled' : ''}><i class="fas fa-chevron-left"></i></button>`;
+    
+    // Show page numbers
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, currentPage + 2);
+    
+    if (startPage > 1) {
+        html += `<button class="page-btn" data-page="1">1</button>`;
+        if (startPage > 2) html += `<span class="page-dots">...</span>`;
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+        html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+    }
+    
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) html += `<span class="page-dots">...</span>`;
+        html += `<button class="page-btn" data-page="${totalPages}">${totalPages}</button>`;
+    }
+    
+    html += `<button class="page-btn" data-page="next" ${currentPage === totalPages ? 'disabled' : ''}><i class="fas fa-chevron-right"></i></button>`;
+    html += `<span class="page-info">Showing ${(currentPage-1)*rowsPerPage + 1}-${Math.min(currentPage*rowsPerPage, currentFilteredApps.length)} of ${currentFilteredApps.length}</span>`;
+    html += `</div>`;
+    
+    container.innerHTML = html;
+    
+    // Add event listeners
+    container.querySelectorAll('.page-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const page = btn.getAttribute('data-page');
+            if (page === 'prev' && currentPage > 1) currentPage--;
+            else if (page === 'next' && currentPage < totalPages) currentPage++;
+            else if (!isNaN(parseInt(page))) currentPage = parseInt(page);
+            renderApplicationsPage();
+        });
+    });
+}
+
+function renderCompactApplicationsList(filtered) {
     if (filtered.length === 0) { 
-        document.getElementById('applicationsList').innerHTML = '<p style="text-align: center; padding: 2rem; color: #999;">No applications found. Applications appear here only after both signatures are complete.</p>'; 
+        document.getElementById('applicationsList').innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <p>No applications found</p>
+                <small>Try adjusting your filters</small>
+            </div>
+        `; 
         return; 
     }
     
-    let html = '<table class="applications-table"><thead><tr><th>Grant</th><th>Project Title</th><th>Applicant</th><th>Submitted</th><th>CV Status</th><th>Signatures</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
+    let html = '<table class="applications-table-compact"><thead><tr>';
+    html += '<th style="width: 5%"></th>';
+    html += '<th style="width: 15%">Grant</th>';
+    html += '<th style="width: 25%">Project Title</th>';
+    html += '<th style="width: 12%">Applicant</th>';
+    html += '<th style="width: 8%">Submitted</th>';
+    html += '<th style="width: 7%">CV</th>';
+    html += '<th style="width: 7%">Sig</th>';
+    html += '<th style="width: 10%">Status</th>';
+    html += '<th style="width: 11%">Actions</th>';
+    html += '</tr></thead><tbody>';
     
     filtered.forEach(function(app) {
         const cvStatus = getCVStatusSummary(app);
-        let cvStatusHtml = '';
-        if (cvStatus.eligible === cvStatus.total) cvStatusHtml = '<span class="cv-status-badge eligible">✅ All Eligible</span>';
-        else if (cvStatus.ineligible > 0) cvStatusHtml = `<span class="cv-status-badge ineligible">⚠️ ${cvStatus.ineligible} Ineligible</span>`;
-        else if (cvStatus.pending > 0) cvStatusHtml = `<span class="cv-status-badge pending">⏳ ${cvStatus.pending} Pending</span>`;
-        else cvStatusHtml = `<span class="cv-status-badge missing">❌ ${cvStatus.missing} Missing</span>`;
+        let cvIcon = '';
+        if (cvStatus.eligible === cvStatus.total) cvIcon = '<span class="cv-icon eligible" title="All CVs Eligible"><i class="fas fa-check-circle"></i></span>';
+        else if (cvStatus.ineligible > 0) cvIcon = `<span class="cv-icon ineligible" title="${cvStatus.ineligible} Ineligible"><i class="fas fa-times-circle"></i></span>`;
+        else if (cvStatus.pending > 0) cvIcon = `<span class="cv-icon pending" title="${cvStatus.pending} Pending"><i class="fas fa-clock"></i></span>`;
+        else cvIcon = `<span class="cv-icon missing" title="${cvStatus.missing} Missing"><i class="fas fa-file"></i></span>`;
         
         let signed = (app.signatures?.chair ? 1 : 0) + (app.signatures?.dean ? 1 : 0);
-        let sigHtml = signed === 2 ? '<span style="color:#2ecc71;">✅ Both Signed</span>' : `<span style="color:#f39c12;">⏳ ${signed}/2 Signed</span>`;
+        let sigIcon = signed === 2 ? '<span class="sig-icon complete" title="Both signed"><i class="fas fa-check-double"></i></span>' : 
+                     `<span class="sig-icon partial" title="${signed}/2 signed"><i class="fas fa-signature"></i> ${signed}/2</span>`;
         
-        // Show check stage text instead of raw status
-        let checkStageText = '';
-        if (app.status === 'Pending Eligibility Check') checkStageText = '🔍 Check 1';
-        else if (app.status === 'Pending Secondary Check') checkStageText = '📋 Check 2';
-        else if (app.status === 'Pending Final Check') checkStageText = '✅ Check 3';
-        else if (app.status === 'Approved') checkStageText = '🎉 Approved';
-        else if (app.status === 'Returned') checkStageText = '↩️ Returned';
-        else checkStageText = app.status;
+        let statusIcon = '';
+        let statusClass = '';
+        if (app.status === 'Pending Eligibility Check') { statusIcon = '🔍'; statusClass = 'status-check1'; }
+        else if (app.status === 'Pending Secondary Check') { statusIcon = '📋'; statusClass = 'status-check2'; }
+        else if (app.status === 'Pending Final Check') { statusIcon = '✅'; statusClass = 'status-check3'; }
+        else if (app.status === 'Approved') { statusIcon = '🎉'; statusClass = 'status-approved'; }
+        else if (app.status === 'Returned') { statusIcon = '↩️'; statusClass = 'status-returned'; }
         
-        let statusClass = 'pending';
-        if (app.status === 'Approved') statusClass = 'approved';
-        else if (app.status === 'Returned') statusClass = 'pending';
-        
-        html += `<tr>
-            <td style="font-weight:600;">${escapeHtml(app.grantTitle).substring(0, 35)}</td>
-            <td>${escapeHtml(app.proposalTitle || 'N/A').substring(0, 40)}</td>
-            <td>${app.applicantEmail}</td>
-            <td>${app.submittedDate}</td>
-            <td>${cvStatusHtml}</td>
-            <td>${sigHtml}</td>
-            <td><span class="status-badge ${statusClass}">${checkStageText}</span></td>
-            <td><button class="btn-sm view-btn" data-id="${app.id}"><i class="fas fa-eye"></i> View</button><button class="btn-sm edit-status-btn" data-id="${app.id}"><i class="fas fa-edit"></i> Status</button><button class="btn-danger delete-btn" data-id="${app.id}"><i class="fas fa-trash"></i></button></td>
+        html += `<tr class="app-row" data-id="${app.id}">
+            <td class="app-select"><input type="checkbox" class="app-checkbox"></td>
+            <td class="grant-cell"><span class="grant-tag">${escapeHtml(app.grantTitle).substring(0, 25)}</span></td>
+            <td class="title-cell" title="${escapeHtml(app.proposalTitle || 'N/A')}">${escapeHtml(app.proposalTitle || 'N/A').substring(0, 45)}</td>
+            <td class="applicant-cell">${escapeHtml(app.piName || app.applicantEmail?.split('@')[0] || 'N/A')}</td>
+            <td class="date-cell">${app.submittedDate || 'N/A'}</td>
+            <td class="cv-cell">${cvIcon}</td>
+            <td class="sig-cell">${sigIcon}</td>
+            <td class="status-cell"><span class="status-compact ${statusClass}">${statusIcon} ${app.status === 'Pending Eligibility Check' ? 'Check 1' : (app.status === 'Pending Secondary Check' ? 'Check 2' : (app.status === 'Pending Final Check' ? 'Check 3' : (app.status === 'Approved' ? 'Approved' : 'Returned')))}</span></td>
+            <td class="actions-cell">
+                <button class="action-btn view-btn" data-id="${app.id}" title="View Details"><i class="fas fa-eye"></i></button>
+                <button class="action-btn edit-status-btn" data-id="${app.id}" title="Change Status"><i class="fas fa-edit"></i></button>
+                <button class="action-btn delete-btn" data-id="${app.id}" title="Delete"><i class="fas fa-trash"></i></button>
+            </td>
         </tr>`;
     });
     
-    html += '</tbody></table>';
+    html += '</tbody>}</table>';
     document.getElementById('applicationsList').innerHTML = html;
     
+    // Attach event listeners
     document.querySelectorAll('.view-btn').forEach(btn => btn.addEventListener('click', function() { viewApplicationDetails(btn.getAttribute('data-id')); }));
     document.querySelectorAll('.edit-status-btn').forEach(btn => btn.addEventListener('click', function() { editApplicationStatus(btn.getAttribute('data-id')); }));
     document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', function() { deleteApplication(btn.getAttribute('data-id')); }));
@@ -1694,158 +2652,292 @@ function viewApplicationDetails(appId) {
 function renderCheckStagesContent(app, email, appId) {
     const isReturned = app.status === 'Returned';
     const currentStatus = app.status;
-    const completedStages = [];
-    const pendingStage = null;
     
-    // Determine which stages are completed
+    // Define stages
     const stages = [
-        { status: 'Pending Eligibility Check', name: 'Eligibility Review', role: 'Eligibility Officer', key: 'check1' },
-        { status: 'Pending Secondary Check', name: 'Secondary Review', role: 'Secondary Checker', key: 'check2' },
-        { status: 'Pending Final Check', name: 'Final Review', role: 'Final Approver', key: 'check3' }
+        { 
+            num: 1, 
+            name: 'Eligibility Review', 
+            status: 'Pending Eligibility Check',
+            checker: 'Check 1',
+            description: 'CV verification & eligibility check',
+            icon: '🔍'
+        },
+        { 
+            num: 2, 
+            name: 'Secondary Review', 
+            status: 'Pending Secondary Check',
+            checker: 'Check 2',
+            description: 'Technical & methodology review',
+            icon: '📋'
+        },
+        { 
+            num: 3, 
+            name: 'Final Review', 
+            status: 'Pending Final Check',
+            checker: 'Check 3',
+            description: 'Final approval & recommendation',
+            icon: '⭐'
+        }
     ];
     
+    // Determine which stages are completed
     let foundCurrent = false;
+    let completedCount = 0;
+    
+    for (let stage of stages) {
+        if (currentStatus === stage.status) {
+            foundCurrent = true;
+        } else if (!foundCurrent && currentStatus !== 'Returned' && currentStatus !== 'Awaiting Signatures' && currentStatus !== 'Approved') {
+            completedCount++;
+        }
+    }
+    
+    // If application is approved, all stages are completed
+    if (currentStatus === 'Approved') {
+        completedCount = stages.length;
+    }
+    
+    const progressPercent = (completedCount / stages.length) * 100;
     
     let html = `<div class="detail-section"><h4>📊 Multi-Stage Review Process</h4>
-    <p style="font-size: 0.75rem; margin-bottom: 1rem; color: #666;">Each application goes through three review stages before final approval.</p>`;
+    <p style="font-size: 0.75rem; margin-bottom: 1.5rem; color: #666;">Each application goes through three review stages before final approval.</p>`;
     
-    // Check 1: Eligibility Review
-    let check1Completed = false;
+    // ========== HORIZONTAL STEP TRACKER ==========
+    html += `
+        <div style="margin-bottom: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem;">
+    `;
+    
+    for (let i = 0; i < stages.length; i++) {
+        const stage = stages[i];
+        const isCompleted = i < completedCount;
+        const isCurrent = currentStatus === stage.status;
+        const isPending = !isCompleted && !isCurrent;
+        
+        // Determine icon and style
+        let icon = stage.icon;
+        let iconBg = '#e0e0e0';
+        let iconColor = '#999';
+        let titleColor = '#666';
+        let borderColor = '#e0e0e0';
+        
+        if (isCompleted) {
+            icon = '✓';
+            iconBg = '#2ecc71';
+            iconColor = 'white';
+            titleColor = '#2ecc71';
+            borderColor = '#2ecc71';
+        } else if (isCurrent) {
+            icon = '◉';
+            iconBg = '#3498db';
+            iconColor = 'white';
+            titleColor = '#3498db';
+            borderColor = '#3498db';
+        } else {
+            icon = '○';
+            iconBg = '#f8f9fa';
+            iconColor = '#ccc';
+            titleColor = '#999';
+            borderColor = '#e0e0e0';
+        }
+        
+        html += `
+            <div style="flex: 1; text-align: center; min-width: 120px; position: relative;">
+                ${i < stages.length - 1 ? `<div style="position: absolute; top: 18px; left: 50%; width: calc(100% - 40px); height: 2px; background: ${isCompleted ? '#2ecc71' : '#e0e0e0'}; z-index: 0;"></div>` : ''}
+                <div style="position: relative; z-index: 1;">
+                    <div style="width: 40px; height: 40px; background: ${iconBg}; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem; font-size: 1.1rem; font-weight: bold; color: ${iconColor}; border: 2px solid ${borderColor};">
+                        ${icon}
+                    </div>
+                    <div style="font-weight: 700; font-size: 0.8rem; color: ${titleColor}; margin-bottom: 0.2rem;">
+                        ${stage.checker}
+                    </div>
+                    <div style="font-size: 0.7rem; font-weight: 600; color: ${titleColor}; margin-bottom: 0.2rem;">
+                        ${stage.name}
+                    </div>
+                    <div style="font-size: 0.6rem; color: #999;">
+                        ${stage.description}
+                    </div>
+                    <div style="margin-top: 0.3rem;">
+                        ${isCompleted ? '<span style="font-size: 0.65rem; color: #2ecc71;"><i class="fas fa-check-circle"></i> Completed</span>' : 
+                          (isCurrent ? '<span style="font-size: 0.65rem; color: #3498db;"><i class="fas fa-spinner fa-pulse"></i> In Progress</span>' : 
+                          '<span style="font-size: 0.65rem; color: #999;"><i class="fas fa-clock"></i> Pending</span>')}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Progress bar
+    const progressColor = progressPercent === 100 ? '#2ecc71' : (progressPercent >= 50 ? '#f39c12' : '#3498db');
+    
+    html += `
+            </div>
+            
+            <div style="margin-top: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.7rem; margin-bottom: 0.3rem;">
+                    <span><i class="fas fa-chart-line"></i> Overall Review Progress</span>
+                    <span style="font-weight: 600;">${Math.round(progressPercent)}% Complete</span>
+                </div>
+                <div style="background: #eef2f0; border-radius: 10px; height: 8px; overflow: hidden;">
+                    <div style="width: ${progressPercent}%; background: ${progressColor}; height: 100%; border-radius: 10px; transition: width 0.3s;"></div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // ========== DETAILED STAGE INFORMATION ==========
+    // Check 1 Details
     let check1Feedback = app.check1Feedback || null;
     let check1CompletedAt = app.check1CompletedAt || null;
+    const isCheck1Completed = (currentStatus !== 'Awaiting Signatures' && currentStatus !== 'Returned' && 
+                               (currentStatus === 'Pending Secondary Check' || currentStatus === 'Pending Final Check' || currentStatus === 'Approved')) || 
+                               currentStatus === 'Approved';
+    const isCheck1Current = currentStatus === 'Pending Eligibility Check';
+    const canActOnCheck1 = (isSuperAdmin || window.isCheck1) && isCheck1Current;
     
-    if (currentStatus === 'Pending Eligibility Check') {
-        html += `<div class="check-stage-card current">
-            <div class="check-stage-header">
-                <span class="check-stage-title"><i class="fas fa-search"></i> Check 1: Eligibility Review</span>
-                <span class="check-stage-status current">⏳ In Progress</span>
-            </div>
-            <div><strong>Reviewer:</strong> Eligibility Officer</div>
-            <div><strong>Review Criteria:</strong> Proposal completeness, eligibility requirements, CV verification</div>
-            <div class="check-stage-actions">
-                <label style="display: block; font-size: 0.7rem; font-weight: 600; margin-bottom: 0.3rem;">Decision:</label>
-                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                    <button class="btn-sm approve-check1" style="background: #2ecc71; color: white;"><i class="fas fa-check"></i> Approve & Send to Check 2</button>
-                    <button class="btn-sm return-check1" style="background: #e74c3c; color: white;"><i class="fas fa-undo-alt"></i> Return to Faculty</button>
+    html += `<div style="margin-bottom: 1rem;">
+        <div style="background: ${isCheck1Completed ? '#f0fff4' : (isCheck1Current ? '#e8f0fe' : '#f8f9fa')}; border-radius: 0.8rem; padding: 1rem; border-left: 4px solid ${isCheck1Completed ? '#2ecc71' : (isCheck1Current ? '#3498db' : '#ddd')};">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <div>
+                    <span style="font-weight: 700; font-size: 0.85rem;">
+                        <i class="fas fa-search" style="color: ${isCheck1Completed ? '#2ecc71' : (isCheck1Current ? '#3498db' : '#999')}; margin-right: 0.3rem;"></i>
+                        Check 1: Eligibility Review
+                    </span>
+                    <span style="margin-left: 0.5rem; font-size: 0.65rem; color: #666;">Eligibility Officer</span>
                 </div>
-                <div style="margin-top: 0.5rem;">
-                    <label style="display: block; font-size: 0.7rem; font-weight: 600; margin-bottom: 0.3rem;">Feedback (required if returning):</label>
-                    <textarea id="check1Feedback" rows="2" style="width: 100%; padding: 0.4rem; border-radius: 0.5rem; border: 1px solid #ddd; font-size: 0.7rem;" placeholder="Add feedback for the faculty..."></textarea>
+                <span style="font-size: 0.7rem; padding: 0.2rem 0.6rem; border-radius: 20px; background: ${isCheck1Completed ? '#d4edda' : (isCheck1Current ? '#cce5ff' : '#e9ecef')}; color: ${isCheck1Completed ? '#155724' : (isCheck1Current ? '#004085' : '#6c757d')};">
+                    ${isCheck1Completed ? '✅ Completed' : (isCheck1Current ? '🔄 In Progress' : '⏳ Pending')}
+                </span>
+            </div>
+            <div style="font-size: 0.75rem; color: #555; margin-bottom: 0.3rem;">
+                <strong>Review Criteria:</strong> Proposal completeness, eligibility requirements, CV verification
+            </div>
+            ${check1CompletedAt ? `<div style="font-size: 0.7rem; color: #666;"><i class="fas fa-clock"></i> Completed: ${new Date(check1CompletedAt).toLocaleString()}</div>` : ''}
+            ${check1Feedback ? `<div style="margin-top: 0.5rem; padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem; font-size: 0.7rem;"><strong>Feedback:</strong> ${escapeHtml(check1Feedback)}</div>` : ''}
+            
+            ${isCheck1Current ? `
+                <div class="check-stage-actions" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e0e0e0;">
+                    ${canActOnCheck1 ? `
+                        <label style="display: block; font-size: 0.7rem; font-weight: 600; margin-bottom: 0.3rem;">Decision:</label>
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <button class="btn-sm approve-check1" style="background: #2ecc71; color: white;"><i class="fas fa-check"></i> Approve & Send to Check 2</button>
+                            <button class="btn-sm return-check1" style="background: #e74c3c; color: white;"><i class="fas fa-undo-alt"></i> Return to Faculty</button>
+                        </div>
+                        <div style="margin-top: 0.5rem;">
+                            <label style="display: block; font-size: 0.7rem; font-weight: 600; margin-bottom: 0.3rem;">Feedback (required if returning):</label>
+                            <textarea id="check1Feedback" rows="2" style="width: 100%; padding: 0.4rem; border-radius: 0.5rem; border: 1px solid #ddd; font-size: 0.7rem;" placeholder="Add feedback for the faculty..."></textarea>
+                        </div>
+                    ` : `
+                        <div style="padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem; text-align: center;">
+                            <i class="fas fa-lock"></i> This stage can only be reviewed by Check 1 (Eligibility Officer).
+                        </div>
+                    `}
                 </div>
-            </div>
-        </div>`;
-    } else {
-        const isCompleted = currentStatus !== 'Awaiting Signatures' && currentStatus !== 'Returned' && 
-                           (currentStatus === 'Pending Secondary Check' || currentStatus === 'Pending Final Check' || currentStatus === 'Approved');
-        check1Completed = isCompleted;
-        html += `<div class="check-stage-card ${isCompleted ? 'completed' : 'pending'}">
-            <div class="check-stage-header">
-                <span class="check-stage-title"><i class="fas fa-search"></i> Check 1: Eligibility Review</span>
-                <span class="check-stage-status ${isCompleted ? 'completed' : 'pending'}">${isCompleted ? '✅ Completed' : '⏳ Pending'}</span>
-            </div>
-            <div><strong>Reviewer:</strong> Eligibility Officer</div>
-            ${check1CompletedAt ? `<div><strong>Completed:</strong> ${new Date(check1CompletedAt).toLocaleString()}</div>` : ''}
-            ${check1Feedback ? `<div class="check-stage-feedback"><strong>Feedback:</strong> ${escapeHtml(check1Feedback)}</div>` : ''}
-        </div>`;
-    }
+            ` : ''}
+        </div>
+    </div>`;
     
-    // Check 2: Secondary Review
-    let check2Completed = false;
+    // Check 2 Details
     let check2Feedback = app.check2Feedback || null;
     let check2CompletedAt = app.check2CompletedAt || null;
+    const isCheck2Completed = (currentStatus === 'Pending Final Check' || currentStatus === 'Approved') || app.check2CompletedAt;
+    const isCheck2Current = currentStatus === 'Pending Secondary Check';
+    const canActOnCheck2 = (isSuperAdmin || window.isCheck2) && isCheck2Current;
     
-    if (currentStatus === 'Pending Secondary Check') {
-        html += `<div class="check-stage-card current">
-            <div class="check-stage-header">
-                <span class="check-stage-title"><i class="fas fa-clipboard-list"></i> Check 2: Secondary Review</span>
-                <span class="check-stage-status current">⏳ In Progress</span>
-            </div>
-            <div><strong>Reviewer:</strong> Secondary Checker</div>
-            <div><strong>Review Criteria:</strong> Technical soundness, methodology, budget feasibility</div>
-            <div class="check-stage-actions">
-                <label style="display: block; font-size: 0.7rem; font-weight: 600; margin-bottom: 0.3rem;">Decision:</label>
-                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                    <button class="btn-sm approve-check2" style="background: #2ecc71; color: white;"><i class="fas fa-check"></i> Approve & Send to Check 3</button>
-                    <button class="btn-sm return-check2" style="background: #e74c3c; color: white;"><i class="fas fa-undo-alt"></i> Return to Faculty</button>
+    html += `<div style="margin-bottom: 1rem;">
+        <div style="background: ${isCheck2Completed ? '#f0fff4' : (isCheck2Current ? '#e8f0fe' : '#f8f9fa')}; border-radius: 0.8rem; padding: 1rem; border-left: 4px solid ${isCheck2Completed ? '#2ecc71' : (isCheck2Current ? '#3498db' : '#ddd')};">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <div>
+                    <span style="font-weight: 700; font-size: 0.85rem;">
+                        <i class="fas fa-clipboard-list" style="color: ${isCheck2Completed ? '#2ecc71' : (isCheck2Current ? '#3498db' : '#999')}; margin-right: 0.3rem;"></i>
+                        Check 2: Secondary Review
+                    </span>
+                    <span style="margin-left: 0.5rem; font-size: 0.65rem; color: #666;">Secondary Checker</span>
                 </div>
-                <div style="margin-top: 0.5rem;">
-                    <label style="display: block; font-size: 0.7rem; font-weight: 600; margin-bottom: 0.3rem;">Feedback (required if returning):</label>
-                    <textarea id="check2Feedback" rows="2" style="width: 100%; padding: 0.4rem; border-radius: 0.5rem; border: 1px solid #ddd; font-size: 0.7rem;" placeholder="Add feedback for the faculty..."></textarea>
+                <span style="font-size: 0.7rem; padding: 0.2rem 0.6rem; border-radius: 20px; background: ${isCheck2Completed ? '#d4edda' : (isCheck2Current ? '#cce5ff' : '#e9ecef')}; color: ${isCheck2Completed ? '#155724' : (isCheck2Current ? '#004085' : '#6c757d')};">
+                    ${isCheck2Completed ? '✅ Completed' : (isCheck2Current ? '🔄 In Progress' : '⏳ Pending')}
+                </span>
+            </div>
+            <div style="font-size: 0.75rem; color: #555; margin-bottom: 0.3rem;">
+                <strong>Review Criteria:</strong> Technical soundness, methodology, budget feasibility
+            </div>
+            ${check2CompletedAt ? `<div style="font-size: 0.7rem; color: #666;"><i class="fas fa-clock"></i> Completed: ${new Date(check2CompletedAt).toLocaleString()}</div>` : ''}
+            ${check2Feedback ? `<div style="margin-top: 0.5rem; padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem; font-size: 0.7rem;"><strong>Feedback:</strong> ${escapeHtml(check2Feedback)}</div>` : ''}
+            
+            ${isCheck2Current ? `
+                <div class="check-stage-actions" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e0e0e0;">
+                    ${canActOnCheck2 ? `
+                        <label style="display: block; font-size: 0.7rem; font-weight: 600; margin-bottom: 0.3rem;">Decision:</label>
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <button class="btn-sm approve-check2" style="background: #2ecc71; color: white;"><i class="fas fa-check"></i> Approve & Send to Check 3</button>
+                            <button class="btn-sm return-check2" style="background: #e74c3c; color: white;"><i class="fas fa-undo-alt"></i> Return to Faculty</button>
+                        </div>
+                        <div style="margin-top: 0.5rem;">
+                            <label style="display: block; font-size: 0.7rem; font-weight: 600; margin-bottom: 0.3rem;">Feedback (required if returning):</label>
+                            <textarea id="check2Feedback" rows="2" style="width: 100%; padding: 0.4rem; border-radius: 0.5rem; border: 1px solid #ddd; font-size: 0.7rem;" placeholder="Add feedback for the faculty..."></textarea>
+                        </div>
+                    ` : `
+                        <div style="padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem; text-align: center;">
+                            <i class="fas fa-lock"></i> This stage can only be reviewed by Check 2 (Secondary Checker).
+                        </div>
+                    `}
                 </div>
-            </div>
-        </div>`;
-    } else if (currentStatus !== 'Awaiting Signatures' && currentStatus !== 'Returned' && currentStatus !== 'Pending Eligibility Check') {
-        const isCompleted = currentStatus === 'Pending Final Check' || currentStatus === 'Approved';
-        check2Completed = isCompleted;
-        html += `<div class="check-stage-card ${isCompleted ? 'completed' : 'pending'}">
-            <div class="check-stage-header">
-                <span class="check-stage-title"><i class="fas fa-clipboard-list"></i> Check 2: Secondary Review</span>
-                <span class="check-stage-status ${isCompleted ? 'completed' : 'pending'}">${isCompleted ? '✅ Completed' : '⏳ Pending'}</span>
-            </div>
-            ${check2CompletedAt ? `<div><strong>Completed:</strong> ${new Date(check2CompletedAt).toLocaleString()}</div>` : ''}
-            ${check2Feedback ? `<div class="check-stage-feedback"><strong>Feedback:</strong> ${escapeHtml(check2Feedback)}</div>` : ''}
-        </div>`;
-    } else {
-        html += `<div class="check-stage-card pending">
-            <div class="check-stage-header">
-                <span class="check-stage-title"><i class="fas fa-clipboard-list"></i> Check 2: Secondary Review</span>
-                <span class="check-stage-status pending">⏳ Pending (Awaiting Check 1)</span>
-            </div>
-        </div>`;
-    }
+            ` : ''}
+        </div>
+    </div>`;
     
-    // Check 3: Final Review
+    // Check 3 Details
     let check3Feedback = app.check3Feedback || null;
     let check3CompletedAt = app.check3CompletedAt || null;
+    const isCheck3Completed = currentStatus === 'Approved';
+    const isCheck3Current = currentStatus === 'Pending Final Check';
+    const canActOnCheck3 = (isSuperAdmin || window.isCheck3) && isCheck3Current;
     
-    if (currentStatus === 'Pending Final Check') {
-        html += `<div class="check-stage-card current">
-            <div class="check-stage-header">
-                <span class="check-stage-title"><i class="fas fa-check-double"></i> Check 3: Final Review</span>
-                <span class="check-stage-status current">⏳ In Progress</span>
-            </div>
-            <div><strong>Reviewer:</strong> Final Approver</div>
-            <div><strong>Review Criteria:</strong> Overall assessment, compliance, funding recommendation</div>
-            <div class="check-stage-actions">
-                <label style="display: block; font-size: 0.7rem; font-weight: 600; margin-bottom: 0.3rem;">Decision:</label>
-                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                    <button class="btn-sm approve-check3" style="background: #2ecc71; color: white;"><i class="fas fa-check"></i> Approve Application</button>
-                    <button class="btn-sm return-check3" style="background: #e74c3c; color: white;"><i class="fas fa-undo-alt"></i> Return to Faculty</button>
+    html += `<div style="margin-bottom: 1rem;">
+        <div style="background: ${isCheck3Completed ? '#f0fff4' : (isCheck3Current ? '#e8f0fe' : '#f8f9fa')}; border-radius: 0.8rem; padding: 1rem; border-left: 4px solid ${isCheck3Completed ? '#2ecc71' : (isCheck3Current ? '#3498db' : '#ddd')};">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <div>
+                    <span style="font-weight: 700; font-size: 0.85rem;">
+                        <i class="fas fa-check-double" style="color: ${isCheck3Completed ? '#2ecc71' : (isCheck3Current ? '#3498db' : '#999')}; margin-right: 0.3rem;"></i>
+                        Check 3: Final Review
+                    </span>
+                    <span style="margin-left: 0.5rem; font-size: 0.65rem; color: #666;">Final Approver</span>
                 </div>
-                <div style="margin-top: 0.5rem;">
-                    <label style="display: block; font-size: 0.7rem; font-weight: 600; margin-bottom: 0.3rem;">Feedback (required if returning):</label>
-                    <textarea id="check3Feedback" rows="2" style="width: 100%; padding: 0.4rem; border-radius: 0.5rem; border: 1px solid #ddd; font-size: 0.7rem;" placeholder="Add feedback for the faculty..."></textarea>
+                <span style="font-size: 0.7rem; padding: 0.2rem 0.6rem; border-radius: 20px; background: ${isCheck3Completed ? '#d4edda' : (isCheck3Current ? '#cce5ff' : '#e9ecef')}; color: ${isCheck3Completed ? '#155724' : (isCheck3Current ? '#004085' : '#6c757d')};">
+                    ${isCheck3Completed ? '✅ Completed' : (isCheck3Current ? '🔄 In Progress' : '⏳ Pending')}
+                </span>
+            </div>
+            <div style="font-size: 0.75rem; color: #555; margin-bottom: 0.3rem;">
+                <strong>Review Criteria:</strong> Overall assessment, compliance, funding recommendation
+            </div>
+            ${check3CompletedAt ? `<div style="font-size: 0.7rem; color: #666;"><i class="fas fa-clock"></i> Completed: ${new Date(check3CompletedAt).toLocaleString()}</div>` : ''}
+            ${check3Feedback ? `<div style="margin-top: 0.5rem; padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem; font-size: 0.7rem;"><strong>Feedback:</strong> ${escapeHtml(check3Feedback)}</div>` : ''}
+            
+            ${isCheck3Current ? `
+                <div class="check-stage-actions" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e0e0e0;">
+                    ${canActOnCheck3 ? `
+                        <label style="display: block; font-size: 0.7rem; font-weight: 600; margin-bottom: 0.3rem;">Decision:</label>
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <button class="btn-sm approve-check3" style="background: #2ecc71; color: white;"><i class="fas fa-check"></i> Approve Application</button>
+                            <button class="btn-sm return-check3" style="background: #e74c3c; color: white;"><i class="fas fa-undo-alt"></i> Return to Faculty</button>
+                        </div>
+                        <div style="margin-top: 0.5rem;">
+                            <label style="display: block; font-size: 0.7rem; font-weight: 600; margin-bottom: 0.3rem;">Feedback (required if returning):</label>
+                            <textarea id="check3Feedback" rows="2" style="width: 100%; padding: 0.4rem; border-radius: 0.5rem; border: 1px solid #ddd; font-size: 0.7rem;" placeholder="Add feedback for the faculty..."></textarea>
+                        </div>
+                    ` : `
+                        <div style="padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem; text-align: center;">
+                            <i class="fas fa-lock"></i> This stage can only be reviewed by Check 3 (Final Approver).
+                        </div>
+                    `}
                 </div>
-            </div>
-        </div>`;
-    } else if (currentStatus === 'Approved') {
-        html += `<div class="check-stage-card completed">
-            <div class="check-stage-header">
-                <span class="check-stage-title"><i class="fas fa-check-double"></i> Check 3: Final Review</span>
-                <span class="check-stage-status completed">✅ Completed</span>
-            </div>
-            <div><strong>Decision:</strong> Approved</div>
-            ${check3CompletedAt ? `<div><strong>Completed:</strong> ${new Date(check3CompletedAt).toLocaleString()}</div>` : ''}
-            ${check3Feedback ? `<div class="check-stage-feedback"><strong>Feedback:</strong> ${escapeHtml(check3Feedback)}</div>` : ''}
-        </div>`;
-    } else if (currentStatus !== 'Returned' && currentStatus !== 'Awaiting Signatures') {
-        html += `<div class="check-stage-card pending">
-            <div class="check-stage-header">
-                <span class="check-stage-title"><i class="fas fa-check-double"></i> Check 3: Final Review</span>
-                <span class="check-stage-status pending">⏳ Pending (Awaiting Check 2)</span>
-            </div>
-        </div>`;
-    } else {
-        html += `<div class="check-stage-card pending">
-            <div class="check-stage-header">
-                <span class="check-stage-title"><i class="fas fa-check-double"></i> Check 3: Final Review</span>
-                <span class="check-stage-status pending">⏳ Pending</span>
-            </div>
-        </div>`;
-    }
+            ` : ''}
+        </div>
+    </div>`;
     
     if (isReturned) {
-        html += `<div class="detail-section" style="background: #fff3cd; margin-top: 1rem;">
+        html += `<div class="detail-section" style="background: #fff3cd; margin-top: 1rem; border-left: 4px solid #e74c3c;">
             <h4 style="color: #856404;"><i class="fas fa-undo-alt"></i> Application Returned</h4>
             <p style="font-size: 0.75rem;">This application has been returned to the faculty for revision. Once resubmitted, the review process will restart from Check 1.</p>
         </div>`;
@@ -1853,7 +2945,7 @@ function renderCheckStagesContent(app, email, appId) {
     
     html += `<div class="demo-note" style="margin-top: 1rem; text-align: left;">
         <i class="fas fa-info-circle"></i> <strong>Review Process Flow:</strong> Check 1 (Eligibility) → Check 2 (Secondary) → Check 3 (Final) → Approval
-    </div></div>`;
+    </div>`;
     
     return html;
 }
@@ -1926,7 +3018,7 @@ function attachCheckStageHandlers(modal, email, appId, currentStatus) {
             
             const result = await Swal.fire({
                 title: 'Return Application?',
-                text: 'This will return the application to the faculty for revision.',
+                text: 'This will return the application to the faculty for revision. The signatures will remain valid.',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#e74c3c',
@@ -1943,9 +3035,9 @@ function attachCheckStageHandlers(modal, email, appId, currentStatus) {
                         submissionsDB[email][appIndex].returnedFeedback = feedback;
                         submissionsDB[email][appIndex].returnedFromStage = 'check1';
                         submissionsDB[email][appIndex].returnedAt = new Date().toISOString();
+                        // DO NOT clear signatures - keep them
                         saveToLocalStorage();
                         
-                        // Notify faculty that their application was returned
                         addNotification(email, 'application_returned', '↩️ Application Returned', 
                             `Your application requires revision: ${feedback.substring(0, 100)}...`, 
                             appId, '↩️', '#e74c3c');
