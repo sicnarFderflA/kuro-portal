@@ -1292,9 +1292,9 @@ if (!userData) {
 const currentUser = window.currentUser;
 
 let isReviewerMode = false;
-let submissionsDB = JSON.parse(localStorage.getItem('kuro_submissions')) || {};
-let draftsDB = JSON.parse(localStorage.getItem('kuro_drafts_' + currentUser.email)) || [];
-let reviewerTasks = JSON.parse(localStorage.getItem('kuro_reviewer_tasks')) || {};
+let submissionsDB = [];
+let draftsDB = [];
+let reviewerTasks = {};
 let selectedGrant = null;
 let editDraftId = null;
 let currentDraftData = null;
@@ -1348,9 +1348,6 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 const CURRENT_YEAR = new Date().getFullYear();
 const NEXT_YEAR = CURRENT_YEAR + 1;
 const YEAR_AFTER = CURRENT_YEAR + 2;
-
-function persist() { localStorage.setItem('kuro_submissions', JSON.stringify(submissionsDB)); localStorage.setItem('kuro_reviewer_tasks', JSON.stringify(reviewerTasks)); }
-function saveDrafts() { localStorage.setItem('kuro_drafts_' + currentUser.email, JSON.stringify(draftsDB)); }
 
 function escapeHtml(str) {
     if (!str) return '';
@@ -1410,28 +1407,14 @@ function initFacultyDashboard() {
     }
 }
 
-function syncReviewerNameFromGoogle() {
+async function syncReviewerNameFromGoogle() {
     const currentUser = JSON.parse(sessionStorage.getItem('kuro_user'));
     if (!currentUser || !currentUser.email) return;
     
-    if (reviewerTasks[currentUser.email] && currentUser.name) {
-        reviewerTasks[currentUser.email].name = currentUser.name;
-        
-        for (let email in submissionsDB) {
-            if (submissionsDB[email]) {
-                submissionsDB[email].forEach(app => {
-                    if (app.assignedReviewers) {
-                        app.assignedReviewers.forEach(reviewer => {
-                            if (reviewer.email === currentUser.email && !reviewer.name) {
-                                reviewer.name = currentUser.name;
-                            }
-                        });
-                    }
-                });
-            }
-        }
-        
-        persist();
+    try {
+        await KURO_API.updateReviewerName(currentUser.email, currentUser.name);
+    } catch (error) {
+        console.error('Failed to sync reviewer name:', error);
     }
 }
 
@@ -1759,227 +1742,258 @@ function initNotificationSystem() {
     }
 }
 
-function renderApplicant() {
-    const userReviewerTasks = reviewerTasks[currentUser.email];
-    const hasReviewerTasks = userReviewerTasks && userReviewerTasks.assignedTasks && userReviewerTasks.assignedTasks.length > 0;
-    
-    const switchBtn = document.getElementById('switchReviewerBtn');
-    if (switchBtn) {
-        hasReviewerTasks ? switchBtn.classList.remove('hidden') : switchBtn.classList.add('hidden');
-    }
-    
-    const mySubs = submissionsDB[currentUser.email] || [];
-    const stats = { 
-        pending: mySubs.filter(s => s.status !== "Approved" && s.status !== "Returned" && s.status !== "Awaiting Signatures").length,
-        approved: mySubs.filter(s => s.status === "Approved").length,
-        awaiting: mySubs.filter(s => s.status === "Awaiting Signatures").length,
-        returned: mySubs.filter(s => s.status === "Returned").length,
-        drafts: draftsDB.length 
-    };
-    
-    let html = '<div class="dashboard-title"><h2>My Research Applications</h2><p>Faculty Research Grants: IR Award, MBHR Award, MR Award, MRR Award</p></div>';
-    html += '<div class="stats-grid">';
-    html += '<div class="stat-card"><i class="fas fa-hourglass-half"></i> <h3>' + stats.pending + '</h3> <span>Under Review</span></div>';
-    html += '<div class="stat-card"><i class="fas fa-check-circle"></i> <h3>' + stats.approved + '</h3> <span>Approved</span></div>';
-    html += '<div class="stat-card"><i class="fas fa-envelope"></i> <h3>' + stats.awaiting + '</h3> <span>Awaiting Signatures</span></div>';
-    html += '<div class="stat-card"><i class="fas fa-undo-alt"></i> <h3>' + stats.returned + '</h3> <span>Returned for Revision</span></div>';
-    html += '<div class="stat-card"><i class="fas fa-pen-fancy"></i> <h3>' + stats.drafts + '</h3> <span>Drafts</span></div></div>';
-    
-    html += '<div class="section-header"><h3>My Submissions</h3><button class="btn-primary" id="newApplyBtn"><i class="fas fa-plus"></i> New Application</button></div>';
-    
-    if (mySubs.length === 0 && draftsDB.length === 0) {
-        html += '<div class="demo-note" style="text-align:center;padding:2rem;"><i class="fas fa-info-circle"></i> No applications yet. Click "New Application" to start.</div>';
-    } else {
-        html += '<div class="applications-list">';
+async function renderApplicant() {
+    try {
+        // Load data from API instead of localStorage
+        const mySubs = await KURO_API.getFacultyApplications();
+        const drafts = await KURO_API.getFacultyDrafts();
+        const reviewerTasksData = await KURO_API.getReviewerTasks();
         
-        for (const sub of mySubs) {
-            const cvStatus = getCVStatusSummary(sub);
-            let cvStatusText = '', cvStatusClass = '';
-            if (cvStatus.eligible === cvStatus.total) {
-                cvStatusText = '✅ CV Eligible';
-                cvStatusClass = 'cv-eligible';
-            } else if (cvStatus.ineligible > 0) {
-                cvStatusText = `❌ ${cvStatus.ineligible} CV Ineligible`;
-                cvStatusClass = 'cv-ineligible';
-            } else if (cvStatus.pending > 0) {
-                cvStatusText = `⏳ ${cvStatus.pending} CV Pending`;
-                cvStatusClass = 'cv-pending';
-            } else {
-                cvStatusText = `📄 ${cvStatus.missing} CV Missing`;
-                cvStatusClass = 'cv-missing';
-            }
+        const hasReviewerTasks = reviewerTasksData.assignedTasks && reviewerTasksData.assignedTasks.length > 0;
+        
+        const switchBtn = document.getElementById('switchReviewerBtn');
+        if (switchBtn) {
+            hasReviewerTasks ? switchBtn.classList.remove('hidden') : switchBtn.classList.add('hidden');
+        }
+        
+        const stats = { 
+            pending: mySubs.filter(s => s.status !== "Approved" && s.status !== "Returned" && s.status !== "Awaiting Signatures").length,
+            approved: mySubs.filter(s => s.status === "Approved").length,
+            awaiting: mySubs.filter(s => s.status === "Awaiting Signatures").length,
+            returned: mySubs.filter(s => s.status === "Returned").length,
+            drafts: drafts.length 
+        };
+        
+        let html = '<div class="dashboard-title"><h2>My Research Applications</h2><p>Faculty Research Grants: IR Award, MBHR Award, MR Award, MRR Award</p></div>';
+        html += '<div class="stats-grid">';
+        html += '<div class="stat-card"><i class="fas fa-hourglass-half"></i> <h3>' + stats.pending + '</h3> <span>Under Review</span></div>';
+        html += '<div class="stat-card"><i class="fas fa-check-circle"></i> <h3>' + stats.approved + '</h3> <span>Approved</span></div>';
+        html += '<div class="stat-card"><i class="fas fa-envelope"></i> <h3>' + stats.awaiting + '</h3> <span>Awaiting Signatures</span></div>';
+        html += '<div class="stat-card"><i class="fas fa-undo-alt"></i> <h3>' + stats.returned + '</h3> <span>Returned for Revision</span></div>';
+        html += '<div class="stat-card"><i class="fas fa-pen-fancy"></i> <h3>' + stats.drafts + '</h3> <span>Drafts</span></div></div>';
+        
+        html += '<div class="section-header"><h3>My Submissions</h3><button class="btn-primary" id="newApplyBtn"><i class="fas fa-plus"></i> New Application</button></div>';
+        
+        if (mySubs.length === 0 && drafts.length === 0) {
+            html += '<div class="demo-note" style="text-align:center;padding:2rem;"><i class="fas fa-info-circle"></i> No applications yet. Click "New Application" to start.</div>';
+        } else {
+            html += '<div class="applications-list">';
             
-            const cvProgressPercent = ((cvStatus.eligible + cvStatus.pending) / cvStatus.total) * 100;
-            let cvProgressClass = cvStatus.ineligible > 0 ? 'bad' : (cvStatus.pending > 0 ? 'warning' : 'good');
-            
-            const chairSigned = sub.signatures?.chair || false;
-            const deanSigned = sub.signatures?.dean || false;
-            const bothSigned = chairSigned && deanSigned;
-            const requestsSent = sub.signatureRequests?.sentAt;
-            
-            let signatureStatusText = '', signatureStatusClass = '';
-            if (bothSigned) {
-                signatureStatusText = '✅ Both Signed';
-                signatureStatusClass = 'cv-eligible';
-            } else if (requestsSent) {
-                signatureStatusText = '📧 Requests Sent';
-                signatureStatusClass = 'signature-sent';
-            } else {
-                signatureStatusText = '⏳ Pending';
-                signatureStatusClass = 'signature-pending';
-            }
-            
-            const statusIcon = getStatusIcon(sub.status);
-            const statusClass = getStatusClass(sub.status);
-            const statusDisplay = getStatusDisplayName(sub.status);
-            
-            const returnClass = sub.status === 'Returned' ? 'returned' : '';
-            
-            html += `<div class="application-card ${returnClass}">
-                <div class="card-header">
-                    <span class="grant-badge"><i class="fas fa-trophy"></i> ${escapeHtml(sub.grantTitle)}</span>
-                    <div class="status-badges">
-                        <span class="status-badge ${statusClass}">${statusIcon} ${statusDisplay}</span>
-                        <span class="status-badge ${signatureStatusClass}"><i class="fas fa-signature"></i> ${signatureStatusText}</span>
-                        <span class="status-badge ${cvStatusClass}"><i class="fas fa-file-pdf"></i> ${cvStatusText}</span>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="project-title">${escapeHtml(sub.proposalTitle || 'Untitled')}</div>
-                    <div class="info-grid">
-                        <div class="info-item"><i class="fas fa-calendar-alt"></i> Submitted: ${sub.submittedDate || 'N/A'}</div>
-                        <div class="info-item"><i class="fas fa-user"></i> PI: ${escapeHtml(sub.piName || 'N/A')}</div>
-                        <div class="info-item"><i class="fas fa-envelope"></i> ${escapeHtml(sub.piEmail || 'N/A')}</div>
-                    </div>`;
-            
-            // Show feedback section for returned applications
-            if (sub.returnedFeedback) {
-                html += `<div class="feedback-section">
-                    <h4><i class="fas fa-feedback"></i> Revision Required</h4>
-                    <p>${escapeHtml(sub.returnedFeedback)}</p>
-                </div>`;
-            }
-            
-            html += `<div class="cv-progress-section">
-                        <div class="cv-progress-label"><i class="fas fa-chart-line"></i> CV Completion Progress</div>
-                        <div class="cv-progress-bar"><div class="cv-progress-fill ${cvProgressClass}" style="width: ${cvProgressPercent}%"></div></div>
-                        <div class="cv-stats">
-                            <span class="cv-stat eligible"><i class="fas fa-check-circle"></i> ${cvStatus.eligible} Eligible</span>
-                            <span class="cv-stat pending"><i class="fas fa-clock"></i> ${cvStatus.pending} Pending</span>
-                            <span class="cv-stat ineligible"><i class="fas fa-times-circle"></i> ${cvStatus.ineligible} Ineligible</span>
-                            <span class="cv-stat missing"><i class="fas fa-file"></i> ${cvStatus.missing} Missing</span>
+            for (const sub of mySubs) {
+                const cvStatus = getCVStatusSummary(sub);
+                let cvStatusText = '', cvStatusClass = '';
+                if (cvStatus.eligible === cvStatus.total) {
+                    cvStatusText = '✅ CV Eligible';
+                    cvStatusClass = 'cv-eligible';
+                } else if (cvStatus.ineligible > 0) {
+                    cvStatusText = `❌ ${cvStatus.ineligible} CV Ineligible`;
+                    cvStatusClass = 'cv-ineligible';
+                } else if (cvStatus.pending > 0) {
+                    cvStatusText = `⏳ ${cvStatus.pending} CV Pending`;
+                    cvStatusClass = 'cv-pending';
+                } else {
+                    cvStatusText = `📄 ${cvStatus.missing} CV Missing`;
+                    cvStatusClass = 'cv-missing';
+                }
+                
+                const cvProgressPercent = ((cvStatus.eligible + cvStatus.pending) / cvStatus.total) * 100;
+                let cvProgressClass = cvStatus.ineligible > 0 ? 'bad' : (cvStatus.pending > 0 ? 'warning' : 'good');
+                
+                const chairSigned = sub.signatures?.chair?.signed || false;
+                const deanSigned = sub.signatures?.dean?.signed || false;
+                const bothSigned = chairSigned && deanSigned;
+                const requestsSent = sub.signatureRequests?.sentAt;
+                
+                let signatureStatusText = '', signatureStatusClass = '';
+                if (bothSigned) {
+                    signatureStatusText = '✅ Both Signed';
+                    signatureStatusClass = 'cv-eligible';
+                } else if (requestsSent) {
+                    signatureStatusText = '📧 Requests Sent';
+                    signatureStatusClass = 'signature-sent';
+                } else {
+                    signatureStatusText = '⏳ Pending';
+                    signatureStatusClass = 'signature-pending';
+                }
+                
+                const statusIcon = getStatusIcon(sub.status);
+                const statusClass = getStatusClass(sub.status);
+                const statusDisplay = getStatusDisplayName(sub.status);
+                
+                const returnClass = sub.status === 'Returned' ? 'returned' : '';
+                
+                html += `<div class="application-card ${returnClass}">
+                    <div class="card-header">
+                        <span class="grant-badge"><i class="fas fa-trophy"></i> ${escapeHtml(sub.grantTitle)}</span>
+                        <div class="status-badges">
+                            <span class="status-badge ${statusClass}">${statusIcon} ${statusDisplay}</span>
+                            <span class="status-badge ${signatureStatusClass}"><i class="fas fa-signature"></i> ${signatureStatusText}</span>
+                            <span class="status-badge ${cvStatusClass}"><i class="fas fa-file-pdf"></i> ${cvStatusText}</span>
                         </div>
                     </div>
-                </div>
-                <div class="card-actions">
-                    <button class="card-action-btn view-sub" data-id="${sub.id}"><i class="fas fa-eye"></i> View</button>`;
-            
-            // Show Resubmit button only for Returned status
-            if (sub.status === 'Returned') {
-                html += `<button class="card-action-btn edit-sub" data-id="${sub.id}"><i class="fas fa-edit"></i> Edit</button>`;
-                html += `<button class="card-action-btn warning resubmit-sub" data-id="${sub.id}"><i class="fas fa-paper-plane"></i> Resubmit</button>`;
-            } else if (sub.status !== 'Approved') {
-                html += `<button class="card-action-btn edit-sub" data-id="${sub.id}"><i class="fas fa-edit"></i> Edit</button>`;
+                    <div class="card-body">
+                        <div class="project-title">${escapeHtml(sub.proposalTitle || 'Untitled')}</div>
+                        <div class="info-grid">
+                            <div class="info-item"><i class="fas fa-calendar-alt"></i> Submitted: ${sub.submittedDate || 'N/A'}</div>
+                            <div class="info-item"><i class="fas fa-user"></i> PI: ${escapeHtml(sub.piName || 'N/A')}</div>
+                            <div class="info-item"><i class="fas fa-envelope"></i> ${escapeHtml(sub.piEmail || 'N/A')}</div>
+                        </div>`;
+                
+                // Show feedback section for returned applications
+                if (sub.returnedFeedback) {
+                    html += `<div class="feedback-section">
+                        <h4><i class="fas fa-feedback"></i> Revision Required</h4>
+                        <p>${escapeHtml(sub.returnedFeedback)}</p>
+                    </div>`;
+                }
+                
+                html += `<div class="cv-progress-section">
+                            <div class="cv-progress-label"><i class="fas fa-chart-line"></i> CV Completion Progress</div>
+                            <div class="cv-progress-bar"><div class="cv-progress-fill ${cvProgressClass}" style="width: ${cvProgressPercent}%"></div></div>
+                            <div class="cv-stats">
+                                <span class="cv-stat eligible"><i class="fas fa-check-circle"></i> ${cvStatus.eligible} Eligible</span>
+                                <span class="cv-stat pending"><i class="fas fa-clock"></i> ${cvStatus.pending} Pending</span>
+                                <span class="cv-stat ineligible"><i class="fas fa-times-circle"></i> ${cvStatus.ineligible} Ineligible</span>
+                                <span class="cv-stat missing"><i class="fas fa-file"></i> ${cvStatus.missing} Missing</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="card-action-btn view-sub" data-id="${sub.id}"><i class="fas fa-eye"></i> View</button>`;
+                
+                // Show Resubmit button only for Returned status
+                if (sub.status === 'Returned') {
+                    html += `<button class="card-action-btn edit-sub" data-id="${sub.id}"><i class="fas fa-edit"></i> Edit</button>`;
+                    html += `<button class="card-action-btn warning resubmit-sub" data-id="${sub.id}"><i class="fas fa-paper-plane"></i> Resubmit</button>`;
+                } else if (sub.status !== 'Approved') {
+                    html += `<button class="card-action-btn edit-sub" data-id="${sub.id}"><i class="fas fa-edit"></i> Edit</button>`;
+                }
+                
+                // Show Resend Signature button only when awaiting signatures
+                if (sub.status === 'Awaiting Signatures' && !bothSigned) {
+                    html += `<button class="card-action-btn warning resend-signature-btn" data-id="${sub.id}"><i class="fas fa-paper-plane"></i> Resend Signature</button>`;
+                }
+                
+                html += `<button class="card-action-btn danger delete-sub" data-id="${sub.id}"><i class="fas fa-trash"></i> Delete</button>
+                        </div>
+                    </div>`;
             }
             
-            // Show Resend Signature button only when awaiting signatures
-            if (sub.status === 'Awaiting Signatures' && !bothSigned) {
-                html += `<button class="card-action-btn warning resend-signature-btn" data-id="${sub.id}"><i class="fas fa-paper-plane"></i> Resend Signature</button>`;
-            }
-            
-            html += `<button class="card-action-btn danger delete-sub" data-id="${sub.id}"><i class="fas fa-trash"></i> Delete</button>
+            // Drafts
+            for (let idx = 0; idx < drafts.length; idx++) {
+                const draft = drafts[idx];
+                html += `<div class="application-card draft">
+                    <div class="card-header" style="background:#6c757d;">
+                        <span class="grant-badge"><i class="fas fa-pen-fancy"></i> ${escapeHtml(draft.grantTitle)}</span>
+                        <div class="status-badges"><span class="status-badge application-draft"><i class="fas fa-pen"></i> Draft</span><span class="status-badge cv-missing"><i class="fas fa-file-pdf"></i> Not Submitted</span></div>
+                    </div>
+                    <div class="card-body">
+                        <div class="project-title">${escapeHtml(draft.proposalTitle || 'Untitled Draft')}</div>
+                        <div class="info-grid">
+                            <div class="info-item"><i class="fas fa-save"></i> Last saved: ${draft.lastSaved || 'N/A'}</div>
+                            <div class="info-item"><i class="fas fa-user"></i> PI: ${escapeHtml(draft.piName || 'Not set')}</div>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="card-action-btn edit-draft" data-idx="${idx}"><i class="fas fa-edit"></i> Edit Draft</button>
+                        <button class="card-action-btn danger delete-draft" data-idx="${idx}"><i class="fas fa-trash"></i> Delete Draft</button>
                     </div>
                 </div>`;
+            }
+            
+            html += '</div>';
         }
         
-        // Drafts (unchanged)
-        for (let idx = 0; idx < draftsDB.length; idx++) {
-            const draft = draftsDB[idx];
-            html += `<div class="application-card draft">
-                <div class="card-header" style="background:#6c757d;">
-                    <span class="grant-badge"><i class="fas fa-pen-fancy"></i> ${escapeHtml(draft.grantTitle)}</span>
-                    <div class="status-badges"><span class="status-badge application-draft"><i class="fas fa-pen"></i> Draft</span><span class="status-badge cv-missing"><i class="fas fa-file-pdf"></i> Not Submitted</span></div>
-                </div>
-                <div class="card-body">
-                    <div class="project-title">${escapeHtml(draft.proposalTitle || 'Untitled Draft')}</div>
-                    <div class="info-grid">
-                        <div class="info-item"><i class="fas fa-save"></i> Last saved: ${draft.lastSaved || 'N/A'}</div>
-                        <div class="info-item"><i class="fas fa-user"></i> PI: ${escapeHtml(draft.piName || 'Not set')}</div>
-                    </div>
-                </div>
-                <div class="card-actions">
-                    <button class="card-action-btn edit-draft" data-idx="${idx}"><i class="fas fa-edit"></i> Edit Draft</button>
-                    <button class="card-action-btn danger delete-draft" data-idx="${idx}"><i class="fas fa-trash"></i> Delete Draft</button>
-                </div>
-            </div>`;
-        }
+        html += '<div class="demo-note"><i class="fas fa-info-circle"></i> Faculty Research Grants: IR Award, MBHR Award, MR Award, MRR Award. For Publication Award and Madigan Award, please contact KURO directly.</div>';
         
-        html += '</div>';
-    }
-    
-    html += '<div class="demo-note"><i class="fas fa-info-circle"></i> Faculty Research Grants: IR Award, MBHR Award, MR Award, MRR Award. For Publication Award and Madigan Award, please contact KURO directly.</div>';
-    
-    document.getElementById('mainContent').innerHTML = html;
-    
-    // Attach event listeners
-    document.getElementById('newApplyBtn')?.addEventListener('click', () => { editDraftId = null; currentDraftData = null; isEditMode = false; editAppId = null; openGrantSelection(); });
-    document.querySelectorAll('.view-sub').forEach(btn => btn.addEventListener('click', async (e) => { const id = btn.getAttribute('data-id'); const sub = mySubs.find(s => s.id === id); if(sub) await showDetails(sub); }));
-    document.querySelectorAll('.edit-sub').forEach(btn => btn.addEventListener('click', (e) => { 
-        const id = btn.getAttribute('data-id'); const sub = mySubs.find(s => s.id === id); 
-        if(sub && sub.status !== 'Approved') { 
-            isEditMode = true; editAppId = id; editDraftId = null; selectedGrant = sub.grantTitle; 
-            currentDraftData = JSON.parse(JSON.stringify(sub)); openApplicationForm(true); 
-        } else if(sub && sub.status === 'Approved') { 
-            showInlineNotification(null, 'Approved applications cannot be edited.', false); 
-        }
-    }));
-    
-    // Resubmit button handler
-    document.querySelectorAll('.resubmit-sub').forEach(btn => btn.addEventListener('click', async (e) => { 
-        const id = btn.getAttribute('data-id'); 
-        const sub = mySubs.find(s => s.id === id); 
-        if(sub) await resubmitApplication(sub); 
-    }));
-    
-    document.querySelectorAll('.delete-sub').forEach(btn => btn.addEventListener('click', async (e) => { 
-        const id = btn.getAttribute('data-id');
-        const result = await confirmDelete('this application');
-        if (result.isConfirmed) {
-            submissionsDB[currentUser.email] = submissionsDB[currentUser.email].filter(s => s.id !== id);
-            persist();
-            renderApplicant();
-            await showSuccess('Application deleted!', 'Deleted');
-        }
-    }));
-    
-    document.querySelectorAll('.edit-draft').forEach(btn => btn.addEventListener('click', (e) => { 
-        const idx = parseInt(btn.getAttribute('data-idx'));
-        const draft = draftsDB[idx];
-        editDraftId = idx; isEditMode = false; editAppId = null; selectedGrant = draft.grantTitle;
-        currentDraftData = JSON.parse(JSON.stringify(draft));
-        if (draft.draftId) sessionStorage.setItem('current_draft_id', draft.draftId);
-        openApplicationForm(false);
-    }));
-    
-    document.querySelectorAll('.delete-draft').forEach(btn => btn.addEventListener('click', async (e) => { 
-        const idx = parseInt(btn.getAttribute('data-idx'));
-        const draft = draftsDB[idx];
-        const result = await confirmDelete(draft?.proposalTitle || 'this draft');
-        if (result.isConfirmed) {
-            draftsDB.splice(idx, 1);
-            saveDrafts();
-            renderApplicant();
-            await showSuccess('Draft deleted!', 'Deleted');
-        }
-    }));
-    
-    document.querySelectorAll('.resend-signature-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-            const id = btn.getAttribute('data-id');
-            const sub = mySubs.find(s => s.id === id);
-            if(sub) await autoGenerateSignatureLinks(sub, id);
+        document.getElementById('mainContent').innerHTML = html;
+        
+        // Attach event listeners
+        document.getElementById('newApplyBtn')?.addEventListener('click', () => { 
+            editDraftId = null; 
+            currentDraftData = null; 
+            isEditMode = false; 
+            editAppId = null; 
+            openGrantSelection(); 
         });
-    });
+        
+        document.querySelectorAll('.view-sub').forEach(btn => btn.addEventListener('click', async (e) => { 
+            const id = btn.getAttribute('data-id'); 
+            const sub = mySubs.find(s => s.id === id); 
+            if(sub) await showDetails(sub); 
+        }));
+        
+        document.querySelectorAll('.edit-sub').forEach(btn => btn.addEventListener('click', async (e) => { 
+            const id = btn.getAttribute('data-id'); 
+            const sub = mySubs.find(s => s.id === id); 
+            if(sub && sub.status !== 'Approved') { 
+                isEditMode = true; 
+                editAppId = id; 
+                editDraftId = null; 
+                selectedGrant = sub.grantTitle; 
+                currentDraftData = JSON.parse(JSON.stringify(sub)); 
+                openApplicationForm(true); 
+            } else if(sub && sub.status === 'Approved') { 
+                showInlineNotification(null, 'Approved applications cannot be edited.', false); 
+            }
+        }));
+        
+        // Resubmit button handler
+        document.querySelectorAll('.resubmit-sub').forEach(btn => btn.addEventListener('click', async (e) => { 
+            const id = btn.getAttribute('data-id'); 
+            const sub = mySubs.find(s => s.id === id); 
+            if(sub) await resubmitApplication(sub); 
+        }));
+        
+        // Delete submission
+        document.querySelectorAll('.delete-sub').forEach(btn => btn.addEventListener('click', async (e) => { 
+            const id = btn.getAttribute('data-id');
+            const result = await confirmDelete('this application');
+            if (result.isConfirmed) {
+                await KURO_API.deleteApplication(id);
+                await renderApplicant();
+                await showSuccess('Application deleted!', 'Deleted');
+            }
+        }));
+        
+        // Edit draft
+        document.querySelectorAll('.edit-draft').forEach(btn => btn.addEventListener('click', async (e) => { 
+            const idx = parseInt(btn.getAttribute('data-idx'));
+            const draft = drafts[idx];
+            editDraftId = idx; 
+            isEditMode = false; 
+            editAppId = null; 
+            selectedGrant = draft.grantTitle;
+            currentDraftData = JSON.parse(JSON.stringify(draft));
+            if (draft.draftId) sessionStorage.setItem('current_draft_id', draft.draftId);
+            openApplicationForm(false);
+        }));
+        
+        // Delete draft
+        document.querySelectorAll('.delete-draft').forEach(btn => btn.addEventListener('click', async (e) => { 
+            const idx = parseInt(btn.getAttribute('data-idx'));
+            const draft = drafts[idx];
+            const result = await confirmDelete(draft?.proposalTitle || 'this draft');
+            if (result.isConfirmed) {
+                await KURO_API.deleteFacultyDraft(draft.draftId || draft.id);
+                await renderApplicant();
+                await showSuccess('Draft deleted!', 'Deleted');
+            }
+        }));
+        
+        // Resend signature
+        document.querySelectorAll('.resend-signature-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const id = btn.getAttribute('data-id');
+                const sub = mySubs.find(s => s.id === id);
+                if(sub) await autoGenerateSignatureLinks(sub, id);
+            });
+        });
+        
+    } catch (error) {
+        console.error('Failed to load dashboard:', error);
+        document.getElementById('mainContent').innerHTML = '<div class="demo-note" style="text-align:center;padding:2rem;color:#e74c3c;"><i class="fas fa-exclamation-triangle"></i> Failed to load applications. Please refresh the page.</div>';
+    }
 }
 
 function getStatusDisplayName(status) {
@@ -2476,39 +2490,35 @@ async function resubmitApplication(app) {
     });
     
     if (result.isConfirmed) {
-        const mySubs = submissionsDB[currentUser.email];
-        const appIndex = mySubs.findIndex(s => s.id === app.id);
-        
-        if (appIndex !== -1) {
-            // Reset status to Awaiting Signatures
-            submissionsDB[currentUser.email][appIndex].status = 'Awaiting Signatures';
-            // Clear the returned feedback
-            submissionsDB[currentUser.email][appIndex].returnedFeedback = null;
-            // Update submission date
-            submissionsDB[currentUser.email][appIndex].submittedDate = new Date().toISOString().slice(0, 10);
-            // Reset signatures
-            submissionsDB[currentUser.email][appIndex].signatures = { chair: false, dean: false };
-            // Remove old signature requests
-            delete submissionsDB[currentUser.email][appIndex].signatureRequests;
-            
-            persist();
+        try {
+            // Call API to resubmit
+            const updatedApp = await KURO_API.resubmitApplication(app.id, {
+                status: 'Awaiting Signatures',
+                returnedFeedback: null,
+                submittedDate: new Date().toISOString().slice(0, 10),
+                signatures: { chair: { signed: false }, dean: { signed: false } }
+            });
             
             // Generate new signature requests
-            await autoGenerateSignatureLinks(submissionsDB[currentUser.email][appIndex], app.id);
+            await autoGenerateSignatureLinks(updatedApp, app.id);
             
-            // Notify faculty
-            addNotification(
-                currentUser.email,
-                'resubmission',
-                '📤 Application Resubmitted',
-                `Your application "${app.proposalTitle}" has been resubmitted. Signature requests have been sent again.`,
-                app.id,
-                '📤',
-                '#2ecc71'
-            );
+            // Add notification
+            await KURO_API.createNotification({
+                userEmail: currentUser.email,
+                type: 'resubmission',
+                title: '📤 Application Resubmitted',
+                message: `Your application "${app.proposalTitle}" has been resubmitted. Signature requests have been sent again.`,
+                appId: app.id,
+                icon: '📤',
+                color: '#2ecc71'
+            });
             
             showInlineNotification(null, '✓ Application resubmitted! New signature requests sent.', true);
-            renderApplicant();
+            await renderApplicant();
+            
+        } catch (error) {
+            console.error('Resubmit failed:', error);
+            showInlineNotification(null, 'Failed to resubmit application. Please try again.', false);
         }
     }
 }
@@ -2797,6 +2807,47 @@ async function requestSignatures(application) {
     }
 }
 
+async function generateAndSendSignatureLinks(application) {
+    if (!application.chairEmail || !application.deanEmail) {
+        console.warn('Missing chair or dean email');
+        showInlineNotification(null, 'Missing chair or dean email addresses. Cannot send signature requests.', false);
+        return false;
+    }
+    
+    showInlineNotification(null, '📧 Generating signature links...', true);
+    
+    try {
+        const result = await KURO_API.generateSignatureLinks(application.id, {
+            chairEmail: application.chairEmail,
+            chairName: application.fromChair,
+            deanEmail: application.deanEmail,
+            deanName: application.deanName,
+            proposalTitle: application.proposalTitle,
+            piName: application.piName
+        });
+        
+        console.log('Signature links generated:', result);
+        
+        await KURO_API.sendSignatureEmails(application.id, {
+            chairLink: result.chairLink,
+            deanLink: result.deanLink,
+            chairEmail: application.chairEmail,
+            deanEmail: application.deanEmail,
+            chairName: application.fromChair,
+            deanName: application.deanName,
+            expiryDays: 7
+        });
+        
+        showInlineNotification(null, '✓ Signature requests sent successfully!', true);
+        return true;
+        
+    } catch (error) {
+        console.error('Failed to generate signature links:', error);
+        showInlineNotification(null, '⚠️ Failed to send signature requests. Please try again.', false);
+        return false;
+    }
+}
+
 async function autoGenerateSignatureLinks(application, appId) {
     if (!application.chairEmail || !application.deanEmail) {
         console.warn('Missing chair or dean email');
@@ -2804,100 +2855,37 @@ async function autoGenerateSignatureLinks(application, appId) {
         return;
     }
     
-    // Generate tokens (7 days expiry)
-    const TOKEN_EXPIRY_DAYS = 7;
-    const expiryDate = new Date();
-    expiryDate.setDate(expiryDate.getDate() + TOKEN_EXPIRY_DAYS);
+    showInlineNotification(null, '📧 Generating signature links...', true);
     
-    const chairToken = 'sig_' + Date.now() + '_' + Math.random().toString(36).substr(2, 12) + '_chair';
-    const deanToken = 'sig_' + Date.now() + '_' + Math.random().toString(36).substr(2, 12) + '_dean';
-    
-    let signatureRequests = JSON.parse(localStorage.getItem('kuro_signature_requests')) || {};
-    
-    // Store chair request
-    signatureRequests[chairToken] = {
-        token: chairToken,
-        appId: appId,
-        role: 'chair',
-        signerEmail: application.chairEmail,
-        signerName: application.fromChair,
-        application: application,
-        completed: false,
-        createdAt: new Date().toISOString(),
-        expiresAt: expiryDate.toISOString(),
-        requestedBy: currentUser.email,
-        requestedByName: currentUser.name
-    };
-    
-    // Store dean request
-    signatureRequests[deanToken] = {
-        token: deanToken,
-        appId: appId,
-        role: 'dean',
-        signerEmail: application.deanEmail,
-        signerName: application.deanName,
-        application: application,
-        completed: false,
-        createdAt: new Date().toISOString(),
-        expiresAt: expiryDate.toISOString(),
-        requestedBy: currentUser.email,
-        requestedByName: currentUser.name
-    };
-    
-    localStorage.setItem('kuro_signature_requests', JSON.stringify(signatureRequests));
-    
-    // FIX: Build correct URL for local hosting
-    const currentPath = window.location.pathname;
-    const basePath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
-    const fullBaseUrl = window.location.origin + basePath;
-    
-    const chairLink = fullBaseUrl + 'signature-confirm.html?token=' + chairToken + '&role=chair&id=' + appId;
-    const deanLink = fullBaseUrl + 'signature-confirm.html?token=' + deanToken + '&role=dean&id=' + appId;
-    
-    console.log('Generated signature links:');
-    console.log('Chair Link:', chairLink);
-    console.log('Dean Link:', deanLink);
-    
-    // Save tokens to application
-    for (let email in submissionsDB) {
-        const apps = submissionsDB[email];
-        if (Array.isArray(apps)) {
-            const appIndex = apps.findIndex(function(a) { return a.id === appId; });
-            if (appIndex !== -1) {
-                submissionsDB[email][appIndex].signatureRequests = {
-                    sentAt: new Date().toISOString(),
-                    chairToken: chairToken,
-                    deanToken: deanToken,
-                    chairResendCount: (submissionsDB[email][appIndex].signatureRequests?.chairResendCount || 0) + 1,
-                    deanResendCount: (submissionsDB[email][appIndex].signatureRequests?.deanResendCount || 0) + 1
-                };
-                localStorage.setItem('kuro_submissions', JSON.stringify(submissionsDB));
-                break;
-            }
-        }
-    }
-    
-    // Show loading indicator
-    showInlineNotification(null, '📧 Sending signature requests...', true);
-    
-    // Send emails using EmailJS
     try {
-        await sendSignatureEmails(application, chairLink, deanLink, TOKEN_EXPIRY_DAYS);
-        showInlineNotification(null, '✓ Signature requests sent successfully!', true);
-    } catch (error) {
-        console.error('EmailJS Error:', error);
-        showInlineNotification(null, '⚠️ Email sending failed. Please check EmailJS configuration.', false);
-        
-        // Fallback - show links manually
-        await Swal.fire({
-            title: '📧 Signature Links Generated',
-            html: '<div style="text-align: left;"><p>Email sending failed. Please share these links manually:</p>' +
-                  '<div style="background: #f8f9fa; padding: 1rem; border-radius: 0.8rem; margin: 1rem 0;">' +
-                  '<strong>Chair Link:</strong><br><a href="' + chairLink + '" target="_blank">' + chairLink + '</a></div>' +
-                  '<div style="background: #f8f9fa; padding: 1rem; border-radius: 0.8rem;">' +
-                  '<strong>Dean Link:</strong><br><a href="' + deanLink + '" target="_blank">' + deanLink + '</a></div></div>',
-            confirmButtonColor: '#D4AF37'
+        // Call backend API to generate signature links
+        const result = await KURO_API.generateSignatureLinks(appId, {
+            chairEmail: application.chairEmail,
+            chairName: application.fromChair,
+            deanEmail: application.deanEmail,
+            deanName: application.deanName,
+            proposalTitle: application.proposalTitle,
+            piName: application.piName
         });
+        
+        console.log('Signature links generated:', result);
+        
+        // Send emails via backend
+        await KURO_API.sendSignatureEmails(appId, {
+            chairLink: result.chairLink,
+            deanLink: result.deanLink,
+            chairEmail: application.chairEmail,
+            deanEmail: application.deanEmail,
+            chairName: application.fromChair,
+            deanName: application.deanName,
+            expiryDays: 7
+        });
+        
+        showInlineNotification(null, '✓ Signature requests sent successfully!', true);
+        
+    } catch (error) {
+        console.error('Failed to generate signature links:', error);
+        showInlineNotification(null, '⚠️ Failed to send signature requests. Please try again.', false);
     }
 }
 
@@ -3076,43 +3064,37 @@ async function resendSignatureRequests(application) {
     }
 }
 
-function checkSignatureStatus() {
-    const mySubs = submissionsDB[currentUser.email] || [];
-    let needsRefresh = false;
-    
-    for (const sub of mySubs) {
-        if (sub.signatureRequests?.chairToken || sub.signatureRequests?.deanToken) {
-            const signatureRequests = JSON.parse(localStorage.getItem('kuro_signature_requests')) || {};
-            
-            if (sub.signatureRequests?.chairToken) {
-                const chairRequest = signatureRequests[sub.signatureRequests.chairToken];
-                if (chairRequest?.completed && !sub.signatures?.chair) {
+async function checkSignatureStatus() {
+    try {
+        const mySubs = await KURO_API.getFacultyApplications();
+        
+        for (const sub of mySubs) {
+            if (sub.signatureRequests?.chairToken || sub.signatureRequests?.deanToken) {
+                const status = await KURO_API.getSignatureStatus(sub.id);
+                
+                if (status.chairCompleted && !sub.signatures?.chair?.signed) {
                     if (!sub.signatures) sub.signatures = {};
-                    sub.signatures.chair = true;
-                    sub.signatures.chairSignedDate = chairRequest.signedAt;
-                    needsRefresh = true;
+                    sub.signatures.chair = { signed: true, signedDate: status.chairSignedAt };
+                    await KURO_API.updateApplication(sub.id, sub);
+                    renderApplicant();
+                    showInlineNotification(null, 'Chair signature received!', true);
                 }
-            }
-            
-            if (sub.signatureRequests?.deanToken) {
-                const deanRequest = signatureRequests[sub.signatureRequests.deanToken];
-                if (deanRequest?.completed && !sub.signatures?.dean) {
+                
+                if (status.deanCompleted && !sub.signatures?.dean?.signed) {
                     if (!sub.signatures) sub.signatures = {};
-                    sub.signatures.dean = true;
-                    sub.signatures.deanSignedDate = deanRequest.signedAt;
-                    needsRefresh = true;
+                    sub.signatures.dean = { signed: true, signedDate: status.deanSignedAt };
+                    await KURO_API.updateApplication(sub.id, sub);
+                    renderApplicant();
+                    showInlineNotification(null, 'Dean signature received!', true);
                 }
             }
         }
-    }
-    
-    if (needsRefresh) {
-        localStorage.setItem('kuro_submissions', JSON.stringify(submissionsDB));
-        renderApplicant();
-        showInlineNotification(null, 'Signature status updated!', true);
+    } catch (error) {
+        console.error('Failed to check signature status:', error);
     }
 }
 
+// Keep the interval but use API version
 setInterval(checkSignatureStatus, 30000);
 
 window.updateEndDateMin = function(startDateInput) {
@@ -3946,32 +3928,42 @@ async function saveDraftToStorage(showNotification = true, modalEl = null) {
     currentDraftData.lastSaved = new Date().toISOString().slice(0, 10);
     currentDraftData.lastSavedTime = new Date().toISOString();
     currentDraftData.draftId = draftId;
+    currentDraftData.userEmail = currentUser.email;
     
-    // Check if this draft already exists
-    const existingDraftIndex = draftsDB.findIndex(d => d.draftId === draftId);
-    
-    if (existingDraftIndex !== -1) {
-        draftsDB[existingDraftIndex] = currentDraftData;
-    } else {
-        draftsDB.push(currentDraftData);
-        editDraftId = draftsDB.length - 1;
+    try {
+        // Save via API
+        await KURO_API.saveFacultyDraft(currentDraftData);
+        
+        if (showNotification) {
+            showFormNotification('✓ Draft saved successfully!', false, modalEl);
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('Failed to save draft:', error);
+        if (showNotification) {
+            showFormNotification('❌ Failed to save draft. Please try again.', true, modalEl);
+        }
+        return false;
     }
-    
-    // Save to localStorage
-    saveDrafts();
-    
-    if (showNotification) {
-        showFormNotification('✓ Draft saved successfully!', false, modalEl);
+}
+
+async function saveDrafts() {
+    if (currentDraftData && currentDraftData.draftId) {
+        try {
+            await KURO_API.saveFacultyDraft(currentDraftData);
+            console.log('Draft auto-saved:', currentDraftData.draftId);
+        } catch (error) {
+            console.error('Failed to auto-save draft:', error);
+        }
     }
-    
-    return true;
 }
 
 function attachCVFileHandlers(modalElement) {
     const piCVInput = modalElement.querySelector('#piCV');
     if (piCVInput) {
         piCVInput.removeEventListener('change', piCVInput._listener);
-        piCVInput._listener = function(e) {
+        piCVInput._listener = async function(e) {
             if (e.target.files.length > 0) {
                 const file = e.target.files[0];
                 
@@ -3991,7 +3983,7 @@ function attachCVFileHandlers(modalElement) {
                 if (currentDraftData) {
                     currentDraftData.piCVName = file.name;
                     currentDraftData.piCVStatus = 'pending';
-                    saveDrafts();
+                    await saveDrafts(); // Use API save
                     refreshCVTabContentAfterUpload(modalElement);
                     
                     if (oldFile) {
@@ -4006,7 +3998,7 @@ function attachCVFileHandlers(modalElement) {
     }
     
     // Handle team CV uploads
-    modalElement.addEventListener('change', function(e) {
+    modalElement.addEventListener('change', async function(e) {
         const input = e.target;
         if (input && input.id && input.id.startsWith('teamCV_')) {
             if (input.files.length > 0) {
@@ -4035,7 +4027,7 @@ function attachCVFileHandlers(modalElement) {
                         status: 'pending'
                     };
                     
-                    saveDrafts();
+                    await saveDrafts(); // Use API save
                     refreshCVTabContentAfterUpload(modalElement);
                     
                     const memberName = (getCurrentTeamMembersFromForm1(modalElement)[memberIdx]?.name) || 'Team member';
@@ -4050,7 +4042,7 @@ function attachCVFileHandlers(modalElement) {
         }
     });
     
-    // FIXED: Remove PI CV button handler - FOLLOWS SAME PATTERN AS "Save as Draft"
+    // Remove PI CV button handler
     const removePiBtn = modalElement.querySelector('.remove-pi-cv-btn');
     if (removePiBtn) {
         if (removePiBtn._handler) {
@@ -4063,12 +4055,10 @@ function attachCVFileHandlers(modalElement) {
             
             if (currentDraftData && currentDraftData.piCVName) {
                 const fileName = currentDraftData.piCVName;
-                const currentTab = currentActiveTab; // Store current tab
+                const currentTab = currentActiveTab;
                 
-                // FIRST: Close the current modal
                 Swal.close();
                 
-                // THEN: Show confirmation
                 setTimeout(async () => {
                     const result = await Swal.fire({
                         title: 'Remove CV?',
@@ -4082,24 +4072,19 @@ function attachCVFileHandlers(modalElement) {
                     });
                     
                     if (result.isConfirmed) {
-                        // Clear the data
                         currentDraftData.piCVName = '';
                         currentDraftData.piCVStatus = 'missing';
                         
-                        // Save to localStorage
-                        saveDrafts();
+                        await saveDrafts(); // Use API save
                         
-                        // Reopen the application form with the same tab
                         setTimeout(() => {
                             openApplicationForm(isEditMode, currentTab);
                         }, 100);
                         
-                        // Show success notification after reopening
                         setTimeout(() => {
                             showInlineNotification(null, `✓ Removed "${fileName}"`, true);
                         }, 300);
                     } else {
-                        // User cancelled - just reopen the form with same tab
                         setTimeout(() => {
                             openApplicationForm(isEditMode, currentTab);
                         }, 100);
@@ -4110,7 +4095,7 @@ function attachCVFileHandlers(modalElement) {
         removePiBtn.addEventListener('click', removePiBtn._handler);
     }
 
-    // FIXED: Remove Team CV button handler - FOLLOWS SAME PATTERN
+    // Remove Team CV button handler
     if (modalElement._teamCVRemoveHandler) {
         modalElement.removeEventListener('click', modalElement._teamCVRemoveHandler);
     }
@@ -4122,7 +4107,7 @@ function attachCVFileHandlers(modalElement) {
             e.stopPropagation();
             
             const memberIdx = parseInt(btn.getAttribute('data-member-idx'));
-            const currentTab = currentActiveTab; // Store current tab
+            const currentTab = currentActiveTab;
             
             let memberName = 'Team member';
             const teamRows = modalElement.querySelectorAll('#teamMembersContainer .member-row');
@@ -4136,10 +4121,8 @@ function attachCVFileHandlers(modalElement) {
             if (currentDraftData && currentDraftData.teamCVs && currentDraftData.teamCVs[memberIdx]) {
                 const fileName = currentDraftData.teamCVs[memberIdx].name;
                 
-                // FIRST: Close the current modal
                 Swal.close();
                 
-                // THEN: Show confirmation
                 setTimeout(async () => {
                     const result = await Swal.fire({
                         title: 'Remove CV?',
@@ -4153,23 +4136,18 @@ function attachCVFileHandlers(modalElement) {
                     });
                     
                     if (result.isConfirmed) {
-                        // Clear the data
                         currentDraftData.teamCVs[memberIdx] = null;
                         
-                        // Save to localStorage
-                        saveDrafts();
+                        await saveDrafts(); // Use API save
                         
-                        // Reopen the application form with the same tab
                         setTimeout(() => {
                             openApplicationForm(isEditMode, currentTab);
                         }, 100);
                         
-                        // Show success notification after reopening
                         setTimeout(() => {
                             showInlineNotification(null, `✓ Removed ${memberName}'s CV`, true);
                         }, 300);
                     } else {
-                        // User cancelled - just reopen the form with same tab
                         setTimeout(() => {
                             openApplicationForm(isEditMode, currentTab);
                         }, 100);
@@ -4184,7 +4162,6 @@ function attachCVFileHandlers(modalElement) {
 function refreshCVTabContentAfterUpload(modalElement) {
     const cvTabContent = modalElement.querySelector('#tabCV');
     if (cvTabContent && currentDraftData) {
-        // Get current team members directly from the DOM
         const updatedTeamMembers = [];
         const teamRows = modalElement.querySelectorAll('#teamMembersContainer .member-row');
         teamRows.forEach(row => {
@@ -4194,36 +4171,30 @@ function refreshCVTabContentAfterUpload(modalElement) {
             }
         });
         
-        // Get PI name
         const piNameInput = modalElement.querySelector('#piName');
         const updatedPIName = piNameInput ? piNameInput.value.trim() : currentDraftData.piName || '';
         
-        // Update currentDraftData
         currentDraftData.teamMembers = updatedTeamMembers;
         currentDraftData.piName = updatedPIName;
         
-        // Ensure teamCVs array matches team members length
         if (!currentDraftData.teamCVs) currentDraftData.teamCVs = [];
         while (currentDraftData.teamCVs.length < updatedTeamMembers.length) {
             currentDraftData.teamCVs.push(null);
         }
         
-        // Store the current scroll position of the CV tab content
         const scrollTop = cvTabContent.scrollTop;
         
-        // Re-render just the CV tab content
         cvTabContent.innerHTML = renderCVUploadContent(currentDraftData, updatedTeamMembers);
         
-        // Restore scroll position
         cvTabContent.scrollTop = scrollTop;
         
-        // Re-attach event handlers to the new content
         attachCVFileHandlers(modalElement);
         
-        // Also update the CV tab button to indicate changes (optional)
+        // Auto-save after CV upload
+        saveDrafts();
+        
         const cvTabBtn = modalElement.querySelector('.tab-btn[data-tab="cv"]');
         if (cvTabBtn && !cvTabBtn.classList.contains('active')) {
-            // Add a subtle indicator that CV tab was updated
             cvTabBtn.style.position = 'relative';
             const indicator = cvTabBtn.querySelector('.update-indicator');
             if (!indicator) {
@@ -4257,20 +4228,18 @@ function setCurrentEndorsementDate(modalElement) {
 }
 
 // Update the addTeamMember function
-window.addTeamMember = function() { 
+window.addTeamMember = async function() { 
     const container = document.getElementById('teamMembersContainer');
     if (container) {
         container.insertAdjacentHTML('beforeend', '<div class="member-row"><input type="text" placeholder="Name of faculty" style="flex:1" autocomplete="off"><input type="text" placeholder="Role, main task, deliverables" style="flex:2" autocomplete="off"><button type="button" class="remove-btn" onclick="removeTeamMember(this)">✕</button></div>');
         
-        // Initialize empty CV entry for the new member in currentDraftData
         if (currentDraftData) {
             if (!currentDraftData.teamMembers) currentDraftData.teamMembers = [];
             if (!currentDraftData.teamCVs) currentDraftData.teamCVs = [];
             
-            // Add empty member and null CV entry
             currentDraftData.teamMembers.push({ name: '', role: '' });
             currentDraftData.teamCVs.push(null);
-            saveDrafts();
+            await saveDrafts(); // Save via API
         }
         
         const newRow = container.lastElementChild;
@@ -4288,32 +4257,27 @@ window.addTeamMember = function() {
 };
 
 // New function to remove team member with CV cleanup
-window.removeTeamMember = function(buttonElement) {
+window.removeTeamMember = async function(buttonElement) {
     const row = buttonElement.closest('.member-row');
     if (!row) return;
     
-    // Get the index of the member being removed
     const container = document.getElementById('teamMembersContainer');
     const allRows = Array.from(container.querySelectorAll('.member-row'));
     const indexToRemove = allRows.indexOf(row);
     
     if (indexToRemove !== -1 && currentDraftData) {
-        // Remove the CV entry for this member
         if (currentDraftData.teamCVs && currentDraftData.teamCVs[indexToRemove]) {
             currentDraftData.teamCVs.splice(indexToRemove, 1);
         } else if (currentDraftData.teamCVs && currentDraftData.teamCVs.length > indexToRemove) {
             currentDraftData.teamCVs.splice(indexToRemove, 1);
         }
         
-        // Remove the member row from DOM
         row.remove();
         
-        // Also remove from currentDraftData.teamMembers if it exists
         if (currentDraftData.teamMembers && currentDraftData.teamMembers[indexToRemove]) {
             currentDraftData.teamMembers.splice(indexToRemove, 1);
         }
         
-        // CRITICAL: Rebuild teamCVs array to match new teamMembers length exactly
         const remainingRows = container.querySelectorAll('.member-row');
         const newTeamMembers = [];
         const newTeamCVs = [];
@@ -4322,7 +4286,6 @@ window.removeTeamMember = function(buttonElement) {
             const nameInput = remainingRows[i].querySelector('input:first-child');
             if (nameInput && nameInput.value.trim()) {
                 newTeamMembers.push({ name: nameInput.value.trim() });
-                // Preserve CV if it exists for this index
                 if (currentDraftData.teamCVs && currentDraftData.teamCVs[i]) {
                     newTeamCVs.push(currentDraftData.teamCVs[i]);
                 } else {
@@ -4334,18 +4297,14 @@ window.removeTeamMember = function(buttonElement) {
         currentDraftData.teamMembers = newTeamMembers;
         currentDraftData.teamCVs = newTeamCVs;
         
-        // Save changes
-        saveDrafts();
+        await saveDrafts(); // Save via API
         
-        // Refresh CV tab to show updated state
         if (currentSwalInstance) {
             refreshCVTab(currentSwalInstance);
         }
         
-        // Show notification
         showInlineNotification(null, 'Team member and their CV removed', true);
     } else {
-        // If no currentDraftData, just remove the row
         row.remove();
     }
 };
@@ -5005,41 +4964,47 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                     }
                     
                     if (isEditMode && editAppId) {
-                        const existingApp = submissionsDB[currentUser.email]?.find(s => s.id === editAppId);
-                        
-                        if (existingApp) {
-                            const existingSignatures = existingApp.signatures || { chair: false, dean: false };
-                            const existingPiCVStatus = existingApp.piCVStatus;
-                            const existingTeamCVs = existingApp.teamCVs ? [...existingApp.teamCVs] : null;
-                            const existingSubmittedDate = existingApp.submittedDate;
-                            const existingSignatureRequests = existingApp.signatureRequests;
+                        try {
+                            // Get existing application from API instead of localStorage
+                            const existingApp = await KURO_API.getApplication(editAppId);
                             
-                            const updatedSubmission = { 
-                                id: editAppId,
-                                grantTitle: selectedGrant,
-                                grantType: "Faculty Research Grant",
-                                status: (existingSignatures.chair && existingSignatures.dean) ? "Under Review" : "Awaiting Signatures",
-                                submittedDate: existingSubmittedDate,
-                                signatures: existingSignatures,
-                                signatureRequests: existingSignatureRequests,
-                                ...formData
-                            };
-                            
-                            if (existingPiCVStatus) updatedSubmission.piCVStatus = existingPiCVStatus;
-                            if (existingTeamCVs) updatedSubmission.teamCVs = existingTeamCVs;
-                            
-                            const index = submissionsDB[currentUser.email].findIndex(s => s.id === editAppId);
-                            if (index !== -1) {
-                                submissionsDB[currentUser.email][index] = updatedSubmission;
-                                persist();
-                                renderApplicant();
+                            if (existingApp) {
+                                const existingSignatures = existingApp.signatures || { chair: { signed: false }, dean: { signed: false } };
+                                const existingPiCVStatus = existingApp.piCVStatus;
+                                const existingTeamCVs = existingApp.teamCVs ? [...existingApp.teamCVs] : null;
+                                const existingSubmittedDate = existingApp.submittedDate;
+                                const existingSignatureRequests = existingApp.signatureRequests;
                                 
-                                if (editDraftId !== null && draftsDB[editDraftId]) {
-                                    draftsDB.splice(editDraftId, 1);
-                                    saveDrafts();
+                                const updatedSubmission = { 
+                                    id: editAppId,
+                                    grantTitle: selectedGrant,
+                                    grantType: "Faculty Research Grant",
+                                    status: (existingSignatures.chair?.signed && existingSignatures.dean?.signed) ? "Under Review" : "Awaiting Signatures",
+                                    submittedDate: existingSubmittedDate,
+                                    signatures: existingSignatures,
+                                    signatureRequests: existingSignatureRequests,
+                                    ...formData
+                                };
+                                
+                                // Preserve CV statuses
+                                if (existingPiCVStatus) updatedSubmission.piCVStatus = existingPiCVStatus;
+                                if (existingTeamCVs) updatedSubmission.teamCVs = existingTeamCVs;
+                                
+                                // UPDATE via API instead of localStorage
+                                await KURO_API.updateApplication(editAppId, updatedSubmission);
+                                
+                                // Delete draft if it exists (via API)
+                                if (editDraftId !== null) {
+                                    const drafts = await KURO_API.getFacultyDrafts();
+                                    const draftToDelete = drafts[editDraftId];
+                                    if (draftToDelete?.draftId) {
+                                        await KURO_API.deleteFacultyDraft(draftToDelete.draftId);
+                                    }
                                     sessionStorage.removeItem('current_draft_id');
                                     editDraftId = null;
                                 }
+                                
+                                await renderApplicant();
                                 
                                 await Swal.fire({
                                     icon: 'success',
@@ -5052,64 +5017,78 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                                 Swal.close();
                                 return;
                             }
+                        } catch (error) {
+                            console.error('Update failed:', error);
+                            showFormNotification('Failed to update application. Please try again.', true, modal);
+                            return;
                         }
                     }
                     
                     if (!isEditMode || !editAppId) {
-                        const newId = "FRG" + Date.now();
-                        const newSubmission = { 
-                            id: newId, 
-                            grantTitle: selectedGrant, 
-                            grantType: "Faculty Research Grant", 
-                            status: "Awaiting Signatures",
-                            submittedDate: new Date().toISOString().slice(0,10),
-                            signatures: { chair: false, dean: false },
-                            piCVStatus: 'pending',
-                            ...formData
-                        };
-                        
-                        if (newSubmission.teamCVs) {
-                            newSubmission.teamCVs.forEach(cv => {
-                                if (cv && cv.name) cv.status = 'pending';
+                        try {
+                            const newId = "FRG" + Date.now();
+                            const newSubmission = { 
+                                id: newId, 
+                                grantTitle: selectedGrant, 
+                                grantType: "Faculty Research Grant", 
+                                status: "Awaiting Signatures",
+                                submittedDate: new Date().toISOString().slice(0,10),
+                                signatures: { chair: { signed: false }, dean: { signed: false } },
+                                piCVStatus: 'pending',
+                                ...formData
+                            };
+                            
+                            // Initialize team CVs status
+                            if (newSubmission.teamCVs) {
+                                newSubmission.teamCVs.forEach(cv => {
+                                    if (cv && cv.name) cv.status = 'pending';
+                                });
+                            }
+                            
+                            // CREATE via API instead of localStorage
+                            const created = await KURO_API.createApplication(newSubmission);
+                            
+                            console.log('Submitting application with:');
+                            console.log('Chair Email:', formData.chairEmail);
+                            console.log('Dean Email:', formData.deanEmail);
+                            console.log('Chair Name:', formData.fromChair);
+                            console.log('Dean Name:', formData.deanName);
+
+                            if (!formData.chairEmail || !formData.deanEmail) {
+                                showFormNotification('⚠️ Please fill in Department Chair and Dean email addresses in Form 2 before submitting.', true, modal);
+                                return;
+                            }
+
+                            // Generate signature links via API
+                            await autoGenerateSignatureLinks(created, created.id);
+
+                            // Delete draft if exists
+                            if (editDraftId !== null) {
+                                const drafts = await KURO_API.getFacultyDrafts();
+                                const draftToDelete = drafts[editDraftId];
+                                if (draftToDelete?.draftId) {
+                                    await KURO_API.deleteFacultyDraft(draftToDelete.draftId);
+                                }
+                                sessionStorage.removeItem('current_draft_id');
+                                editDraftId = null;
+                            }
+                            
+                            await renderApplicant();
+                            
+                            await Swal.fire({
+                                icon: 'success',
+                                title: 'Submitted!',
+                                text: 'Application submitted! Signature requests have been sent to the Department Chair and Dean.',
+                                confirmButtonColor: '#D4AF37',
+                                timer: 3000,
+                                showConfirmButton: false
                             });
+                            Swal.close();
+                            
+                        } catch (error) {
+                            console.error('Submission failed:', error);
+                            showFormNotification('Failed to submit application. Please try again.', true, modal);
                         }
-                        
-                        if (!submissionsDB[currentUser.email]) submissionsDB[currentUser.email] = [];
-                        submissionsDB[currentUser.email].push(newSubmission);
-                        
-
-                        console.log('Submitting application with:');
-                        console.log('Chair Email:', formData.chairEmail);
-                        console.log('Dean Email:', formData.deanEmail);
-                        console.log('Chair Name:', formData.fromChair);
-                        console.log('Dean Name:', formData.deanName);
-
-                        if (!formData.chairEmail || !formData.deanEmail) {
-                            showFormNotification('⚠️ Please fill in Department Chair and Dean email addresses in Form 2 before submitting.', true, modal);
-                            return;
-                        }
-
-                        await autoGenerateSignatureLinks(newSubmission, newId);
-
-                        if (editDraftId !== null && draftsDB[editDraftId]) {
-                            draftsDB.splice(editDraftId, 1);
-                            saveDrafts();
-                            sessionStorage.removeItem('current_draft_id');
-                            editDraftId = null;
-                        }
-                        
-                        persist();
-                        renderApplicant();
-                        
-                        await Swal.fire({
-                            icon: 'success',
-                            title: 'Submitted!',
-                            text: 'Application submitted! Signature requests have been sent to the Department Chair and Dean.',
-                            confirmButtonColor: '#D4AF37',
-                            timer: 3000,
-                            showConfirmButton: false
-                        });
-                        Swal.close();
                     }
                 });
             }
@@ -5169,28 +5148,28 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                         sessionStorage.setItem('current_draft_id', draftId);
                     }
                     currentDraftData.draftId = draftId;
+                    currentDraftData.userEmail = currentUser.email; // Add user email for API
                     
-                    const existingDraftIndex = draftsDB.findIndex(d => d.draftId === draftId);
-                    
-                    if (existingDraftIndex !== -1) {
-                        draftsDB[existingDraftIndex] = currentDraftData;
-                        editDraftId = existingDraftIndex;
-                    } else {
-                        draftsDB.push(currentDraftData);
-                        editDraftId = draftsDB.length - 1;
+                    try {
+                        // Save draft via API instead of localStorage
+                        const savedDraft = await KURO_API.saveFacultyDraft(currentDraftData);
+                        
+                        // Update local reference
+                        editDraftId = savedDraft.index;
+                        
+                        // Show success message
+                        showFormNotification('✓ Draft saved successfully!', false, modal);
+                        
+                        // Close the modal after successful save
+                        setTimeout(() => {
+                            Swal.close();
+                            renderApplicant();
+                        }, 500);
+                        
+                    } catch (error) {
+                        console.error('Failed to save draft:', error);
+                        showFormNotification('❌ Failed to save draft. Please try again.', true, modal);
                     }
-                    
-                    saveDrafts();
-                    renderApplicant();
-                    
-                    // Show success message
-                    showFormNotification('✓ Draft saved successfully!', false, modal);
-                    
-                    // Close the modal after successful save (as requested)
-                    setTimeout(() => {
-                        Swal.close();
-                        renderApplicant();
-                    }, 500);
                 });
             }
         }
@@ -5701,10 +5680,8 @@ document.getElementById('logoutBtn').onclick = () => { sessionStorage.clear(); w
 initNotificationSystem();
 
 window.addEventListener('storage', function(e) {
-    if (e.key === 'kuro_submissions' || e.key === 'kuro_signature_updated') {
-        console.log('Storage changed, refreshing dashboard...');
-        // Reload submissions from localStorage
-        submissionsDB = JSON.parse(localStorage.getItem('kuro_submissions')) || {};
+    if (e.key === 'kuro_signature_updated') {
+        console.log('Signature updated, refreshing dashboard...');
         renderApplicant();
     }
 });

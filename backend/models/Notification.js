@@ -10,10 +10,7 @@ const NotificationSchema = new mongoose.Schema({
     icon: String,
     color: String,
     isRead: { type: Boolean, default: false },
-    createdAt: { type: Date, default: Date.now },
+    createdAt: { type: Date, default: Date.now }
 });
-
-NotificationSchema.index({ userEmail: 1, isRead: 1 });
-NotificationSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model('Notification', NotificationSchema);

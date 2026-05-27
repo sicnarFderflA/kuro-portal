@@ -442,76 +442,86 @@
             }
         });
         
-        confirmBtn.addEventListener('click', function() {
+        confirmBtn.addEventListener('click', async function() {
             if (!isSigned) {
                 showError('Please click the signature field to sign first.');
                 return;
             }
             
-            const submissionsDB = JSON.parse(localStorage.getItem('kuro_submissions')) || {};
-            let found = false;
-            
-            for (let email in submissionsDB) {
-                const apps = submissionsDB[email];
-                if (Array.isArray(apps)) {
-                    for (let i = 0; i < apps.length; i++) {
-                        if (apps[i].id === appId) {
-                            if (!apps[i].signatures) apps[i].signatures = {};
-                            apps[i].signatures[role] = {
-                                signed: true,
-                                signedDate: new Date().toISOString(),
-                                signerEmail: authenticatedUser.email,
-                                signerName: authenticatedUser.name
-                            };
-                            submissionsDB[email] = apps;
-                            localStorage.setItem('kuro_submissions', JSON.stringify(submissionsDB));
-                            found = true;
-                            break;
+            try {
+                // Update signature via API
+                await KURO_API.updateApplication(appId, {
+                    signatures: {
+                        [role]: {
+                            signed: true,
+                            signedDate: new Date().toISOString(),
+                            signerEmail: authenticatedUser.email,
+                            signerName: authenticatedUser.name
                         }
                     }
-                }
-                if (found) break;
-            }
-            
-            signatureRequests[token].completed = true;
-            signatureRequests[token].signedDate = new Date().toISOString();
-            signatureRequests[token].signerName = authenticatedUser.name;
-            localStorage.setItem('kuro_signature_updated', Date.now().toString());
-            localStorage.setItem('kuro_signature_requests', JSON.stringify(signatureRequests));
-            
-            document.getElementById('signSection').style.display = 'none';
-            document.getElementById('signatureCard').innerHTML = `
-                <div class="signature-icon"><i class="fas fa-check-circle"></i></div>
-                <h1>Thank You!</h1>
-                <div class="success">
-                    <i class="fas fa-check"></i> You have successfully signed the endorsement letter.
-                </div>
-                <p>The application will now reflect your digital signature.</p>
-                <button class="btn-confirm" onclick="window.close()">Close Window</button>
-                <footer><i class="fas fa-certificate"></i> Digital signature recorded at ${new Date().toLocaleString()}</footer>
-            `;
-            // In the confirm button handler, after saving signature, add:
-
-            // Add notification for faculty
-            addNotification(applicantEmail, 'signature_received', '✍️ Signature Received', 
-                `${role === 'chair' ? 'Department Chair' : 'Dean'} ${authenticatedUser.name} has signed the endorsement letter.`, 
-                appId, '✍️', '#2ecc71');
-
-            // Check if both signatures are complete
-            const chairSigned = submissionsDB[email][appIndex].signatures.chair?.signed || false;
-            const deanSigned = submissionsDB[email][appIndex].signatures.dean?.signed || false;
-
-            if (chairSigned && deanSigned) {
-                // Notify faculty that both signatures are complete
-                addNotification(applicantEmail, 'signatures_complete', '✅ Signatures Complete', 
-                    'Both Department Chair and Dean have signed the endorsement letter. Your application is now pending review.', 
-                    appId, '✅', '#2ecc71');
+                });
                 
-                // Notify admin (Check 1 staff) that application is ready for review
-                const checkerEmails = getCheckerEmails();
-                addNotification(checkerEmails.check1, 'application_ready', '📋 New Application Ready for Review', 
-                    `Application "${submissionsDB[email][appIndex].proposalTitle}" has been signed and is ready for Check 1 review.`, 
-                    appId, '📋', '#3498db', 'checks');
+                // Mark request as completed
+                await KURO_API.markSignatureComplete(token, {
+                    completed: true,
+                    signedDate: new Date().toISOString(),
+                    signerName: authenticatedUser.name
+                });
+                
+                // Add notification
+                await KURO_API.createNotification({
+                    userEmail: applicantEmail,
+                    type: 'signature_received',
+                    title: '✍️ Signature Received',
+                    message: `${role === 'chair' ? 'Department Chair' : 'Dean'} ${authenticatedUser.name} has signed the endorsement letter.`,
+                    appId: appId,
+                    icon: '✍️',
+                    color: '#2ecc71'
+                });
+                
+                // Check if both signatures complete
+                const app = await KURO_API.getApplication(appId);
+                if (app.signatures?.chair?.signed && app.signatures?.dean?.signed) {
+                    await KURO_API.createNotification({
+                        userEmail: applicantEmail,
+                        type: 'signatures_complete',
+                        title: '✅ Signatures Complete',
+                        message: 'Both signatures have been completed. Your application is now pending review.',
+                        appId: appId,
+                        icon: '✅',
+                        color: '#2ecc71'
+                    });
+                    
+                    // Notify Check 1 reviewer
+                    const checkerEmails = await KURO_API.getCheckerSettings();
+                    await KURO_API.createNotification({
+                        userEmail: checkerEmails.check1,
+                        type: 'application_ready',
+                        title: '📋 New Application Ready for Review',
+                        message: `Application "${app.proposalTitle}" has been signed and is ready for Check 1 review.`,
+                        appId: appId,
+                        icon: '📋',
+                        color: '#3498db',
+                        tab: 'checks'
+                    });
+                }
+                
+                // Show success
+                document.getElementById('signSection').style.display = 'none';
+                document.getElementById('signatureCard').innerHTML = `
+                    <div class="signature-icon"><i class="fas fa-check-circle"></i></div>
+                    <h1>Thank You!</h1>
+                    <div class="success">
+                        <i class="fas fa-check"></i> You have successfully signed the endorsement letter.
+                    </div>
+                    <p>The application will now reflect your digital signature.</p>
+                    <button class="btn-confirm" onclick="window.close()">Close Window</button>
+                    <footer><i class="fas fa-certificate"></i> Digital signature recorded at ${new Date().toLocaleString()}</footer>
+                `;
+                
+            } catch (error) {
+                console.error('Signature failed:', error);
+                showError('Failed to save signature. Please try again.');
             }
         });
     }

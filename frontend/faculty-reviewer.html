@@ -422,8 +422,8 @@ if (!userData) {
 
 const currentUser = window.currentUser;
 
-let submissionsDB = JSON.parse(localStorage.getItem('kuro_submissions')) || {};
-let reviewerTasks = JSON.parse(localStorage.getItem('kuro_reviewer_tasks')) || {};
+let submissionsDB = [];
+let reviewerTasks = {};
 
 function escapeHtml(str) { if (!str) return ''; return String(str).replace(/[&<>]/g, function(m) { return m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'; }); }
 
@@ -592,23 +592,21 @@ function initNotificationSystem() {
     }
 }
 
-function getMyAssignedTasks() {
-    const tasks = reviewerTasks[currentUser.email];
-    if (!tasks || !tasks.assignedTasks) return [];
-    
-    // Add application details to each task
-    return tasks.assignedTasks.map(task => {
-        let app = null;
-        for (let email in submissionsDB) {
-            const found = submissionsDB[email]?.find(a => a.id === task.applicationId);
-            if (found) {
-                app = found;
-                app.applicantEmail = email;
-                break;
-            }
+async function getMyAssignedTasks() {
+    try {
+        const tasks = await KURO_API.getReviewerTasks();
+        reviewerTasks = tasks;
+        
+        // Add application details
+        for (let task of tasks.assignedTasks || []) {
+            const app = await KURO_API.getApplication(task.applicationId);
+            task.application = app;
         }
-        return { ...task, application: app };
-    });
+        return tasks.assignedTasks || [];
+    } catch (error) {
+        console.error('Failed to load tasks:', error);
+        return [];
+    }
 }
 
 function renderDashboard() {

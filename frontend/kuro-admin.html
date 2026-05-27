@@ -1386,9 +1386,9 @@ function showRoleBadge() {
     </div>`;
 }
 
-let submissionsDB = JSON.parse(localStorage.getItem('kuro_submissions')) || {};
-let reviewerTasks = JSON.parse(localStorage.getItem('kuro_reviewer_tasks')) || {};
-let notificationsDB = JSON.parse(localStorage.getItem('kuro_notifications')) || {};
+let submissionsDB = {};
+let reviewerTasks = {};
+let notificationsDB = {};
 
 const ALL_GRANTS = ["INSTITUTIONAL RESEARCH (IR) AWARD", "MIGUEL BERNAD HUMANITIES RESEARCH (MBHR) AWARD", "MINDANAO RESEARCH (MR) AWARD", "MATTEO RICCI RESEARCH (MRR) AWARD", "Publication Award", "Madigan Award", "Kinaadman Student Research Award (KSRA)"];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -1926,20 +1926,21 @@ function generateAuditLogHtml() {
     return html;
 }
 
-function getAllApplications() {
-    let apps = [];
-    for (let email in submissionsDB) {
-        if (Array.isArray(submissionsDB[email])) {
-            submissionsDB[email].forEach(function(s) {
-                // ONLY include applications that are NOT waiting for signatures
-                // This means: status is NOT "Awaiting Signatures"
-                if (s.status !== 'Awaiting Signatures') {
-                    apps.push(Object.assign({}, s, { applicantEmail: email }));
-                }
-            });
-        }
+async function getAllApplications() {
+    try {
+        const userRole = getCurrentUserRole();
+        let filters = {};
+        
+        if (userRole === 'check1') filters.status = 'Pending Eligibility Check';
+        else if (userRole === 'check2') filters.status = 'Pending Secondary Check';
+        else if (userRole === 'check3') filters.status = 'Pending Final Check';
+        
+        const apps = await KURO_API.getAdminApplications(filters);
+        return apps;
+    } catch (error) {
+        console.error('Failed to load applications:', error);
+        return [];
     }
-    return apps.sort(function(a, b) { return new Date(b.submittedDate) - new Date(a.submittedDate); });
 }
 
 function saveToLocalStorage() { 
@@ -2091,8 +2092,8 @@ function getAllApplications() {
 }
 
 // Also update renderDashboard to show appropriate title
-function renderDashboard() {
-    const allApps = getAllApplications();
+async function renderDashboard() {
+    const allApps = await getAllApplications();
     const monthlyData = getMonthlyData(allApps);
     const statusDist = getStatusDistribution(allApps);
     const grantData = getGrantDistribution(allApps);

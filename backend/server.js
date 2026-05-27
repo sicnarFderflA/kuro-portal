@@ -149,10 +149,12 @@ app.get('/', (req, res) => {
 // Import routes
 const applicationsRoutes = require('./routes/applications');
 const adminRoutes = require('./routes/admin');
+const notificationsRoutes = require('./routes/notifications');
 
 // Use routes
 app.use('/api/applications', applicationsRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
 // ========== 404 HANDLER ==========
 app.use((req, res) => {
