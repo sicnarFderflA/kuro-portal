@@ -6,7 +6,7 @@
     <title>Digital Signature Confirmation | KURO</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <script src="https://accounts.google.com/gsi/client" async></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -265,27 +265,46 @@
             return;
         }
         
-        debugLog('Initializing Google Sign-In...');
+        // Wait for Google to be defined
+        let attempts = 0;
+        const maxAttempts = 10;
         
-        google.accounts.id.initialize({
-            client_id: GOOGLE_CLIENT_ID,
-            callback: handleGoogleSignIn,
-            auto_select: false,
-            cancel_on_tap_outside: true,
-            context: "signin"
-        });
+        function tryInit() {
+            if (typeof google !== 'undefined' && google.accounts) {
+                debugLog('Google loaded, initializing...');
+                
+                google.accounts.id.initialize({
+                    client_id: GOOGLE_CLIENT_ID,
+                    callback: handleGoogleSignIn,
+                    auto_select: false,
+                    cancel_on_tap_outside: true,
+                    context: "signin"
+                });
+                
+                google.accounts.id.renderButton(container, {
+                    theme: 'outline',
+                    size: 'large',
+                    width: '100%',
+                    text: 'signin_with',
+                    shape: 'pill',
+                    locale: 'en'
+                });
+                
+                google.accounts.id.prompt();
+                debugLog('Google Sign-In initialized');
+            } else {
+                attempts++;
+                if (attempts < maxAttempts) {
+                    debugLog('Waiting for Google to load... Attempt ' + attempts);
+                    setTimeout(tryInit, 500);
+                } else {
+                    debugLog('ERROR: Google failed to load after ' + maxAttempts + ' attempts');
+                    document.getElementById('statusMessage').innerHTML = '<span style="color: #e74c3c;">❌ Unable to load Google Sign-In. Please refresh the page.</span>';
+                }
+            }
+        }
         
-        google.accounts.id.renderButton(container, {
-            theme: 'outline',
-            size: 'large',
-            width: '100%',
-            text: 'signin_with',
-            shape: 'pill',
-            locale: 'en'
-        });
-        
-        google.accounts.id.prompt();
-        debugLog('Google Sign-In initialized');
+        tryInit();
     }
     
     function handleGoogleSignIn(response) {
