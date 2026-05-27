@@ -1,78 +1,70 @@
 const express = require('express');
 const cors = require('cors');
-const bcrypt = require('bcryptjs');
 const { OAuth2Client } = require('google-auth-library');
 require('dotenv').config();
 
 const app = express();
-app.use(cors());
+
+// CORS configuration - allow your frontend
+app.use(cors({
+    origin: ['https://kuro-portal.vercel.app', 'http://localhost:5500', 'http://localhost:3000', 'http://127.0.0.1:5500'],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
 
-// Initialize Google OAuth client
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || '1074730624717-8u9auss3uqp5grgs7e4padhothotmfrf.apps.googleusercontent.com');
+// Google OAuth client
+const googleClient = new OAuth2Client(
+    '1074730624717-8u9auss3uqp5grgs7e4padhothotmfrf.apps.googleusercontent.com'
+);
 
-// In-memory storage (will add MongoDB later)
-let submissionsDB = {};
-let usersDB = {
-    'faculty@xu.edu.ph': {
-        name: 'Faculty User',
-        email: 'faculty@xu.edu.ph',
-        password: bcrypt.hashSync('password123', 10),
-        role: 'faculty'
-    },
-    'admin@xu.edu.ph': {
-        name: 'Admin User',
-        email: 'admin@xu.edu.ph',
-        password: bcrypt.hashSync('admin123', 10),
-        role: 'admin'
-    },
-    'student@my.xu.edu.ph': {
-        name: 'Student User',
-        email: 'student@my.xu.edu.ph',
-        password: bcrypt.hashSync('student123', 10),
-        role: 'student'
-    },
+// User database (temporary - replace with MongoDB later)
+const usersDB = {
     '200520181@my.xu.edu.ph': {
         name: 'Super Admin',
         email: '200520181@my.xu.edu.ph',
-        password: bcrypt.hashSync('admin123', 10),
         role: 'admin',
         isSuperAdmin: true
     },
     'alfredrabanes@gmail.com': {
         name: 'Alfred Rabanes',
         email: 'alfredrabanes@gmail.com',
-        password: bcrypt.hashSync('password123', 10),
         role: 'admin',
         checkerRole: 'check1'
     },
     'rabanes.francisalfred@gmail.com': {
         name: 'Francis Rabanes',
         email: 'rabanes.francisalfred@gmail.com',
-        password: bcrypt.hashSync('password123', 10),
         role: 'admin',
         checkerRole: 'check2'
     },
     'excitegaming04@gmail.com': {
         name: 'Excite Gaming',
         email: 'excitegaming04@gmail.com',
-        password: bcrypt.hashSync('password123', 10),
         role: 'admin',
         checkerRole: 'check3'
     }
 };
 
-// ========== GOOGLE OAUTH ENDPOINT (For Login.html) ==========
+// ========== GOOGLE AUTH ENDPOINT ==========
 app.post('/api/auth/google', async (req, res) => {
+    console.log('📥 Received auth request');
+    
     try {
         const { credential, role } = req.body;
         
-        console.log('Google sign-in request for role:', role);
+        if (!credential) {
+            console.error('No credential provided');
+            return res.status(400).json({ error: 'No credential provided' });
+        }
         
-        // Verify Google token
+        console.log('🔐 Verifying Google token...');
+        
         const ticket = await googleClient.verifyIdToken({
             idToken: credential,
-            audience: process.env.GOOGLE_CLIENT_ID || '1074730624717-8u9auss3uqp5grgs7e4padhothotmfrf.apps.googleusercontent.com',
+            audience: '1074730624717-8u9auss3uqp5grgs7e4padhothotmfrf.apps.googleusercontent.com',
         });
         
         const payload = ticket.getPayload();
@@ -80,9 +72,10 @@ app.post('/api/auth/google', async (req, res) => {
         const name = payload.name;
         const picture = payload.picture;
         
-        console.log('Authenticated user:', email, name);
+        console.log(`✅ User authenticated: ${email} (${name})`);
+        console.log(`📋 Requested role: ${role}`);
         
-        // Check if user exists, if not create one
+        // Get user from database or create
         let user = usersDB[email];
         
         if (!user) {
@@ -90,8 +83,6 @@ app.post('/api/auth/google', async (req, res) => {
             let userRole = 'student';
             if (email.endsWith('@xu.edu.ph')) {
                 userRole = 'faculty';
-            } else if (email === '200520181@my.xu.edu.ph') {
-                userRole = 'admin';
             }
             
             user = {
@@ -99,27 +90,32 @@ app.post('/api/auth/google', async (req, res) => {
                 email: email,
                 picture: picture,
                 role: userRole,
-                isSuperAdmin: email === '200520181@my.xu.edu.ph',
+                isSuperAdmin: false,
                 checkerRole: null
             };
             usersDB[email] = user;
+            console.log(`🆕 Created new user: ${email} as ${userRole}`);
         }
         
-        // Check if user can access the selected role
-        let allowedRole = false;
+        // Check role permission
         const isExempted = email === '200520181@my.xu.edu.ph';
+        let allowed = false;
         
-        if (role === 'student' && (user.role === 'student' || isExempted)) allowedRole = true;
-        if (role === 'faculty' && (user.role === 'faculty' || isExempted)) allowedRole = true;
-        if (role === 'admin' && (user.isSuperAdmin || user.role === 'admin' || isExempted)) allowedRole = true;
+        if (role === 'student') allowed = (user.role === 'student' || isExempted);
+        else if (role === 'faculty') allowed = (user.role === 'faculty' || isExempted);
+        else if (role === 'admin') allowed = (user.isSuperAdmin || user.role === 'admin' || isExempted);
         
-        if (!allowedRole) {
+        if (!allowed) {
+            console.error(`❌ Access denied: ${email} cannot sign in as ${role}`);
             return res.status(403).json({ error: `You cannot sign in as ${role}` });
         }
         
-        // Return user data
+        console.log(`✅ Access granted for ${email} as ${role}`);
+        
+        // Return success
         res.json({
-            token: 'dummy_token_' + Date.now(),
+            success: true,
+            token: 'jwt_token_' + Date.now(),
             user: {
                 email: user.email,
                 name: user.name,
@@ -131,53 +127,37 @@ app.post('/api/auth/google', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Google auth error:', error);
+        console.error('❌ Auth error:', error);
         res.status(500).json({ error: 'Authentication failed: ' + error.message });
     }
 });
 
-// ========== TRADITIONAL LOGIN ENDPOINT ==========
-app.post('/api/auth/login', async (req, res) => {
-    const { email, password, selectedRole } = req.body;
-    const user = usersDB[email];
-    
-    if (!user) return res.status(401).json({ error: 'Account not found' });
-    
-    const isValid = await bcrypt.compare(password, user.password);
-    if (!isValid) return res.status(401).json({ error: 'Invalid password' });
-    
-    res.json({ success: true, user: { name: user.name, email: user.email, role: user.role } });
+// ========== HEALTH CHECK ==========
+app.get('/health', (req, res) => {
+    res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
 // ========== ROOT ENDPOINT ==========
 app.get('/', (req, res) => {
-    res.json({ 
+    res.json({
         message: 'KURO API is running!',
+        status: 'online',
         endpoints: {
             'POST /api/auth/google': 'Google OAuth login',
-            'POST /api/auth/login': 'Traditional login',
             'GET /health': 'Health check'
         }
     });
 });
 
-// ========== HEALTH CHECK ==========
-app.get('/health', (req, res) => {
-    res.json({ status: 'OK', timestamp: new Date() });
-});
-
 // ========== 404 HANDLER ==========
 app.use((req, res) => {
-    res.status(404).json({ 
-        error: 'Route not found',
-        path: req.originalUrl,
-        method: req.method
-    });
+    console.log(`❌ 404: ${req.method} ${req.url}`);
+    res.status(404).json({ error: 'Route not found', path: req.url });
 });
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-    console.log(`Test: http://localhost:${PORT}`);
-    console.log(`Google Auth endpoint: http://localhost:${PORT}/api/auth/google`);
+    console.log(`\n🚀 Server running on port ${PORT}`);
+    console.log(`📍 API URL: http://localhost:${PORT}`);
+    console.log(`✅ Health check: http://localhost:${PORT}/health\n`);
 });

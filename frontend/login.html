@@ -626,10 +626,11 @@ async function handleGoogleResponse(response) {
     showLoading(true);
     
     try {
-        // Use the API to authenticate
+        console.log("Sending auth request for role:", selectedRole);
+        
         const result = await window.KURO_API.googleSignIn(response.credential, selectedRole);
         
-        console.log("Authentication successful:", result.user);
+        console.log("Auth successful:", result);
         
         // Redirect based on selected role
         if (selectedRole === 'student') {
@@ -643,6 +644,7 @@ async function handleGoogleResponse(response) {
     } catch (error) {
         console.error("Authentication error:", error);
         showError(error.message || "Authentication failed. Please try again.");
+    } finally {
         showLoading(false);
     }
 }
