@@ -7,7 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -145,6 +144,16 @@
             border-radius: 0.8rem;
             margin: 1rem 0;
         }
+        .debug-info {
+            background: #f0f0f0;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.7rem;
+            margin-top: 1rem;
+            display: none;
+            text-align: left;
+            word-break: break-all;
+        }
     </style>
 </head>
 <body>
@@ -177,6 +186,8 @@
         <button class="btn-confirm" id="confirmBtn" disabled>✍️ Confirm & Sign</button>
     </div>
     
+    <div id="debugInfo" class="debug-info"></div>
+    
     <footer><i class="fas fa-lock"></i> This is a legally binding digital signature</footer>
 </div>
 
@@ -187,11 +198,23 @@
     const role = urlParams.get('role');
     const appId = urlParams.get('id');
     
-    let signatureRequests = JSON.parse(localStorage.getItem('kuro_signature_requests')) || {};
+    // Debug function
+    function debugLog(msg) {
+        console.log('[Signature]', msg);
+        const debugDiv = document.getElementById('debugInfo');
+        if (debugDiv) {
+            debugDiv.style.display = 'block';
+            debugDiv.innerHTML += '<div>' + new Date().toLocaleTimeString() + ': ' + escapeHtml(msg) + '</div>';
+        }
+    }
+    
+    let signatureRequests = {};
     let request = null;
     let isSigned = false;
     let authenticatedUser = null;
     const GOOGLE_CLIENT_ID = "1074730624717-8u9auss3uqp5grgs7e4padhothotmfrf.apps.googleusercontent.com";
+    
+    debugLog('Page loaded. Token: ' + token + ', Role: ' + role + ', AppId: ' + appId);
     
     // ==================== HELPER FUNCTIONS ====================
     function escapeHtml(str) {
@@ -217,7 +240,8 @@
         `;
         errorDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
         document.body.appendChild(errorDiv);
-        setTimeout(() => errorDiv.remove(), 3000);
+        setTimeout(() => errorDiv.remove(), 5000);
+        debugLog('ERROR: ' + message);
     }
     
     function parseJwt(token) {
@@ -229,13 +253,19 @@
             }).join(''));
             return JSON.parse(jsonPayload);
         } catch (e) {
+            debugLog('JWT Parse error: ' + e.message);
             return null;
         }
     }
     
     function initGoogleSignIn() {
         const container = document.getElementById('googleButtonContainer');
-        if (!container) return;
+        if (!container) {
+            debugLog('Google button container not found');
+            return;
+        }
+        
+        debugLog('Initializing Google Sign-In...');
         
         google.accounts.id.initialize({
             client_id: GOOGLE_CLIENT_ID,
@@ -255,18 +285,30 @@
         });
         
         google.accounts.id.prompt();
+        debugLog('Google Sign-In initialized');
     }
     
     function handleGoogleSignIn(response) {
+        debugLog('Google Sign-In callback received');
+        
         const payload = parseJwt(response.credential);
         if (!payload || !payload.email) {
             showError('Authentication failed. Please try again.');
+            debugLog('Invalid payload: ' + JSON.stringify(payload));
             return;
         }
         
         const userEmail = payload.email;
         const userName = payload.name;
-        const userPicture = payload.picture;
+        
+        debugLog('User authenticated: ' + userEmail);
+        debugLog('Expected signer: ' + (request ? request.signerEmail : 'No request found'));
+        
+        if (!request) {
+            showError('Signature request not found. Please refresh the page and try again.');
+            debugLog('Request is null! Token may be invalid.');
+            return;
+        }
         
         const expectedEmail = request.signerEmail;
         
@@ -280,11 +322,11 @@
                     Please sign in with the correct email address to continue.
                 </div>
             `;
-            document.getElementById('loginSection').style.display = 'none';
+            debugLog('Email mismatch: ' + userEmail + ' vs ' + expectedEmail);
             return;
         }
         
-        authenticatedUser = { email: userEmail, name: userName, picture: userPicture };
+        authenticatedUser = { email: userEmail, name: userName, picture: payload.picture };
         
         document.getElementById('loginSection').style.display = 'none';
         document.getElementById('signSection').style.display = 'block';
@@ -315,6 +357,7 @@
                 document.getElementById('signatureStatus').className = 'status-badge signed';
                 isSigned = true;
                 confirmBtn.disabled = false;
+                debugLog('User clicked signature field');
             }
         });
         
@@ -323,6 +366,8 @@
                 showError('Please click the signature field to sign first.');
                 return;
             }
+            
+            debugLog('Confirming signature...');
             
             const submissionsDB = JSON.parse(localStorage.getItem('kuro_submissions')) || {};
             let found = false;
@@ -342,6 +387,7 @@
                             submissionsDB[email] = apps;
                             localStorage.setItem('kuro_submissions', JSON.stringify(submissionsDB));
                             found = true;
+                            debugLog('Signature saved for app: ' + appId);
                             break;
                         }
                     }
@@ -365,24 +411,38 @@
                 <button class="btn-confirm" onclick="window.close()">Close Window</button>
                 <footer><i class="fas fa-certificate"></i> Digital signature recorded at ${new Date().toLocaleString()}</footer>
             `;
+            
+            debugLog('Signature completed successfully');
         });
+        
+        debugLog('Signature section displayed');
     }
     
     // ==================== INITIAL VALIDATION ====================
     function validateAndInit() {
+        debugLog('Validating token and request...');
+        
         if (!token || !role || !appId) {
             document.getElementById('statusMessage').innerHTML = '<span style="color: #e74c3c;">❌ Invalid signature link. Missing parameters.</span>';
             document.getElementById('signatureIcon').style.background = '#e74c3c';
+            debugLog('Missing parameters');
             return;
         }
+        
+        // Load signature requests from localStorage
+        signatureRequests = JSON.parse(localStorage.getItem('kuro_signature_requests')) || {};
+        debugLog('Loaded signature requests: ' + Object.keys(signatureRequests).length);
         
         request = signatureRequests[token];
         
         if (!request || request.appId !== appId) {
             document.getElementById('statusMessage').innerHTML = '<span style="color: #e74c3c;">❌ This signature link is invalid.</span><br><br>Please contact the KURO office for assistance.';
             document.getElementById('signatureIcon').style.background = '#e74c3c';
+            debugLog('Invalid token or appId mismatch');
             return;
         }
+        
+        debugLog('Request found for role: ' + request.role);
         
         if (request.revoked === true) {
             document.getElementById('statusMessage').innerHTML = `
@@ -394,6 +454,7 @@
                 </div>
             `;
             document.getElementById('signatureIcon').style.background = '#e74c3c';
+            debugLog('Request was revoked');
             return;
         }
         
@@ -406,6 +467,7 @@
                 </div>
             `;
             document.getElementById('signatureIcon').style.background = '#e74c3c';
+            debugLog('Request expired');
             return;
         }
         
@@ -417,6 +479,7 @@
                 </div>
             `;
             document.getElementById('signatureIcon').style.background = '#2ecc71';
+            debugLog('Request already completed');
             return;
         }
         
@@ -428,12 +491,14 @@
                 </div>
             `;
             document.getElementById('signatureIcon').style.background = '#e74c3c';
+            debugLog('Role mismatch: expected ' + request.role + ', got ' + role);
             return;
         }
         
         // All checks passed
         document.getElementById('statusMessage').innerHTML = '<span style="color: #2ecc71;">✓ Valid signature request found. Please sign in to continue.</span>';
         document.getElementById('loginSection').style.display = 'block';
+        debugLog('Validation passed, showing login section');
         initGoogleSignIn();
     }
     
