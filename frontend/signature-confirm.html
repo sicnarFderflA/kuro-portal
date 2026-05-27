@@ -471,7 +471,7 @@
             document.getElementById('statusMessage').innerHTML = `
                 <div class="warning">
                     <i class="fas fa-ban" style="color: #e74c3c;"></i> 
-                    <strong>⚠️ This signature link has been revoked!</strong><br><br>
+                    <strong>This signature link has been revoked!</strong><br><br>
                     The applicant has generated a new signature request. 
                     Please use the most recent link sent to you.
                 </div>
@@ -484,7 +484,7 @@
             document.getElementById('statusMessage').innerHTML = `
                 <div class="warning">
                     <i class="fas fa-hourglass-end" style="color: #e74c3c;"></i> 
-                    <strong>⏰ This signature link has expired!</strong><br><br>
+                    <strong>This signature link has expired!</strong><br><br>
                     Please ask the applicant to resend the request.
                 </div>
             `;
@@ -496,7 +496,7 @@
             document.getElementById('statusMessage').innerHTML = `
                 <div class="success">
                     <i class="fas fa-check-circle"></i> 
-                    <strong>✅ Signature Already Completed!</strong>
+                    <strong>Signature Already Completed!</strong>
                 </div>
             `;
             document.getElementById('signatureIcon').style.background = '#2ecc71';
@@ -507,7 +507,7 @@
             document.getElementById('statusMessage').innerHTML = `
                 <div class="warning">
                     <i class="fas fa-exclamation-triangle"></i> 
-                    <strong>🔐 This signature link is for a different role.</strong>
+                    <strong>This signature link is for a different role.</strong>
                 </div>
             `;
             document.getElementById('signatureIcon').style.background = '#e74c3c';
