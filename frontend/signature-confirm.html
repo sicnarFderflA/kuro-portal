@@ -289,7 +289,6 @@
         const container = document.getElementById('googleButtonContainer');
         if (!container) return;
         
-        // Wait for Google to be defined
         let attempts = 0;
         const maxAttempts = 10;
         
@@ -406,14 +405,23 @@
                 return;
             }
             
+            console.log('Confirming signature for app:', appId, 'role:', role);
+            
             const submissionsDB = JSON.parse(localStorage.getItem('kuro_submissions')) || {};
             let found = false;
+            let updatedApp = null;
+            let applicantEmail = null;
             
+            // Find the application and update it
             for (let email in submissionsDB) {
                 const apps = submissionsDB[email];
                 if (Array.isArray(apps)) {
                     for (let i = 0; i < apps.length; i++) {
                         if (apps[i].id === appId) {
+                            console.log('Found application for email:', email);
+                            console.log('Before update - signatures:', apps[i].signatures);
+                            console.log('Before update - status:', apps[i].status);
+                            
                             if (!apps[i].signatures) apps[i].signatures = {};
                             apps[i].signatures[role] = {
                                 signed: true,
@@ -421,9 +429,25 @@
                                 signerEmail: authenticatedUser.email,
                                 signerName: authenticatedUser.name
                             };
+                            
+                            // Update the main status if both signatures are complete
+                            const chairSigned = apps[i].signatures.chair?.signed || false;
+                            const deanSigned = apps[i].signatures.dean?.signed || false;
+                            
+                            console.log('Chair signed:', chairSigned, 'Dean signed:', deanSigned);
+                            
+                            if (chairSigned && deanSigned && apps[i].status === 'Awaiting Signatures') {
+                                console.log('Both signatures complete! Updating status to Pending Eligibility Check');
+                                apps[i].status = 'Pending Eligibility Check';
+                            }
+                            
+                            updatedApp = apps[i];
+                            applicantEmail = email;
                             submissionsDB[email] = apps;
                             localStorage.setItem('kuro_submissions', JSON.stringify(submissionsDB));
                             found = true;
+                            console.log('After update - signatures:', apps[i].signatures);
+                            console.log('After update - status:', apps[i].status);
                             break;
                         }
                     }
@@ -431,11 +455,24 @@
                 if (found) break;
             }
             
+            if (!found) {
+                console.error('Application not found with ID:', appId);
+                showError('Application not found. Please contact support.');
+                return;
+            }
+            
+            // Mark request as completed
             signatureRequests[token].completed = true;
             signatureRequests[token].signedDate = new Date().toISOString();
             signatureRequests[token].signerName = authenticatedUser.name;
             localStorage.setItem('kuro_signature_requests', JSON.stringify(signatureRequests));
             
+            // Trigger storage event to notify other tabs
+            localStorage.setItem('kuro_signature_updated', Date.now().toString());
+            
+            console.log('Signature saved successfully. Updated app status:', updatedApp.status);
+            
+            // Show success message
             document.getElementById('signSection').style.display = 'none';
             document.getElementById('signatureCard').innerHTML = `
                 <div class="signature-icon"><i class="fas fa-check-circle"></i></div>
@@ -452,6 +489,9 @@
     
     // ==================== INITIAL VALIDATION ====================
     function validateAndInit() {
+        console.log('Validating signature request...');
+        console.log('Token:', token, 'Role:', role, 'AppId:', appId);
+        
         if (!token || !role || !appId) {
             document.getElementById('statusMessage').innerHTML = '<span style="color: #e74c3c;">❌ Invalid signature link. Missing parameters.</span>';
             document.getElementById('signatureIcon').style.background = '#e74c3c';
@@ -459,13 +499,18 @@
         }
         
         signatureRequests = JSON.parse(localStorage.getItem('kuro_signature_requests')) || {};
+        console.log('Signature requests in localStorage:', Object.keys(signatureRequests));
+        
         request = signatureRequests[token];
         
         if (!request || request.appId !== appId) {
             document.getElementById('statusMessage').innerHTML = '<span style="color: #e74c3c;">❌ This signature link is invalid.</span><br><br>Please contact the KURO office for assistance.';
             document.getElementById('signatureIcon').style.background = '#e74c3c';
+            console.log('Request not found or appId mismatch');
             return;
         }
+        
+        console.log('Request found for role:', request.role);
         
         if (request.revoked === true) {
             document.getElementById('statusMessage').innerHTML = `
