@@ -1750,6 +1750,13 @@ async function renderApplicant() {
         const drafts = await KURO_API.getFacultyDrafts();
         const reviewerTasksData = await KURO_API.getReviewerTasks();
         
+        const filteredSubs = mySubs.filter(sub => 
+            sub.userEmail === currentUser.email || 
+            sub.applicantEmail === currentUser.email
+        );
+        console.log('Filtered applications:', filteredSubs);
+
+        
         const hasReviewerTasks = reviewerTasksData.assignedTasks && reviewerTasksData.assignedTasks.length > 0;
         
         const switchBtn = document.getElementById('switchReviewerBtn');
