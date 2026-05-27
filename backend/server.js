@@ -136,10 +136,23 @@ app.get('/', (req, res) => {
         mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
         endpoints: {
             'POST /api/auth/google': 'Google OAuth login',
-            'GET /health': 'Health check'
+            'GET /health': 'Health check',
+            'GET /api/applications': 'Get all applications',
+            'POST /api/applications': 'Create application',
+            'GET /api/admin/stats': 'Admin dashboard stats',
+            'GET /api/admin/applications': 'Admin view all applications',
+            'PUT /api/admin/applications/:id/status': 'Update application status'
         }
     });
 });
+
+// Import routes
+const applicationsRoutes = require('./routes/applications');
+const adminRoutes = require('./routes/admin');
+
+// Use routes
+app.use('/api/applications', applicationsRoutes);
+app.use('/api/admin', adminRoutes);
 
 // ========== 404 HANDLER ==========
 app.use((req, res) => {
