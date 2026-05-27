@@ -1745,10 +1745,38 @@ function initNotificationSystem() {
 
 async function renderApplicant() {
     try {
-        // Load data from API instead of localStorage
+        // Load data from API
         const mySubs = await KURO_API.getFacultyApplications();
         const drafts = await KURO_API.getFacultyDrafts();
         const reviewerTasksData = await KURO_API.getReviewerTasks();
+        
+        // ========== DEBUGGING ==========
+        console.log('=== DEBUG INFO ===');
+        console.log('1. Current user email:', currentUser.email);
+        console.log('2. Raw mySubs from API:', mySubs);
+        console.log('3. Type of mySubs:', typeof mySubs);
+        console.log('4. Is array?', Array.isArray(mySubs));
+        console.log('5. Length:', mySubs?.length);
+        
+        // If mySubs has data, show each item's email
+        if (mySubs && mySubs.length > 0) {
+            console.log('6. First item emails:', {
+                userEmail: mySubs[0].userEmail,
+                applicantEmail: mySubs[0].applicantEmail
+            });
+        } else {
+            console.log('6. No items in mySubs - API returned empty or null');
+        }
+        
+        // Try direct API test
+        try {
+            const testApi = await fetch(`https://kuro-api-m4mb.onrender.com/api/faculty/applications?userEmail=${currentUser.email}`);
+            const testResult = await testApi.json();
+            console.log('7. Direct API test result:', testResult);
+        } catch(e) {
+            console.log('7. Direct API test failed:', e);
+        }
+        // ========== END DEBUG ==========
         
         const filteredSubs = mySubs.filter(sub => 
             sub.userEmail === currentUser.email || 
@@ -1756,7 +1784,7 @@ async function renderApplicant() {
         );
         console.log('Filtered applications:', filteredSubs);
 
-        
+
         const hasReviewerTasks = reviewerTasksData.assignedTasks && reviewerTasksData.assignedTasks.length > 0;
         
         const switchBtn = document.getElementById('switchReviewerBtn');
