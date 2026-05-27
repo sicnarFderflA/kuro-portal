@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="api.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
@@ -1148,6 +1149,31 @@
 </div>
 
 <script>
+
+// Helper to load data from API instead of localStorage
+async function loadAllApplications() {
+    try {
+        const apps = await KURO_API.getAdminApplications();
+        return apps;
+    } catch (error) {
+        console.error('Failed to load applications:', error);
+        return [];
+    }
+}
+
+async function loadUserRole() {
+    try {
+        const user = JSON.parse(sessionStorage.getItem('kuro_user'));
+        if (user) {
+            window.currentUser = user;
+            window.userRole = user.checkerRole || null;
+            window.isSuperAdmin = user.isSuperAdmin || false;
+        }
+    } catch (error) {
+        console.error('Failed to load user:', error);
+    }
+}
+
 const EXEMPTED_EMAIL = '200520181@my.xu.edu.ph';
 const ADMIN_EMAILS = ['200520181@my.xu.edu.ph'];
 

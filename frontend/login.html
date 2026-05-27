@@ -317,6 +317,7 @@
         }
     </style>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="api.js"></script>
 </head>
 <body>
 <div class="login-container">
@@ -625,27 +626,23 @@ async function handleGoogleResponse(response) {
     showLoading(true);
     
     try {
-        const payload = parseJwt(response.credential);
-        if (!payload || !payload.email) {
-            showError("Authentication failed. Please try again.");
-            showLoading(false);
-            return;
+        // Use the API to authenticate
+        const result = await window.KURO_API.googleSignIn(response.credential, selectedRole);
+        
+        console.log("Authentication successful:", result.user);
+        
+        // Redirect based on selected role
+        if (selectedRole === 'student') {
+            window.location.href = 'student-dashboard.html';
+        } else if (selectedRole === 'faculty') {
+            window.location.href = 'faculty-dashboard.html';
+        } else if (selectedRole === 'admin') {
+            window.location.href = 'kuro-admin.html';
         }
-        
-        let userEmail = payload.email;
-        let userName = payload.name;
-        let userPicture = payload.picture;
-        
-        console.log("User authenticated:", userEmail);
-        console.log("Selected role:", selectedRole);
-        console.log("Is exempted account?", isExemptedAccount(userEmail));
-        
-        validateRoleAndRedirect(userEmail, userName, userPicture);
         
     } catch (error) {
         console.error("Authentication error:", error);
-        showError("Authentication failed. Please try again.");
-    } finally {
+        showError(error.message || "Authentication failed. Please try again.");
         showLoading(false);
     }
 }
