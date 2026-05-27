@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* Base styles - consistent with original */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
             --xavier-primary: #283871;
             --xavier-primary-dark: #1e2b57;
@@ -19,9 +19,9 @@
             --xavier-gray-text: #5A6E6B;
             --bg-gradient-start: #1b2352;
             --bg-gradient-end: #10183a;
+            --xavier-border: #eef2f0;
         }
         
-        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             min-height: 100vh;
             background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--xavier-primary) 50%, var(--bg-gradient-end) 100%);
@@ -33,19 +33,19 @@
         }
         
         .login-container {
-            max-width: 540px;
+            max-width: 550px;
             width: 100%;
             background: white;
-            border-radius: 1.5rem;
+            border-radius: 1rem;
             overflow: hidden;
-            box-shadow: 0 25px 45px rgba(0,0,0,0.3);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
         }
         
-        .brand-header {
+        /* Header Section */
+        .login-header {
             background: var(--xavier-primary);
-            padding: 2rem 2rem 1.5rem;
+            padding: 1.5rem;
             text-align: center;
-            color: white;
             border-bottom: 3px solid var(--xavier-gold);
         }
         
@@ -58,84 +58,50 @@
             flex-wrap: wrap;
         }
         
-        .logo-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.3rem;
-            position: relative;
-        }
-        
         .logo-wrapper img {
-            height: 55px;
+            height: 50px;
             width: auto;
-            object-fit: contain;
             transition: transform 0.2s ease;
         }
         
-        .logo-wrapper:hover img {
+        .logo-wrapper img:hover {
             transform: scale(1.05);
         }
         
-        .logo-label {
-            font-size: 0.55rem;
-            opacity: 0;
-            visibility: hidden;
-            letter-spacing: 1px;
-            background: rgba(0,0,0,0.6);
-            padding: 0.2rem 0.6rem;
-            border-radius: 20px;
-            transition: all 0.2s ease;
-            position: absolute;
-            bottom: -1.8rem;
-            white-space: nowrap;
-        }
-        
-        .logo-wrapper:hover .logo-label {
-            opacity: 1;
-            visibility: visible;
-            bottom: -1.5rem;
-        }
-        
-        .text-logo {
-            background: rgba(255,255,255,0.1);
-            padding: 0.3rem 0.8rem;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.7rem;
-        }
-        
-        .brand-header h1 {
+        /* Gold font for University Name */
+        .university-name {
+            color: var(--xavier-gold);
+            font-size: 1.2rem;
+            margin: 0.5rem 0 0.2rem;
+            font-weight: 700;
             font-family: 'Poppins', sans-serif;
-            font-weight: 800;
-            font-size: 2rem;
-            letter-spacing: -0.3px;
-            color: white;
-            margin-top: 0.5rem;
+            letter-spacing: 0.5px;
+            line-height: 1.4;
         }
         
-        .school-fullname {
-            font-size: 0.7rem;
-            letter-spacing: 1px;
-            background: rgba(255,255,255,0.15);
+        /* Dark Blue Pill for KURO Office */
+        .kuro-pill {
             display: inline-block;
-            padding: 0.25rem 1.2rem;
+            background: var(--xavier-primary-dark);
+            color: white;
+            padding: 0.4rem 1.2rem;
             border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
             margin-top: 0.5rem;
-            font-weight: 500;
-            color: #FFEFCF;
+            font-family: 'Inter', sans-serif;
+            border: 1px solid rgba(255,255,255,0.1);
         }
         
-        .office-tag { 
-            font-size: 0.6rem; 
-            letter-spacing: 2px; 
-            background: rgba(0,0,0,0.25); 
-            display: inline-block; 
-            padding: 0.2rem 1rem; 
-            border-radius: 40px; 
-            margin-top: 0.6rem;
+        .portal-subtitle {
+            color: rgba(255,255,255,0.8);
+            font-size: 0.65rem;
+            margin-top: 0.5rem;
+            letter-spacing: 0.5px;
         }
         
+        /* Content Section */
         .login-content { 
             padding: 2rem; 
             background: white;
@@ -151,7 +117,7 @@
         .role-btn {
             background: #f8f9fa;
             border: 2px solid #e0e0e0;
-            border-radius: 1rem;
+            border-radius: 0.8rem;
             padding: 1.2rem 0.5rem;
             text-align: center;
             cursor: pointer;
@@ -170,6 +136,7 @@
             font-size: 1rem;
             color: var(--xavier-primary);
             margin-bottom: 0;
+            font-weight: 600;
         }
         
         .role-btn .role-hover-info {
@@ -244,32 +211,12 @@
             border: 1px solid var(--xavier-gold);
         }
         
-        .google-btn {
+        .google-btn-wrapper {
             display: flex;
-            align-items: center;
             justify-content: center;
-            gap: 12px;
+            align-items: center;
             width: 100%;
-            background: var(--xavier-gold);
-            border: none;
-            border-radius: 48px;
-            padding: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            color: var(--xavier-primary);
-            font-size: 0.95rem;
-        }
-        
-        .google-btn i:first-child {
-            font-size: 1.2rem;
-        }
-        
-        .google-btn:hover { 
-            background: var(--xavier-gold-dark);
-            color: white;
-            transform: scale(1.01);
-            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+            margin: 1rem 0;
         }
         
         .demo-note { 
@@ -322,20 +269,20 @@
             font-size: 0.65rem; 
             color: var(--xavier-gray-text); 
             padding: 1rem;
-            border-top: 1px solid #e8ecd9;
+            border-top: 1px solid var(--xavier-border);
             background: white;
         }
         
         footer i {
             color: var(--xavier-gold);
+            margin-right: 0.3rem;
         }
         
-        /* Custom exemption badge */
         .exemption-note {
             background: linear-gradient(135deg, #28387110, #D4AF3710);
             border-left: 3px solid var(--xavier-gold);
             padding: 0.6rem 0.9rem;
-            border-radius: 14px;
+            border-radius: 0.8rem;
             font-size: 0.7rem;
             margin-bottom: 1rem;
             text-align: center;
@@ -348,6 +295,14 @@
             margin-right: 6px;
         }
         
+        /* Center Google Sign-In button */
+        #googleButtonContainer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+        
         @media (max-width: 480px) {
             .role-selection { gap: 0.5rem; }
             .role-btn { padding: 0.8rem 0.3rem; }
@@ -356,45 +311,37 @@
             .role-btn .role-hover-info { font-size: 0.55rem; white-space: nowrap; }
             .logo-wrapper img { height: 35px; }
             .logos-container { gap: 1rem; }
-            .logo-label { font-size: 0.5rem; }
             .exemption-note { font-size: 0.6rem; }
-        }
-
-        /* Center Google Sign-In button */
-        #googleButtonContainer {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-        }
-
-        #googleButtonContainer iframe,
-        #googleButtonContainer div {
-            margin: 0 auto;
+            .university-name { font-size: 0.9rem; }
+            .kuro-pill { font-size: 0.6rem; padding: 0.3rem 0.8rem; }
         }
     </style>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 <div class="login-container">
-    <div class="brand-header">
+    <!-- Header Section -->
+    <div class="login-header">
         <div class="logos-container">
             <div class="logo-wrapper">
-                <img src="xu_logo.png" alt="Xavier University Logo" onerror="this.parentElement.innerHTML='<div class=\'text-logo\'><i class=\'fas fa-university\'></i> XU</div>'">
-                <span class="logo-label">Xavier University</span>
+                <img src="xu_logo.png" alt="Xavier University Logo" onerror="this.style.display='none'">
             </div>
             <div class="logo-wrapper">
-                <img src="kuro_logo.png" alt="KURO Logo" onerror="this.parentElement.innerHTML='<div class=\'text-logo\'><i class=\'fas fa-scroll\'></i> KURO</div>'">
-                <span class="logo-label">Research Office</span>
+                <img src="kuro_logo.png" alt="KURO Logo" onerror="this.style.display='none'">
             </div>
         </div>
-        <h1>KURO</h1>
-        <div class="school-fullname">Xavier University - Ateneo de Cagayan</div>
-        <div class="office-tag">Kinaadman University Research Office</div>
-        <div style="font-size:0.7rem; margin-top:0.3rem; opacity:0.9;">Research Grants & Awards Submission Portal</div>
+        
+        <!-- University Name in Gold Font -->
+        <div class="university-name">XAVIER UNIVERSITY<br>ATENEO DE CAGAYAN</div>
+        
+        <!-- KURO Office in Dark Blue Pill -->
+        <div class="kuro-pill">Kinaadman University Research Office (KURO)</div>
+        
+        <div class="portal-subtitle">Research Grants & Awards Submission Portal</div>
     </div>
+    
     <div class="login-content">
-        <!-- Exemption Message for the specific email -->
+        <!-- Exemption Message -->
         <div class="exemption-note" id="exemptionMessage" style="display: none;">
             <i class="fas fa-star-of-life"></i> <strong>⭐ Exempted Account:</strong> Your XU email has full role-flexibility — you can sign in as any role without domain restrictions.
         </div>
@@ -434,6 +381,7 @@
         </div>
         <div id="loginErrorMsg" class="alert-message"></div>
     </div>
+    
     <footer>
         <i class="fas fa-scroll"></i> Kinaadman University Research Office · Secured OAuth 2.0<br>
         <span style="font-size:0.6rem;">Xavier University - Ateneo de Cagayan | Transforming Minds, Serving Communities</span>
@@ -452,14 +400,8 @@
         '200520181@my.xu.edu.ph',
     ];
     
-    // ⭐ THE EXEMPTED EMAIL: This specific XU email can sign in to ANY selected role 
-    // (Student, Faculty, Admin) regardless of their actual email domain.
-    // No super user privileges required — just unrestricted role choice.
-    const EXEMPTED_EMAIL = '200520181@my.xu.edu.ph';   // ← Change this to any XU email you want as the exemption
-    
-    // For backward compatibility, SUPER_USER_EMAILS is deprecated but kept for potential legacy. 
-    // We will not use it for role exemption; we rely on EXEMPTED_EMAIL for universal role picking.
-    // (Super user concept replaced with flexible role exemption)
+    // ⭐ THE EXEMPTED EMAIL
+    const EXEMPTED_EMAIL = '200520181@my.xu.edu.ph';
     
     let selectedRole = null;
     
@@ -501,7 +443,6 @@
         }
     }
     
-    // Check if email is the exempted account (full role flexibility)
     function isExemptedAccount(email) {
         return email && email.toLowerCase() === EXEMPTED_EMAIL.toLowerCase();
     }
@@ -510,20 +451,16 @@
         return email.split('@')[1]?.toLowerCase();
     }
     
-    // Admin check (only for actual admin dashboard access control)
     function isAdminEmail(email) {
         return ADMIN_EMAILS.map(e => e.toLowerCase()).includes(email.toLowerCase());
     }
     
-    // ==================== CORE VALIDATION WITH EXEMPTION LOGIC ====================
-    // NEW: Exempted email can bypass domain restrictions and role-specific domain checks.
-    // The user can freely pick Student, Faculty, or Admin — we respect that choice.
+    // ==================== CORE VALIDATION ====================
     function validateRoleAndRedirect(email, name, picture) {
         const domain = getDomain(email);
         const isExempted = isExemptedAccount(email);
         const isAdminAccount = isAdminEmail(email);
         
-        // Show exemption UI hint when email is the exempted one
         if (isExempted) {
             const exemptionDiv = document.getElementById('exemptionMessage');
             if (exemptionDiv) exemptionDiv.style.display = 'block';
@@ -532,17 +469,13 @@
             if (exemptionDiv) exemptionDiv.style.display = 'none';
         }
         
-        // Check domain only if NOT exempted. Exempted emails skip ALL domain restrictions.
         if (!isExempted) {
-            // Standard domain validation for regular accounts
             if (!ALLOWED_DOMAINS.includes(domain)) {
                 showError(`Access Denied: ${email} is not a Xavier University email (@xu.edu.ph or @my.xu.edu.ph).`);
                 return false;
             }
         }
         
-        // Role validation: For normal accounts, enforce domain/role matching.
-        // For exempted account: allow ANY selected role regardless of email domain.
         if (selectedRole === 'student') {
             if (!isExempted && domain !== 'my.xu.edu.ph') {
                 showError(`You selected "Student" but ${email} is not a @my.xu.edu.ph account.`);
@@ -562,13 +495,6 @@
         }
         
         if (selectedRole === 'admin') {
-            // For admin role: if email is exempted, we still must ensure it's listed in ADMIN_EMAILS?
-            // According to requirement: "i login in all of roles" — the user wants to freely choose ANY role, including admin.
-            // But to keep proper security, we need the email to be in ADMIN_EMAILS to access actual admin panel.
-            // However, the requirement is: "i can just freely choose which role i can sign in" meaning the login should allow admin role selection
-            // without blocking due to missing admin list. For clarity: The exempted email should be able to sign in as admin 
-            // regardless of ADMIN_EMAILS array, but the admin dashboard will still expect appropriate privileges.
-            // We'll implement: If email is exempted, allow admin sign in even if not in ADMIN_EMAILS (bypass admin list requirement).
             if (!isExempted && !isAdminAccount) {
                 showError(`You selected "Admin" but ${email} is not an authorized admin account.`);
                 return false;
@@ -589,7 +515,7 @@
             picture: picture,
             role: 'student',
             isAdmin: false,
-            isExempted: isExemptedAccount(email)   // flag for dashboard if needed
+            isExempted: isExemptedAccount(email)
         };
         sessionStorage.setItem('kuro_user', JSON.stringify(userData));
         window.location.href = 'student-dashboard.html';
@@ -660,7 +586,6 @@
             console.log("Selected role:", selectedRole);
             console.log("Is exempted account?", isExemptedAccount(userEmail));
             
-            // Pass to validation and redirect
             validateRoleAndRedirect(userEmail, userName, userPicture);
             
         } catch (error) {
@@ -678,7 +603,6 @@
         
         const GOOGLE_CLIENT_ID = "1074730624717-8u9auss3uqp5grgs7e4padhothotmfrf.apps.googleusercontent.com";
         
-        // Real Google Sign-In with English language
         google.accounts.id.initialize({
             client_id: GOOGLE_CLIENT_ID,
             callback: handleGoogleResponse,
@@ -688,29 +612,25 @@
             scope: "profile email https://www.googleapis.com/auth/userinfo.profile"
         });
         
-        // Render button with English text and centered
         google.accounts.id.renderButton(container, {
             theme: 'outline',
             size: 'large',
-            width: '100%',
-            text: 'signin_with',  // This should show "Sign in with Google" in English
+            width: 280,
+            text: 'signin_with',
             shape: 'pill',
             logo_alignment: 'center',
             type: 'standard',
-            locale: 'en'  // Force English language
+            locale: 'en'
         });
         
-        // Prompt One Tap for smoother experience
         google.accounts.id.prompt();
     }
     
     // ==================== CHECK EXISTING SESSION ====================
-    // If a user already has a session, redirect accordingly but we need to ensure role flexibility preserved.
     const existingUser = sessionStorage.getItem('kuro_user');
     if (existingUser) {
         try {
             const user = JSON.parse(existingUser);
-            // For existing session, check if email is exempted OR allowed domain.
             if (user.email && (isExemptedAccount(user.email) || ALLOWED_DOMAINS.includes(getDomain(user.email)))) {
                 if (user.role === 'admin') {
                     window.location.href = 'kuro-admin.html';
@@ -729,8 +649,6 @@
         }
     }
     
-    // Preemptively check if the exempted email detection should show message? No, we show after sign-in attempt.
-    // We'll also update badge based on role selection already handled.
     initGoogleSignIn();
 </script>
 </body>
