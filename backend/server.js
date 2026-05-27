@@ -137,11 +137,19 @@ app.get('/', (req, res) => {
         endpoints: {
             'POST /api/auth/google': 'Google OAuth login',
             'GET /health': 'Health check',
-            'GET /api/applications': 'Get all applications',
+            'GET /api/faculty/applications': 'Get faculty applications',
+            'GET /api/faculty/drafts': 'Get faculty drafts',
+            'POST /api/faculty/drafts': 'Save faculty draft',
+            'DELETE /api/faculty/drafts/:draftId': 'Delete faculty draft',
+            'GET /api/my-submissions': 'Alias for faculty applications',
+            'GET /api/applications/:id': 'Get single application',
             'POST /api/applications': 'Create application',
+            'PUT /api/applications/:id': 'Update application',
+            'DELETE /api/applications/:id': 'Delete application',
             'GET /api/admin/stats': 'Admin dashboard stats',
             'GET /api/admin/applications': 'Admin view all applications',
-            'PUT /api/admin/applications/:id/status': 'Update application status'
+            'PUT /api/admin/applications/:id/status': 'Update application status',
+            'GET /api/notifications': 'Get notifications'
         }
     });
 });
@@ -155,6 +163,224 @@ const notificationsRoutes = require('./routes/notifications');
 app.use('/api/applications', applicationsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationsRoutes);
+
+// ========== FACULTY ROUTES ==========
+
+// Get faculty's own applications
+app.get('/api/faculty/applications', async (req, res) => {
+    try {
+        const userEmail = req.query.userEmail;
+        if (!userEmail) {
+            return res.status(400).json({ error: 'userEmail required' });
+        }
+        
+        const db = mongoose.connection.db;
+        const submissions = await db.collection('submissions').find({ 
+            userEmail: userEmail 
+        }).toArray();
+        
+        res.json(submissions);
+    } catch (error) {
+        console.error('Error fetching faculty applications:', error);
+        res.json([]);
+    }
+});
+
+// Get faculty drafts
+app.get('/api/faculty/drafts', async (req, res) => {
+    try {
+        const userEmail = req.query.userEmail;
+        if (!userEmail) {
+            return res.status(400).json({ error: 'userEmail required' });
+        }
+        
+        const db = mongoose.connection.db;
+        const drafts = await db.collection('drafts').find({ 
+            userEmail: userEmail 
+        }).toArray();
+        
+        res.json(drafts);
+    } catch (error) {
+        console.error('Error fetching faculty drafts:', error);
+        res.json([]);
+    }
+});
+
+// Save faculty draft
+app.post('/api/faculty/drafts', async (req, res) => {
+    try {
+        const draft = req.body;
+        if (!draft.userEmail) {
+            return res.status(400).json({ error: 'userEmail required' });
+        }
+        
+        draft.updatedAt = new Date();
+        
+        const db = mongoose.connection.db;
+        const result = await db.collection('drafts').updateOne(
+            { draftId: draft.draftId, userEmail: draft.userEmail },
+            { $set: draft },
+            { upsert: true }
+        );
+        
+        res.json({ success: true, draftId: draft.draftId });
+    } catch (error) {
+        console.error('Error saving draft:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Delete faculty draft
+app.delete('/api/faculty/drafts/:draftId', async (req, res) => {
+    try {
+        const { draftId } = req.params;
+        const userEmail = req.query.userEmail;
+        
+        if (!userEmail) {
+            return res.status(400).json({ error: 'userEmail required' });
+        }
+        
+        const db = mongoose.connection.db;
+        const result = await db.collection('drafts').deleteOne({ 
+            draftId: draftId, 
+            userEmail: userEmail 
+        });
+        
+        if (result.deletedCount === 0) {
+            return res.status(404).json({ error: 'Draft not found' });
+        }
+        
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error deleting draft:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Delete faculty draft
+app.delete('/api/faculty/drafts/:draftId', async (req, res) => {
+    try {
+        const { draftId } = req.params;
+        const userEmail = req.query.userEmail;
+        
+        if (!userEmail) {
+            return res.status(400).json({ error: 'userEmail required' });
+        }
+        
+        const db = mongoose.connection.db;
+        const result = await db.collection('drafts').deleteOne({ 
+            draftId: draftId, 
+            userEmail: userEmail 
+        });
+        
+        if (result.deletedCount === 0) {
+            return res.status(404).json({ error: 'Draft not found' });
+        }
+        
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error deleting draft:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Alias for faculty applications (my-submissions)
+app.get('/api/my-submissions', async (req, res) => {
+    try {
+        const userEmail = req.query.userEmail;
+        if (!userEmail) {
+            return res.status(400).json({ error: 'userEmail required' });
+        }
+        
+        const db = mongoose.connection.db;
+        const submissions = await db.collection('submissions').find({ 
+            userEmail: userEmail 
+        }).toArray();
+        
+        res.json(submissions);
+    } catch (error) {
+        console.error('Error fetching my submissions:', error);
+        res.json([]);
+    }
+});
+
+// Get single application
+app.get('/api/applications/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const db = mongoose.connection.db;
+        const application = await db.collection('submissions').findOne({ id: id });
+        
+        if (!application) {
+            return res.status(404).json({ error: 'Application not found' });
+        }
+        
+        res.json(application);
+    } catch (error) {
+        console.error('Error fetching application:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Create new application
+app.post('/api/applications', async (req, res) => {
+    try {
+        const application = req.body;
+        application.createdAt = new Date();
+        application.updatedAt = new Date();
+        
+        const db = mongoose.connection.db;
+        await db.collection('submissions').insertOne(application);
+        
+        res.json(application);
+    } catch (error) {
+        console.error('Error creating application:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Update application
+app.put('/api/applications/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updates = req.body;
+        updates.updatedAt = new Date();
+        
+        const db = mongoose.connection.db;
+        const result = await db.collection('submissions').updateOne(
+            { id: id },
+            { $set: updates }
+        );
+        
+        if (result.matchedCount === 0) {
+            return res.status(404).json({ error: 'Application not found' });
+        }
+        
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error updating application:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Delete application
+app.delete('/api/applications/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const db = mongoose.connection.db;
+        const result = await db.collection('submissions').deleteOne({ id: id });
+        
+        if (result.deletedCount === 0) {
+            return res.status(404).json({ error: 'Application not found' });
+        }
+        
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error deleting application:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
 
 // ========== 404 HANDLER ==========
 app.use((req, res) => {
