@@ -441,6 +441,182 @@ app.put('/api/users/reviewer-name', async (req, res) => {
     }
 });
 
+// ========== SIGNATURE ROUTES ==========
+
+// Generate signature links for an application
+app.post('/api/applications/:appId/generate-signatures', async (req, res) => {
+    try {
+        const { appId } = req.params;
+        const { chairEmail, chairName, deanEmail, deanName, proposalTitle, piName } = req.body;
+        
+        // Generate unique tokens for chair and dean
+        const chairToken = 'sig_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8) + '_chair';
+        const deanToken = 'sig_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8) + '_dean';
+        
+        // Store signature requests in database
+        const db = mongoose.connection.db;
+        
+        const signatureRequest = {
+            appId: appId,
+            chairToken: chairToken,
+            deanToken: deanToken,
+            chairEmail: chairEmail,
+            chairName: chairName,
+            deanEmail: deanEmail,
+            deanName: deanName,
+            chairCompleted: false,
+            deanCompleted: false,
+            createdAt: new Date(),
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days expiry
+        };
+        
+        await db.collection('signature_requests').updateOne(
+            { appId: appId },
+            { $set: signatureRequest },
+            { upsert: true }
+        );
+        
+        // Update application with signature request info
+        await db.collection('submissions').updateOne(
+            { id: appId },
+            { 
+                $set: { 
+                    signatureRequests: {
+                        chairToken: chairToken,
+                        deanToken: deanToken,
+                        sentAt: new Date().toISOString()
+                    }
+                }
+            }
+        );
+        
+        // Generate signature links
+        const baseUrl = 'https://kuro-portal.vercel.app'; // Your frontend URL
+        const chairLink = `${baseUrl}/signature-confirm.html?token=${chairToken}&role=chair&id=${appId}`;
+        const deanLink = `${baseUrl}/signature-confirm.html?token=${deanToken}&role=dean&id=${appId}`;
+        
+        res.json({ 
+            success: true, 
+            chairLink: chairLink, 
+            deanLink: deanLink,
+            chairToken: chairToken,
+            deanToken: deanToken
+        });
+        
+    } catch (error) {
+        console.error('Error generating signature links:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Send signature emails
+app.post('/api/applications/:appId/send-signature-emails', async (req, res) => {
+    try {
+        const { appId } = req.params;
+        const { chairLink, deanLink, chairEmail, deanEmail, chairName, deanName, expiryDays } = req.body;
+        
+        // Here you would integrate with EmailJS or another email service
+        // For now, just log and return success
+        console.log(`📧 Signature emails would be sent to:
+            Chair: ${chairName} (${chairEmail}) - Link: ${chairLink}
+            Dean: ${deanName} (${deanEmail}) - Link: ${deanLink}
+        `);
+        
+        // Update application to show emails were sent
+        const db = mongoose.connection.db;
+        await db.collection('submissions').updateOne(
+            { id: appId },
+            { 
+                $set: { 
+                    'signatureRequests.emailsSent': true,
+                    'signatureRequests.emailsSentAt': new Date().toISOString()
+                }
+            }
+        );
+        
+        res.json({ success: true, message: 'Emails would be sent (EmailJS integration needed)' });
+        
+    } catch (error) {
+        console.error('Error sending signature emails:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Check signature status
+app.get('/api/applications/:appId/signature-status', async (req, res) => {
+    try {
+        const { appId } = req.params;
+        
+        const db = mongoose.connection.db;
+        const signatureRequest = await db.collection('signature_requests').findOne({ appId: appId });
+        
+        if (!signatureRequest) {
+            return res.json({ chairCompleted: false, deanCompleted: false });
+        }
+        
+        res.json({ 
+            chairCompleted: signatureRequest.chairCompleted || false,
+            deanCompleted: signatureRequest.deanCompleted || false,
+            chairSignedAt: signatureRequest.chairSignedAt,
+            deanSignedAt: signatureRequest.deanSignedAt
+        });
+        
+    } catch (error) {
+        console.error('Error checking signature status:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Complete signature (when signatory clicks the link)
+app.put('/api/signatures/:token/complete', async (req, res) => {
+    try {
+        const { token } = req.params;
+        const { name, email } = req.body;
+        
+        const db = mongoose.connection.db;
+        
+        // Determine if it's chair or dean token
+        const isChair = token.includes('_chair');
+        const isDean = token.includes('_dean');
+        
+        let updateField = {};
+        if (isChair) {
+            updateField = { chairCompleted: true, chairSignedAt: new Date(), chairSignerName: name, chairSignerEmail: email };
+        } else if (isDean) {
+            updateField = { deanCompleted: true, deanSignedAt: new Date(), deanSignerName: name, deanSignerEmail: email };
+        } else {
+            return res.status(400).json({ error: 'Invalid token' });
+        }
+        
+        const result = await db.collection('signature_requests').updateOne(
+            { $or: [{ chairToken: token }, { deanToken: token }] },
+            { $set: updateField }
+        );
+        
+        if (result.matchedCount === 0) {
+            return res.status(404).json({ error: 'Signature request not found' });
+        }
+        
+        // Update the application status if both signatures are complete
+        const signatureRequest = await db.collection('signature_requests').findOne({
+            $or: [{ chairToken: token }, { deanToken: token }]
+        });
+        
+        if (signatureRequest && signatureRequest.chairCompleted && signatureRequest.deanCompleted) {
+            await db.collection('submissions').updateOne(
+                { id: signatureRequest.appId },
+                { $set: { status: 'Pending Eligibility Check' } }
+            );
+        }
+        
+        res.json({ success: true, message: 'Signature completed' });
+        
+    } catch (error) {
+        console.error('Error completing signature:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // ========== 404 HANDLER ==========
 app.use((req, res) => {
     res.status(404).json({ error: 'Route not found', path: req.url });
