@@ -181,95 +181,56 @@
 </div>
 
 <script>
+    // ==================== DOM ELEMENTS ====================
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
-    const role = urlParams.get('role'); // chair, dean
+    const role = urlParams.get('role');
     const appId = urlParams.get('id');
     
     let signatureRequests = JSON.parse(localStorage.getItem('kuro_signature_requests')) || {};
     let request = null;
     let isSigned = false;
     let authenticatedUser = null;
-    let GOOGLE_CLIENT_ID = "1074730624717-8u9auss3uqp5grgs7e4padhothotmfrf.apps.googleusercontent.com";
+    const GOOGLE_CLIENT_ID = "1074730624717-8u9auss3uqp5grgs7e4padhothotmfrf.apps.googleusercontent.com";
     
-    // Validate token and request
-    if (!token || !role || !appId) {
-        document.getElementById('statusMessage').innerHTML = '<span style="color: #e74c3c;">❌ Invalid signature link. Missing parameters.</span>';
-        document.getElementById('signatureIcon').style.background = '#e74c3c';
-    } else {
-        request = signatureRequests[token];
-        
-        // Check 1: Does request exist?
-        if (!request || request.appId !== appId) {
-            document.getElementById('statusMessage').innerHTML = '<span style="color: #e74c3c;">❌ This signature link is invalid.</span><br><br>Please contact the KURO office for assistance.';
-            document.getElementById('signatureIcon').style.background = '#e74c3c';
-            return;
+    // ==================== HELPER FUNCTIONS ====================
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>]/g, function(m) {
+            return m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;';
+        });
+    }
+    
+    function showError(message) {
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #e74c3c;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+        `;
+        errorDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
+        document.body.appendChild(errorDiv);
+        setTimeout(() => errorDiv.remove(), 3000);
+    }
+    
+    function parseJwt(token) {
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            return JSON.parse(jsonPayload);
+        } catch (e) {
+            return null;
         }
-        
-        // Check 2: Is token revoked? (NEW)
-        if (request.revoked === true) {
-            document.getElementById('statusMessage').innerHTML = `
-                <div class="warning">
-                    <i class="fas fa-ban" style="color: #e74c3c;"></i> 
-                    <strong>⚠️ This signature link has been revoked!</strong><br><br>
-                    The applicant has generated a new signature request. 
-                    Please use the most recent link sent to you.
-                    ${request.revokedReason ? `<br><br><strong>Reason:</strong> ${escapeHtml(request.revokedReason)}` : ''}
-                    ${request.revokedAt ? `<br><strong>Revoked on:</strong> ${new Date(request.revokedAt).toLocaleString()}` : ''}
-                </div>
-            `;
-            document.getElementById('signatureIcon').style.background = '#e74c3c';
-            return;
-        }
-        
-        // Check 3: Has token expired? (NEW)
-        if (request.expiresAt && new Date(request.expiresAt) < new Date()) {
-            const expiryDate = new Date(request.expiresAt);
-            document.getElementById('statusMessage').innerHTML = `
-                <div class="warning">
-                    <i class="fas fa-hourglass-end" style="color: #e74c3c;"></i> 
-                    <strong>⏰ This signature link has expired!</strong><br><br>
-                    Signature requests expire after 7 days for security reasons.
-                    <br><br><strong>Expired on:</strong> ${expiryDate.toLocaleString()}
-                    <br><br>Please ask the applicant to resend the request to generate a new link.
-                </div>
-            `;
-            document.getElementById('signatureIcon').style.background = '#e74c3c';
-            return;
-        }
-        
-        // Check 4: Already completed?
-        if (request.completed === true) {
-            document.getElementById('statusMessage').innerHTML = `
-                <div class="success">
-                    <i class="fas fa-check-circle"></i> 
-                    <strong>✅ Signature Already Completed!</strong><br><br>
-                    You have already signed this document.
-                    ${request.signedDate ? `<br><br><strong>Signed on:</strong> ${new Date(request.signedDate).toLocaleString()}` : ''}
-                </div>
-            `;
-            document.getElementById('signatureIcon').style.background = '#2ecc71';
-            return;
-        }
-        
-        // Check 5: Role mismatch?
-        if (request.role !== role) {
-            document.getElementById('statusMessage').innerHTML = `
-                <div class="warning">
-                    <i class="fas fa-exclamation-triangle"></i> 
-                    <strong>🔐 This signature link is for a different role.</strong><br><br>
-                    This link was intended for the <strong>${request.role === 'chair' ? 'Department Chair' : 'Dean'}</strong>.<br>
-                    Please check your email for the correct link or contact the applicant.
-                </div>
-            `;
-            document.getElementById('signatureIcon').style.background = '#e74c3c';
-            return;
-        }
-        
-        // All checks passed - show login section
-        document.getElementById('statusMessage').innerHTML = '<span style="color: #2ecc71;">✓ Valid signature request found. Please sign in to continue.</span>';
-        document.getElementById('loginSection').style.display = 'block';
-        initGoogleSignIn();
     }
     
     function initGoogleSignIn() {
@@ -289,7 +250,8 @@
             size: 'large',
             width: '100%',
             text: 'signin_with',
-            shape: 'pill'
+            shape: 'pill',
+            locale: 'en'
         });
         
         google.accounts.id.prompt();
@@ -306,7 +268,6 @@
         const userName = payload.name;
         const userPicture = payload.picture;
         
-        // Verify the email matches the intended signer
         const expectedEmail = request.signerEmail;
         
         if (userEmail.toLowerCase() !== expectedEmail.toLowerCase()) {
@@ -323,14 +284,11 @@
             return;
         }
         
-        // Authentication successful
         authenticatedUser = { email: userEmail, name: userName, picture: userPicture };
         
-        // Hide login, show signature section
         document.getElementById('loginSection').style.display = 'none';
         document.getElementById('signSection').style.display = 'block';
         
-        // Display user info
         document.getElementById('userInfo').innerHTML = `
             <div class="user-avatar">${userName.charAt(0).toUpperCase()}</div>
             <div>
@@ -339,7 +297,6 @@
             </div>
         `;
         
-        // Display application details
         const app = request.application;
         document.getElementById('appDetails').innerHTML = `
             <strong>Project Title:</strong> ${escapeHtml(app.proposalTitle || app.projectTitle || 'N/A')}<br>
@@ -348,7 +305,6 @@
             <strong>Your Role:</strong> ${role === 'chair' ? 'Department Chair' : 'Dean'}
         `;
         
-        // Signature field click handler
         const signatureField = document.getElementById('signatureField');
         const confirmBtn = document.getElementById('confirmBtn');
         
@@ -362,14 +318,12 @@
             }
         });
         
-        // Confirm button handler
         confirmBtn.addEventListener('click', function() {
             if (!isSigned) {
                 showError('Please click the signature field to sign first.');
                 return;
             }
             
-            // Update the signature status in localStorage
             const submissionsDB = JSON.parse(localStorage.getItem('kuro_submissions')) || {};
             let found = false;
             
@@ -395,13 +349,11 @@
                 if (found) break;
             }
             
-            // Mark request as completed
             signatureRequests[token].completed = true;
             signatureRequests[token].signedDate = new Date().toISOString();
             signatureRequests[token].signerName = authenticatedUser.name;
             localStorage.setItem('kuro_signature_requests', JSON.stringify(signatureRequests));
             
-            // Show success message
             document.getElementById('signSection').style.display = 'none';
             document.getElementById('signatureCard').innerHTML = `
                 <div class="signature-icon"><i class="fas fa-check-circle"></i></div>
@@ -410,51 +362,83 @@
                     <i class="fas fa-check"></i> You have successfully signed the endorsement letter.
                 </div>
                 <p>The application will now reflect your digital signature.</p>
-                <p>A confirmation email has been sent to the applicant.</p>
                 <button class="btn-confirm" onclick="window.close()">Close Window</button>
                 <footer><i class="fas fa-certificate"></i> Digital signature recorded at ${new Date().toLocaleString()}</footer>
             `;
         });
     }
     
-    function parseJwt(token) {
-        try {
-            const base64Url = token.split('.')[1];
-            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-            }).join(''));
-            return JSON.parse(jsonPayload);
-        } catch (e) {
-            return null;
+    // ==================== INITIAL VALIDATION ====================
+    function validateAndInit() {
+        if (!token || !role || !appId) {
+            document.getElementById('statusMessage').innerHTML = '<span style="color: #e74c3c;">❌ Invalid signature link. Missing parameters.</span>';
+            document.getElementById('signatureIcon').style.background = '#e74c3c';
+            return;
         }
+        
+        request = signatureRequests[token];
+        
+        if (!request || request.appId !== appId) {
+            document.getElementById('statusMessage').innerHTML = '<span style="color: #e74c3c;">❌ This signature link is invalid.</span><br><br>Please contact the KURO office for assistance.';
+            document.getElementById('signatureIcon').style.background = '#e74c3c';
+            return;
+        }
+        
+        if (request.revoked === true) {
+            document.getElementById('statusMessage').innerHTML = `
+                <div class="warning">
+                    <i class="fas fa-ban" style="color: #e74c3c;"></i> 
+                    <strong>⚠️ This signature link has been revoked!</strong><br><br>
+                    The applicant has generated a new signature request. 
+                    Please use the most recent link sent to you.
+                </div>
+            `;
+            document.getElementById('signatureIcon').style.background = '#e74c3c';
+            return;
+        }
+        
+        if (request.expiresAt && new Date(request.expiresAt) < new Date()) {
+            document.getElementById('statusMessage').innerHTML = `
+                <div class="warning">
+                    <i class="fas fa-hourglass-end" style="color: #e74c3c;"></i> 
+                    <strong>⏰ This signature link has expired!</strong><br><br>
+                    Please ask the applicant to resend the request.
+                </div>
+            `;
+            document.getElementById('signatureIcon').style.background = '#e74c3c';
+            return;
+        }
+        
+        if (request.completed === true) {
+            document.getElementById('statusMessage').innerHTML = `
+                <div class="success">
+                    <i class="fas fa-check-circle"></i> 
+                    <strong>✅ Signature Already Completed!</strong>
+                </div>
+            `;
+            document.getElementById('signatureIcon').style.background = '#2ecc71';
+            return;
+        }
+        
+        if (request.role !== role) {
+            document.getElementById('statusMessage').innerHTML = `
+                <div class="warning">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    <strong>🔐 This signature link is for a different role.</strong>
+                </div>
+            `;
+            document.getElementById('signatureIcon').style.background = '#e74c3c';
+            return;
+        }
+        
+        // All checks passed
+        document.getElementById('statusMessage').innerHTML = '<span style="color: #2ecc71;">✓ Valid signature request found. Please sign in to continue.</span>';
+        document.getElementById('loginSection').style.display = 'block';
+        initGoogleSignIn();
     }
     
-    function showError(message) {
-        const errorDiv = document.createElement('div');
-        errorDiv.style.cssText = `
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #e74c3c;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-size: 14px;
-            z-index: 10000;
-            animation: slideIn 0.3s ease;
-        `;
-        errorDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
-        document.body.appendChild(errorDiv);
-        setTimeout(() => errorDiv.remove(), 3000);
-    }
-    
-    function escapeHtml(str) {
-        if (!str) return '';
-        return String(str).replace(/[&<>]/g, function(m) {
-            return m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;';
-        });
-    }
+    // Start the validation
+    validateAndInit();
     
     // Add CSS animation
     const style = document.createElement('style');
