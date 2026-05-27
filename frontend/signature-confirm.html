@@ -6,7 +6,7 @@
     <title>Digital Signature Confirmation | KURO</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://accounts.google.com/gsi/client" async></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
@@ -15,14 +15,14 @@
             --xavier-gold: #D4AF37;
             --xavier-gold-dark: #b8942e;
             --xavier-gray-text: #5A6E6B;
+            --xavier-bg-light: #f8f9fa;
             --success: #2ecc71;
             --warning: #f39c12;
             --danger: #e74c3c;
-            --light-bg: #f8f9fa;
         }
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #f0f2f5 0%, #e8ecef 100%);
+            background: #f0f2f5;
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -31,12 +31,13 @@
         }
         .signature-card {
             background: white;
-            border-radius: 1.5rem;
+            border-radius: 1rem;
             max-width: 550px;
             width: 100%;
             padding: 2rem;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
             text-align: center;
+            border: 1px solid #eef2f0;
         }
         .signature-icon {
             width: 80px;
@@ -56,9 +57,10 @@
             color: var(--xavier-primary);
             margin-bottom: 0.5rem;
             font-weight: 700;
+            font-size: 1.6rem;
         }
         .application-details {
-            background: var(--light-bg);
+            background: var(--xavier-bg-light);
             padding: 1rem;
             border-radius: 0.8rem;
             margin: 1.5rem 0;
@@ -119,7 +121,7 @@
         .google-login {
             margin: 1rem 0;
             padding: 1rem;
-            background: var(--light-bg);
+            background: var(--xavier-bg-light);
             border-radius: 0.8rem;
             text-align: center;
         }
@@ -132,12 +134,11 @@
             color: var(--xavier-gold);
             margin-right: 0.3rem;
         }
-        #googleButtonContainer {
+        .google-btn-wrapper {
             display: flex;
             justify-content: center;
             align-items: center;
             width: 100%;
-            min-height: 60px;
         }
         .user-info {
             display: flex;
@@ -195,6 +196,12 @@
         #statusMessage {
             font-size: 0.85rem;
         }
+        
+        /* Fix for Google button - use exact width */
+        .g_id_signin {
+            display: flex;
+            justify-content: center;
+        }
     </style>
 </head>
 <body>
@@ -208,7 +215,7 @@
     <div id="loginSection" style="display: none;">
         <div class="google-login">
             <p><i class="fas fa-shield-alt"></i> Please sign in with your Xavier University email to continue.</p>
-            <div id="googleButtonContainer"></div>
+            <div class="google-btn-wrapper" id="googleButtonContainer"></div>
         </div>
     </div>
     
@@ -231,9 +238,6 @@
 </div>
 
 <script>
-    // Force English language for Google
-    document.documentElement.lang = 'en';
-    
     // ==================== DOM ELEMENTS ====================
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
@@ -246,7 +250,6 @@
     let authenticatedUser = null;
     const GOOGLE_CLIENT_ID = "1074730624717-8u9auss3uqp5grgs7e4padhothotmfrf.apps.googleusercontent.com";
     
-    // Flag to prevent multiple initializations
     let googleInitialized = false;
     
     // ==================== HELPER FUNCTIONS ====================
@@ -293,7 +296,6 @@
     }
     
     function initGoogleSignIn() {
-        // Prevent double initialization
         if (googleInitialized) {
             console.log('Google Sign-In already initialized');
             return;
@@ -305,17 +307,11 @@
             return;
         }
         
-        // Clear container first to prevent duplicates
+        // Clear container
         container.innerHTML = '';
         
-        // Set language to English for the button
-        const meta = document.createElement('meta');
-        meta.name = 'google-signin-client';
-        meta.content = GOOGLE_CLIENT_ID;
-        document.head.appendChild(meta);
-        
         let attempts = 0;
-        const maxAttempts = 15;
+        const maxAttempts = 20;
         
         function tryInit() {
             if (typeof google !== 'undefined' && google.accounts) {
@@ -330,11 +326,11 @@
                     ux_mode: "popup"
                 });
                 
-                // Render the default Google button with English forced
+                // Use fixed width instead of 100%
                 google.accounts.id.renderButton(container, {
                     theme: 'outline',
                     size: 'large',
-                    width: '100%',
+                    width: 280,
                     text: 'signin_with',
                     shape: 'pill',
                     logo_alignment: 'center',
@@ -343,18 +339,15 @@
                 });
                 
                 googleInitialized = true;
-                console.log('Google Sign-In initialized with English button');
+                console.log('Google Sign-In initialized');
             } else {
                 attempts++;
                 if (attempts < maxAttempts) {
-                    console.log('Waiting for Google to load... Attempt ' + attempts);
+                    console.log('Waiting for Google... Attempt ' + attempts);
                     setTimeout(tryInit, 500);
                 } else {
-                    console.error('Google failed to load after ' + maxAttempts + ' attempts');
-                    document.getElementById('statusMessage').innerHTML = '<span style="color: #e74c3c;">❌ Unable to load Google Sign-In. Please refresh the page.</span>';
-                    
-                    // Show fallback message
-                    container.innerHTML = '<p style="color: #999; font-size: 0.8rem;">Please refresh the page to try again.</p>';
+                    console.error('Google failed to load');
+                    container.innerHTML = '<p style="color: #999;">Please refresh the page to sign in.</p>';
                 }
             }
         }
@@ -377,7 +370,7 @@
         console.log('User authenticated:', userEmail);
         
         if (!request) {
-            showError('Signature request not found. Please refresh the page and try again.');
+            showError('Signature request not found. Please refresh the page.');
             return;
         }
         
@@ -388,9 +381,9 @@
                 <div class="warning">
                     <i class="fas fa-exclamation-triangle"></i> 
                     <strong>Email Mismatch!</strong><br>
-                    This signature request was sent to <strong>${escapeHtml(expectedEmail)}</strong><br>
-                    You are signed in as <strong>${escapeHtml(userEmail)}</strong><br><br>
-                    Please sign in with the correct email address to continue.
+                    This request was sent to <strong>${escapeHtml(expectedEmail)}</strong><br>
+                    You signed in as <strong>${escapeHtml(userEmail)}</strong><br><br>
+                    Please sign in with the correct email address.
                 </div>
             `;
             return;
@@ -411,7 +404,7 @@
         
         const app = request.application;
         document.getElementById('appDetails').innerHTML = `
-            <strong>Project Title:</strong> ${escapeHtml(app.proposalTitle || app.projectTitle || 'N/A')}<br>
+            <strong>Project Title:</strong> ${escapeHtml(app.proposalTitle || 'N/A')}<br>
             <strong>Principal Investigator:</strong> ${escapeHtml(app.piName || 'N/A')}<br>
             <strong>Grant:</strong> ${escapeHtml(app.grantTitle)}<br>
             <strong>Your Role:</strong> ${role === 'chair' ? 'Department Chair' : 'Dean'}
@@ -420,7 +413,7 @@
         const signatureField = document.getElementById('signatureField');
         const confirmBtn = document.getElementById('confirmBtn');
         
-        // Remove existing listeners by cloning
+        // Clone to remove old listeners
         const newSignatureField = signatureField.cloneNode(true);
         signatureField.parentNode.replaceChild(newSignatureField, signatureField);
         
@@ -436,23 +429,20 @@
         
         confirmBtn.addEventListener('click', function() {
             if (!isSigned) {
-                showError('Please click the signature field to sign first.');
+                showError('Click the signature field to sign first.');
                 return;
             }
             
-            console.log('Confirming signature for app:', appId, 'role:', role);
+            console.log('Confirming signature...');
             
             const submissionsDB = JSON.parse(localStorage.getItem('kuro_submissions')) || {};
             let found = false;
-            let updatedApp = null;
             
             for (let email in submissionsDB) {
                 const apps = submissionsDB[email];
                 if (Array.isArray(apps)) {
                     for (let i = 0; i < apps.length; i++) {
                         if (apps[i].id === appId) {
-                            console.log('Found application for email:', email);
-                            
                             if (!apps[i].signatures) apps[i].signatures = {};
                             apps[i].signatures[role] = {
                                 signed: true,
@@ -465,11 +455,9 @@
                             const deanSigned = apps[i].signatures.dean?.signed || false;
                             
                             if (chairSigned && deanSigned && apps[i].status === 'Awaiting Signatures') {
-                                console.log('Both signatures complete! Updating status to Pending Eligibility Check');
                                 apps[i].status = 'Pending Eligibility Check';
                             }
                             
-                            updatedApp = apps[i];
                             submissionsDB[email] = apps;
                             localStorage.setItem('kuro_submissions', JSON.stringify(submissionsDB));
                             found = true;
@@ -481,19 +469,14 @@
             }
             
             if (!found) {
-                console.error('Application not found with ID:', appId);
-                showError('Application not found. Please contact support.');
+                showError('Application not found.');
                 return;
             }
             
             signatureRequests[token].completed = true;
             signatureRequests[token].signedDate = new Date().toISOString();
-            signatureRequests[token].signerName = authenticatedUser.name;
             localStorage.setItem('kuro_signature_requests', JSON.stringify(signatureRequests));
-            
             localStorage.setItem('kuro_signature_updated', Date.now().toString());
-            
-            console.log('Signature saved successfully. Updated app status:', updatedApp.status);
             
             document.getElementById('signSection').style.display = 'none';
             document.getElementById('signatureCard').innerHTML = `
@@ -511,92 +494,45 @@
     
     // ==================== INITIAL VALIDATION ====================
     function validateAndInit() {
-        console.log('Validating signature request...');
-        console.log('Token:', token, 'Role:', role, 'AppId:', appId);
-        
         if (!token || !role || !appId) {
-            document.getElementById('statusMessage').innerHTML = '<span style="color: #e74c3c;">❌ Invalid signature link. Missing parameters.</span>';
+            document.getElementById('statusMessage').innerHTML = '<span style="color: #e74c3c;">❌ Invalid signature link.</span>';
             document.getElementById('signatureIcon').style.background = '#e74c3c';
             return;
         }
         
         signatureRequests = JSON.parse(localStorage.getItem('kuro_signature_requests')) || {};
-        console.log('Signature requests in localStorage:', Object.keys(signatureRequests));
-        
         request = signatureRequests[token];
         
         if (!request || request.appId !== appId) {
-            document.getElementById('statusMessage').innerHTML = '<span style="color: #e74c3c;">❌ This signature link is invalid.</span><br><br>Please contact the KURO office for assistance.';
-            document.getElementById('signatureIcon').style.background = '#e74c3c';
-            console.log('Request not found or appId mismatch');
-            return;
-        }
-        
-        console.log('Request found for role:', request.role);
-        
-        if (request.revoked === true) {
-            document.getElementById('statusMessage').innerHTML = `
-                <div class="warning">
-                    <i class="fas fa-ban" style="color: #e74c3c;"></i> 
-                    <strong>This signature link has been revoked!</strong><br><br>
-                    The applicant has generated a new signature request. 
-                    Please use the most recent link sent to you.
-                </div>
-            `;
-            document.getElementById('signatureIcon').style.background = '#e74c3c';
-            return;
-        }
-        
-        if (request.expiresAt && new Date(request.expiresAt) < new Date()) {
-            document.getElementById('statusMessage').innerHTML = `
-                <div class="warning">
-                    <i class="fas fa-hourglass-end" style="color: #e74c3c;"></i> 
-                    <strong>This signature link has expired!</strong><br><br>
-                    Please ask the applicant to resend the request.
-                </div>
-            `;
+            document.getElementById('statusMessage').innerHTML = '<span style="color: #e74c3c;">❌ This signature link is invalid.</span>';
             document.getElementById('signatureIcon').style.background = '#e74c3c';
             return;
         }
         
         if (request.completed === true) {
-            document.getElementById('statusMessage').innerHTML = `
-                <div class="success">
-                    <i class="fas fa-check-circle"></i> 
-                    <strong>Signature Already Completed!</strong>
-                </div>
-            `;
+            document.getElementById('statusMessage').innerHTML = '<div class="success"><i class="fas fa-check-circle"></i> Signature already completed!</div>';
             document.getElementById('signatureIcon').style.background = '#2ecc71';
             return;
         }
         
-        if (request.role !== role) {
-            document.getElementById('statusMessage').innerHTML = `
-                <div class="warning">
-                    <i class="fas fa-exclamation-triangle"></i> 
-                    <strong>This signature link is for a different role.</strong>
-                </div>
-            `;
+        if (request.expiresAt && new Date(request.expiresAt) < new Date()) {
+            document.getElementById('statusMessage').innerHTML = '<div class="warning">⏰ This link has expired. Please ask the applicant to resend.</div>';
             document.getElementById('signatureIcon').style.background = '#e74c3c';
             return;
         }
         
-        document.getElementById('statusMessage').innerHTML = '<span style="color: #2ecc71;">✓ Valid signature request found. Please sign in to continue.</span>';
+        if (request.role !== role) {
+            document.getElementById('statusMessage').innerHTML = '<div class="warning">🔐 This link is for a different role.</div>';
+            document.getElementById('signatureIcon').style.background = '#e74c3c';
+            return;
+        }
+        
+        document.getElementById('statusMessage').innerHTML = '<span style="color: #2ecc71;">✓ Valid signature request. Please sign in.</span>';
         document.getElementById('loginSection').style.display = 'block';
         initGoogleSignIn();
     }
     
-    // Start validation
     validateAndInit();
-    
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-    `;
-    document.head.appendChild(style);
 </script>
 </body>
 </html>
