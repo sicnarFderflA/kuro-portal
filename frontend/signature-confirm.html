@@ -12,17 +12,22 @@
         :root {
             --xavier-primary: #283871;
             --xavier-primary-dark: #1e2b57;
+            --xavier-primary-light: #3e5090;
             --xavier-gold: #D4AF37;
             --xavier-gold-dark: #b8942e;
+            --xavier-gold-light: #e6c86a;
+            --xavier-cream: #F9F6F0;
+            --xavier-dark-text: #1A2E3F;
             --xavier-gray-text: #5A6E6B;
             --xavier-bg-light: #f8f9fa;
+            --xavier-border: #eef2f0;
             --success: #2ecc71;
             --warning: #f39c12;
             --danger: #e74c3c;
         }
         body {
             font-family: 'Inter', sans-serif;
-            background: #f0f2f5;
+            background: linear-gradient(135deg, #1b2352 0%, var(--xavier-primary) 50%, #10183a 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -34,10 +39,44 @@
             border-radius: 1rem;
             max-width: 550px;
             width: 100%;
-            padding: 2rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            border: none;
+        }
+        /* Header Section */
+        .signature-header {
+            background: var(--xavier-primary);
+            padding: 1.5rem;
             text-align: center;
-            border: 1px solid #eef2f0;
+            border-bottom: 3px solid var(--xavier-gold);
+        }
+        .logos-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .logo-wrapper img {
+            height: 50px;
+            width: auto;
+        }
+        .signature-header h2 {
+            color: var(--xavier-gold);
+            font-size: 1.3rem;
+            margin: 0.5rem 0 0.2rem;
+            font-weight: 700;
+        }
+        .signature-header p {
+            color: white;
+            font-size: 0.7rem;
+            opacity: 0.9;
+        }
+        /* Content Section */
+        .signature-content {
+            padding: 2rem;
+            text-align: center;
         }
         .signature-icon {
             width: 80px;
@@ -47,7 +86,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 1.5rem;
+            margin: 0 auto 1rem;
         }
         .signature-icon i {
             font-size: 2.5rem;
@@ -57,7 +96,7 @@
             color: var(--xavier-primary);
             margin-bottom: 0.5rem;
             font-weight: 700;
-            font-size: 1.6rem;
+            font-size: 1.5rem;
         }
         .application-details {
             background: var(--xavier-bg-light);
@@ -166,6 +205,10 @@
             margin-top: 1.5rem;
             font-size: 0.7rem;
             color: var(--xavier-gray-text);
+            text-align: center;
+            padding: 1rem;
+            border-top: 1px solid var(--xavier-border);
+            background: white;
         }
         footer i {
             color: var(--xavier-gold);
@@ -196,42 +239,53 @@
         #statusMessage {
             font-size: 0.85rem;
         }
-        
-        /* Fix for Google button - use exact width */
-        .g_id_signin {
-            display: flex;
-            justify-content: center;
-        }
     </style>
 </head>
 <body>
 <div class="signature-card" id="signatureCard">
-    <div class="signature-icon">
-        <i class="fas fa-signature"></i>
-    </div>
-    <h1>Digital Signature Request</h1>
-    <p id="statusMessage">Loading signature request...</p>
-    
-    <div id="loginSection" style="display: none;">
-        <div class="google-login">
-            <p><i class="fas fa-shield-alt"></i> Please sign in with your Xavier University email to continue.</p>
-            <div class="google-btn-wrapper" id="googleButtonContainer"></div>
+    <!-- Header with Xavier colors -->
+    <div class="signature-header">
+        <div class="logos-container">
+            <div class="logo-wrapper">
+                <img src="xu_logo.png" alt="Xavier University" onerror="this.style.display='none'">
+            </div>
+            <div class="logo-wrapper">
+                <img src="kuro_logo.png" alt="KURO" onerror="this.style.display='none'">
+            </div>
         </div>
+        <h2>XAVIER UNIVERSITY - ATENEO DE CAGAYAN</h2>
+        <p>Kinaadman University Research Office (KURO)</p>
     </div>
     
-    <div id="signSection" style="display: none;">
-        <div class="user-info" id="userInfo"></div>
-        <div class="application-details" id="appDetails"></div>
+    <!-- Content -->
+    <div class="signature-content">
+        <div class="signature-icon">
+            <i class="fas fa-signature"></i>
+        </div>
+        <h1>Digital Signature Request</h1>
+        <p id="statusMessage">Loading signature request...</p>
         
-        <h3>Your Signature</h3>
-        <div class="signature-field" id="signatureField">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span><i class="fas fa-pen"></i> Click to sign digitally</span>
-                <span class="status-badge pending" id="signatureStatus">Pending</span>
+        <div id="loginSection" style="display: none;">
+            <div class="google-login">
+                <p><i class="fas fa-shield-alt"></i> Please sign in with your Xavier University email to continue.</p>
+                <div class="google-btn-wrapper" id="googleButtonContainer"></div>
             </div>
         </div>
         
-        <button class="btn-confirm" id="confirmBtn" disabled>✍️ Confirm & Sign</button>
+        <div id="signSection" style="display: none;">
+            <div class="user-info" id="userInfo"></div>
+            <div class="application-details" id="appDetails"></div>
+            
+            <h3>Your Signature</h3>
+            <div class="signature-field" id="signatureField">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span><i class="fas fa-pen"></i> Click to sign digitally</span>
+                    <span class="status-badge pending" id="signatureStatus">Pending</span>
+                </div>
+            </div>
+            
+            <button class="btn-confirm" id="confirmBtn" disabled>✍️ Confirm & Sign</button>
+        </div>
     </div>
     
     <footer><i class="fas fa-lock"></i> This is a legally binding digital signature</footer>
@@ -307,7 +361,6 @@
             return;
         }
         
-        // Clear container
         container.innerHTML = '';
         
         let attempts = 0;
@@ -326,7 +379,6 @@
                     ux_mode: "popup"
                 });
                 
-                // Use fixed width instead of 100%
                 google.accounts.id.renderButton(container, {
                     theme: 'outline',
                     size: 'large',
@@ -413,7 +465,6 @@
         const signatureField = document.getElementById('signatureField');
         const confirmBtn = document.getElementById('confirmBtn');
         
-        // Clone to remove old listeners
         const newSignatureField = signatureField.cloneNode(true);
         signatureField.parentNode.replaceChild(newSignatureField, signatureField);
         
@@ -480,13 +531,23 @@
             
             document.getElementById('signSection').style.display = 'none';
             document.getElementById('signatureCard').innerHTML = `
-                <div class="signature-icon"><i class="fas fa-check-circle"></i></div>
-                <h1>Thank You!</h1>
-                <div class="success">
-                    <i class="fas fa-check"></i> You have successfully signed the endorsement letter.
+                <div class="signature-header" style="background: #283871;">
+                    <div class="logos-container">
+                        <div class="logo-wrapper"><img src="xu_logo.png" onerror="this.style.display='none'"></div>
+                        <div class="logo-wrapper"><img src="kuro_logo.png" onerror="this.style.display='none'"></div>
+                    </div>
+                    <h2>XAVIER UNIVERSITY - ATENEO DE CAGAYAN</h2>
+                    <p>Kinaadman University Research Office (KURO)</p>
                 </div>
-                <p>The application will now reflect your digital signature.</p>
-                <button class="btn-confirm" onclick="window.close()">Close Window</button>
+                <div class="signature-content">
+                    <div class="signature-icon"><i class="fas fa-check-circle"></i></div>
+                    <h1>Thank You!</h1>
+                    <div class="success">
+                        <i class="fas fa-check"></i> You have successfully signed the endorsement letter.
+                    </div>
+                    <p>The application will now reflect your digital signature.</p>
+                    <button class="btn-confirm" onclick="window.close()">Close Window</button>
+                </div>
                 <footer><i class="fas fa-certificate"></i> Digital signature recorded at ${new Date().toLocaleString()}</footer>
             `;
         });
