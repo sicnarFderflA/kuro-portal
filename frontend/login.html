@@ -359,6 +359,19 @@
             .logo-label { font-size: 0.5rem; }
             .exemption-note { font-size: 0.6rem; }
         }
+
+        /* Center Google Sign-In button */
+        #googleButtonContainer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+
+        #googleButtonContainer iframe,
+        #googleButtonContainer div {
+            margin: 0 auto;
+        }
     </style>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -665,7 +678,7 @@
         
         const GOOGLE_CLIENT_ID = "1074730624717-8u9auss3uqp5grgs7e4padhothotmfrf.apps.googleusercontent.com";
         
-        // Real Google Sign-In
+        // Real Google Sign-In with English language
         google.accounts.id.initialize({
             client_id: GOOGLE_CLIENT_ID,
             callback: handleGoogleResponse,
@@ -675,14 +688,16 @@
             scope: "profile email https://www.googleapis.com/auth/userinfo.profile"
         });
         
+        // Render button with English text and centered
         google.accounts.id.renderButton(container, {
             theme: 'outline',
             size: 'large',
             width: '100%',
-            text: 'signin_with',
+            text: 'signin_with',  // This should show "Sign in with Google" in English
             shape: 'pill',
             logo_alignment: 'center',
-            type: 'standard'
+            type: 'standard',
+            locale: 'en'  // Force English language
         });
         
         // Prompt One Tap for smoother experience
