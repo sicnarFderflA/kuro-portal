@@ -6,7 +6,7 @@
     <title>Digital Signature Confirmation | KURO</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <script src="https://accounts.google.com/gsi/client" async></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
@@ -137,6 +137,7 @@
             justify-content: center;
             align-items: center;
             width: 100%;
+            min-height: 60px;
         }
         .user-info {
             display: flex;
@@ -194,6 +195,33 @@
         #statusMessage {
             font-size: 0.85rem;
         }
+        
+        /* Custom Google Button Styles to match theme */
+        .custom-google-btn {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 40px;
+            padding: 0.7rem 1.5rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: #333;
+            width: 100%;
+            justify-content: center;
+        }
+        .custom-google-btn:hover {
+            background: #f8f9fa;
+            border-color: var(--xavier-gold);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .custom-google-btn i {
+            font-size: 1.2rem;
+        }
     </style>
 </head>
 <body>
@@ -242,6 +270,9 @@
     let authenticatedUser = null;
     const GOOGLE_CLIENT_ID = "1074730624717-8u9auss3uqp5grgs7e4padhothotmfrf.apps.googleusercontent.com";
     
+    // Flag to prevent multiple initializations
+    let googleInitialized = false;
+    
     // ==================== HELPER FUNCTIONS ====================
     function escapeHtml(str) {
         if (!str) return '';
@@ -286,8 +317,17 @@
     }
     
     function initGoogleSignIn() {
+        // Prevent double initialization
+        if (googleInitialized) {
+            console.log('Google Sign-In already initialized');
+            return;
+        }
+        
         const container = document.getElementById('googleButtonContainer');
         if (!container) return;
+        
+        // Clear container first to prevent duplicates
+        container.innerHTML = '';
         
         let attempts = 0;
         const maxAttempts = 10;
@@ -305,18 +345,17 @@
                     ux_mode: "popup"
                 });
                 
-                google.accounts.id.renderButton(container, {
-                    theme: 'outline',
-                    size: 'large',
-                    width: '280px',
-                    text: 'signin_with',
-                    shape: 'pill',
-                    logo_alignment: 'center',
-                    locale: 'en'
-                });
+                // Use custom button instead of Google's default to avoid language issues
+                const customButton = document.createElement('button');
+                customButton.className = 'custom-google-btn';
+                customButton.innerHTML = '<i class="fab fa-google"></i> Sign in with Google';
+                customButton.onclick = function() {
+                    google.accounts.id.prompt();
+                };
+                container.appendChild(customButton);
                 
-                google.accounts.id.prompt();
-                console.log('Google Sign-In initialized');
+                googleInitialized = true;
+                console.log('Google Sign-In initialized with custom button');
             } else {
                 attempts++;
                 if (attempts < maxAttempts) {
@@ -389,7 +428,11 @@
         const signatureField = document.getElementById('signatureField');
         const confirmBtn = document.getElementById('confirmBtn');
         
-        signatureField.addEventListener('click', function() {
+        // Remove existing listeners to prevent duplicates
+        const newSignatureField = signatureField.cloneNode(true);
+        signatureField.parentNode.replaceChild(newSignatureField, signatureField);
+        
+        newSignatureField.addEventListener('click', function() {
             if (!isSigned) {
                 this.classList.add('signed');
                 document.getElementById('signatureStatus').innerText = 'Signed';
@@ -410,17 +453,13 @@
             const submissionsDB = JSON.parse(localStorage.getItem('kuro_submissions')) || {};
             let found = false;
             let updatedApp = null;
-            let applicantEmail = null;
             
-            // Find the application and update it
             for (let email in submissionsDB) {
                 const apps = submissionsDB[email];
                 if (Array.isArray(apps)) {
                     for (let i = 0; i < apps.length; i++) {
                         if (apps[i].id === appId) {
                             console.log('Found application for email:', email);
-                            console.log('Before update - signatures:', apps[i].signatures);
-                            console.log('Before update - status:', apps[i].status);
                             
                             if (!apps[i].signatures) apps[i].signatures = {};
                             apps[i].signatures[role] = {
@@ -430,11 +469,8 @@
                                 signerName: authenticatedUser.name
                             };
                             
-                            // Update the main status if both signatures are complete
                             const chairSigned = apps[i].signatures.chair?.signed || false;
                             const deanSigned = apps[i].signatures.dean?.signed || false;
-                            
-                            console.log('Chair signed:', chairSigned, 'Dean signed:', deanSigned);
                             
                             if (chairSigned && deanSigned && apps[i].status === 'Awaiting Signatures') {
                                 console.log('Both signatures complete! Updating status to Pending Eligibility Check');
@@ -442,12 +478,9 @@
                             }
                             
                             updatedApp = apps[i];
-                            applicantEmail = email;
                             submissionsDB[email] = apps;
                             localStorage.setItem('kuro_submissions', JSON.stringify(submissionsDB));
                             found = true;
-                            console.log('After update - signatures:', apps[i].signatures);
-                            console.log('After update - status:', apps[i].status);
                             break;
                         }
                     }
@@ -461,18 +494,15 @@
                 return;
             }
             
-            // Mark request as completed
             signatureRequests[token].completed = true;
             signatureRequests[token].signedDate = new Date().toISOString();
             signatureRequests[token].signerName = authenticatedUser.name;
             localStorage.setItem('kuro_signature_requests', JSON.stringify(signatureRequests));
             
-            // Trigger storage event to notify other tabs
             localStorage.setItem('kuro_signature_updated', Date.now().toString());
             
             console.log('Signature saved successfully. Updated app status:', updatedApp.status);
             
-            // Show success message
             document.getElementById('signSection').style.display = 'none';
             document.getElementById('signatureCard').innerHTML = `
                 <div class="signature-icon"><i class="fas fa-check-circle"></i></div>
