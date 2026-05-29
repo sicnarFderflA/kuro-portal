@@ -168,7 +168,6 @@ app.get('/', (req, res) => {
 const applicationsRoutes = require('./routes/applications');
 const adminRoutes = require('./routes/admin');
 const notificationsRoutes = require('./routes/notifications');
-const Submission = require('./models/Submission');
 const Draft = require('./models/Draft');
 
 // Use routes
