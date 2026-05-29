@@ -264,16 +264,64 @@ app.get('/api/faculty/applications', async (req, res) => {
             return res.status(400).json({ error: 'userEmail required' });
         }
         
-        // Use mongoose model directly
-        const Submission = mongoose.model('Submission');
-        const submissions = await Submission.find({ 
-            userEmail: userEmail 
-        }).sort({ submittedDate: -1 });
+        // Method 1: Try using the Submission model
+        let submissions = [];
         
-        console.log(`✅ Found ${submissions.length} submissions`);
+        try {
+            const Submission = mongoose.model('Submission');
+            submissions = await Submission.find({ 
+                userEmail: userEmail 
+            }).sort({ submittedDate: -1 });
+            console.log(`✅ Found ${submissions.length} submissions via model`);
+        } catch (modelError) {
+            console.log('Model error, trying direct collection:', modelError.message);
+            
+            // Method 2: Direct database access
+            const db = mongoose.connection.db;
+            submissions = await db.collection('submissions').find({ 
+                userEmail: userEmail 
+            }).toArray();
+            console.log(`✅ Found ${submissions.length} submissions via direct query`);
+        }
+        
+        // If still empty, try case-insensitive search
+        if (submissions.length === 0) {
+            const db = mongoose.connection.db;
+            submissions = await db.collection('submissions').find({ 
+                userEmail: { $regex: new RegExp(`^${userEmail}$`, 'i') }
+            }).toArray();
+            console.log(`✅ Found ${submissions.length} submissions via case-insensitive search`);
+        }
+        
         res.json(submissions);
     } catch (error) {
         console.error('Error in /api/faculty/applications:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Debug endpoint - remove after fixing
+app.get('/api/debug/applications', async (req, res) => {
+    try {
+        const db = mongoose.connection.db;
+        
+        // Get all submissions
+        const allSubmissions = await db.collection('submissions').find({}).toArray();
+        
+        // Get unique user emails
+        const userEmails = [...new Set(allSubmissions.map(s => s.userEmail))];
+        
+        res.json({
+            totalSubmissions: allSubmissions.length,
+            userEmails: userEmails,
+            submissions: allSubmissions.map(s => ({
+                id: s.id,
+                userEmail: s.userEmail,
+                proposalTitle: s.proposalTitle,
+                status: s.status
+            }))
+        });
+    } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
