@@ -1,38 +1,48 @@
-// models/Submission.js
-const mongoose = require('mongoose');
-
+// models/Submission.js (Enhanced from your existing file)
 const submissionSchema = new mongoose.Schema({
-    // Basic Info
+    // ========== BASIC INFO ==========
     id: { type: String, required: true, unique: true },
     userEmail: { type: String, required: true, index: true },
     grantTitle: { type: String, required: true },
+    grantType: { type: String, default: 'Faculty Research Grant' },
     proposalTitle: { type: String, required: true },
-    status: { type: String, default: 'Awaiting Signatures' },
+    status: { 
+        type: String, 
+        enum: [
+            'Awaiting Signatures', 
+            'Pending Eligibility Check', 
+            'Pending Secondary Check', 
+            'Pending Final Check', 
+            'Approved', 
+            'Returned'
+        ],
+        default: 'Awaiting Signatures' 
+    },
     submittedDate: { type: String, required: true },
     
-    // Principal Investigator
+    // ========== FORM 1 - PROJECT PROFILE ==========
     piName: { type: String, required: true },
     piEmail: { type: String, required: true },
     dept: { type: String, required: true },
     school: { type: String, required: true },
-    extension: { type: String },  // ← ADD THIS
-    duration: { type: String, required: true },  // ← ADD THIS
+    extension: { type: String },
+    duration: { type: String, required: true },
     
-    // Proposal Content
+    // ========== FORM 1 - PROPOSAL CONTENT ==========
     rationale: { type: String, required: true },
-    litReview: { type: String },  // ← ADD THIS
+    litReview: { type: String },
     objectives: { type: String, required: true },
     methodology: { type: String, required: true },
     outputs: { type: String, required: true },
     references: [{ type: String }],
     
-    // Research Team (FIX THIS - array of objects)
+    // ========== RESEARCH TEAM MEMBERS ==========
     teamMembers: [{
         name: { type: String },
         role: { type: String }
     }],
     
-    // Activities (FIX THIS - array of objects)
+    // ========== ACTIVITIES / WORKPLAN ==========
     activities: [{
         name: { type: String },
         description: { type: String },
@@ -42,7 +52,7 @@ const submissionSchema = new mongoose.Schema({
         endDate: { type: String }
     }],
     
-    // Budget Items (FIX THIS - array of objects)
+    // ========== BUDGET ITEMS ==========
     budgetItems: [{
         category: { type: String },
         subcategory: { type: String },
@@ -52,20 +62,32 @@ const submissionSchema = new mongoose.Schema({
         qty: { type: Number }
     }],
     
-    // Form 2 - Endorsement Information (ADD THESE)
+    // ========== FORM 2 - ENDORSEMENT INFORMATION ==========
     endorsementDate: { type: String },
-    endorseDept: { type: String },  // ← ADD THIS
-    endorseSchool: { type: String },  // ← ADD THIS
-    schoolYear: { type: String },  // ← ADD THIS
+    endorseDept: { type: String },
+    endorseSchool: { type: String },
+    schoolYear: { type: String },
     
-    // Signatures
+    // ========== FORM 2 - SIGNATURES ==========
     fromChair: { type: String, required: true },
     chairEmail: { type: String, required: true },
     deanName: { type: String, required: true },
     deanEmail: { type: String, required: true },
+    
+    // ========== SIGNATURE STATUS ==========
     signatures: {
-        chair: { signed: { type: Boolean, default: false }, signedDate: Date },
-        dean: { signed: { type: Boolean, default: false }, signedDate: Date }
+        chair: { 
+            signed: { type: Boolean, default: false }, 
+            signedDate: Date,
+            signerEmail: String,
+            signerName: String
+        },
+        dean: { 
+            signed: { type: Boolean, default: false }, 
+            signedDate: Date,
+            signerEmail: String,
+            signerName: String
+        }
     },
     signatureRequests: {
         chairToken: String,
@@ -75,32 +97,45 @@ const submissionSchema = new mongoose.Schema({
         resendCount: { type: Number, default: 0 }
     },
     
-    // CV Uploads
+    // ========== CV UPLOADS ==========
     piCVName: { type: String },
-    piCVStatus: { type: String, default: 'pending' },
+    piCVStatus: { 
+        type: String, 
+        enum: ['pending', 'eligible', 'ineligible', 'missing'], 
+        default: 'missing' 
+    },
     teamCVs: [{
         name: { type: String },
-        status: { type: String, default: 'pending' }
+        status: { 
+            type: String, 
+            enum: ['pending', 'eligible', 'ineligible', 'missing'], 
+            default: 'pending' 
+        }
     }],
     uploadFeedback: { type: String },
     
-    // Review Feedback
+    // ========== REVIEW FEEDBACK (CHECK STAGES) ==========
     returnedFeedback: { type: String },
-    check1Feedback: { type: String },
-    check2Feedback: { type: String },
-    check3Feedback: { type: String },
-    check1CompletedAt: Date,
-    check2CompletedAt: Date,
-    check3CompletedAt: Date,
-    approvedAt: Date,
+    returnedFromStage: { type: String },
     returnedAt: Date,
-    returnedFromStage: String,
     
-    // External Review
+    check1Feedback: { type: String },
+    check1CompletedAt: Date,
+    
+    check2Feedback: { type: String },
+    check2CompletedAt: Date,
+    
+    check3Feedback: { type: String },
+    check3CompletedAt: Date,
+    
+    approvedAt: Date,
+    
+    // ========== EXTERNAL REVIEWERS ==========
     externalReview: {
         assigned: { type: Boolean, default: false },
         assignedAt: Date,
         assignedBy: String,
+        dueDate: Date,
         reviewers: [{
             email: String,
             name: String,
@@ -120,12 +155,8 @@ const submissionSchema = new mongoose.Schema({
         }]
     },
     
-    // Timestamps
+    // ========== TIMESTAMPS ==========
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
-}, { 
-    // IMPORTANT: Add strict: false to allow any fields not defined in schema
-    strict: false 
-});
 
-module.exports = mongoose.models.Submission || mongoose.model('Submission', submissionSchema);
+}, { strict: false });  // Allows flexibility for additional fields
