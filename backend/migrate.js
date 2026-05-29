@@ -1,66 +1,36 @@
 // migrate.js
-const mongoose = require('mongoose');
-require('dotenv').config();
+const { MongoClient } = require('mongodb');
 
-// Use your existing MongoDB connection string
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://200520181_db_user:200520181_db_password@kuro-database.neg1meg.mongodb.net/kuro_portal?retryWrites=true&w=majority&appName=KURO-Database';
-
-// Define a simple schema for migration (no need to import from models)
-const submissionSchema = new mongoose.Schema({
-    any: mongoose.Schema.Types.Mixed
-}, { strict: false });
-
-const Submission = mongoose.model('Submission', submissionSchema, 'submissions');
+const uri = 'mongodb+srv://200520181_db_user:200520181_db_password@kuro-database.neg1meg.mongodb.net/?retryWrites=true&w=majority&appName=KURO-Database';
 
 async function migrate() {
+    const client = new MongoClient(uri);
+    
     try {
-        console.log('🔌 Connecting to MongoDB...');
-        await mongoose.connect(MONGODB_URI);
-        console.log('✅ Connected to MongoDB\n');
+        await client.connect();
+        console.log('Connected to MongoDB');
         
-        // Find all submissions without userEmail but with applicantEmail
-        const submissionsToMigrate = await Submission.find({
-            userEmail: { $exists: false },
-            applicantEmail: { $exists: true }
-        });
+        const sourceDB = client.db('test');
+        const targetDB = client.db('kuro_portal');
         
-        console.log(`📊 Found ${submissionsToMigrate.length} submissions to migrate\n`);
+        // Get all data from test.applications
+        const allData = await sourceDB.collection('applications').find({}).toArray();
+        console.log(`Found ${allData.length} documents in test.applications`);
         
-        let updatedCount = 0;
-        
-        for (const sub of submissionsToMigrate) {
-            console.log(`🔄 Migrating: ${sub.id || sub._id}`);
-            console.log(`   - applicantEmail: ${sub.applicantEmail}`);
-            
-            sub.userEmail = sub.applicantEmail;
-            await sub.save();
-            
-            console.log(`   ✅ Added userEmail: ${sub.userEmail}\n`);
-            updatedCount++;
+        if (allData.length > 0) {
+            // Insert into kuro_portal.submissions
+            const result = await targetDB.collection('submissions').insertMany(allData);
+            console.log(`✅ Inserted ${result.insertedCount} documents into kuro_portal.submissions`);
         }
         
-        // Also update any submissions that have userEmail but it's empty
-        const emptyUserEmail = await Submission.find({
-            userEmail: { $eq: "" },
-            applicantEmail: { $exists: true }
-        });
-        
-        for (const sub of emptyUserEmail) {
-            console.log(`🔄 Fixing empty userEmail for: ${sub.id || sub._id}`);
-            sub.userEmail = sub.applicantEmail;
-            await sub.save();
-            updatedCount++;
-        }
-        
-        console.log('='.repeat(50));
-        console.log(`✅ Migration complete! Updated ${updatedCount} submissions`);
-        console.log('='.repeat(50));
-        
-        process.exit(0);
+        // Verify
+        const count = await targetDB.collection('submissions').countDocuments();
+        console.log(`📊 Total documents in kuro_portal.submissions: ${count}`);
         
     } catch (error) {
-        console.error('❌ Migration failed:', error);
-        process.exit(1);
+        console.error('Error:', error);
+    } finally {
+        await client.close();
     }
 }
 
