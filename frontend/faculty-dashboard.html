@@ -4955,11 +4955,9 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                         if (isEditMode && editAppId) {
                             try {
                                 // Get the existing application first
-                                const existingApp = await KURO_API.getApplication(editAppId);
-                                
-                                if (!existingApp) {
-                                    throw new Error('Application not found');
-                                }
+                                const response = await fetch(`${API_URL}/api/applications/${editAppId}`);
+                                const existingApp = await response.json();
+                                if (!response.ok) throw new Error(existingApp.error || 'Application not found');
                                 
                                 // Preserve existing signatures, CV statuses, and signature requests
                                 const existingSignatures = existingApp.signatures || { chair: { signed: false }, dean: { signed: false } };

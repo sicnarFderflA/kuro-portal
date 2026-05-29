@@ -206,6 +206,7 @@ app.post('/api/applications', async (req, res) => {
 app.get('/api/applications/:id', async (req, res) => {
     try {
         const { id } = req.params;
+        // Ignore any query parameters like ?userEmail=...
         console.log('🔍 GET single application:', id);
         
         const db = mongoose.connection.db;

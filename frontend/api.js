@@ -17,8 +17,15 @@ async function apiRequest(endpoint, options = {}) {
     
     let url = `${API_BASE_URL}${endpoint}`;
     
-    // Add user email to query params for GET requests if not already present
-    if (user.email && options.method !== 'POST' && options.method !== 'PUT' && !url.includes('userEmail')) {
+    // Only add userEmail to GET requests that don't already have an ID in the path
+    // and only for specific endpoints that need it
+    const needsUserEmail = options.method !== 'POST' && 
+                          options.method !== 'PUT' && 
+                          options.method !== 'DELETE' &&
+                          !endpoint.match(/\/api\/applications\/[^\/]+$/) && // Skip if it's /api/applications/XXX
+                          !url.includes('userEmail');
+    
+    if (user.email && needsUserEmail) {
         const separator = url.includes('?') ? '&' : '?';
         url += `${separator}userEmail=${encodeURIComponent(user.email)}`;
     }
@@ -147,7 +154,24 @@ async function resendSignatureRequests(appId, data) {
 }
 
 async function getSignatureStatus(appId) {
-    return apiRequest(`/applications/${appId}/signature-status`);
+    // Don't use the main apiRequest that adds userEmail
+    const token = sessionStorage.getItem('kuro_token');
+    
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    const url = `${API_BASE_URL}/api/applications/${appId}/signature-status`;
+    
+    const response = await fetch(url, { headers });
+    
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Request failed' }));
+        throw new Error(error.error || `HTTP ${response.status}`);
+    }
+    
+    return response.json();
 }
 
 // ==================== DRAFTS API ====================
