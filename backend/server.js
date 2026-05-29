@@ -840,54 +840,48 @@ app.put('/api/signatures/:token/complete', async (req, res) => {
 app.get('/api/signatures/:token', async (req, res) => {
     try {
         const { token } = req.params;
+        console.log("🔍 Looking for token:", token);
         
         const db = mongoose.connection.db;
         
-        // Find the signature request by token (check both chair and dean tokens)
-        const signatureRequest = await db.collection('signature_requests').findOne({
+        // Search for the token in the applications collection's signatureRequests field
+        const application = await db.collection('applications').findOne({
             $or: [
-                { chairToken: token },
-                { deanToken: token }
+                { 'signatureRequests.chairToken': token },
+                { 'signatureRequests.deanToken': token }
             ]
         });
         
-        if (!signatureRequest) {
+        if (!application) {
+            console.log("Token not found in any application");
             return res.status(404).json({ error: 'Signature request not found' });
         }
         
-        // Get the associated application
-        const application = await db.collection('submissions').findOne({ id: signatureRequest.appId });
+        console.log("✅ Found application:", application.id);
         
-        if (!application) {
-            return res.status(404).json({ error: 'Application not found' });
+        const isChair = application.signatureRequests?.chairToken === token;
+        const isDean = application.signatureRequests?.deanToken === token;
+        
+        if (!isChair && !isDean) {
+            return res.status(404).json({ error: 'Token not associated with any role' });
         }
         
-        // Determine role based on which token matched
-        const isChair = signatureRequest.chairToken === token;
-        const isDean = signatureRequest.deanToken === token;
+        const role = isChair ? 'chair' : 'dean';
+        const signerEmail = isChair ? application.chairEmail : application.deanEmail;
+        const signerName = isChair ? application.fromChair : application.deanName;
         
-        let role = null;
-        let signerEmail = null;
-        let signerName = null;
-        
-        if (isChair) {
-            role = 'chair';
-            signerEmail = signatureRequest.chairEmail;
-            signerName = signatureRequest.chairName;
-        } else if (isDean) {
-            role = 'dean';
-            signerEmail = signatureRequest.deanEmail;
-            signerName = signatureRequest.deanName;
-        }
+        const isCompleted = isChair 
+            ? (application.signatures?.chair?.signed || false)
+            : (application.signatures?.dean?.signed || false);
         
         res.json({
-            appId: signatureRequest.appId,
+            appId: application.id,
             role: role,
             signerEmail: signerEmail,
             signerName: signerName,
-            completed: isChair ? signatureRequest.chairCompleted : signatureRequest.deanCompleted,
-            revoked: false, // You can add a revoked flag if needed
-            expiresAt: signatureRequest.expiresAt,
+            completed: isCompleted,
+            revoked: false,
+            expiresAt: application.signatureRequests?.expiresAt || null,
             application: {
                 proposalTitle: application.proposalTitle,
                 piName: application.piName,
