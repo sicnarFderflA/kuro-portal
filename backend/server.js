@@ -508,20 +508,81 @@ app.post('/api/applications/:appId/generate-signatures', async (req, res) => {
     }
 });
 
+const emailjs = require('@emailjs/nodejs');
+
+// EmailJS configuration (add to your .env file)
+const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID || 'service_ocv82fn';
+const EMAILJS_CHAIR_TEMPLATE = process.env.EMAILJS_CHAIR_TEMPLATE || 'template_0ll7awk';
+const EMAILJS_DEAN_TEMPLATE = process.env.EMAILJS_DEAN_TEMPLATE || 'template_3lsq7ug';
+const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY;
+const EMAILJS_PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY;
+
 // Send signature emails
 app.post('/api/applications/:appId/send-signature-emails', async (req, res) => {
     try {
         const { appId } = req.params;
         const { chairLink, deanLink, chairEmail, deanEmail, chairName, deanName, expiryDays } = req.body;
         
-        // Here you would integrate with EmailJS or another email service
-        // For now, just log and return success
-        console.log(`📧 Signature emails would be sent to:
-            Chair: ${chairName} (${chairEmail}) - Link: ${chairLink}
-            Dean: ${deanName} (${deanEmail}) - Link: ${deanLink}
-        `);
+        console.log(`📧 Sending signature emails for application: ${appId}`);
+        console.log(`   Chair: ${chairEmail} (${chairName})`);
+        console.log(`   Dean: ${deanEmail} (${deanName})`);
         
-        // Update application to show emails were sent
+        let chairSuccess = false;
+        let deanSuccess = false;
+        
+        // Send to Chair
+        try {
+            const chairParams = {
+                to_email: chairEmail,
+                to_name: chairName,
+                chair_name: chairName,
+                signature_link: chairLink,
+                expiry_days: expiryDays || 7
+            };
+            
+            const chairResponse = await emailjs.send(
+                EMAILJS_SERVICE_ID, 
+                EMAILJS_CHAIR_TEMPLATE, 
+                chairParams,
+                {
+                    publicKey: EMAILJS_PUBLIC_KEY,
+                    privateKey: EMAILJS_PRIVATE_KEY
+                }
+            );
+            
+            console.log('Chair email sent:', chairResponse.status);
+            chairSuccess = true;
+        } catch (error) {
+            console.error('Chair email failed:', error);
+        }
+        
+        // Send to Dean
+        try {
+            const deanParams = {
+                to_email: deanEmail,
+                to_name: deanName,
+                dean_name: deanName,
+                signature_link: deanLink,
+                expiry_days: expiryDays || 7
+            };
+            
+            const deanResponse = await emailjs.send(
+                EMAILJS_SERVICE_ID, 
+                EMAILJS_DEAN_TEMPLATE, 
+                deanParams,
+                {
+                    publicKey: EMAILJS_PUBLIC_KEY,
+                    privateKey: EMAILJS_PRIVATE_KEY
+                }
+            );
+            
+            console.log('Dean email sent:', deanResponse.status);
+            deanSuccess = true;
+        } catch (error) {
+            console.error('Dean email failed:', error);
+        }
+        
+        // Update application with email sent status
         const db = mongoose.connection.db;
         await db.collection('submissions').updateOne(
             { id: appId },
@@ -533,10 +594,141 @@ app.post('/api/applications/:appId/send-signature-emails', async (req, res) => {
             }
         );
         
-        res.json({ success: true, message: 'Emails would be sent (EmailJS integration needed)' });
+        res.json({ 
+            success: chairSuccess && deanSuccess,
+            chairSent: chairSuccess,
+            deanSent: deanSuccess
+        });
         
     } catch (error) {
         console.error('Error sending signature emails:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// ========== RESEND SIGNATURE REQUESTS ==========
+app.post('/api/applications/:appId/resend-signatures', async (req, res) => {
+    try {
+        const { appId } = req.params;
+        const { chairEmail, chairName, deanEmail, deanName, proposalTitle, piName } = req.body;
+        
+        console.log(`📧 Resending signature requests for application: ${appId}`);
+        
+        const db = mongoose.connection.db;
+        
+        // Generate new unique tokens
+        const chairToken = 'sig_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8) + '_chair';
+        const deanToken = 'sig_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8) + '_dean';
+        
+        // Update signature requests in database
+        const signatureRequest = {
+            appId: appId,
+            chairToken: chairToken,
+            deanToken: deanToken,
+            chairEmail: chairEmail,
+            chairName: chairName,
+            deanEmail: deanEmail,
+            deanName: deanName,
+            chairCompleted: false,
+            deanCompleted: false,
+            createdAt: new Date(),
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+        };
+        
+        await db.collection('signature_requests').updateOne(
+            { appId: appId },
+            { $set: signatureRequest },
+            { upsert: true }
+        );
+        
+        // Update application with new signature tokens
+        await db.collection('submissions').updateOne(
+            { id: appId },
+            { 
+                $set: { 
+                    'signatureRequests.chairToken': chairToken,
+                    'signatureRequests.deanToken': deanToken,
+                    'signatureRequests.sentAt': new Date().toISOString(),
+                    'signatureRequests.resendCount': { $inc: 1 }
+                }
+            }
+        );
+        
+        // Generate signature links
+        const baseUrl = 'https://kuro-portal.vercel.app';
+        const chairLink = `${baseUrl}/signature-confirm.html?token=${chairToken}&role=chair&id=${appId}`;
+        const deanLink = `${baseUrl}/signature-confirm.html?token=${deanToken}&role=dean&id=${appId}`;
+        
+        // Send emails via EmailJS from backend
+        const emailjs = require('@emailjs/nodejs');
+        
+        const SERVICE_ID = process.env.EMAILJS_SERVICE_ID || 'service_ocv82fn';
+        const CHAIR_TEMPLATE = process.env.EMAILJS_CHAIR_TEMPLATE || 'template_0ll7awk';
+        const DEAN_TEMPLATE = process.env.EMAILJS_DEAN_TEMPLATE || 'template_3lsq7ug';
+        
+        let chairSent = false;
+        let deanSent = false;
+        
+        // Send to Chair
+        try {
+            const chairParams = {
+                to_email: chairEmail,
+                to_name: chairName,
+                chair_name: chairName,
+                pi_name: piName || 'N/A',
+                department: application.dept || 'N/A',
+                proposal_title: proposalTitle || 'N/A',
+                grant_title: application.grantTitle || 'N/A',
+                duration: application.duration || 'N/A',
+                signature_link: chairLink,
+                expiry_days: 7
+            };
+            
+            await emailjs.send(SERVICE_ID, CHAIR_TEMPLATE, chairParams, {
+                publicKey: process.env.EMAILJS_PUBLIC_KEY,
+                privateKey: process.env.EMAILJS_PRIVATE_KEY
+            });
+            chairSent = true;
+            console.log('Chair resend email sent');
+        } catch (error) {
+            console.error('Chair resend failed:', error);
+        }
+        
+        // Send to Dean
+        try {
+            const deanParams = {
+                to_email: deanEmail,
+                to_name: deanName,
+                dean_name: deanName,
+                pi_name: piName || 'N/A',
+                department: application.dept || 'N/A',
+                proposal_title: proposalTitle || 'N/A',
+                grant_title: application.grantTitle || 'N/A',
+                duration: application.duration || 'N/A',
+                signature_link: deanLink,
+                expiry_days: 7
+            };
+            
+            await emailjs.send(SERVICE_ID, DEAN_TEMPLATE, deanParams, {
+                publicKey: process.env.EMAILJS_PUBLIC_KEY,
+                privateKey: process.env.EMAILJS_PRIVATE_KEY
+            });
+            deanSent = true;
+            console.log('Dean resend email sent');
+        } catch (error) {
+            console.error('Dean resend failed:', error);
+        }
+        
+        res.json({ 
+            success: chairSent && deanSent,
+            chairSent: chairSent,
+            deanSent: deanSent,
+            chairLink: chairLink,
+            deanLink: deanLink
+        });
+        
+    } catch (error) {
+        console.error('Error resending signatures:', error);
         res.status(500).json({ error: error.message });
     }
 });

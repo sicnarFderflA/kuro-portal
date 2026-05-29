@@ -138,6 +138,14 @@ async function sendSignatureEmails(appId, data) {
     });
 }
 
+
+async function resendSignatureRequests(appId, data) {
+    return apiRequest(`/applications/${appId}/resend-signatures`, {
+        method: 'POST',
+        body: JSON.stringify(data)
+    });
+}
+
 async function getSignatureStatus(appId) {
     return apiRequest(`/applications/${appId}/signature-status`);
 }
@@ -193,6 +201,7 @@ window.KURO_API = {
     generateSignatureLinks,
     sendSignatureEmails,
     getSignatureStatus,
+    resendSignatureRequests,
     
     // Drafts
     saveFacultyDraft,

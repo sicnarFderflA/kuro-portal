@@ -2004,9 +2004,82 @@ async function renderApplicant() {
             btn.addEventListener('click', async () => {
                 const id = btn.getAttribute('data-id');
                 const sub = filteredSubs.find(s => s.id === id);
-                if(sub) await autoGenerateSignatureLinks(sub, id);
+                if(sub) {
+                    // Call the new resend API instead
+                    await resubmitSignatureRequests(sub);
+                }
             });
         });
+
+        // Add this new function for resending signatures
+        async function resubmitSignatureRequests(application) {
+            const result = await Swal.fire({
+                title: 'Resend Signature Requests?',
+                html: `
+                    <div style="text-align: left;">
+                        <p>This will:</p>
+                        <ul style="margin-left: 1.5rem;">
+                            <li>Generate <strong>new signature links</strong></li>
+                            <li>Send <strong>new emails</strong> to:</li>
+                            <ul style="margin-left: 1.5rem;">
+                                <li>📧 <strong>Chair:</strong> ${escapeHtml(application.chairEmail)}</li>
+                                <li>📧 <strong>Dean:</strong> ${escapeHtml(application.deanEmail)}</li>
+                            </ul>
+                            <li>⚠️ <strong>Old links will no longer work</strong></li>
+                        </ul>
+                    </div>
+                `,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#D4AF37',
+                confirmButtonText: 'Yes, Resend',
+                cancelButtonText: 'Cancel'
+            });
+            
+            if (!result.isConfirmed) return;
+            
+            showInlineNotification(null, '📧 Resending signature requests...', true);
+            
+            try {
+                const resendResult = await KURO_API.resendSignatureRequests(application.id, {
+                    chairEmail: application.chairEmail,
+                    chairName: application.fromChair,
+                    deanEmail: application.deanEmail,
+                    deanName: application.deanName,
+                    proposalTitle: application.proposalTitle,
+                    piName: application.piName,
+                    dept: application.dept,
+                    grantTitle: application.grantTitle,
+                    duration: application.duration
+                });
+                
+                if (resendResult.success) {
+                    await Swal.fire({
+                        icon: 'success',
+                        title: 'Requests Resent!',
+                        html: `
+                            New signature requests have been sent to:<br>
+                            <strong>${escapeHtml(application.fromChair)}</strong> (${escapeHtml(application.chairEmail)})<br>
+                            <strong>${escapeHtml(application.deanName)}</strong> (${escapeHtml(application.deanEmail)})<br><br>
+                            <small>They will receive new emails with updated links.</small>
+                        `,
+                        confirmButtonColor: '#D4AF37'
+                    });
+                } else {
+                    throw new Error('Failed to send emails');
+                }
+                
+            } catch (error) {
+                console.error('Resend failed:', error);
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Resend Failed',
+                    text: 'Failed to resend signature requests. Please try again.',
+                    confirmButtonColor: '#D4AF37'
+                });
+            }
+        }
+
         
     } catch (error) {
         console.error('Failed to load dashboard:', error);
@@ -2868,15 +2941,14 @@ async function generateAndSendSignatureLinks(application) {
 
 async function autoGenerateSignatureLinks(application, appId) {
     if (!application.chairEmail || !application.deanEmail) {
-        console.warn('Missing chair or dean email');
-        showInlineNotification(null, 'Missing chair or dean email addresses. Cannot send signature requests.', false);
+        showInlineNotification(null, 'Missing chair or dean email addresses.', false);
         return;
     }
     
     showInlineNotification(null, '📧 Generating signature links...', true);
     
     try {
-        // Call backend API to generate signature links
+        // Generate signature links via backend API
         const result = await KURO_API.generateSignatureLinks(appId, {
             chairEmail: application.chairEmail,
             chairName: application.fromChair,
@@ -2888,8 +2960,8 @@ async function autoGenerateSignatureLinks(application, appId) {
         
         console.log('Signature links generated:', result);
         
-        // Send emails via backend
-        await KURO_API.sendSignatureEmails(appId, {
+        // Send emails via backend API (not frontend!)
+        const emailResult = await KURO_API.sendSignatureEmails(appId, {
             chairLink: result.chairLink,
             deanLink: result.deanLink,
             chairEmail: application.chairEmail,
@@ -2899,113 +2971,15 @@ async function autoGenerateSignatureLinks(application, appId) {
             expiryDays: 7
         });
         
-        showInlineNotification(null, '✓ Signature requests sent successfully!', true);
+        if (emailResult.success) {
+            showInlineNotification(null, '✓ Signature requests sent successfully!', true);
+        } else {
+            showInlineNotification(null, '⚠️ Some emails failed to send. Please check the email addresses.', false);
+        }
         
     } catch (error) {
-        console.error('Failed to generate signature links:', error);
-        showInlineNotification(null, '⚠️ Failed to send signature requests. Please try again.', false);
-    }
-}
-
-// Email sending function using EmailJS with better error handling
-async function sendSignatureEmails(application, chairLink, deanLink, expiryDays) {
-    // EmailJS Configuration - REPLACE WITH YOUR ACTUAL CREDENTIALS
-    const SERVICE_ID = 'service_ocv82fn';           // Your EmailJS service ID
-    const CHAIR_TEMPLATE = 'template_0ll7awk';  // Your chair template ID
-    const DEAN_TEMPLATE = 'template_3lsq7ug';    // Your dean template ID
-    
-    // Debug: Check if emails exist
-    console.log('Chair Email:', application.chairEmail);
-    console.log('Dean Email:', application.deanEmail);
-    console.log('Chair Name:', application.fromChair);
-    console.log('Dean Name:', application.deanName);
-    
-    // Validate emails before sending
-    if (!application.chairEmail || application.chairEmail.trim() === '') {
-        console.error('Chair email is missing!');
-        showInlineNotification(null, 'Chair email address is missing. Please update Form 2.', false);
-        return false;
-    }
-    
-    if (!application.deanEmail || application.deanEmail.trim() === '') {
-        console.error('Dean email is missing!');
-        showInlineNotification(null, 'Dean email address is missing. Please update Form 2.', false);
-        return false;
-    }
-    
-    let chairSuccess = false;
-    let deanSuccess = false;
-    
-    // Send to Chair
-    try {
-        const chairParams = {
-            to_email: application.chairEmail,  // This MUST be a valid email
-            to_name: application.fromChair,
-            chair_name: application.fromChair,
-            pi_name: application.piName || 'N/A',
-            department: application.dept || 'N/A',
-            proposal_title: application.proposalTitle || 'N/A',
-            grant_title: application.grantTitle || 'N/A',
-            duration: application.duration || 'N/A',
-            signature_link: chairLink,
-            expiry_days: expiryDays
-        };
-        
-        console.log('Sending to Chair with params:', chairParams);
-        
-        const chairResponse = await emailjs.send(SERVICE_ID, CHAIR_TEMPLATE, chairParams);
-        console.log('Chair email sent:', chairResponse);
-        chairSuccess = true;
-    } catch (error) {
-        console.error('Chair email failed:', error);
-        console.error('Error details:', error.text);
-    }
-    
-    // Send to Dean
-    try {
-        const deanParams = {
-            to_email: application.deanEmail,   // This MUST be a valid email
-            to_name: application.deanName,
-            dean_name: application.deanName,
-            pi_name: application.piName || 'N/A',
-            department: application.dept || 'N/A',
-            proposal_title: application.proposalTitle || 'N/A',
-            grant_title: application.grantTitle || 'N/A',
-            duration: application.duration || 'N/A',
-            signature_link: deanLink,
-            expiry_days: expiryDays
-        };
-        
-        console.log('Sending to Dean with params:', deanParams);
-        
-        const deanResponse = await emailjs.send(SERVICE_ID, DEAN_TEMPLATE, deanParams);
-        console.log('Dean email sent:', deanResponse);
-        deanSuccess = true;
-    } catch (error) {
-        console.error('Dean email failed:', error);
-        console.error('Error details:', error.text);
-    }
-    
-    // Show results
-    if (chairSuccess && deanSuccess) {
-        addNotification(
-            currentUser.email,
-            'emails_sent',
-            '📧 Signature Requests Sent',
-            'Signature requests have been emailed to ' + application.fromChair + ' and ' + application.deanName + '.',
-            application.id,
-            '📧',
-            '#2ecc71'
-        );
-        showInlineNotification(null, '✓ Signature requests sent successfully!', true);
-        return true;
-    } else if (chairSuccess || deanSuccess) {
-        const failed = chairSuccess ? 'Dean' : 'Chair';
-        showInlineNotification(null, `⚠️ Email to ${failed} failed. Please check the email address.`, false);
-        return false;
-    } else {
-        showInlineNotification(null, '⚠️ Failed to send emails. Please check EmailJS configuration and email addresses.', false);
-        return false;
+        console.error('Failed:', error);
+        showInlineNotification(null, '⚠️ Failed to send signature requests.', false);
     }
 }
 
