@@ -198,7 +198,7 @@
 </head>
 <body>
 <div class="signature-card" id="signatureCard">
-    <div class="signature-icon">
+    <div class="signature-icon" id="signatureIcon">
         <i class="fas fa-signature"></i>
     </div>
     <h1>Digital Signature Request</h1>
@@ -577,7 +577,7 @@
                 // Show success
                 document.getElementById('signSection').style.display = 'none';
                 document.getElementById('signatureCard').innerHTML = `
-                    <div class="signature-icon"><i class="fas fa-check-circle"></i></div>
+                    <div class="signature-icon" id="signatureIcon"><i class="fas fa-check-circle"></i></div>
                     <h1>Thank You!</h1>
                     <div class="success">
                         <i class="fas fa-check"></i> You have successfully signed the endorsement letter.
