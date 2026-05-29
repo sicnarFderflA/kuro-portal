@@ -1928,14 +1928,9 @@ function generateAuditLogHtml() {
 
 async function getAllApplications() {
     try {
-        const userRole = getCurrentUserRole();
-        let filters = {};
-        
-        if (userRole === 'check1') filters.status = 'Pending Eligibility Check';
-        else if (userRole === 'check2') filters.status = 'Pending Secondary Check';
-        else if (userRole === 'check3') filters.status = 'Pending Final Check';
-        
-        const apps = await KURO_API.getAdminApplications(filters);
+        const response = await fetch(`${API_URL}/api/admin/applications`);
+        const apps = await response.json();
+        console.log(`✅ Admin loaded ${apps.length} applications from API`);
         return apps;
     } catch (error) {
         console.error('Failed to load applications:', error);
@@ -2093,6 +2088,7 @@ function getAllApplications() {
 
 // Also update renderDashboard to show appropriate title
 async function renderDashboard() {
+    // Get applications from API (not localStorage)
     const allApps = await getAllApplications();
     const monthlyData = getMonthlyData(allApps);
     const statusDist = getStatusDistribution(allApps);
@@ -2257,7 +2253,7 @@ async function renderDashboard() {
     
     document.getElementById('mainContent').innerHTML = html;
     
-    // Charts with improved options
+    // Initialize charts
     const trendCtx = document.getElementById('trendChart')?.getContext('2d');
     if (trendCtx) {
         new Chart(trendCtx, { 
