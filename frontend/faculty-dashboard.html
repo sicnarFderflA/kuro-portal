@@ -2003,16 +2003,29 @@ async function renderApplicant() {
         document.querySelectorAll('.resend-signature-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
                 const id = btn.getAttribute('data-id');
+                console.log('Resend clicked for appId:', id);
+                
+                // Find the application in filteredSubs
                 const sub = filteredSubs.find(s => s.id === id);
-                if(sub) {
-                    // Call the new resend API instead
+                if (sub) {
                     await resubmitSignatureRequests(sub);
+                } else {
+                    console.error('Application not found for id:', id);
+                    showInlineNotification(null, 'Application not found', false);
                 }
             });
         });
 
         // Add this new function for resending signatures
         async function resubmitSignatureRequests(application) {
+            const appId = application.id || application._id;
+            console.log('Resending for appId:', appId);
+            
+            if (!appId) {
+                showInlineNotification(null, 'Invalid application ID', false);
+                return;
+            }
+            
             const result = await Swal.fire({
                 title: 'Resend Signature Requests?',
                 html: `
@@ -2038,11 +2051,11 @@ async function renderApplicant() {
             
             if (!result.isConfirmed) return;
             
-            showInlineNotification(null, '📧 Generating new signature links...', true);
+            showInlineNotification(null, '📧 Resending signature requests...', true);
             
             try {
-                // Call API to generate new signature links
-                const resendResult = await KURO_API.resendSignatureRequests(application.id, {
+                // First, generate new signature links
+                const generateResult = await KURO_API.generateSignatureLinks(appId, {
                     chairEmail: application.chairEmail,
                     chairName: application.fromChair,
                     deanEmail: application.deanEmail,
@@ -2051,76 +2064,65 @@ async function renderApplicant() {
                     piName: application.piName
                 });
                 
-                console.log('Resend result:', resendResult);
+                console.log('New signature links generated:', generateResult);
                 
-                // Even if email failed, we have new links! Try to send from frontend
-                if (resendResult.chairLink && resendResult.deanLink) {
-                    // Try to send emails from frontend (this works!)
-                    const emailSent = await sendSignatureEmails(application, resendResult.chairLink, resendResult.deanLink, 7);
-                    
-                    if (emailSent) {
-                        await Swal.fire({
-                            icon: 'success',
-                            title: 'Requests Resent!',
-                            html: `
-                                New signature requests have been sent to:<br>
-                                <strong>${escapeHtml(application.fromChair)}</strong> (${escapeHtml(application.chairEmail)})<br>
-                                <strong>${escapeHtml(application.deanName)}</strong> (${escapeHtml(application.deanEmail)})<br><br>
-                                <small>They will receive new emails with updated links.</small>
-                            `,
-                            confirmButtonColor: '#D4AF37'
-                        });
-                    } else {
-                        // Show links so admin can copy them
-                        await Swal.fire({
-                            icon: 'warning',
-                            title: 'New Links Generated',
-                            html: `
-                                New signature links were created but emails could not be sent automatically.<br><br>
-                                <strong>📧 Chair Link (${escapeHtml(application.fromChair)}):</strong><br>
-                                <a href="${resendResult.chairLink}" target="_blank" style="font-size: 0.7rem; word-break: break-all;">${resendResult.chairLink}</a><br><br>
-                                <strong>📧 Dean Link (${escapeHtml(application.deanName)}):</strong><br>
-                                <a href="${resendResult.deanLink}" target="_blank" style="font-size: 0.7rem; word-break: break-all;">${resendResult.deanLink}</a><br><br>
-                                <button id="copyChairLink" class="btn-sm" style="margin-right: 0.5rem;">📋 Copy Chair Link</button>
-                                <button id="copyDeanLink" class="btn-sm">📋 Copy Dean Link</button>
-                                <br><br>
-                                <small>You can copy these links and send them manually to the signatories.</small>
-                            `,
-                            confirmButtonColor: '#D4AF37',
-                            didOpen: (modal) => {
-                                const copyChairBtn = modal.querySelector('#copyChairLink');
-                                const copyDeanBtn = modal.querySelector('#copyDeanLink');
-                                
-                                if (copyChairBtn) {
-                                    copyChairBtn.addEventListener('click', () => {
-                                        navigator.clipboard.writeText(resendResult.chairLink);
-                                        Swal.fire({
-                                            icon: 'success',
-                                            title: 'Copied!',
-                                            text: 'Chair link copied to clipboard',
-                                            timer: 1500,
-                                            showConfirmButton: false
-                                        });
-                                    });
-                                }
-                                
-                                if (copyDeanBtn) {
-                                    copyDeanBtn.addEventListener('click', () => {
-                                        navigator.clipboard.writeText(resendResult.deanLink);
-                                        Swal.fire({
-                                            icon: 'success',
-                                            title: 'Copied!',
-                                            text: 'Dean link copied to clipboard',
-                                            timer: 1500,
-                                            showConfirmButton: false
-                                        });
-                                    });
-                                }
-                            }
-                        });
-                    }
+                if (!generateResult.chairLink || !generateResult.deanLink) {
+                    throw new Error('Failed to generate signature links');
+                }
+                
+                // Now send emails using frontend EmailJS
+                const emailSent = await sendSignatureEmails(
+                    application, 
+                    generateResult.chairLink, 
+                    generateResult.deanLink, 
+                    7
+                );
+                
+                if (emailSent) {
+                    await Swal.fire({
+                        icon: 'success',
+                        title: 'Requests Resent!',
+                        html: `
+                            New signature requests have been sent to:<br>
+                            <strong>${escapeHtml(application.fromChair)}</strong> (${escapeHtml(application.chairEmail)})<br>
+                            <strong>${escapeHtml(application.deanName)}</strong> (${escapeHtml(application.deanEmail)})<br><br>
+                            <small>They will receive new emails with updated links.</small>
+                        `,
+                        confirmButtonColor: '#D4AF37'
+                    });
                 } else {
-                    throw new Error('Failed to generate new signature links');
+                    // Show links as fallback
+                    await Swal.fire({
+                        icon: 'warning',
+                        title: 'Links Generated - Email Failed',
+                        html: `
+                            New signature links were created but emails could not be sent.<br><br>
+                            <strong>📧 Chair Link (${escapeHtml(application.fromChair)}):</strong><br>
+                            <a href="${generateResult.chairLink}" target="_blank" style="font-size: 0.7rem; word-break: break-all;">${generateResult.chairLink}</a><br><br>
+                            <strong>📧 Dean Link (${escapeHtml(application.deanName)}):</strong><br>
+                            <a href="${generateResult.deanLink}" target="_blank" style="font-size: 0.7rem; word-break: break-all;">${generateResult.deanLink}</a><br><br>
+                            <button id="copyChairLink" class="btn-sm" style="margin-right: 0.5rem;">📋 Copy Chair Link</button>
+                            <button id="copyDeanLink" class="btn-sm">📋 Copy Dean Link</button>
+                        `,
+                        confirmButtonColor: '#D4AF37',
+                        didOpen: (modal) => {
+                            const copyChairBtn = modal.querySelector('#copyChairLink');
+                            const copyDeanBtn = modal.querySelector('#copyDeanLink');
+                            
+                            if (copyChairBtn) {
+                                copyChairBtn.addEventListener('click', () => {
+                                    navigator.clipboard.writeText(generateResult.chairLink);
+                                    Swal.fire({ icon: 'success', title: 'Copied!', text: 'Chair link copied', timer: 1500, showConfirmButton: false });
+                                });
+                            }
+                            if (copyDeanBtn) {
+                                copyDeanBtn.addEventListener('click', () => {
+                                    navigator.clipboard.writeText(generateResult.deanLink);
+                                    Swal.fire({ icon: 'success', title: 'Copied!', text: 'Dean link copied', timer: 1500, showConfirmButton: false });
+                                });
+                            }
+                        }
+                    });
                 }
                 
             } catch (error) {

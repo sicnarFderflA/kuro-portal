@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const { OAuth2Client } = require('google-auth-library');
+const emailjs = require('@emailjs/nodejs');
 require('dotenv').config();
 
 const app = express();
@@ -508,7 +509,7 @@ app.post('/api/applications/:appId/generate-signatures', async (req, res) => {
     }
 });
 
-const emailjs = require('@emailjs/nodejs');
+
 
 // EmailJS configuration (add to your .env file)
 const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID || 'service_ocv82fn';
@@ -658,10 +659,6 @@ app.post('/api/applications/:appId/resend-signatures', async (req, res) => {
         const baseUrl = 'https://kuro-portal.vercel.app';
         const chairLink = `${baseUrl}/signature-confirm.html?token=${chairToken}&role=chair&id=${appId}`;
         const deanLink = `${baseUrl}/signature-confirm.html?token=${deanToken}&role=dean&id=${appId}`;
-        
-        // Send emails via EmailJS from backend
-        const emailjs = require('@emailjs/nodejs');
-        
         const SERVICE_ID = process.env.EMAILJS_SERVICE_ID || 'service_ocv82fn';
         const CHAIR_TEMPLATE = process.env.EMAILJS_CHAIR_TEMPLATE || 'template_0ll7awk';
         const DEAN_TEMPLATE = process.env.EMAILJS_DEAN_TEMPLATE || 'template_3lsq7ug';
