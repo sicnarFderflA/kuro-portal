@@ -258,44 +258,19 @@ app.delete('/api/applications/:id', async (req, res) => {
 app.get('/api/faculty/applications', async (req, res) => {
     try {
         const userEmail = req.query.userEmail;
-        console.log('📋 GET faculty applications for:', userEmail);
         
         if (!userEmail) {
             return res.status(400).json({ error: 'userEmail required' });
         }
         
-        // Method 1: Try using the Submission model
-        let submissions = [];
+        // Use Application model (points to 'applications' collection)
+        const Application = mongoose.model('Application');
+        const applications = await Application.find({ 
+            userEmail: userEmail 
+        }).sort({ submittedDate: -1 });
         
-        try {
-            const Submission = mongoose.model('Submission');
-            submissions = await Submission.find({ 
-                userEmail: userEmail 
-            }).sort({ submittedDate: -1 });
-            console.log(`✅ Found ${submissions.length} submissions via model`);
-        } catch (modelError) {
-            console.log('Model error, trying direct collection:', modelError.message);
-            
-            // Method 2: Direct database access
-            const db = mongoose.connection.db;
-            submissions = await db.collection('submissions').find({ 
-                userEmail: userEmail 
-            }).toArray();
-            console.log(`✅ Found ${submissions.length} submissions via direct query`);
-        }
-        
-        // If still empty, try case-insensitive search
-        if (submissions.length === 0) {
-            const db = mongoose.connection.db;
-            submissions = await db.collection('submissions').find({ 
-                userEmail: { $regex: new RegExp(`^${userEmail}$`, 'i') }
-            }).toArray();
-            console.log(`✅ Found ${submissions.length} submissions via case-insensitive search`);
-        }
-        
-        res.json(submissions);
+        res.json(applications);
     } catch (error) {
-        console.error('Error in /api/faculty/applications:', error);
         res.status(500).json({ error: error.message });
     }
 });
