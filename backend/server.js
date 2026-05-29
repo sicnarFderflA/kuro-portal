@@ -896,6 +896,58 @@ app.get('/api/signatures/:token', async (req, res) => {
     }
 });
 
+// Add this to your server.js temporarily
+app.get('/api/debug/emailjs-test', async (req, res) => {
+    try {
+        // Test if EmailJS is configured
+        const testResult = {
+            serviceId: process.env.EMAILJS_SERVICE_ID ? '✅ Set' : '❌ MISSING',
+            chairTemplate: process.env.EMAILJS_CHAIR_TEMPLATE ? '✅ Set' : '❌ MISSING',
+            deanTemplate: process.env.EMAILJS_DEAN_TEMPLATE ? '✅ Set' : '❌ MISSING',
+            publicKey: process.env.EMAILJS_PUBLIC_KEY ? '✅ Set' : '❌ MISSING',
+            privateKey: process.env.EMAILJS_PRIVATE_KEY ? '✅ Set' : '❌ MISSING',
+        };
+        
+        // Try to send a test email
+        let testEmailSent = false;
+        let testError = null;
+        
+        if (process.env.EMAILJS_SERVICE_ID && process.env.EMAILJS_PUBLIC_KEY) {
+            try {
+                emailjs.init({
+                    publicKey: process.env.EMAILJS_PUBLIC_KEY,
+                    privateKey: process.env.EMAILJS_PRIVATE_KEY
+                });
+                
+                const testParams = {
+                    to_email: "200520181@my.xu.edu.ph",
+                    to_name: "Test User",
+                    chair_name: "Test",
+                    signature_link: "https://test.com",
+                    expiry_days: 7
+                };
+                
+                await emailjs.send(
+                    process.env.EMAILJS_SERVICE_ID,
+                    process.env.EMAILJS_CHAIR_TEMPLATE,
+                    testParams
+                );
+                testEmailSent = true;
+            } catch (error) {
+                testError = error.message;
+            }
+        }
+        
+        res.json({
+            config: testResult,
+            testEmailSent: testEmailSent,
+            testError: testError
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // ========== 404 HANDLER ==========
 app.use((req, res) => {
     res.status(404).json({ error: 'Route not found', path: req.url });
