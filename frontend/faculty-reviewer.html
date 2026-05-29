@@ -649,7 +649,7 @@ function renderDashboard() {
                 <tr>
                     <td><strong>${escapeHtml(task.grantTitle)}</strong></td>
                     <td>${escapeHtml(task.proposalTitle || 'N/A')}</td>
-                    <td>${escapeHtml(task.applicantEmail)}</td>
+                    <td>${escapeHtml(task.userEmail)}</td>
                     <td>${assignedDate}</td>
                     <td>${dueDate}</td>
                     <td><span class="status ${statusClass}">${statusText}</span></td>
@@ -676,7 +676,7 @@ async function viewApplicationDetails(appId) {
             let found = apps.find(a => a.id === appId);
             if (found) {
                 foundApp = JSON.parse(JSON.stringify(found));
-                foundApp.applicantEmail = email;
+                foundApp.userEmail = email;
                 foundEmail = email;
                 break;
             }
@@ -939,7 +939,7 @@ async function viewApplicationDetails(appId) {
                 <h3 style="color: var(--gold); margin-bottom: 0.5rem;"><i class="fas fa-file-alt"></i> FINAL REPORT REVIEW</h3>
                 <div><strong>Grant:</strong> ${escapeHtml(foundApp.grantTitle)}</div>
                 <div><strong>Proposal Title:</strong> ${escapeHtml(foundApp.proposalTitle || 'N/A')}</div>
-                <div><strong>Applicant:</strong> ${escapeHtml(foundApp.piName || foundApp.applicantEmail)}</div>
+                <div><strong>Applicant:</strong> ${escapeHtml(foundApp.piName || foundApp.userEmail)}</div>
                 <div><strong>Submitted:</strong> ${foundApp.submittedDate || 'N/A'}</div>
             </div>
             

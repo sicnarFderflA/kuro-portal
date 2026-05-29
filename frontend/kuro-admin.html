@@ -2066,23 +2066,23 @@ function getAllApplications() {
                 if (s.status !== 'Awaiting Signatures') {
                     // Super Admin sees ALL applications
                     if (userRole === 'superadmin') {
-                        apps.push(Object.assign({}, s, { applicantEmail: email }));
+                        apps.push(Object.assign({}, s, { userEmail: email }));
                     } 
                     // Admin sees ALL applications
                     else if (userRole === 'admin') {
-                        apps.push(Object.assign({}, s, { applicantEmail: email }));
+                        apps.push(Object.assign({}, s, { userEmail: email }));
                     } 
                     // Check 1 sees only Pending Eligibility Check
                     else if (userRole === 'check1' && s.status === 'Pending Eligibility Check') {
-                        apps.push(Object.assign({}, s, { applicantEmail: email }));
+                        apps.push(Object.assign({}, s, { userEmail: email }));
                     } 
                     // Check 2 sees only Pending Secondary Check
                     else if (userRole === 'check2' && s.status === 'Pending Secondary Check') {
-                        apps.push(Object.assign({}, s, { applicantEmail: email }));
+                        apps.push(Object.assign({}, s, { userEmail: email }));
                     } 
                     // Check 3 sees only Pending Final Check
                     else if (userRole === 'check3' && s.status === 'Pending Final Check') {
-                        apps.push(Object.assign({}, s, { applicantEmail: email }));
+                        apps.push(Object.assign({}, s, { userEmail: email }));
                     }
                 }
             });
@@ -2407,7 +2407,7 @@ function filterApplications(allApps) {
         if (searchFilter) {
             const s = searchFilter.toLowerCase();
             if (!(app.proposalTitle || '').toLowerCase().includes(s) && 
-                !(app.applicantEmail || '').toLowerCase().includes(s) &&
+                !(app.userEmail || '').toLowerCase().includes(s) &&
                 !(app.piName || '').toLowerCase().includes(s)) return false;
         }
         return true;
@@ -2531,7 +2531,7 @@ function renderCompactApplicationsList(filtered) {
             <td class="app-select"><input type="checkbox" class="app-checkbox"></td>
             <td class="grant-cell"><span class="grant-tag">${escapeHtml(app.grantTitle).substring(0, 25)}</span></td>
             <td class="title-cell" title="${escapeHtml(app.proposalTitle || 'N/A')}">${escapeHtml(app.proposalTitle || 'N/A').substring(0, 45)}</td>
-            <td class="applicant-cell">${escapeHtml(app.piName || app.applicantEmail?.split('@')[0] || 'N/A')}</td>
+            <td class="applicant-cell">${escapeHtml(app.piName || app.userEmail?.split('@')[0] || 'N/A')}</td>
             <td class="date-cell">${app.submittedDate || 'N/A'}</td>
             <td class="cv-cell">${cvIcon}</td>
             <td class="sig-cell">${sigIcon}</td>
@@ -2561,7 +2561,7 @@ function viewApplicationDetails(appId) {
             let found = apps.find(a => a.id === appId);
             if (found) { 
                 foundApp = JSON.parse(JSON.stringify(found)); 
-                foundApp.applicantEmail = email;
+                foundApp.userEmail = email;
                 foundEmail = email; 
                 break; 
             }
@@ -2592,7 +2592,7 @@ function viewApplicationDetails(appId) {
     <div class="detail-section"><h4>📋 Application Information</h4>
         <div class="detail-field"><strong>ID:</strong> ${foundApp.id}</div>
         <div class="detail-field"><strong>Grant:</strong> ${escapeHtml(foundApp.grantTitle)}</div>
-        <div class="detail-field"><strong>Applicant:</strong> ${foundApp.applicantEmail}</div>
+        <div class="detail-field"><strong>Applicant:</strong> ${foundApp.userEmail}</div>
         <div class="detail-field"><strong>Submitted:</strong> ${foundApp.submittedDate}</div>
         <div class="detail-field"><strong>Status:</strong> <span class="status-badge ${foundApp.status === 'Approved' ? 'approved' : (foundApp.status === 'Returned' ? 'pending' : 'external')}">${foundApp.status}</span></div>
         ${foundApp.returnedFeedback ? `<div class="detail-field"><strong>Return Reason:</strong> <span class="return-badge"><i class="fas fa-undo-alt"></i> Returned for Revision</span></div>` : ''}

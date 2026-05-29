@@ -470,7 +470,7 @@
                 
                 // Add notification
                 await KURO_API.createNotification({
-                    userEmail: applicantEmail,
+                    userEmail: userEmail,
                     type: 'signature_received',
                     title: '✍️ Signature Received',
                     message: `${role === 'chair' ? 'Department Chair' : 'Dean'} ${authenticatedUser.name} has signed the endorsement letter.`,
@@ -483,7 +483,7 @@
                 const app = await KURO_API.getApplication(appId);
                 if (app.signatures?.chair?.signed && app.signatures?.dean?.signed) {
                     await KURO_API.createNotification({
-                        userEmail: applicantEmail,
+                        userEmail: userEmail,
                         type: 'signatures_complete',
                         title: '✅ Signatures Complete',
                         message: 'Both signatures have been completed. Your application is now pending review.',

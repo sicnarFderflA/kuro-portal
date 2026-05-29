@@ -2,10 +2,10 @@ const mongoose = require('mongoose');
 
 const submissionSchema = new mongoose.Schema({
     id: { type: String, required: true, unique: true },
-    userEmail: { type: String, required: true, index: true },  // Consistent field name
+    userEmail: { type: String, required: true }, 
     grantTitle: { type: String, required: true },
     proposalTitle: { type: String, required: true },
-    status: { type: String, default: 'Awaiting Signatures', index: true },
+    status: { type: String, default: 'Awaiting Signatures' }, 
     submittedDate: { type: String, required: true },
     
     // Principal Investigator
@@ -94,4 +94,4 @@ submissionSchema.index({ userEmail: 1 });
 submissionSchema.index({ status: 1 });
 submissionSchema.index({ submittedDate: -1 });
 
-module.exports = mongoose.model('Submission', submissionSchema);
+module.exports = mongoose.models.Submission || mongoose.model('Submission', submissionSchema);
