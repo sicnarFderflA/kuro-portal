@@ -350,7 +350,6 @@ app.delete('/api/faculty/drafts/:draftId', async (req, res) => {
             return res.status(404).json({ error: 'Draft not found' });
         }
         
-        console.log('✅ Deleted draft:', draftId);
         res.json({ success: true });
         
     } catch (error) {

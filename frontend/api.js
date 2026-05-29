@@ -197,7 +197,10 @@ async function getFacultyDrafts() {
 }
 
 async function deleteFacultyDraft(draftId) {
-    return apiRequest(`/faculty/drafts/${draftId}`, { method: 'DELETE' });
+    const user = JSON.parse(sessionStorage.getItem('kuro_user') || '{}');
+    return apiRequest(`/faculty/drafts/${draftId}?userEmail=${encodeURIComponent(user.email)}`, { 
+        method: 'DELETE' 
+    });
 }
 
 // ==================== REVIEWER API ====================
