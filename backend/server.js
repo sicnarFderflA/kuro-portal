@@ -5,7 +5,7 @@ const { OAuth2Client } = require('google-auth-library');
 const emailjs = require('@emailjs/nodejs');
 require('dotenv').config();
 
-const MONGODB_URI = process.env.MONGODB_URI;
+
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_do_not_use_in_production';
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID;
@@ -518,15 +518,6 @@ app.post('/api/applications/:appId/generate-signatures', async (req, res) => {
     }
 });
 
-
-
-// EmailJS configuration (add to your .env file)
-const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID || 'service_ocv82fn';
-const EMAILJS_CHAIR_TEMPLATE = process.env.EMAILJS_CHAIR_TEMPLATE || 'template_0ll7awk';
-const EMAILJS_DEAN_TEMPLATE = process.env.EMAILJS_DEAN_TEMPLATE || 'template_3lsq7ug';
-const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY;
-const EMAILJS_PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY;
-
 // Send signature emails
 app.post('/api/applications/:appId/send-signature-emails', async (req, res) => {
     try {
@@ -810,6 +801,72 @@ app.put('/api/signatures/:token/complete', async (req, res) => {
         
     } catch (error) {
         console.error('Error completing signature:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get signature request by token
+app.get('/api/signatures/:token', async (req, res) => {
+    try {
+        const { token } = req.params;
+        
+        const db = mongoose.connection.db;
+        
+        // Find the signature request by token (check both chair and dean tokens)
+        const signatureRequest = await db.collection('signature_requests').findOne({
+            $or: [
+                { chairToken: token },
+                { deanToken: token }
+            ]
+        });
+        
+        if (!signatureRequest) {
+            return res.status(404).json({ error: 'Signature request not found' });
+        }
+        
+        // Get the associated application
+        const application = await db.collection('submissions').findOne({ id: signatureRequest.appId });
+        
+        if (!application) {
+            return res.status(404).json({ error: 'Application not found' });
+        }
+        
+        // Determine role based on which token matched
+        const isChair = signatureRequest.chairToken === token;
+        const isDean = signatureRequest.deanToken === token;
+        
+        let role = null;
+        let signerEmail = null;
+        let signerName = null;
+        
+        if (isChair) {
+            role = 'chair';
+            signerEmail = signatureRequest.chairEmail;
+            signerName = signatureRequest.chairName;
+        } else if (isDean) {
+            role = 'dean';
+            signerEmail = signatureRequest.deanEmail;
+            signerName = signatureRequest.deanName;
+        }
+        
+        res.json({
+            appId: signatureRequest.appId,
+            role: role,
+            signerEmail: signerEmail,
+            signerName: signerName,
+            completed: isChair ? signatureRequest.chairCompleted : signatureRequest.deanCompleted,
+            revoked: false, // You can add a revoked flag if needed
+            expiresAt: signatureRequest.expiresAt,
+            application: {
+                proposalTitle: application.proposalTitle,
+                piName: application.piName,
+                grantTitle: application.grantTitle,
+                userEmail: application.userEmail
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error fetching signature:', error);
         res.status(500).json({ error: error.message });
     }
 });
