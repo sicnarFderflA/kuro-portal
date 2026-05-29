@@ -515,17 +515,15 @@ app.post('/api/applications/:appId/generate-signatures', async (req, res) => {
         );
         
         // Update application with signature request info
-        await db.collection('submissions').updateOne(
+        await db.collection('applications').updateOne(
             { id: appId },
-            { 
-                $set: { 
-                    signatureRequests: {
-                        chairToken: chairToken,
-                        deanToken: deanToken,
-                        sentAt: new Date().toISOString()
-                    }
-                }
-            }
+            { $set: { signatureRequests: {
+                chairToken: chairToken,
+                deanToken: deanToken,
+                sentAt: new Date().toISOString(),
+                emailsSent: false,
+                resendCount: 0
+            } } }
         );
         
         // Generate signature links
@@ -840,11 +838,10 @@ app.put('/api/signatures/:token/complete', async (req, res) => {
 app.get('/api/signatures/:token', async (req, res) => {
     try {
         const { token } = req.params;
-        console.log("🔍 Looking for token:", token);
         
         const db = mongoose.connection.db;
         
-        // Search for the token in the applications collection's signatureRequests field
+        // Search in APPLICATIONS collection
         const application = await db.collection('applications').findOne({
             $or: [
                 { 'signatureRequests.chairToken': token },
@@ -853,34 +850,21 @@ app.get('/api/signatures/:token', async (req, res) => {
         });
         
         if (!application) {
-            console.log("Token not found in any application");
             return res.status(404).json({ error: 'Signature request not found' });
         }
         
-        console.log("✅ Found application:", application.id);
-        
+        // Determine role
         const isChair = application.signatureRequests?.chairToken === token;
-        const isDean = application.signatureRequests?.deanToken === token;
-        
-        if (!isChair && !isDean) {
-            return res.status(404).json({ error: 'Token not associated with any role' });
-        }
-        
         const role = isChair ? 'chair' : 'dean';
         const signerEmail = isChair ? application.chairEmail : application.deanEmail;
         const signerName = isChair ? application.fromChair : application.deanName;
-        
-        const isCompleted = isChair 
-            ? (application.signatures?.chair?.signed || false)
-            : (application.signatures?.dean?.signed || false);
         
         res.json({
             appId: application.id,
             role: role,
             signerEmail: signerEmail,
             signerName: signerName,
-            completed: isCompleted,
-            revoked: false,
+            completed: false,
             expiresAt: application.signatureRequests?.expiresAt || null,
             application: {
                 proposalTitle: application.proposalTitle,
@@ -891,7 +875,6 @@ app.get('/api/signatures/:token', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Error fetching signature:', error);
         res.status(500).json({ error: error.message });
     }
 });
