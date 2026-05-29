@@ -10,8 +10,6 @@ emailjs.init({
     privateKey: process.env.EMAILJS_PRIVATE_KEY
 });
 
-console.log('📧 EmailJS initialized');
-
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_do_not_use_in_production';
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const EMAILJS_SERVICE_ID = 'service_gh6jwhb';  // Keep this the same
@@ -676,7 +674,7 @@ app.post('/api/applications/:appId/resend-signatures', async (req, res) => {
         );
         
         // Update application with new signature tokens
-        await db.collection('submissions').updateOne(
+        await db.collection('applications').updateOne(
             { id: appId },
             { 
                 $set: { 
@@ -771,15 +769,25 @@ app.get('/api/applications/:appId/signature-status', async (req, res) => {
         const db = mongoose.connection.db;
         const signatureRequest = await db.collection('signature_requests').findOne({ appId: appId });
         
-        if (!signatureRequest) {
-            return res.json({ chairCompleted: false, deanCompleted: false });
+        // Also get the application to check signatures
+        const application = await db.collection('applications').findOne({ id: appId });
+        
+        // Check if both signatures are complete and status needs update
+        if (signatureRequest && signatureRequest.chairCompleted && signatureRequest.deanCompleted) {
+            if (application.status === 'Awaiting Signatures') {
+                await db.collection('applications').updateOne(
+                    { id: appId },
+                    { $set: { status: 'Pending Eligibility Check' } }
+                );
+                console.log('✅ Status synchronized to Pending Eligibility Check');
+            }
         }
         
         res.json({ 
-            chairCompleted: signatureRequest.chairCompleted || false,
-            deanCompleted: signatureRequest.deanCompleted || false,
-            chairSignedAt: signatureRequest.chairSignedAt,
-            deanSignedAt: signatureRequest.deanSignedAt
+            chairCompleted: signatureRequest?.chairCompleted || false,
+            deanCompleted: signatureRequest?.deanCompleted || false,
+            chairSignedAt: signatureRequest?.chairSignedAt,
+            deanSignedAt: signatureRequest?.deanSignedAt
         });
         
     } catch (error) {

@@ -536,6 +536,16 @@
                     signedDate: new Date().toISOString(),
                     signerName: authenticatedUser.name
                 });
+
+                // Check if both signatures are now complete and update status
+                const updatedApp = await KURO_API.getApplication(appId);
+                if (updatedApp.signatures?.chair?.signed && updatedApp.signatures?.dean?.signed) {
+                    // Update status to Pending Eligibility Check
+                    await KURO_API.updateApplication(appId, {
+                        status: "Pending Eligibility Check"
+                    });
+                    console.log("✅ Both signatures complete! Status updated to Pending Eligibility Check");
+                }
                 
                 // Add notification
                 await KURO_API.createNotification({
