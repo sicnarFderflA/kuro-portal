@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const ApplicationSchema = new mongoose.Schema({
     id: { type: String, required: true, unique: true },
-    applicantEmail: { type: String, required: true, index: true },
+    useremail: { type: String, required: true, index: true },
     grantTitle: { type: String, required: true },
     proposalTitle: { type: String, required: true },
     submittedDate: { type: String, required: true },

@@ -1758,7 +1758,6 @@ async function renderApplicant() {
         
         // Filter applications for current user
         const filteredSubs = mySubs.filter(sub => 
-            sub.applicantEmail === currentUser.email ||
             sub.userEmail === currentUser.email
         );
         console.log('Filtered applications:', filteredSubs);

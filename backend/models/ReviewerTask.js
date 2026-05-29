@@ -2,10 +2,10 @@ const mongoose = require('mongoose');
 
 const ReviewerTaskSchema = new mongoose.Schema({
     reviewerEmail: { type: String, required: true, index: true },
-    applicationId: { type: String, required: true, index: true },
+    usermail: { type: String, required: true, index: true },
     grantTitle: String,
     proposalTitle: String,
-    applicantEmail: String,
+    userEmail: String,
     status: { type: String, enum: ['pending', 'completed'], default: 'pending' },
     assignedDate: Date,
     dueDate: Date,

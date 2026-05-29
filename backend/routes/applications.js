@@ -8,8 +8,8 @@ router.get('/', async (req, res) => {
         const { email, role } = req.user || {};
         let query = {};
         
-        if (role === 'faculty') query.applicantEmail = email;
-        else if (role === 'student') query.applicantEmail = email;
+        if (role === 'faculty') query.userEmail = email;
+        else if (role === 'student') query.userEmail = email;
         
         const apps = await Application.find(query).sort({ submittedDate: -1 });
         res.json(apps);

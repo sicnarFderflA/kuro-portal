@@ -158,6 +158,8 @@ app.get('/', (req, res) => {
 const applicationsRoutes = require('./routes/applications');
 const adminRoutes = require('./routes/admin');
 const notificationsRoutes = require('./routes/notifications');
+const Submission = require('./models/Submission');
+const Draft = require('./models/Draft');
 
 // Use routes
 app.use('/api/applications', applicationsRoutes);
@@ -168,86 +170,72 @@ app.use('/api/notifications', notificationsRoutes);
 app.get('/api/faculty/applications', async (req, res) => {
     try {
         const userEmail = req.query.userEmail;
-        console.log('📋 Faculty applications requested for:', userEmail);
+        console.log('📋 GET faculty applications for:', userEmail);
         
         if (!userEmail) {
             return res.status(400).json({ error: 'userEmail required' });
         }
         
-        const db = mongoose.connection.db;
+        // Use the schema - this ensures consistent field names!
+        const submissions = await Submission.find({ 
+            userEmail: userEmail 
+        }).sort({ submittedDate: -1 });
         
-        // Get all submissions first to see what's there
-        const allSubmissions = await db.collection('submissions').find({}).toArray();
-        console.log(`📊 Total submissions in DB: ${allSubmissions.length}`);
-        
-        // Filter for this user
-        const userSubmissions = allSubmissions.filter(sub => 
-            sub.userEmail === userEmail || 
-            sub.applicantEmail === userEmail
-        );
-        
-        console.log(`✅ Found ${userSubmissions.length} submissions for ${userEmail}`);
-        
-        if (userSubmissions.length > 0) {
-            console.log('First submission:', {
-                id: userSubmissions[0].id,
-                userEmail: userSubmissions[0].userEmail,
-                applicantEmail: userSubmissions[0].applicantEmail
-            });
-        }
-        
-        res.json(userSubmissions);
+        console.log(`✅ Found ${submissions.length} submissions`);
+        res.json(submissions);
         
     } catch (error) {
-        console.error('❌ Error fetching faculty applications:', error);
+        console.error('Error:', error);
         res.status(500).json({ error: error.message });
     }
 });
+
+
 // Get faculty drafts
 app.get('/api/faculty/drafts', async (req, res) => {
     try {
         const userEmail = req.query.userEmail;
+        console.log('📋 GET faculty drafts for:', userEmail);
+        
         if (!userEmail) {
             return res.status(400).json({ error: 'userEmail required' });
         }
         
-        const db = mongoose.connection.db;
-        const drafts = await db.collection('drafts').find({ 
-            userEmail: userEmail 
-        }).toArray();
+        const drafts = await Draft.find({ userEmail: userEmail }).sort({ lastSaved: -1 });
         
+        console.log(`✅ Found ${drafts.length} drafts`);
         res.json(drafts);
+        
     } catch (error) {
-        console.error('Error fetching faculty drafts:', error);
-        res.json([]);
+        console.error('Error:', error);
+        res.status(500).json({ error: error.message });
     }
 });
 
 // Save faculty draft
 app.post('/api/faculty/drafts', async (req, res) => {
     try {
-        const draft = req.body;
-        if (!draft.userEmail) {
+        const draftData = req.body;
+        
+        if (!draftData.userEmail) {
             return res.status(400).json({ error: 'userEmail required' });
         }
         
-        draft.updatedAt = new Date();
-        
-        const db = mongoose.connection.db;
-        
-        // IMPORTANT: Remove _id if it exists to avoid immutable field error
-        if (draft._id) {
-            delete draft._id;
+        // Remove _id if it exists to avoid conflicts
+        if (draftData._id) {
+            delete draftData._id;
         }
         
-        // Use updateOne with $set to avoid _id issues
-        const result = await db.collection('drafts').updateOne(
-            { draftId: draft.draftId, userEmail: draft.userEmail },
-            { $set: draft },
-            { upsert: true }
+        // Upsert using the schema
+        const result = await Draft.findOneAndUpdate(
+            { draftId: draftData.draftId, userEmail: draftData.userEmail },
+            { $set: draftData },
+            { upsert: true, new: true }
         );
         
-        res.json({ success: true, draftId: draft.draftId });
+        console.log('✅ Saved draft:', result.draftId);
+        res.json({ success: true, draftId: result.draftId });
+        
     } catch (error) {
         console.error('Error saving draft:', error);
         res.status(500).json({ error: error.message });
@@ -260,26 +248,30 @@ app.delete('/api/faculty/drafts/:draftId', async (req, res) => {
         const { draftId } = req.params;
         const userEmail = req.query.userEmail;
         
+        console.log('🗑️ DELETE draft:', draftId, 'for user:', userEmail);
+        
         if (!userEmail) {
             return res.status(400).json({ error: 'userEmail required' });
         }
         
-        const db = mongoose.connection.db;
-        const result = await db.collection('drafts').deleteOne({ 
+        const result = await Draft.findOneAndDelete({ 
             draftId: draftId, 
             userEmail: userEmail 
         });
         
-        if (result.deletedCount === 0) {
+        if (!result) {
             return res.status(404).json({ error: 'Draft not found' });
         }
         
+        console.log('✅ Deleted draft:', draftId);
         res.json({ success: true });
+        
     } catch (error) {
         console.error('Error deleting draft:', error);
         res.status(500).json({ error: error.message });
     }
 });
+
 
 // Alias for faculty applications (my-submissions)
 app.get('/api/my-submissions', async (req, res) => {
@@ -298,8 +290,7 @@ app.get('/api/my-submissions', async (req, res) => {
         
         // Filter for this user
         const userSubmissions = allSubmissions.filter(sub => 
-            sub.userEmail === userEmail || 
-            sub.applicantEmail === userEmail
+            sub.userEmail === userEmail
         );
         
         console.log(`✅ Found ${userSubmissions.length} submissions for ${userEmail}`);
@@ -332,14 +323,20 @@ app.get('/api/applications/:id', async (req, res) => {
 // Create new application
 app.post('/api/applications', async (req, res) => {
     try {
-        const application = req.body;
-        application.createdAt = new Date();
-        application.updatedAt = new Date();
+        const applicationData = req.body;
         
-        const db = mongoose.connection.db;
-        await db.collection('submissions').insertOne(application);
+        // Validate required fields
+        if (!applicationData.userEmail) {
+            return res.status(400).json({ error: 'userEmail is required' });
+        }
         
-        res.json(application);
+        // Create using the schema - this validates the data
+        const submission = new Submission(applicationData);
+        await submission.save();
+        
+        console.log('✅ Created application:', submission.id, 'for user:', submission.userEmail);
+        res.json(submission);
+        
     } catch (error) {
         console.error('Error creating application:', error);
         res.status(500).json({ error: error.message });
@@ -374,15 +371,17 @@ app.put('/api/applications/:id', async (req, res) => {
 app.delete('/api/applications/:id', async (req, res) => {
     try {
         const { id } = req.params;
+        console.log('🗑️ DELETE application:', id);
         
-        const db = mongoose.connection.db;
-        const result = await db.collection('submissions').deleteOne({ id: id });
+        const result = await Submission.findOneAndDelete({ id: id });
         
-        if (result.deletedCount === 0) {
+        if (!result) {
             return res.status(404).json({ error: 'Application not found' });
         }
         
+        console.log('✅ Deleted application:', id);
         res.json({ success: true });
+        
     } catch (error) {
         console.error('Error deleting application:', error);
         res.status(500).json({ error: error.message });

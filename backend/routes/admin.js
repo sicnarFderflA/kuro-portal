@@ -27,7 +27,7 @@ router.get('/applications', async (req, res) => {
         if (search) {
             query.$or = [
                 { proposalTitle: { $regex: search, $options: 'i' } },
-                { applicantEmail: { $regex: search, $options: 'i' } }
+                { userEmail: { $regex: search, $options: 'i' } }
             ];
         }
         const apps = await Application.find(query).sort({ submittedDate: -1 });
