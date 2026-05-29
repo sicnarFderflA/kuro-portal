@@ -178,12 +178,13 @@ app.use('/api/notifications', notificationsRoutes);
 
 // ========== SINGLE APPLICATION ROUTES ==========
 
+// Get single application - FIXED to use Submission model
 app.get('/api/applications/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        console.log('🔍 GET single application:', id);
+        console.log('🔍 GET single application by ID:', id);
         
-        // Use the same Submission model that works for faculty endpoint
+        // Use the Submission model (same as faculty applications endpoint)
         const application = await Submission.findOne({ id: id });
         
         if (!application) {
@@ -200,27 +201,6 @@ app.get('/api/applications/:id', async (req, res) => {
     }
 });
 
-// Get single application (GET with :id parameter)
-app.get('/api/applications/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        // Ignore any query parameters like ?userEmail=...
-        console.log('🔍 GET single application:', id);
-        
-        const db = mongoose.connection.db;
-        const application = await db.collection('submissions').findOne({ id: id });
-        
-        if (!application) {
-            return res.status(404).json({ error: 'Application not found' });
-        }
-        
-        res.json(application);
-    } catch (error) {
-        console.error('Error fetching application:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
 // Update application (PUT with :id parameter)
 app.put('/api/applications/:id', async (req, res) => {
     try {
@@ -230,22 +210,20 @@ app.put('/api/applications/:id', async (req, res) => {
         
         console.log('📝 PUT update application:', id);
         
-        const db = mongoose.connection.db;
+        // Use Submission model
+        const result = await Submission.findOneAndUpdate(
+            { id: id },
+            { $set: updates },
+            { new: true }
+        );
         
-        // Check if application exists
-        const existing = await db.collection('submissions').findOne({ id: id });
-        if (!existing) {
+        if (!result) {
+            console.log('❌ Application not found for update:', id);
             return res.status(404).json({ error: 'Application not found' });
         }
         
-        // Update the application
-        const result = await db.collection('submissions').updateOne(
-            { id: id },
-            { $set: updates }
-        );
-        
-        console.log('✅ Updated:', id);
-        res.json({ success: true });
+        console.log('✅ Updated application:', id);
+        res.json({ success: true, data: result });
         
     } catch (error) {
         console.error('Error updating application:', error);
