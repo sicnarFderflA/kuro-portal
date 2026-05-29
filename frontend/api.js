@@ -18,11 +18,12 @@ async function apiRequest(endpoint, options = {}) {
     let url = `${API_BASE_URL}${endpoint}`;
     
     // Only add userEmail to GET requests that don't already have an ID in the path
-    // and only for specific endpoints that need it
+    // Skip if it's a single application endpoint (contains an ID)
+    const isSingleAppEndpoint = endpoint.match(/\/applications\/[^\/]+$/) && !endpoint.includes('signature-status');
     const needsUserEmail = options.method !== 'POST' && 
                           options.method !== 'PUT' && 
                           options.method !== 'DELETE' &&
-                          !endpoint.match(/\/api\/applications\/[^\/]+$/) && // Skip if it's /api/applications/XXX
+                          !isSingleAppEndpoint &&
                           !url.includes('userEmail');
     
     if (user.email && needsUserEmail) {
@@ -102,7 +103,7 @@ async function getApplication(appId) {
 
 // IMPORTANT: Use the correct endpoint from server.js
 async function getFacultyApplications() {
-    return apiRequest('/faculty/applications');  // ✅ This matches the new route
+    return apiRequest('/faculty/applications');  // ✅ Uses faculty applications endpoint
 }
 
 async function createApplication(application) {
@@ -154,7 +155,6 @@ async function resendSignatureRequests(appId, data) {
 }
 
 async function getSignatureStatus(appId) {
-    // Don't use the main apiRequest that adds userEmail
     const token = sessionStorage.getItem('kuro_token');
     
     const headers = { 'Content-Type': 'application/json' };
@@ -162,7 +162,10 @@ async function getSignatureStatus(appId) {
         headers['Authorization'] = `Bearer ${token}`;
     }
     
-    const url = `${API_BASE_URL}/api/applications/${appId}/signature-status`;
+    // This is correct - API_BASE_URL already includes /api
+    const url = `${API_BASE_URL}/applications/${appId}/signature-status`;
+    
+    console.log('Getting signature status:', url);
     
     const response = await fetch(url, { headers });
     
@@ -172,6 +175,13 @@ async function getSignatureStatus(appId) {
     }
     
     return response.json();
+}
+
+async function markSignatureComplete(token, data) {
+    return apiRequest(`/signatures/${token}/complete`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+    });
 }
 
 // ==================== DRAFTS API ====================
@@ -226,6 +236,7 @@ window.KURO_API = {
     sendSignatureEmails,
     getSignatureStatus,
     resendSignatureRequests,
+    markSignatureComplete,
     
     // Drafts
     saveFacultyDraft,
