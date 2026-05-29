@@ -128,9 +128,4 @@ const submissionSchema = new mongoose.Schema({
     strict: false 
 });
 
-// Indexes
-submissionSchema.index({ userEmail: 1 });
-submissionSchema.index({ status: 1 });
-submissionSchema.index({ submittedDate: -1 });
-
 module.exports = mongoose.models.Submission || mongoose.model('Submission', submissionSchema);
