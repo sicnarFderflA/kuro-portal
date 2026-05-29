@@ -565,7 +565,11 @@ app.post('/api/applications/:appId/send-signature-emails', async (req, res) => {
                 const chairResponse = await emailjs.send(
                     EMAILJS_SERVICE_ID, 
                     EMAILJS_CHAIR_TEMPLATE, 
-                    chairParams
+                    chairParams,
+                    {
+                        publicKey: EMAILJS_PUBLIC_KEY,
+                        privateKey: EMAILJS_PRIVATE_KEY
+                    }
                 );
                 
                 console.log('Chair email sent:', chairResponse.status);
@@ -595,7 +599,11 @@ app.post('/api/applications/:appId/send-signature-emails', async (req, res) => {
                 const deanResponse = await emailjs.send(
                     EMAILJS_SERVICE_ID, 
                     EMAILJS_DEAN_TEMPLATE, 
-                    deanParams
+                    deanParams,
+                    {
+                        publicKey: EMAILJS_PUBLIC_KEY,
+                        privateKey: EMAILJS_PRIVATE_KEY
+                    }
                 );
                 
                 console.log('Dean email sent:', deanResponse.status);

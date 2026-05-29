@@ -2872,13 +2872,15 @@ async function generateAndSendSignatureLinks(application) {
     }
 }
 
-async function autoGenerateSignatureLinks(application, appId) {
+async function autoGenerateSignatureLinks(application, appId, showNotifications = true) {
     if (!application.chairEmail || !application.deanEmail) {
         showInlineNotification(null, 'Missing chair or dean email addresses.', false);
         return;
     }
     
-    showInlineNotification(null, '📧 Generating signature links...', true);
+    if (showNotifications) {
+        showInlineNotification(null, '📧 Generating signature links...', true);
+    }
     
     try {
         // Generate signature links via backend API
@@ -2904,10 +2906,12 @@ async function autoGenerateSignatureLinks(application, appId) {
             expiryDays: 7
         });
         
-        if (emailResult.success) {
-            showInlineNotification(null, '✓ Signature requests sent successfully!', true);
-        } else {
-            showInlineNotification(null, '⚠️ Some emails failed to send. Please check the email addresses.', false);
+        if (showNotifications) {
+            if (emailResult.success) {
+                showInlineNotification(null, '✓ Signature requests sent successfully!', true);
+            } else {
+                showInlineNotification(null, '⚠️ Some emails failed to send. Please check the email addresses.', false);
+            }
         }
         
     } catch (error) {
@@ -2963,7 +2967,7 @@ async function resendSignatureRequests(application) {
     
     try {
         // Generate new tokens and send emails
-        await autoGenerateSignatureLinks(application, application.id);
+        await autoGenerateSignatureLinks(application, application.id, false);
         
         // Show success message
         await Swal.fire({
