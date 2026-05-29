@@ -176,7 +176,108 @@ app.use('/api/applications', applicationsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationsRoutes);
 
-// ========== FACULTY ROUTES ==========
+// ========== SINGLE APPLICATION ROUTES (Parameterized - MUST come AFTER specific routes) ==========
+// But before faculty routes, these need to be in the right order
+
+// Create new application (POST - no parameters, put this first)
+app.post('/api/applications', async (req, res) => {
+    try {
+        const applicationData = req.body;
+        
+        // Validate required fields
+        if (!applicationData.userEmail) {
+            return res.status(400).json({ error: 'userEmail is required' });
+        }
+        
+        // Create using the schema - this validates the data
+        const submission = new Submission(applicationData);
+        await submission.save();
+        
+        console.log('✅ Created application:', submission.id, 'for user:', submission.userEmail);
+        res.json(submission);
+        
+    } catch (error) {
+        console.error('Error creating application:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get single application (GET with :id parameter)
+app.get('/api/applications/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        console.log('🔍 GET single application:', id);
+        
+        const db = mongoose.connection.db;
+        const application = await db.collection('submissions').findOne({ id: id });
+        
+        if (!application) {
+            return res.status(404).json({ error: 'Application not found' });
+        }
+        
+        res.json(application);
+    } catch (error) {
+        console.error('Error fetching application:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Update application (PUT with :id parameter)
+app.put('/api/applications/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updates = req.body;
+        updates.updatedAt = new Date();
+        
+        console.log('📝 PUT update application:', id);
+        
+        const db = mongoose.connection.db;
+        
+        // Check if application exists
+        const existing = await db.collection('submissions').findOne({ id: id });
+        if (!existing) {
+            return res.status(404).json({ error: 'Application not found' });
+        }
+        
+        // Update the application
+        const result = await db.collection('submissions').updateOne(
+            { id: id },
+            { $set: updates }
+        );
+        
+        console.log('✅ Updated:', id);
+        res.json({ success: true });
+        
+    } catch (error) {
+        console.error('Error updating application:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Delete application (DELETE with :id parameter)
+app.delete('/api/applications/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        console.log('🗑️ DELETE application:', id);
+        
+        const result = await Submission.findOneAndDelete({ id: id });
+        
+        if (!result) {
+            return res.status(404).json({ error: 'Application not found' });
+        }
+        
+        console.log('✅ Deleted application:', id);
+        res.json({ success: true });
+        
+    } catch (error) {
+        console.error('Error deleting application:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// ========== FACULTY ROUTES (Specific paths - NO parameters) ==========
+
+// Get faculty applications
 app.get('/api/faculty/applications', async (req, res) => {
     try {
         const userEmail = req.query.userEmail;
@@ -199,7 +300,6 @@ app.get('/api/faculty/applications', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
-
 
 // Get faculty drafts
 app.get('/api/faculty/drafts', async (req, res) => {
@@ -282,7 +382,6 @@ app.delete('/api/faculty/drafts/:draftId', async (req, res) => {
     }
 });
 
-
 // Alias for faculty applications (my-submissions)
 app.get('/api/my-submissions', async (req, res) => {
     try {
@@ -308,92 +407,6 @@ app.get('/api/my-submissions', async (req, res) => {
         
     } catch (error) {
         console.error('❌ Error fetching my submissions:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Get single application
-app.get('/api/applications/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const db = mongoose.connection.db;
-        const application = await db.collection('submissions').findOne({ id: id });
-        
-        if (!application) {
-            return res.status(404).json({ error: 'Application not found' });
-        }
-        
-        res.json(application);
-    } catch (error) {
-        console.error('Error fetching application:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Create new application
-app.post('/api/applications', async (req, res) => {
-    try {
-        const applicationData = req.body;
-        
-        // Validate required fields
-        if (!applicationData.userEmail) {
-            return res.status(400).json({ error: 'userEmail is required' });
-        }
-        
-        // Create using the schema - this validates the data
-        const submission = new Submission(applicationData);
-        await submission.save();
-        
-        console.log('✅ Created application:', submission.id, 'for user:', submission.userEmail);
-        res.json(submission);
-        
-    } catch (error) {
-        console.error('Error creating application:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Update application
-app.put('/api/applications/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const updates = req.body;
-        updates.updatedAt = new Date();
-        
-        const db = mongoose.connection.db;
-        const result = await db.collection('submissions').updateOne(
-            { id: id },
-            { $set: updates }
-        );
-        
-        if (result.matchedCount === 0) {
-            return res.status(404).json({ error: 'Application not found' });
-        }
-        
-        res.json({ success: true });
-    } catch (error) {
-        console.error('Error updating application:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Delete application
-app.delete('/api/applications/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        console.log('🗑️ DELETE application:', id);
-        
-        const result = await Submission.findOneAndDelete({ id: id });
-        
-        if (!result) {
-            return res.status(404).json({ error: 'Application not found' });
-        }
-        
-        console.log('✅ Deleted application:', id);
-        res.json({ success: true });
-        
-    } catch (error) {
-        console.error('Error deleting application:', error);
         res.status(500).json({ error: error.message });
     }
 });
