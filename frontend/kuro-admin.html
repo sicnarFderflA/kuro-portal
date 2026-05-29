@@ -2553,145 +2553,168 @@ function renderCompactApplicationsList(filtered) {
     document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', function() { deleteApplication(btn.getAttribute('data-id')); }));
 }
 
-function viewApplicationDetails(appId) {
-    let foundApp = null, foundEmail = null;
-    for (let email in submissionsDB) {
-        let apps = submissionsDB[email];
-        if (Array.isArray(apps)) {
-            let found = apps.find(a => a.id === appId);
-            if (found) { 
-                foundApp = JSON.parse(JSON.stringify(found)); 
-                foundApp.userEmail = email;
-                foundEmail = email; 
-                break; 
+async function viewApplicationDetails(appId) {
+    try {
+        // Fetch application directly from API
+        const response = await fetch(`${API_URL}/api/applications/${appId}`);
+        
+        if (!response.ok) {
+            console.error("Application not found:", appId);
+            Swal.fire({ 
+                icon: 'error', 
+                title: 'Error', 
+                text: 'Application not found!' 
+            });
+            return;
+        }
+        
+        const foundApp = await response.json();
+        
+        if (!foundApp) {
+            Swal.fire({ 
+                icon: 'error', 
+                title: 'Error', 
+                text: 'Application not found!' 
+            });
+            return;
+        }
+        
+        // Add userEmail for compatibility
+        foundApp.userEmail = foundApp.userEmail;
+        
+        // Initialize teamCVs if needed
+        if (!foundApp.teamCVs) foundApp.teamCVs = [];
+        if (foundApp.teamMembers && foundApp.teamMembers.length > foundApp.teamCVs.length) {
+            for (let i = foundApp.teamCVs.length; i < foundApp.teamMembers.length; i++) {
+                foundApp.teamCVs.push({ name: null, status: 'missing' });
             }
         }
-    }
-    if (!foundApp) { Swal.fire({ icon: 'error', title: 'Error', text: 'Application not found!' }); return; }
-    
-    if (!foundApp.teamCVs) foundApp.teamCVs = [];
-    if (foundApp.teamMembers && foundApp.teamMembers.length > foundApp.teamCVs.length) {
-        for (let i = foundApp.teamCVs.length; i < foundApp.teamMembers.length; i++) {
-            foundApp.teamCVs.push({ name: null, status: 'missing' });
-        }
-    }
-    
-    // Determine current check stage info
-    let currentStageInfo = null;
-    let nextStage = null;
-    let isReturned = foundApp.status === 'Returned';
-    
-    if (!isReturned && foundApp.status !== 'Awaiting Signatures' && foundApp.status !== 'Approved') {
-        currentStageInfo = CHECK_STAGES[foundApp.status];
-        if (currentStageInfo) {
-            nextStage = currentStageInfo.nextStatus;
-        }
-    }
-    
-    let html = `<div style="max-height: 65vh; overflow-y: auto;">
-    <div class="detail-section"><h4>📋 Application Information</h4>
-        <div class="detail-field"><strong>ID:</strong> ${foundApp.id}</div>
-        <div class="detail-field"><strong>Grant:</strong> ${escapeHtml(foundApp.grantTitle)}</div>
-        <div class="detail-field"><strong>Applicant:</strong> ${foundApp.userEmail}</div>
-        <div class="detail-field"><strong>Submitted:</strong> ${foundApp.submittedDate}</div>
-        <div class="detail-field"><strong>Status:</strong> <span class="status-badge ${foundApp.status === 'Approved' ? 'approved' : (foundApp.status === 'Returned' ? 'pending' : 'external')}">${foundApp.status}</span></div>
-        ${foundApp.returnedFeedback ? `<div class="detail-field"><strong>Return Reason:</strong> <span class="return-badge"><i class="fas fa-undo-alt"></i> Returned for Revision</span></div>` : ''}
-    </div>`;
-    
-    // Add Check Stages Progress Indicator
-    if (!isReturned && foundApp.status !== 'Awaiting Signatures' && foundApp.status !== 'Approved') {
-        html += `<div class="detail-section"><h4>📊 Review Progress</h4>`;
-        html += `<div style="display: flex; margin-bottom: 1rem;">`;
         
-        const stages = [
-            { status: 'Pending Eligibility Check', name: 'Eligibility Review' },
-            { status: 'Pending Secondary Check', name: 'Secondary Review' },
-            { status: 'Pending Final Check', name: 'Final Review' }
-        ];
+        // Determine current check stage info
+        let currentStageInfo = null;
+        let nextStage = null;
+        let isReturned = foundApp.status === 'Returned';
         
-        let foundCurrent = false;
-        for (let i = 0; i < stages.length; i++) {
-            const stage = stages[i];
-            const isCompleted = !foundCurrent && foundApp.status !== stage.status && foundApp.status !== 'Awaiting Signatures' && foundApp.status !== 'Returned';
-            const isCurrent = foundApp.status === stage.status;
-            const isPending = !isCompleted && !isCurrent && !foundCurrent;
+        if (!isReturned && foundApp.status !== 'Awaiting Signatures' && foundApp.status !== 'Approved') {
+            currentStageInfo = CHECK_STAGES[foundApp.status];
+            if (currentStageInfo) {
+                nextStage = currentStageInfo.nextStatus;
+            }
+        }
+        
+        let html = `<div style="max-height: 65vh; overflow-y: auto;">
+        <div class="detail-section"><h4>📋 Application Information</h4>
+            <div class="detail-field"><strong>ID:</strong> ${foundApp.id}</div>
+            <div class="detail-field"><strong>Grant:</strong> ${escapeHtml(foundApp.grantTitle)}</div>
+            <div class="detail-field"><strong>Applicant:</strong> ${foundApp.userEmail}</div>
+            <div class="detail-field"><strong>Submitted:</strong> ${foundApp.submittedDate}</div>
+            <div class="detail-field"><strong>Status:</strong> <span class="status-badge ${foundApp.status === 'Approved' ? 'approved' : (foundApp.status === 'Returned' ? 'pending' : 'external')}">${foundApp.status}</span></div>
+            ${foundApp.returnedFeedback ? `<div class="detail-field"><strong>Return Reason:</strong> <span class="return-badge"><i class="fas fa-undo-alt"></i> Returned for Revision</span></div>` : ''}
+        </div>`;
+        
+        // Add Check Stages Progress Indicator
+        if (!isReturned && foundApp.status !== 'Awaiting Signatures' && foundApp.status !== 'Approved') {
+            html += `<div class="detail-section"><h4>📊 Review Progress</h4>`;
+            html += `<div style="display: flex; margin-bottom: 1rem;">`;
             
-            if (isCurrent) foundCurrent = true;
+            const stages = [
+                { status: 'Pending Eligibility Check', name: 'Eligibility Review' },
+                { status: 'Pending Secondary Check', name: 'Secondary Review' },
+                { status: 'Pending Final Check', name: 'Final Review' }
+            ];
             
-            let stageClass = 'pending';
-            let stageIcon = '○';
-            if (isCompleted) { stageClass = 'completed'; stageIcon = '●'; }
-            else if (isCurrent) { stageClass = 'current'; stageIcon = '◉'; }
-            
-            html += `<div style="flex: 1; text-align: center; position: relative;">
-                <div style="width: 30px; height: 30px; border-radius: 50%; background: ${isCompleted ? '#2ecc71' : (isCurrent ? '#3498db' : '#ddd')}; color: white; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem; font-size: 0.8rem;">${stageIcon}</div>
-                <div style="font-size: 0.65rem; font-weight: ${isCurrent ? 'bold' : 'normal'}; color: ${isCurrent ? '#3498db' : '#666'};">${stage.name}</div>
-                ${i < stages.length - 1 ? `<div style="position: absolute; top: 15px; left: 50%; width: 100%; height: 2px; background: ${isCompleted ? '#2ecc71' : '#ddd'};"></div>` : ''}
+            let foundCurrent = false;
+            for (let i = 0; i < stages.length; i++) {
+                const stage = stages[i];
+                const isCompleted = !foundCurrent && foundApp.status !== stage.status && foundApp.status !== 'Awaiting Signatures' && foundApp.status !== 'Returned';
+                const isCurrent = foundApp.status === stage.status;
+                const isPending = !isCompleted && !isCurrent && !foundCurrent;
+                
+                if (isCurrent) foundCurrent = true;
+                
+                let stageClass = 'pending';
+                let stageIcon = '○';
+                if (isCompleted) { stageClass = 'completed'; stageIcon = '●'; }
+                else if (isCurrent) { stageClass = 'current'; stageIcon = '◉'; }
+                
+                html += `<div style="flex: 1; text-align: center; position: relative;">
+                    <div style="width: 30px; height: 30px; border-radius: 50%; background: ${isCompleted ? '#2ecc71' : (isCurrent ? '#3498db' : '#ddd')}; color: white; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem; font-size: 0.8rem;">${stageIcon}</div>
+                    <div style="font-size: 0.65rem; font-weight: ${isCurrent ? 'bold' : 'normal'}; color: ${isCurrent ? '#3498db' : '#666'};">${stage.name}</div>
+                    ${i < stages.length - 1 ? `<div style="position: absolute; top: 15px; left: 50%; width: 100%; height: 2px; background: ${isCompleted ? '#2ecc71' : '#ddd'};"></div>` : ''}
+                </div>`;
+            }
+            html += `</div></div>`;
+        }
+        
+        // Show Returned Feedback if applicable
+        if (foundApp.returnedFeedback) {
+            html += `<div class="detail-section" style="background: #fff3cd; border-left: 4px solid #e74c3c;">
+                <h4 style="color: #856404;"><i class="fas fa-feedback"></i> Revision Required</h4>
+                <div style="font-size: 0.8rem; color: #856404; margin-top: 0.5rem;">${escapeHtml(foundApp.returnedFeedback)}</div>
+                <div style="font-size: 0.7rem; color: #856404; margin-top: 0.5rem;"><i class="fas fa-info-circle"></i> Faculty must address this feedback and resubmit the application.</div>
             </div>`;
         }
-        html += `</div></div>`;
-    }
-    
-    // Show Returned Feedback if applicable
-    if (foundApp.returnedFeedback) {
-        html += `<div class="detail-section" style="background: #fff3cd; border-left: 4px solid #e74c3c;">
-            <h4 style="color: #856404;"><i class="fas fa-feedback"></i> Revision Required</h4>
-            <div style="font-size: 0.8rem; color: #856404; margin-top: 0.5rem;">${escapeHtml(foundApp.returnedFeedback)}</div>
-            <div style="font-size: 0.7rem; color: #856404; margin-top: 0.5rem;"><i class="fas fa-info-circle"></i> Faculty must address this feedback and resubmit the application.</div>
-        </div>`;
-    }
-    
-    html += `<div class="modal-detail-tabs">
-        <button class="modal-detail-tab active" data-tab="form1">📝 Research Proposal</button>
-        <button class="modal-detail-tab" data-tab="form2">📋 Endorsement</button>
-        <button class="modal-detail-tab" data-tab="cv">📎 CV Review</button>
-        <button class="modal-detail-tab" data-tab="external">👥 External Reviewers</button>
-        <button class="modal-detail-tab" data-tab="checks">✓ Check Stages</button>
-    </div>
-    <div id="tabForm1" class="modal-tab-content">${renderForm1Content(foundApp)}</div>
-    <div id="tabForm2" class="modal-tab-content">${renderForm2Content(foundApp)}</div>
-    <div id="tabCV" class="modal-tab-content">${renderCVReviewContent(foundApp, foundEmail, appId)}</div>
-    <div id="tabExternal" class="modal-tab-content">${renderExternalReviewersContent(foundApp, foundEmail, appId)}</div>
-    <div id="tabChecks" class="modal-tab-content">${renderCheckStagesContent(foundApp, foundEmail, appId)}</div>
-</div>`;
-    
-    Swal.fire({ 
-        title: 'Application Details', 
-        html: html, 
-        width: '950px', 
-        showConfirmButton: true, 
-        confirmButtonColor: '#D4AF37', 
-        confirmButtonText: 'Close',
-        didOpen: (modal) => {
-            const tabs = ['form1', 'form2', 'cv', 'external', 'checks'];
-            const contents = {
-                form1: modal.querySelector('#tabForm1'),
-                form2: modal.querySelector('#tabForm2'),
-                cv: modal.querySelector('#tabCV'),
-                external: modal.querySelector('#tabExternal'),
-                checks: modal.querySelector('#tabChecks')
-            };
-            
-            // Hide all tabs initially
-            Object.values(contents).forEach(content => { if (content) content.style.display = 'none'; });
-            if (contents.form1) contents.form1.style.display = 'block';
-            
-            const tabBtns = modal.querySelectorAll('.modal-detail-tab');
-            tabBtns.forEach((btn, idx) => {
-                btn.onclick = () => {
-                    Object.values(contents).forEach(c => { if (c) c.style.display = 'none'; });
-                    tabBtns.forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    const tabId = btn.getAttribute('data-tab');
-                    if (contents[tabId]) contents[tabId].style.display = 'block';
+        
+        html += `<div class="modal-detail-tabs">
+            <button class="modal-detail-tab active" data-tab="form1">📝 Research Proposal</button>
+            <button class="modal-detail-tab" data-tab="form2">📋 Endorsement</button>
+            <button class="modal-detail-tab" data-tab="cv">📎 CV Review</button>
+            <button class="modal-detail-tab" data-tab="external">👥 External Reviewers</button>
+            <button class="modal-detail-tab" data-tab="checks">✓ Check Stages</button>
+        </div>
+        <div id="tabForm1" class="modal-tab-content">${renderForm1Content(foundApp)}</div>
+        <div id="tabForm2" class="modal-tab-content">${renderForm2Content(foundApp)}</div>
+        <div id="tabCV" class="modal-tab-content">${renderCVReviewContent(foundApp, foundApp.userEmail, appId)}</div>
+        <div id="tabExternal" class="modal-tab-content">${renderExternalReviewersContent(foundApp, foundApp.userEmail, appId)}</div>
+        <div id="tabChecks" class="modal-tab-content">${renderCheckStagesContent(foundApp, foundApp.userEmail, appId)}</div>
+    </div>`;
+        
+        Swal.fire({ 
+            title: 'Application Details', 
+            html: html, 
+            width: '950px', 
+            showConfirmButton: true, 
+            confirmButtonColor: '#D4AF37', 
+            confirmButtonText: 'Close',
+            didOpen: (modal) => {
+                const tabs = ['form1', 'form2', 'cv', 'external', 'checks'];
+                const contents = {
+                    form1: modal.querySelector('#tabForm1'),
+                    form2: modal.querySelector('#tabForm2'),
+                    cv: modal.querySelector('#tabCV'),
+                    external: modal.querySelector('#tabExternal'),
+                    checks: modal.querySelector('#tabChecks')
                 };
-            });
-            
-            // Attach handlers for CV and Check stages
-            attachCVHandlersInModal(modal, foundEmail, appId);
-            attachCheckStageHandlers(modal, foundEmail, appId, foundApp.status);
-        }
-    });
+                
+                // Hide all tabs initially
+                Object.values(contents).forEach(content => { if (content) content.style.display = 'none'; });
+                if (contents.form1) contents.form1.style.display = 'block';
+                
+                const tabBtns = modal.querySelectorAll('.modal-detail-tab');
+                tabBtns.forEach((btn) => {
+                    btn.onclick = () => {
+                        Object.values(contents).forEach(c => { if (c) c.style.display = 'none'; });
+                        tabBtns.forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        const tabId = btn.getAttribute('data-tab');
+                        if (contents[tabId]) contents[tabId].style.display = 'block';
+                    };
+                });
+                
+                // Attach handlers for CV and Check stages
+                attachCVHandlersInModal(modal, foundApp.userEmail, appId);
+                attachCheckStageHandlers(modal, foundApp.userEmail, appId, foundApp.status);
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error fetching application:', error);
+        Swal.fire({ 
+            icon: 'error', 
+            title: 'Error', 
+            text: 'Application not found!' 
+        });
+    }
 }
 
 function renderCheckStagesContent(app, email, appId) {
