@@ -14,11 +14,19 @@ console.log('📧 EmailJS initialized');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_do_not_use_in_production';
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID;
-const EMAILJS_CHAIR_TEMPLATE = process.env.EMAILJS_CHAIR_TEMPLATE;
-const EMAILJS_DEAN_TEMPLATE = process.env.EMAILJS_DEAN_TEMPLATE;
-const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY;
-const EMAILJS_PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY;
+const EMAILJS_SERVICE_ID = 'service_gh6jwhb';  // Keep this the same
+const EMAILJS_CHAIR_TEMPLATE = 'template_yurehtl';  // NEW
+const EMAILJS_DEAN_TEMPLATE = 'template_7l5r5eq';   // NEW
+const EMAILJS_PUBLIC_KEY = '1qXRfGkNZuqEY_BUI';     // NEW
+const EMAILJS_PRIVATE_KEY = 'uDrt2ggg3t8A334NwutB2'; // NEW
+
+// Initialize EmailJS
+emailjs.init({
+    publicKey: EMAILJS_PUBLIC_KEY,
+    privateKey: EMAILJS_PRIVATE_KEY
+});
+
+console.log('📧 EmailJS initialized with new keys');
 
 const app = express();
 
