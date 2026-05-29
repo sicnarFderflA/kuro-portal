@@ -1,46 +1,40 @@
+// models/Submission.js
 const mongoose = require('mongoose');
 
 const submissionSchema = new mongoose.Schema({
+    // Basic Info
     id: { type: String, required: true, unique: true },
-    userEmail: { type: String, required: true }, 
+    userEmail: { type: String, required: true, index: true },
     grantTitle: { type: String, required: true },
     proposalTitle: { type: String, required: true },
-    status: { type: String, default: 'Awaiting Signatures' }, 
+    status: { type: String, default: 'Awaiting Signatures' },
     submittedDate: { type: String, required: true },
     
     // Principal Investigator
     piName: { type: String, required: true },
     piEmail: { type: String, required: true },
-    piCVName: { type: String },
-    piCVStatus: { type: String, default: 'pending', enum: ['pending', 'eligible', 'ineligible', 'missing'] },
-    
-    // Organization
     dept: { type: String, required: true },
     school: { type: String, required: true },
-    extension: { type: String },
-    duration: { type: String, required: true },
+    extension: { type: String },  // ← ADD THIS
+    duration: { type: String, required: true },  // ← ADD THIS
     
     // Proposal Content
     rationale: { type: String, required: true },
-    litReview: { type: String },
+    litReview: { type: String },  // ← ADD THIS
     objectives: { type: String, required: true },
     methodology: { type: String, required: true },
     outputs: { type: String, required: true },
     references: [{ type: String }],
     
-    // Team
+    // Research Team (FIX THIS - array of objects)
     teamMembers: [{
-        name: { type: String, required: true },
+        name: { type: String },
         role: { type: String }
     }],
-    teamCVs: [{
-        name: { type: String },
-        status: { type: String, default: 'pending', enum: ['pending', 'eligible', 'ineligible', 'missing'] }
-    }],
     
-    // Activities
+    // Activities (FIX THIS - array of objects)
     activities: [{
-        name: { type: String, required: true },
+        name: { type: String },
         description: { type: String },
         objective: { type: String },
         output: { type: String },
@@ -48,15 +42,21 @@ const submissionSchema = new mongoose.Schema({
         endDate: { type: String }
     }],
     
-    // Budget
+    // Budget Items (FIX THIS - array of objects)
     budgetItems: [{
-        category: { type: String, required: true },
+        category: { type: String },
         subcategory: { type: String },
-        itemName: { type: String, required: true },
+        itemName: { type: String },
         specs: { type: String },
-        unitCost: { type: Number, required: true, min: 0 },
-        qty: { type: Number, required: true, min: 1 }
+        unitCost: { type: Number },
+        qty: { type: Number }
     }],
+    
+    // Form 2 - Endorsement Information (ADD THESE)
+    endorsementDate: { type: String },
+    endorseDept: { type: String },  // ← ADD THIS
+    endorseSchool: { type: String },  // ← ADD THIS
+    schoolYear: { type: String },  // ← ADD THIS
     
     // Signatures
     fromChair: { type: String, required: true },
@@ -71,25 +71,64 @@ const submissionSchema = new mongoose.Schema({
         chairToken: String,
         deanToken: String,
         sentAt: Date,
-        emailsSent: { type: Boolean, default: false }
+        emailsSent: { type: Boolean, default: false },
+        resendCount: { type: Number, default: 0 }
     },
     
-    // Review
-    statusHistory: [{
-        status: String,
-        updatedBy: String,
-        updatedAt: { type: Date, default: Date.now },
-        feedback: String
+    // CV Uploads
+    piCVName: { type: String },
+    piCVStatus: { type: String, default: 'pending' },
+    teamCVs: [{
+        name: { type: String },
+        status: { type: String, default: 'pending' }
     }],
-    returnedFeedback: String,
-    uploadFeedback: String,
+    uploadFeedback: { type: String },
     
-    // Metadata
+    // Review Feedback
+    returnedFeedback: { type: String },
+    check1Feedback: { type: String },
+    check2Feedback: { type: String },
+    check3Feedback: { type: String },
+    check1CompletedAt: Date,
+    check2CompletedAt: Date,
+    check3CompletedAt: Date,
+    approvedAt: Date,
+    returnedAt: Date,
+    returnedFromStage: String,
+    
+    // External Review
+    externalReview: {
+        assigned: { type: Boolean, default: false },
+        assignedAt: Date,
+        assignedBy: String,
+        reviewers: [{
+            email: String,
+            name: String,
+            status: { type: String, default: 'pending' },
+            assignedAt: Date,
+            completedAt: Date,
+            evaluation: {
+                scores: {
+                    technicalMerit: Number,
+                    innovation: Number,
+                    feasibility: Number,
+                    impact: Number
+                },
+                comments: String,
+                recommendation: String
+            }
+        }]
+    },
+    
+    // Timestamps
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
+}, { 
+    // IMPORTANT: Add strict: false to allow any fields not defined in schema
+    strict: false 
 });
 
-// Indexes for better query performance
+// Indexes
 submissionSchema.index({ userEmail: 1 });
 submissionSchema.index({ status: 1 });
 submissionSchema.index({ submittedDate: -1 });

@@ -1950,7 +1950,7 @@ async function renderApplicant() {
                 editDraftId = null; 
                 selectedGrant = sub.grantTitle; 
                 currentDraftData = JSON.parse(JSON.stringify(sub)); 
-                openApplicationForm(true); 
+                openApplicationForm(true);  // Pass true for isEdit
             } else if(sub && sub.status === 'Approved') { 
                 showInlineNotification(null, 'Approved applications cannot be edited.', false); 
             }
@@ -4951,13 +4951,79 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                             return;
                         }
                         
+                        // ========== EDIT MODE (UPDATE EXISTING APPLICATION) ==========
                         if (isEditMode && editAppId) {
-                            // Edit mode logic...
-                            // (keep your existing edit code)
+                            try {
+                                // Get the existing application first
+                                const existingApp = await KURO_API.getApplication(editAppId);
+                                
+                                if (!existingApp) {
+                                    throw new Error('Application not found');
+                                }
+                                
+                                // Preserve existing signatures, CV statuses, and signature requests
+                                const existingSignatures = existingApp.signatures || { chair: { signed: false }, dean: { signed: false } };
+                                const existingPiCVStatus = existingApp.piCVStatus;
+                                const existingTeamCVs = existingApp.teamCVs ? [...existingApp.teamCVs] : null;
+                                const existingSubmittedDate = existingApp.submittedDate;
+                                const existingSignatureRequests = existingApp.signatureRequests;
+                                
+                                // Create updated submission - KEEP signatures and CV statuses
+                                const updatedSubmission = { 
+                                    id: editAppId,
+                                    grantTitle: selectedGrant,
+                                    grantType: "Faculty Research Grant",
+                                    status: existingApp.status, // Keep existing status
+                                    submittedDate: existingSubmittedDate,
+                                    signatures: existingSignatures, // Preserve signatures
+                                    signatureRequests: existingSignatureRequests, // Preserve signature requests
+                                    ...formData
+                                };
+                                
+                                // Preserve CV statuses
+                                if (existingPiCVStatus) updatedSubmission.piCVStatus = existingPiCVStatus;
+                                if (existingTeamCVs) updatedSubmission.teamCVs = existingTeamCVs;
+                                
+                                console.log('Updating application:', updatedSubmission);
+                                
+                                // UPDATE via API
+                                await KURO_API.updateApplication(editAppId, updatedSubmission);
+                                
+                                // Delete draft if it exists
+                                if (editDraftId !== null) {
+                                    const drafts = await KURO_API.getFacultyDrafts();
+                                    const draftToDelete = drafts[editDraftId];
+                                    if (draftToDelete?.draftId) {
+                                        await KURO_API.deleteFacultyDraft(draftToDelete.draftId);
+                                    }
+                                    sessionStorage.removeItem('current_draft_id');
+                                    editDraftId = null;
+                                }
+                                
+                                await renderApplicant();
+                                
+                                await Swal.fire({
+                                    icon: 'success',
+                                    title: 'Updated!',
+                                    text: 'Application updated successfully.',
+                                    confirmButtonColor: '#D4AF37',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                                Swal.close();
+                                return;
+                                
+                            } catch (error) {
+                                console.error('Update failed:', error);
+                                showFormNotification('Failed to update application: ' + error.message, true, modal);
+                                submitBtn.disabled = false;
+                                submitBtn.innerHTML = 'Update Application';
+                                return;
+                            }
                         }
                         
+                        // ========== NEW SUBMISSION MODE ==========
                         if (!isEditMode || !editAppId) {
-                            // NEW SUBMISSION
                             const newId = "FRG" + Date.now();
                             const newSubmission = { 
                                 id: newId, 
@@ -4971,7 +5037,7 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                                 ...formData
                             };
                             
-                            console.log('Submitting application:', newSubmission);
+                            console.log('Creating new application:', newSubmission);
                             
                             // CREATE via API
                             const created = await KURO_API.createApplication(newSubmission);

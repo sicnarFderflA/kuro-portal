@@ -1,12 +1,11 @@
+// models/Draft.js
 const mongoose = require('mongoose');
 
 const draftSchema = new mongoose.Schema({
     draftId: { type: String, required: true, unique: true },
-    userEmail: { type: String, required: true},
+    userEmail: { type: String, required: true, index: true },
     grantTitle: { type: String, required: true },
-    proposalTitle: { type: String },
-    
-    // All other fields are optional for drafts
+    proposalTitle: String,
     piName: String,
     piEmail: String,
     dept: String,
@@ -22,10 +21,6 @@ const draftSchema = new mongoose.Schema({
     teamMembers: [{
         name: String,
         role: String
-    }],
-    teamCVs: [{
-        name: String,
-        status: { type: String, default: 'pending' }
     }],
     activities: [{
         name: String,
@@ -43,20 +38,24 @@ const draftSchema = new mongoose.Schema({
         unitCost: Number,
         qty: Number
     }],
+    endorsementDate: String,
+    endorseDept: String,
+    endorseSchool: String,
+    schoolYear: String,
     fromChair: String,
     chairEmail: String,
     deanName: String,
     deanEmail: String,
     piCVName: String,
     piCVStatus: { type: String, default: 'pending' },
-    
+    teamCVs: [{
+        name: String,
+        status: { type: String, default: 'pending' }
+    }],
     lastSaved: String,
     lastSavedTime: { type: Date, default: Date.now },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
-});
-
-draftSchema.index({ userEmail: 1 });
-draftSchema.index({ lastSaved: -1 });
+}, { strict: false });
 
 module.exports = mongoose.models.Draft || mongoose.model('Draft', draftSchema);
