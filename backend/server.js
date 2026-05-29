@@ -5,6 +5,13 @@ const { OAuth2Client } = require('google-auth-library');
 const emailjs = require('@emailjs/nodejs');
 require('dotenv').config();
 
+// Add this near the top of server.js, after other requires
+console.log('🔧 Environment Variables Check:');
+console.log('  EMAILJS_SERVICE_ID:', process.env.EMAILJS_SERVICE_ID ? '✅ Set' : '❌ MISSING');
+console.log('  EMAILJS_CHAIR_TEMPLATE:', process.env.EMAILJS_CHAIR_TEMPLATE ? '✅ Set' : '❌ MISSING');
+console.log('  EMAILJS_DEAN_TEMPLATE:', process.env.EMAILJS_DEAN_TEMPLATE ? '✅ Set' : '❌ MISSING');
+console.log('  EMAILJS_PUBLIC_KEY:', process.env.EMAILJS_PUBLIC_KEY ? '✅ Set' : '❌ MISSING');
+console.log('  EMAILJS_PRIVATE_KEY:', process.env.EMAILJS_PRIVATE_KEY ? '✅ Set' : '❌ MISSING');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_do_not_use_in_production';
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
@@ -13,6 +20,17 @@ const EMAILJS_CHAIR_TEMPLATE = process.env.EMAILJS_CHAIR_TEMPLATE;
 const EMAILJS_DEAN_TEMPLATE = process.env.EMAILJS_DEAN_TEMPLATE;
 const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY;
 const EMAILJS_PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY;
+
+if (EMAILJS_PUBLIC_KEY && EMAILJS_PRIVATE_KEY) {
+    emailjs.init({
+        publicKey: EMAILJS_PUBLIC_KEY,
+        privateKey: EMAILJS_PRIVATE_KEY
+    });
+    console.log('📧 EmailJS initialized successfully');
+} else {
+    console.warn('⚠️ EmailJS keys missing - email sending will not work');
+}
+// =====================================================
 
 const app = express();
 
@@ -535,85 +553,87 @@ app.post('/api/applications/:appId/send-signature-emails', async (req, res) => {
         const { appId } = req.params;
         const { chairLink, deanLink, chairEmail, deanEmail, chairName, deanName, expiryDays } = req.body;
         
-        console.log(`📧 Sending signature emails for application: ${appId}`);
-        console.log(`   Chair: ${chairEmail} (${chairName})`);
-        console.log(`   Dean: ${deanEmail} (${deanName})`);
+        console.log(`📧 Attempting to send emails for: ${appId}`);
+        console.log(`   Service ID: ${EMAILJS_SERVICE_ID ? '✅' : '❌'}`);
+        console.log(`   Chair Template: ${EMAILJS_CHAIR_TEMPLATE ? '✅' : '❌'}`);
+        console.log(`   Dean Template: ${EMAILJS_DEAN_TEMPLATE ? '✅' : '❌'}`);
         
         let chairSuccess = false;
         let deanSuccess = false;
+        let chairError = null;
+        let deanError = null;
         
         // Send to Chair
-        try {
-            const chairParams = {
-                to_email: chairEmail,
-                to_name: chairName,
-                chair_name: chairName,
-                signature_link: chairLink,
-                expiry_days: expiryDays || 7
-            };
-            
-            const chairResponse = await emailjs.send(
-                EMAILJS_SERVICE_ID, 
-                EMAILJS_CHAIR_TEMPLATE, 
-                chairParams,
-                {
-                    publicKey: EMAILJS_PUBLIC_KEY,
-                    privateKey: EMAILJS_PRIVATE_KEY
-                }
-            );
-            
-            console.log('Chair email sent:', chairResponse.status);
-            chairSuccess = true;
-        } catch (error) {
-            console.error('Chair email failed:', error);
+        if (EMAILJS_SERVICE_ID && EMAILJS_CHAIR_TEMPLATE) {
+            try {
+                const chairParams = {
+                    to_email: chairEmail,
+                    to_name: chairName,
+                    chair_name: chairName,
+                    signature_link: chairLink,
+                    expiry_days: expiryDays || 7
+                };
+                
+                console.log('Sending chair email with params:', chairParams);
+                
+                const chairResponse = await emailjs.send(
+                    EMAILJS_SERVICE_ID, 
+                    EMAILJS_CHAIR_TEMPLATE, 
+                    chairParams
+                );
+                
+                console.log('Chair email sent:', chairResponse.status);
+                chairSuccess = true;
+            } catch (error) {
+                console.error('Chair email failed:', error.message);
+                chairError = error.message;
+            }
+        } else {
+            console.error('Missing EmailJS config for chair email');
+            chairError = 'EmailJS not configured properly';
         }
         
         // Send to Dean
-        try {
-            const deanParams = {
-                to_email: deanEmail,
-                to_name: deanName,
-                dean_name: deanName,
-                signature_link: deanLink,
-                expiry_days: expiryDays || 7
-            };
-            
-            const deanResponse = await emailjs.send(
-                EMAILJS_SERVICE_ID, 
-                EMAILJS_DEAN_TEMPLATE, 
-                deanParams,
-                {
-                    publicKey: EMAILJS_PUBLIC_KEY,
-                    privateKey: EMAILJS_PRIVATE_KEY
-                }
-            );
-            
-            console.log('Dean email sent:', deanResponse.status);
-            deanSuccess = true;
-        } catch (error) {
-            console.error('Dean email failed:', error);
+        if (EMAILJS_SERVICE_ID && EMAILJS_DEAN_TEMPLATE) {
+            try {
+                const deanParams = {
+                    to_email: deanEmail,
+                    to_name: deanName,
+                    dean_name: deanName,
+                    signature_link: deanLink,
+                    expiry_days: expiryDays || 7
+                };
+                
+                console.log('Sending dean email with params:', deanParams);
+                
+                const deanResponse = await emailjs.send(
+                    EMAILJS_SERVICE_ID, 
+                    EMAILJS_DEAN_TEMPLATE, 
+                    deanParams
+                );
+                
+                console.log('Dean email sent:', deanResponse.status);
+                deanSuccess = true;
+            } catch (error) {
+                console.error('Dean email failed:', error.message);
+                deanError = error.message;
+            }
+        } else {
+            console.error('Missing EmailJS config for dean email');
+            deanError = 'EmailJS not configured properly';
         }
         
-        // Update application with email sent status
-        const db = mongoose.connection.db;
-        await db.collection('submissions').updateOne(
-            { id: appId },
-            { 
-                $set: { 
-                    'signatureRequests.emailsSent': true,
-                    'signatureRequests.emailsSentAt': new Date().toISOString()
-                }
-            }
-        );
-        
         res.json({ 
-            success: chairSuccess && deanSuccess,
+            success: chairSuccess || deanSuccess,
             chairSent: chairSuccess,
-            deanSent: deanSuccess
+            deanSent: deanSuccess,
+            chairError: chairError,
+            deanError: deanError,
+            message: chairSuccess && deanSuccess ? 'Both emails sent' : 'Some emails failed'
         });
         
     } catch (error) {
-        console.error('Error sending signature emails:', error);
+        console.error('Error in send-signature-emails:', error);
         res.status(500).json({ error: error.message });
     }
 });
