@@ -176,51 +176,14 @@ app.use('/api/applications', applicationsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationsRoutes);
 
-// ========== ADMIN ROUTES ==========
-
-// Get all applications (admin)
-app.get('/api/admin/applications', async (req, res) => {
-    try {
-        console.log('📊 Admin fetching all applications');
-        
-        // Use the Submission model directly
-        const submissions = await Submission.find({}).sort({ submittedDate: -1 });
-        
-        console.log(`✅ Found ${submissions.length} total applications`);
-        res.json(submissions);
-        
-    } catch (error) {
-        console.error('Error fetching admin applications:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Get admin stats
-app.get('/api/admin/stats', async (req, res) => {
-    try {
-        const total = await Submission.countDocuments();
-        const pending = await Submission.countDocuments({ 
-            status: { $in: ['Awaiting Signatures', 'Pending Eligibility Check', 'Pending Secondary Check', 'Pending Final Check'] }
-        });
-        const approved = await Submission.countDocuments({ status: 'Approved' });
-        const returned = await Submission.countDocuments({ status: 'Returned' });
-        
-        res.json({ total, pending, approved, returned });
-    } catch (error) {
-        console.error('Error fetching stats:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
 // ========== SINGLE APPLICATION ROUTES ==========
 
-// Get single application - FIXED to use Submission model
 app.get('/api/applications/:id', async (req, res) => {
     try {
         const { id } = req.params;
         console.log('🔍 GET single application:', id);
         
-        // Use Submission model instead of raw db collection
+        // Use the same Submission model that works for faculty endpoint
         const application = await Submission.findOne({ id: id });
         
         if (!application) {
@@ -237,7 +200,28 @@ app.get('/api/applications/:id', async (req, res) => {
     }
 });
 
-// Update application - FIXED to use Submission model
+// Get single application (GET with :id parameter)
+app.get('/api/applications/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        // Ignore any query parameters like ?userEmail=...
+        console.log('🔍 GET single application:', id);
+        
+        const db = mongoose.connection.db;
+        const application = await db.collection('submissions').findOne({ id: id });
+        
+        if (!application) {
+            return res.status(404).json({ error: 'Application not found' });
+        }
+        
+        res.json(application);
+    } catch (error) {
+        console.error('Error fetching application:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Update application (PUT with :id parameter)
 app.put('/api/applications/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -246,20 +230,22 @@ app.put('/api/applications/:id', async (req, res) => {
         
         console.log('📝 PUT update application:', id);
         
-        // Use Submission model
-        const result = await Submission.findOneAndUpdate(
-            { id: id },
-            { $set: updates },
-            { new: true }  // Return the updated document
-        );
+        const db = mongoose.connection.db;
         
-        if (!result) {
-            console.log('❌ Application not found for update:', id);
+        // Check if application exists
+        const existing = await db.collection('submissions').findOne({ id: id });
+        if (!existing) {
             return res.status(404).json({ error: 'Application not found' });
         }
         
-        console.log('✅ Updated application:', id);
-        res.json({ success: true, data: result });
+        // Update the application
+        const result = await db.collection('submissions').updateOne(
+            { id: id },
+            { $set: updates }
+        );
+        
+        console.log('✅ Updated:', id);
+        res.json({ success: true });
         
     } catch (error) {
         console.error('Error updating application:', error);
@@ -267,7 +253,7 @@ app.put('/api/applications/:id', async (req, res) => {
     }
 });
 
-// Delete application - FIXED (already using Submission model, that's good)
+// Delete application (DELETE with :id parameter)
 app.delete('/api/applications/:id', async (req, res) => {
     try {
         const { id } = req.params;
