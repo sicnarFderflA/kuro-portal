@@ -2003,138 +2003,18 @@ async function renderApplicant() {
         document.querySelectorAll('.resend-signature-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
                 const id = btn.getAttribute('data-id');
-                console.log('Resend clicked for appId:', id);
+                console.log('Resend signature clicked for appId:', id);
                 
                 // Find the application in filteredSubs
                 const sub = filteredSubs.find(s => s.id === id);
                 if (sub) {
-                    await resubmitSignatureRequests(sub);
+                    await resendSignatureRequests(sub); 
                 } else {
                     console.error('Application not found for id:', id);
                     showInlineNotification(null, 'Application not found', false);
                 }
             });
         });
-
-        // Add this new function for resending signatures
-        async function resubmitSignatureRequests(application) {
-            const appId = application.id || application._id;
-            console.log('Resending for appId:', appId);
-            
-            if (!appId) {
-                showInlineNotification(null, 'Invalid application ID', false);
-                return;
-            }
-            
-            const result = await Swal.fire({
-                title: 'Resend Signature Requests?',
-                html: `
-                    <div style="text-align: left;">
-                        <p>This will:</p>
-                        <ul style="margin-left: 1.5rem;">
-                            <li>Generate <strong>new signature links</strong></li>
-                            <li>Send <strong>new emails</strong> to:</li>
-                            <ul style="margin-left: 1.5rem;">
-                                <li>📧 <strong>Chair:</strong> ${escapeHtml(application.chairEmail)}</li>
-                                <li>📧 <strong>Dean:</strong> ${escapeHtml(application.deanEmail)}</li>
-                            </ul>
-                            <li>⚠️ <strong>Old links will no longer work</strong></li>
-                        </ul>
-                    </div>
-                `,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#D4AF37',
-                confirmButtonText: 'Yes, Resend',
-                cancelButtonText: 'Cancel'
-            });
-            
-            if (!result.isConfirmed) return;
-            
-            showInlineNotification(null, '📧 Resending signature requests...', true);
-            
-            try {
-                // First, generate new signature links
-                const generateResult = await KURO_API.generateSignatureLinks(appId, {
-                    chairEmail: application.chairEmail,
-                    chairName: application.fromChair,
-                    deanEmail: application.deanEmail,
-                    deanName: application.deanName,
-                    proposalTitle: application.proposalTitle,
-                    piName: application.piName
-                });
-                
-                console.log('New signature links generated:', generateResult);
-                
-                if (!generateResult.chairLink || !generateResult.deanLink) {
-                    throw new Error('Failed to generate signature links');
-                }
-                
-                // Now send emails using frontend EmailJS
-                const emailSent = await sendSignatureEmails(
-                    application, 
-                    generateResult.chairLink, 
-                    generateResult.deanLink, 
-                    7
-                );
-                
-                if (emailSent) {
-                    await Swal.fire({
-                        icon: 'success',
-                        title: 'Requests Resent!',
-                        html: `
-                            New signature requests have been sent to:<br>
-                            <strong>${escapeHtml(application.fromChair)}</strong> (${escapeHtml(application.chairEmail)})<br>
-                            <strong>${escapeHtml(application.deanName)}</strong> (${escapeHtml(application.deanEmail)})<br><br>
-                            <small>They will receive new emails with updated links.</small>
-                        `,
-                        confirmButtonColor: '#D4AF37'
-                    });
-                } else {
-                    // Show links as fallback
-                    await Swal.fire({
-                        icon: 'warning',
-                        title: 'Links Generated - Email Failed',
-                        html: `
-                            New signature links were created but emails could not be sent.<br><br>
-                            <strong>📧 Chair Link (${escapeHtml(application.fromChair)}):</strong><br>
-                            <a href="${generateResult.chairLink}" target="_blank" style="font-size: 0.7rem; word-break: break-all;">${generateResult.chairLink}</a><br><br>
-                            <strong>📧 Dean Link (${escapeHtml(application.deanName)}):</strong><br>
-                            <a href="${generateResult.deanLink}" target="_blank" style="font-size: 0.7rem; word-break: break-all;">${generateResult.deanLink}</a><br><br>
-                            <button id="copyChairLink" class="btn-sm" style="margin-right: 0.5rem;">📋 Copy Chair Link</button>
-                            <button id="copyDeanLink" class="btn-sm">📋 Copy Dean Link</button>
-                        `,
-                        confirmButtonColor: '#D4AF37',
-                        didOpen: (modal) => {
-                            const copyChairBtn = modal.querySelector('#copyChairLink');
-                            const copyDeanBtn = modal.querySelector('#copyDeanLink');
-                            
-                            if (copyChairBtn) {
-                                copyChairBtn.addEventListener('click', () => {
-                                    navigator.clipboard.writeText(generateResult.chairLink);
-                                    Swal.fire({ icon: 'success', title: 'Copied!', text: 'Chair link copied', timer: 1500, showConfirmButton: false });
-                                });
-                            }
-                            if (copyDeanBtn) {
-                                copyDeanBtn.addEventListener('click', () => {
-                                    navigator.clipboard.writeText(generateResult.deanLink);
-                                    Swal.fire({ icon: 'success', title: 'Copied!', text: 'Dean link copied', timer: 1500, showConfirmButton: false });
-                                });
-                            }
-                        }
-                    });
-                }
-                
-            } catch (error) {
-                console.error('Resend failed:', error);
-                await Swal.fire({
-                    icon: 'error',
-                    title: 'Resend Failed',
-                    text: error.message || 'Failed to resend signature requests. Please try again.',
-                    confirmButtonColor: '#D4AF37'
-                });
-            }
-        }
 
         
     } catch (error) {
@@ -2627,7 +2507,7 @@ async function resubmitApplication(app) {
             <div style="background: #fff3cd; padding: 0.8rem; border-radius: 0.5rem; margin-top: 0.5rem;">
                 ${escapeHtml(app.returnedFeedback || 'No specific feedback provided.')}
             </div>
-            <p class="demo-note" style="margin-top: 1rem;"><i class="fas fa-info-circle"></i> Upon resubmission, new signature requests will be sent to the Department Chair and Dean.</p>
+            <p class="demo-note" style="margin-top: 1rem;"><i class="fas fa-info-circle"></i> The existing signatures will remain valid. Chair and Dean do NOT need to sign again.</p>
         </div>`,
         icon: 'question',
         showCancelButton: true,
@@ -2638,29 +2518,26 @@ async function resubmitApplication(app) {
     
     if (result.isConfirmed) {
         try {
-            // Call API to resubmit
+            // Call API to resubmit - KEEP existing signatures
             const updatedApp = await KURO_API.resubmitApplication(app.id, {
-                status: 'Awaiting Signatures',
+                status: 'Awaiting Signatures', // Or go back to previous check stage
                 returnedFeedback: null,
-                submittedDate: new Date().toISOString().slice(0, 10),
-                signatures: { chair: { signed: false }, dean: { signed: false } }
+                submittedDate: new Date().toISOString().slice(0, 10)
+                // DO NOT reset signatures - keep them!
             });
             
-            // Generate new signature requests
-            await autoGenerateSignatureLinks(updatedApp, app.id);
-            
-            // Add notification
+            // Add notification to faculty
             await KURO_API.createNotification({
                 userEmail: currentUser.email,
                 type: 'resubmission',
                 title: '📤 Application Resubmitted',
-                message: `Your application "${app.proposalTitle}" has been resubmitted. Signature requests have been sent again.`,
+                message: `Your application "${app.proposalTitle}" has been resubmitted for review.`,
                 appId: app.id,
                 icon: '📤',
                 color: '#2ecc71'
             });
             
-            showInlineNotification(null, '✓ Application resubmitted! New signature requests sent.', true);
+            showInlineNotification(null, '✓ Application resubmitted!', true);
             await renderApplicant();
             
         } catch (error) {
@@ -3016,25 +2893,21 @@ async function autoGenerateSignatureLinks(application, appId) {
         
         console.log('Signature links generated:', result);
         
-        // Send emails using frontend EmailJS (this works!)
-        const emailSent = await sendSignatureEmails(application, result.chairLink, result.deanLink, 7);
+        // Send emails via backend API
+        const emailResult = await KURO_API.sendSignatureEmails(appId, {
+            chairLink: result.chairLink,
+            deanLink: result.deanLink,
+            chairEmail: application.chairEmail,
+            deanEmail: application.deanEmail,
+            chairName: application.fromChair,
+            deanName: application.deanName,
+            expiryDays: 7
+        });
         
-        if (emailSent) {
+        if (emailResult.success) {
             showInlineNotification(null, '✓ Signature requests sent successfully!', true);
         } else {
-            // Show links as fallback
-            await Swal.fire({
-                icon: 'warning',
-                title: 'Links Generated',
-                html: `
-                    Signature links were created but emails could not be sent.<br><br>
-                    <strong>Chair Link:</strong><br>
-                    <a href="${result.chairLink}" target="_blank">${result.chairLink.substring(0, 80)}...</a><br><br>
-                    <strong>Dean Link:</strong><br>
-                    <a href="${result.deanLink}" target="_blank">${result.deanLink.substring(0, 80)}...</a>
-                `,
-                confirmButtonColor: '#D4AF37'
-            });
+            showInlineNotification(null, '⚠️ Some emails failed to send. Please check the email addresses.', false);
         }
         
     } catch (error) {
@@ -3470,19 +3343,17 @@ function collectFormData() {
         piCVName = currentDraftData.piCVName;
     }
     
-    // Get team members from DOM - ONLY include those with names
+    // Get team members from DOM
     const teamMembers = Array.from(document.querySelectorAll('#teamMembersContainer .member-row'))
         .map(row => ({ 
             name: (row.children[0]?.value || '').trim(), 
             role: (row.children[1]?.value || '').trim() 
         }))
-        .filter(member => member.name !== ''); // FILTER OUT EMPTY TEAM MEMBERS
+        .filter(member => member.name !== '');
     
-    // Preserve existing teamCVs but ONLY for team members that exist
+    // Preserve existing teamCVs
     let teamCVs = [];
-    
     if (currentDraftData && currentDraftData.teamCVs) {
-        // Only keep CVs for team members that still exist (by index)
         for (let i = 0; i < teamMembers.length; i++) {
             if (currentDraftData.teamCVs[i] && currentDraftData.teamCVs[i].name) {
                 teamCVs[i] = { ...currentDraftData.teamCVs[i] };
@@ -3510,32 +3381,87 @@ function collectFormData() {
         }
     }
     
+    // Collect activities - FIX THIS
+    const activities = [];
+    const activityCards = document.querySelectorAll('#activitiesContainer .activity-card');
+    activityCards.forEach(card => {
+        const activity = {
+            name: card.querySelector('.act-name')?.value || '',
+            description: card.querySelector('.act-desc')?.value || '',
+            objective: card.querySelector('.act-objective')?.value || '',
+            output: card.querySelector('.act-output')?.value || '',
+            startDate: card.querySelector('.act-start-date')?.value || '',
+            endDate: card.querySelector('.act-end-date')?.value || ''
+        };
+        // Only add if it has a name (not empty)
+        if (activity.name.trim() !== '') {
+            activities.push(activity);
+        }
+    });
+    
+    // Collect budget items - FIX THIS
+    const budgetItems = [];
+    const budgetCards = document.querySelectorAll('.budget-card');
+    budgetCards.forEach(card => {
+        const category = card.querySelector('.budget-category')?.value || '';
+        const subcategory = card.querySelector('.budget-subcategory')?.value || '';
+        const itemName = card.querySelector('.budget-item-select')?.value || '';
+        const specs = card.querySelector('.budget-specs')?.value || '';
+        const unitCost = parseFloat(card.querySelector('.budget-unit-cost')?.value) || 0;
+        const qty = parseFloat(card.querySelector('.budget-qty')?.value) || 1;
+        
+        // Only add if it has at least a category or item name
+        if (category !== '' || itemName !== '') {
+            budgetItems.push({
+                category: category,
+                subcategory: subcategory,
+                itemName: itemName,
+                specs: specs,
+                unitCost: unitCost,
+                qty: qty
+            });
+        }
+    });
+    
     return {
+        // Form 1 - Project Profile
         proposalTitle: document.getElementById('projTitle')?.value || '',
         piName: document.getElementById('piName')?.value || '',
         piEmail: document.getElementById('piEmail')?.value || '',
         dept: document.getElementById('dept')?.value || '',
         school: document.getElementById('school')?.value || '',
-        extension: document.getElementById('extension')?.value || '',
-        duration: document.getElementById('duration')?.value || '',
+        extension: document.getElementById('extension')?.value || '',  // ← Make sure this exists!
+        duration: document.getElementById('duration')?.value || '',    // ← Make sure this exists!
+        
+        // Form 1 - Proposal Content
         rationale: document.getElementById('rationale')?.value || '',
-        litReview: document.getElementById('litReview')?.value || '',
+        litReview: document.getElementById('litReview')?.value || '',   // ← Make sure this exists!
         objectives: document.getElementById('objectives')?.value || '',
         methodology: document.getElementById('methodology')?.value || '',
         outputs: document.getElementById('outputs')?.value || '',
         references: Array.from(document.querySelectorAll('#referencesContainer .reference-row input')).map(inp => inp.value).filter(v => v && v.trim() !== ''),
-        teamMembers: teamMembers,  // Now only contains members with names
-        activities: collectActivities(),
-        budgetItems: collectBudgetItems(),
+        
+        // Form 1 - Team & Activities
+        teamMembers: teamMembers,
+        activities: activities,  // ← Now properly collected
+        budgetItems: budgetItems, // ← Now properly collected
+        
+        // Form 2 - Endorsement Information
         endorsementDate: document.getElementById('endorsementDate')?.value || '',
+        endorseDept: document.getElementById('endorseDept')?.value || '',     // ← Make sure this exists!
+        endorseSchool: document.getElementById('endorseSchool')?.value || '', // ← Make sure this exists!
+        schoolYear: document.getElementById('schoolYear')?.value || '',       // ← Make sure this exists!
+        
+        // Form 2 - Signatures
         fromChair: document.getElementById('fromChair')?.value || '',
         chairEmail: document.getElementById('chairEmail')?.value || '',
-        endorseDept: document.getElementById('endorseDept')?.value || '',
-        endorseSchool: document.getElementById('endorseSchool')?.value || '',
-        schoolYear: document.getElementById('schoolYear')?.value || '',
         deanName: document.getElementById('deanName')?.value || '',
         deanEmail: document.getElementById('deanEmail')?.value || '',
+        
+        // Signatures status
         signatures: { chair: false, dean: false },
+        
+        // CV Uploads
         piCVName: piCVName,
         teamCVs: teamCVs
     };

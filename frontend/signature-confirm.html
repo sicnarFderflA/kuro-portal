@@ -273,6 +273,7 @@
     }
 
     // ==================== DOM ELEMENTS ====================
+    const API_URL = 'https://kuro-api-m4mb.onrender.com';
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
     const role = urlParams.get('role');
@@ -324,6 +325,74 @@
         } catch (e) {
             console.error('JWT Parse error:', e);
             return null;
+        }
+    }
+
+    async function notifyApplicantAboutExpiredLink(appId, role, signerEmail, signerName) {
+        try {
+            // Get the application to find the applicant's email
+            const response = await fetch(`${API_URL}/api/applications/${appId}`);
+            const application = await response.json();
+            
+            if (application && application.userEmail) {
+                // Create notification for applicant
+                await fetch(`${API_URL}/api/notifications`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userEmail: application.userEmail,
+                        type: 'signature_expired',
+                        title: '⏰ Signature Link Expired',
+                        message: `${role === 'chair' ? 'Department Chair' : 'Dean'} ${signerName || 'Someone'} attempted to sign but the link has expired. Please resend signature requests.`,
+                        appId: appId,
+                        icon: '⏰',
+                        color: '#e74c3c',
+                        isRead: false,
+                        createdAt: new Date().toISOString()
+                    })
+                });
+                
+                console.log('Applicant notified about expired link');
+                return true;
+            }
+        } catch (error) {
+            console.error('Failed to notify applicant:', error);
+        }
+        return false;
+    }
+
+    async function requestNewSignatureLink(appId, role) {
+        try {
+            const response = await fetch(`${API_URL}/api/applications/${appId}`);
+            const application = await response.json();
+            
+            if (!application) {
+                showError('Application not found');
+                return;
+            }
+            
+            // Notify the applicant to resend
+            await fetch(`${API_URL}/api/notifications`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userEmail: application.userEmail,
+                    type: 'resend_requested',
+                    title: '📧 Signature Link Request',
+                    message: `${role === 'chair' ? 'Department Chair' : 'Dean'} requested a new signature link. Please resend the signature request.`,
+                    appId: appId,
+                    icon: '📧',
+                    color: '#f39c12',
+                    isRead: false,
+                    createdAt: new Date().toISOString()
+                })
+            });
+            
+            showError('Request sent! The applicant will send you a new link shortly.');
+            
+        } catch (error) {
+            console.error('Failed to request new link:', error);
+            showError('Failed to send request. Please contact the applicant directly.');
         }
     }
     
@@ -527,7 +596,7 @@
     }
     
     // ==================== INITIAL VALIDATION ====================
-    function validateAndInit() {
+    async function validateAndInit() {
         if (!token || !role || !appId) {
             document.getElementById('statusMessage').innerHTML = '<span style="color: #e74c3c;">❌ Invalid signature link. Missing parameters.</span>';
             document.getElementById('signatureIcon').style.background = '#e74c3c';
@@ -557,14 +626,33 @@
         }
         
         if (request.expiresAt && new Date(request.expiresAt) < new Date()) {
+            // Notify the applicant about expired attempt
+            await notifyApplicantAboutExpiredLink(appId, role, request.signerEmail, request.signerName);
+            
             document.getElementById('statusMessage').innerHTML = `
                 <div class="warning">
                     <i class="fas fa-hourglass-end" style="color: #e74c3c;"></i> 
                     <strong>⏰ This signature link has expired!</strong><br><br>
-                    Please ask the applicant to resend the request.
+                    The applicant has been notified and will send you a new link shortly.
+                </div>
+                <div style="margin-top: 1rem;">
+                    <button id="requestNewLinkBtn" class="btn-confirm" style="background: #3498db; margin-top: 0;">
+                        <i class="fas fa-paper-plane"></i> Request New Link
+                    </button>
                 </div>
             `;
             document.getElementById('signatureIcon').style.background = '#e74c3c';
+            
+            // Add event listener for "Request New Link" button after DOM update
+            setTimeout(() => {
+                const requestBtn = document.getElementById('requestNewLinkBtn');
+                if (requestBtn) {
+                    requestBtn.addEventListener('click', async () => {
+                        await requestNewSignatureLink(appId, role);
+                    });
+                }
+            }, 100);
+            
             return;
         }
         
