@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="api.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
@@ -303,6 +304,29 @@
         .switch-reviewer-btn.hidden {
             display: none;
         }
+
+        .toast-notification {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            min-width: 320px;
+            max-width: 400px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            z-index: 10000;
+            animation: slideInRight 0.3s ease;
+            border-left: 4px solid;
+            overflow: hidden;
+        }
+        .toast-notification.success { border-left-color: #2ecc71; }
+        .toast-notification.warning { border-left-color: #f39c12; }
+        .toast-notification.info { border-left-color: #3498db; }
+        .toast-notification.error { border-left-color: #e74c3c; }
+        .toast-content { display: flex; align-items: flex-start; gap: 0.8rem; padding: 1rem; }
+        .toast-icon { font-size: 1.2rem; }
+        .toast-message { flex: 1; font-size: 0.8rem; color: #333; }
+        .toast-close { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #999; line-height: 1; }
         
         footer { text-align: center; font-size: 0.65rem; color: var(--gray-text); padding: 1rem; background: transparent; }
         footer i { color: var(--gold); margin-right: 0.3rem; }
@@ -367,6 +391,7 @@ function isExemptedAccount(email) {
     return email && email.toLowerCase() === EXEMPTED_EMAIL.toLowerCase();
 }
 
+const API_URL = 'https://kuro-api-m4mb.onrender.com';
 const userData = sessionStorage.getItem('kuro_user');
 
 if (!userData) {
@@ -422,8 +447,9 @@ if (!userData) {
 
 const currentUser = window.currentUser;
 
-let submissionsDB = [];
-let reviewerTasks = {};
+let allApplications = [];
+let myAssignedApps = [];
+
 
 function escapeHtml(str) { if (!str) return ''; return String(str).replace(/[&<>]/g, function(m) { return m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'; }); }
 
@@ -439,29 +465,22 @@ function getTimeAgo(dateString) {
 
 async function addNotification(userEmail, type, title, message, appId, icon, color, tab = null) {
     try {
-        const notification = {
-            userEmail: userEmail,
-            type: type,
-            title: title,
-            message: message,
-            appId: appId,
-            tab: tab,
-            icon: icon,
-            color: color,
-            isRead: false,
-            createdAt: new Date().toISOString()
-        };
+        const response = await fetch(`${API_URL}/api/notifications`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                userEmail, type, title, message, appId, tab, icon, color,
+                isRead: false,
+                createdAt: new Date().toISOString()
+            })
+        });
         
-        await KURO_API.createNotification(notification);
-        
-        // If this notification is for the current user, update the bell badge
-        const currentUser = JSON.parse(sessionStorage.getItem('kuro_user'));
-        if (currentUser && currentUser.email === userEmail) {
+        if (response.ok && currentUser && currentUser.email === userEmail) {
             updateNotificationBadge(userEmail);
             showToast(icon, title, message, color);
         }
         
-        return notification;
+        return await response.json();
     } catch (error) {
         console.error('Failed to save notification:', error);
     }
@@ -479,7 +498,8 @@ async function getUserNotifications(userEmail) {
 
 async function updateNotificationBadge(userEmail) {
     try {
-        const notifications = await KURO_API.getNotifications(userEmail);
+        const response = await fetch(`${API_URL}/api/notifications?userEmail=${userEmail}`);
+        const notifications = await response.json();
         const unreadCount = notifications.filter(n => !n.isRead).length;
         const badge = document.getElementById('notificationBadge');
         if (badge) {
@@ -497,7 +517,8 @@ async function updateNotificationBadge(userEmail) {
 
 async function renderNotificationDropdown(userEmail) {
     try {
-        const notifications = await KURO_API.getNotifications(userEmail);
+        const response = await fetch(`${API_URL}/api/notifications?userEmail=${userEmail}`);
+        const notifications = await response.json();
         const container = document.getElementById('notificationList');
         if (!container) return;
         
@@ -530,21 +551,18 @@ async function renderNotificationDropdown(userEmail) {
         
         container.innerHTML = html;
         
-        // Add click handlers
         document.querySelectorAll('.notification-item').forEach(item => {
             item.addEventListener('click', async () => {
                 const id = item.dataset.id;
                 const appId = item.dataset.appId;
                 
-                await KURO_API.markNotificationRead(id);
+                await fetch(`${API_URL}/api/notifications/${id}/read`, { method: 'PUT' });
                 updateNotificationBadge(userEmail);
                 
                 const dropdown = document.getElementById('notificationDropdown');
                 if (dropdown) dropdown.style.display = 'none';
                 
-                if (appId) {
-                    viewApplicationDetails(appId);
-                }
+                if (appId) viewApplicationDetails(appId);
             });
         });
     } catch (error) {
@@ -553,7 +571,6 @@ async function renderNotificationDropdown(userEmail) {
 }
 
 function initNotificationSystem() {
-    const currentUser = JSON.parse(sessionStorage.getItem('kuro_user'));
     if (currentUser && currentUser.email) {
         updateNotificationBadge(currentUser.email);
         
@@ -575,13 +592,16 @@ function initNotificationSystem() {
         if (markAllBtn) {
             markAllBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                await KURO_API.markAllNotificationsRead(currentUser.email);
+                await fetch(`${API_URL}/api/notifications/mark-all-read`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userEmail: currentUser.email })
+                });
                 updateNotificationBadge(currentUser.email);
                 await renderNotificationDropdown(currentUser.email);
             });
         }
         
-        // Close dropdown when clicking outside
         document.addEventListener('click', (e) => {
             if (dropdown && bell) {
                 if (!dropdown.contains(e.target) && !bell.contains(e.target)) {
@@ -594,23 +614,43 @@ function initNotificationSystem() {
 
 async function getMyAssignedTasks() {
     try {
-        const tasks = await KURO_API.getReviewerTasks();
-        reviewerTasks = tasks;
+        // Get current user's email
+        const userEmail = currentUser.email;
         
-        // Add application details
-        for (let task of tasks.assignedTasks || []) {
-            const app = await KURO_API.getApplication(task.applicationId);
-            task.application = app;
-        }
-        return tasks.assignedTasks || [];
+        // Fetch all applications from API
+        const response = await fetch(`${API_URL}/api/admin/applications`);
+        const allApps = await response.json();
+        
+        // Filter applications where this external reviewer is assigned
+        const assignedApps = allApps.filter(app => {
+            if (!app.externalReview?.reviewers) return false;
+            return app.externalReview.reviewers.some(r => r.email === userEmail);
+        });
+        
+        // Format tasks
+        myAssignedApps = assignedApps.map(app => {
+            const myReview = app.externalReview?.reviewers?.find(r => r.email === userEmail);
+            return {
+                applicationId: app.id,
+                grantTitle: app.grantTitle,
+                proposalTitle: app.proposalTitle,
+                applicantEmail: app.userEmail,
+                assignedDate: app.externalReview?.assignedAt || app.createdAt,
+                dueDate: app.externalReview?.dueDate || null,
+                status: myReview?.status || 'pending',
+                application: app
+            };
+        });
+        
+        return myAssignedApps;
     } catch (error) {
-        console.error('Failed to load tasks:', error);
+        console.error('Error fetching assigned tasks:', error);
         return [];
     }
 }
 
-function renderDashboard() {
-    const tasks = getMyAssignedTasks();
+async function renderDashboard() {
+    const tasks = await getMyAssignedTasks();
     const pending = tasks.filter(t => t.status !== 'completed').length;
     const completed = tasks.filter(t => t.status === 'completed').length;
     
@@ -669,33 +709,28 @@ function renderDashboard() {
 }
 
 async function viewApplicationDetails(appId) {
-    let foundApp = null, foundEmail = null;
-    for (let email in submissionsDB) {
-        let apps = submissionsDB[email];
-        if (Array.isArray(apps)) {
-            let found = apps.find(a => a.id === appId);
-            if (found) {
-                foundApp = JSON.parse(JSON.stringify(found));
-                foundApp.userEmail = email;
-                foundEmail = email;
-                break;
+    try {
+        // Fetch application from API
+        const response = await fetch(`${API_URL}/api/applications/${appId}`);
+        const foundApp = await response.json();
+        
+        if (!foundApp) {
+            await Swal.fire({ icon: 'error', title: 'Error', text: 'Application not found!' });
+            return;
+        }
+        
+        // Find my review status
+        const myTask = myAssignedApps.find(t => t.applicationId === appId);
+        const isReviewed = myTask?.status === 'completed';
+        
+        // Load existing review data if any
+        let savedReview = null;
+        if (foundApp.externalReview?.reviewers) {
+            const myReview = foundApp.externalReview.reviewers.find(r => r.email === currentUser.email);
+            if (myReview && myReview.evaluation) {
+                savedReview = myReview.evaluation;
             }
         }
-    }
-    if (!foundApp) { 
-        await Swal.fire({ icon: 'error', title: 'Error', text: 'Application not found!' }); 
-        return; 
-    }
-    
-    // Check if already reviewed
-    const myTask = getMyAssignedTasks().find(t => t.applicationId === appId);
-    const isReviewed = myTask?.status === 'completed';
-    
-    // Load existing review data if any
-    let savedReview = null;
-    if (foundApp.finalReportReview?.reviewerFeedbacks?.[currentUser.email]) {
-        savedReview = foundApp.finalReportReview.reviewerFeedbacks[currentUser.email];
-    }
     
     // ========== DEFINE SECTIONS WITH MAPPED FIELDS ==========
     const evaluationSections = [
@@ -1192,56 +1227,38 @@ async function viewApplicationDetails(appId) {
     });
     
     if (result.isConfirmed && result.value && !isReviewed) {
-        // Save final review
-        const reviewData = result.value;
-        
-        for (let email in submissionsDB) {
-            const appIndex = submissionsDB[email]?.findIndex(a => a.id === appId);
-            if (appIndex !== -1 && appIndex !== undefined) {
-                if (!submissionsDB[email][appIndex].finalReportReview) {
-                    submissionsDB[email][appIndex].finalReportReview = {};
-                }
-                if (!submissionsDB[email][appIndex].finalReportReview.reviewerFeedbacks) {
-                    submissionsDB[email][appIndex].finalReportReview.reviewerFeedbacks = {};
-                }
-                
-                submissionsDB[email][appIndex].finalReportReview.reviewerFeedbacks[currentUser.email] = {
-                    evaluations: reviewData.evaluations,
+            const reviewData = result.value;
+            
+            // Submit review via API
+            const submitResponse = await fetch(`${API_URL}/api/external-review/${appId}/submit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    reviewerEmail: currentUser.email,
+                    reviewerName: currentUser.name,
+                    evaluation: reviewData.evaluations,
                     recommendation: reviewData.finalRecommendation,
                     narrativeFeedback: reviewData.narrativeFeedback,
-                    revisionReasons: reviewData.revisionReasons || [],
-                    submittedDate: new Date().toISOString(),
-                    reviewerName: currentUser.name,
-                    reviewerEmail: currentUser.email
-                };
-                
-                // Mark task as completed
-                const taskIndex = reviewerTasks[currentUser.email]?.assignedTasks?.findIndex(t => t.applicationId === appId);
-                if (taskIndex !== -1 && taskIndex !== undefined) {
-                    reviewerTasks[currentUser.email].assignedTasks[taskIndex].status = 'completed';
-                    reviewerTasks[currentUser.email].assignedTasks[taskIndex].submittedDate = new Date().toISOString();
-                }
-                
-                localStorage.setItem('kuro_submissions', JSON.stringify(submissionsDB));
-                localStorage.setItem('kuro_reviewer_tasks', JSON.stringify(reviewerTasks));
-                
-                // Notify admin
-                addNotification(email, 'review_completed', '📋 Final Report Review Completed', `Reviewer ${currentUser.name} has submitted their final report review for "${submissionsDB[email][appIndex].proposalTitle}".`, appId, '📋', '#D4AF37');
-                
-                break;
+                    revisionReasons: reviewData.revisionReasons || []
+                })
+            });
+            
+            if (submitResponse.ok) {
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Review Submitted!',
+                    text: 'Thank you for your valuable feedback.',
+                    confirmButtonColor: '#D4AF37',
+                    timer: 2500
+                });
+                renderDashboard();
+            } else {
+                throw new Error('Failed to submit review');
             }
         }
-        
-        await Swal.fire({
-            icon: 'success',
-            title: 'Review Submitted!',
-            text: 'Thank you for your valuable feedback. The author will be notified.',
-            confirmButtonColor: '#D4AF37',
-            timer: 2500,
-            showConfirmButton: false
-        });
-        
-        renderDashboard();
+    } catch (error) {
+        console.error('Error:', error);
+        await Swal.fire({ icon: 'error', title: 'Error', text: error.message });
     }
 }
 
@@ -1289,6 +1306,32 @@ window.toggleSection = function(sectionId) {
         }
     }
 };
+
+function showToast(icon, title, message, color) {
+    const toast = document.createElement('div');
+    toast.className = `toast-notification success`;
+    toast.innerHTML = `
+        <div class="toast-content">
+            <div class="toast-icon">${icon}</div>
+            <div class="toast-message">
+                <div style="font-weight: 600; margin-bottom: 0.2rem;">${title}</div>
+                <div style="font-size: 0.7rem; color: #666;">${message}</div>
+            </div>
+            <button class="toast-close">&times;</button>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        if (toast && toast.remove) toast.remove();
+    }, 5000);
+    
+    const closeBtn = toast.querySelector('.toast-close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => toast.remove());
+    }
+}
 
 document.getElementById('logoutBtn').onclick = () => { sessionStorage.clear(); window.location.href = 'login.html'; };
 
