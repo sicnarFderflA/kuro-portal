@@ -264,16 +264,16 @@ app.get('/api/faculty/applications', async (req, res) => {
             return res.status(400).json({ error: 'userEmail required' });
         }
         
-        // Use the schema - this ensures consistent field names!
+        // Use mongoose model directly
+        const Submission = mongoose.model('Submission');
         const submissions = await Submission.find({ 
             userEmail: userEmail 
         }).sort({ submittedDate: -1 });
         
         console.log(`✅ Found ${submissions.length} submissions`);
         res.json(submissions);
-        
     } catch (error) {
-        console.error('Error:', error);
+        console.error('Error in /api/faculty/applications:', error);
         res.status(500).json({ error: error.message });
     }
 });
