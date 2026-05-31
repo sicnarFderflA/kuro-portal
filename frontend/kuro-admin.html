@@ -266,19 +266,6 @@
             .user-name-short { display: none; }
         }
 
-        /* Check Stage Styles */
-        .check-stage-card {
-            background: #f8f9fa;
-            border-radius: 1rem;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            border-left: 4px solid;
-            transition: all 0.2s;
-        }
-        .check-stage-card.pending { border-left-color: #f39c12; background: #fffef5; }
-        .check-stage-card.completed { border-left-color: #2ecc71; background: #f0fff4; }
-        .check-stage-card.current { border-left-color: #3498db; background: #e8f0fe; }
-
         /* Superuser Settings Button */
         .superuser-settings-btn {
             background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
@@ -613,7 +600,6 @@
             cursor: pointer;
             border-radius: 8px 8px 0 0;
             transition: 0.2s;
-            position: relative;
         }
         .modal-detail-tab i { margin-right: 0.4rem; }
         .modal-detail-tab:hover { background: rgba(212, 175, 55, 0.1); }
@@ -681,7 +667,7 @@
         .swal2-html-container { max-height: 70vh !important; overflow-y: auto !important; }
         footer { text-align: center; font-size: 0.65rem; color: var(--gray-text); padding: 1rem; margin-top: 1rem; }
 
-        /* Super Admin Settings - Modern UI */
+        /* Settings Card Styles */
         .settings-card {
             background: white;
             border-radius: 1rem;
@@ -693,13 +679,7 @@
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             padding: 1rem 1.2rem;
             color: white;
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
         }
-        .settings-card-header i { font-size: 1.3rem; color: var(--gold); }
-        .settings-card-header h3 { font-size: 1rem; margin: 0; font-weight: 600; }
-        .settings-card-header p { font-size: 0.7rem; margin: 0.2rem 0 0 0; opacity: 0.8; }
         .settings-card-body { padding: 1.2rem; }
         
         .settings-table {
@@ -719,7 +699,6 @@
             border-bottom: 1px solid #eef2f0;
             font-size: 0.8rem;
         }
-        .settings-table tr:last-child td { border-bottom: none; }
         
         .add-item-bar {
             display: flex;
@@ -734,7 +713,6 @@
             border-radius: 40px;
             font-size: 0.8rem;
             outline: none;
-            transition: 0.2s;
         }
         .add-item-bar input:focus { border-color: var(--gold); }
         
@@ -752,16 +730,6 @@
             margin-bottom: 0.5rem;
             border-radius: 0.5rem;
             border-left: 3px solid var(--gold);
-        }
-        .audit-item .action { font-weight: 600; color: var(--primary); }
-        .audit-item .by { font-size: 0.7rem; color: var(--gold); }
-        .audit-item .time { font-size: 0.65rem; color: #999; }
-        .audit-item .details { font-size: 0.7rem; color: #666; margin-top: 0.3rem; }
-        
-        .empty-state-small {
-            text-align: center;
-            padding: 2rem;
-            color: #999;
         }
 
         @media (max-width: 1000px) { .stats-compact-grid { grid-template-columns: repeat(3, 1fr); } }
@@ -827,7 +795,6 @@
 const API_URL = 'https://kuro-api-m4mb.onrender.com';
 const ALL_GRANTS = ["INSTITUTIONAL RESEARCH (IR) AWARD", "MIGUEL BERNAD HUMANITIES RESEARCH (MBHR) AWARD", "MINDANAO RESEARCH (MR) AWARD", "MATTEO RICCI RESEARCH (MRR) AWARD", "Publication Award", "Madigan Award", "Kinaadman Student Research Award (KSRA)"];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const SUPERUSER_EMAILS = ['200520181@my.xu.edu.ph'];
 
 // Get current user
 const userData = sessionStorage.getItem('kuro_user');
@@ -836,7 +803,7 @@ if (!userData) { window.location.href = 'login.html'; }
 let currentUser = null;
 try {
     currentUser = JSON.parse(userData);
-    const isValidAdmin = currentUser.role === 'admin' || SUPERUSER_EMAILS.includes(currentUser.email);
+    const isValidAdmin = currentUser.role === 'admin' || currentUser.email === '200520181@my.xu.edu.ph';
     if (!isValidAdmin) { sessionStorage.removeItem('kuro_user'); window.location.href = 'login.html'; }
 } catch(e) { sessionStorage.removeItem('kuro_user'); window.location.href = 'login.html'; }
 
@@ -990,13 +957,6 @@ function getGrantDistribution(apps) {
     return ALL_GRANTS.map(g => apps.filter(a => a.grantTitle === g).length);
 }
 
-// Check Stage Helper
-const CHECK_STAGES = {
-    'Pending Eligibility Check': { name: 'Check 1: Eligibility Review', role: 'Eligibility Officer', nextStatus: 'Pending Secondary Check', order: 1 },
-    'Pending Secondary Check': { name: 'Check 2: Secondary Review', role: 'Secondary Checker', nextStatus: 'Pending Final Check', order: 2 },
-    'Pending Final Check': { name: 'Check 3: Final Review', role: 'Final Approver', nextStatus: 'Approved', order: 3 }
-};
-
 // Role management
 let checkerRoles = { check1: '', check2: '', check3: '' };
 async function loadCheckerRoles() {
@@ -1012,7 +972,7 @@ function getUserCheckerRole(email) {
 }
 
 const userRole = getUserCheckerRole(currentUser.email);
-const isSuperAdmin = SUPERUSER_EMAILS.includes(currentUser.email);
+const isSuperAdmin = currentUser.email === '200520181@my.xu.edu.ph';
 const isCheck1 = userRole === 'check1';
 const isCheck2 = userRole === 'check2';
 const isCheck3 = userRole === 'check3';
@@ -1185,21 +1145,22 @@ function renderCompactApplicationsList(filtered) {
             </td>
         </tr>`;
     });
-    html += '</tbody></table>';
+    html += '</tbody>}</div>';
     document.getElementById('applicationsList').innerHTML = html;
     document.querySelectorAll('.view-btn').forEach(btn => btn.addEventListener('click', () => viewApplicationDetails(btn.getAttribute('data-id'))));
     document.querySelectorAll('.edit-status-btn').forEach(btn => btn.addEventListener('click', () => editApplicationStatus(btn.getAttribute('data-id'))));
     document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', () => deleteApplicationHandler(btn.getAttribute('data-id'))));
 }
 
-// Main View Application Details with all tabs
+// ============ APPLICATION DETAILS VIEW WITH WORKING TABS ============
+
 async function viewApplicationDetails(appId) {
     try {
         const response = await fetch(`${API_URL}/api/applications/${appId}`);
         if (!response.ok) throw new Error('Application not found');
         const app = await response.json();
         
-        console.log('Application data loaded:', app);
+        console.log('Application loaded:', app);
         
         // Ensure teamCVs array exists
         if (!app.teamCVs) app.teamCVs = [];
@@ -1209,66 +1170,52 @@ async function viewApplicationDetails(appId) {
             }
         }
         
-        let html = `<div style="max-height: 65vh; overflow-y: auto; padding-right: 5px;">
-        <div class="detail-section"><h4>📋 Application Information</h4>
-            <div class="detail-field"><strong>ID:</strong> ${app.id}</div>
-            <div class="detail-field"><strong>Grant:</strong> ${escapeHtml(app.grantTitle)}</div>
-            <div class="detail-field"><strong>Applicant:</strong> ${app.userEmail}</div>
-            <div class="detail-field"><strong>Submitted:</strong> ${app.submittedDate || 'N/A'}</div>
-            <div class="detail-field"><strong>Status:</strong> <span class="status-badge ${app.status === 'Approved' ? 'approved' : 'pending'}">${app.status}</span></div>
-            ${app.returnedFeedback ? `<div class="detail-field"><strong>Return Reason:</strong> ${escapeHtml(app.returnedFeedback)}</div>` : ''}
-        </div>`;
-        
-        // Check Stages Progress
-        const isReturned = app.status === 'Returned';
-        if (!isReturned && app.status !== 'Awaiting Signatures' && app.status !== 'Approved') {
-            html += `<div class="detail-section"><h4>📊 Review Progress</h4><div style="display: flex; gap: 0.5rem;">`;
-            const stages = ['Pending Eligibility Check', 'Pending Secondary Check', 'Pending Final Check'];
-            let foundCurrent = false;
-            for (let i = 0; i < stages.length; i++) {
-                const isCompleted = !foundCurrent && app.status !== stages[i] && app.status !== 'Awaiting Signatures' && app.status !== 'Returned';
-                const isCurrent = app.status === stages[i];
-                if (isCurrent) foundCurrent = true;
-                html += `<div style="flex: 1; text-align: center;">
-                    <div style="width: 30px; height: 30px; border-radius: 50%; background: ${isCompleted ? '#2ecc71' : (isCurrent ? '#3498db' : '#ddd')}; color: white; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem;">${isCompleted ? '✓' : (isCurrent ? '◉' : '○')}</div>
-                    <div style="font-size: 0.65rem; font-weight: ${isCurrent ? 'bold' : 'normal'}; color: ${isCurrent ? '#3498db' : '#666'};">${stages[i] === 'Pending Eligibility Check' ? 'Eligibility' : (stages[i] === 'Pending Secondary Check' ? 'Secondary' : 'Final')}</div>
-                </div>`;
-            }
-            html += `</div></div>`;
-        }
-        
         // Render all tab contents
-        const form1Content = renderForm1Content(app);
-        const form2Content = renderForm2Content(app);
-        const cvContent = renderCVReviewContent(app);
-        const externalContent = renderExternalReviewersContent(app);
-        const checksContent = renderCheckStagesContent(app);
+        const form1Html = renderForm1Content(app);
+        const form2Html = renderForm2Content(app);
+        const cvHtml = renderCVReviewContent(app);
+        const externalHtml = renderExternalReviewersContent(app);
+        const checksHtml = renderCheckStagesContent(app);
         
-        html += `<div class="modal-detail-tabs">
-            <button class="modal-detail-tab active" data-tab="form1"><i class="fas fa-file-alt"></i> Research Proposal</button>
-            <button class="modal-detail-tab" data-tab="form2"><i class="fas fa-clipboard-list"></i> Endorsement</button>
-            <button class="modal-detail-tab" data-tab="cv"><i class="fas fa-file-pdf"></i> CV Review</button>
-            <button class="modal-detail-tab" data-tab="external"><i class="fas fa-users"></i> External Reviewers</button>
-            <button class="modal-detail-tab" data-tab="checks"><i class="fas fa-check-double"></i> Check Stages</button>
-        </div>
-        <div id="tabForm1" class="modal-tab-content active">${form1Content}</div>
-        <div id="tabForm2" class="modal-tab-content">${form2Content}</div>
-        <div id="tabCV" class="modal-tab-content">${cvContent}</div>
-        <div id="tabExternal" class="modal-tab-content">${externalContent}</div>
-        <div id="tabChecks" class="modal-tab-content">${checksContent}</div>
-        </div>`;
+        const modalHtml = `
+            <div style="max-height: 65vh; overflow-y: auto; padding-right: 5px;">
+                <div class="detail-section">
+                    <h4>📋 Application Information</h4>
+                    <div class="detail-field"><strong>ID:</strong> ${app.id}</div>
+                    <div class="detail-field"><strong>Grant:</strong> ${escapeHtml(app.grantTitle)}</div>
+                    <div class="detail-field"><strong>Applicant:</strong> ${app.userEmail}</div>
+                    <div class="detail-field"><strong>Submitted:</strong> ${app.submittedDate || 'N/A'}</div>
+                    <div class="detail-field"><strong>Status:</strong> <span class="status-badge ${app.status === 'Approved' ? 'approved' : 'pending'}">${app.status}</span></div>
+                    ${app.returnedFeedback ? `<div class="detail-field"><strong>Return Reason:</strong> ${escapeHtml(app.returnedFeedback)}</div>` : ''}
+                </div>
+                
+                <div class="modal-detail-tabs">
+                    <button class="modal-detail-tab active" data-tab="form1"><i class="fas fa-file-alt"></i> Research Proposal</button>
+                    <button class="modal-detail-tab" data-tab="form2"><i class="fas fa-clipboard-list"></i> Endorsement</button>
+                    <button class="modal-detail-tab" data-tab="cv"><i class="fas fa-file-pdf"></i> CV Review</button>
+                    <button class="modal-detail-tab" data-tab="external"><i class="fas fa-users"></i> External Reviewers</button>
+                    <button class="modal-detail-tab" data-tab="checks"><i class="fas fa-check-double"></i> Check Stages</button>
+                </div>
+                
+                <div id="tabForm1" class="modal-tab-content active">${form1Html}</div>
+                <div id="tabForm2" class="modal-tab-content">${form2Html}</div>
+                <div id="tabCV" class="modal-tab-content">${cvHtml}</div>
+                <div id="tabExternal" class="modal-tab-content">${externalHtml}</div>
+                <div id="tabChecks" class="modal-tab-content">${checksHtml}</div>
+            </div>
+        `;
         
-        Swal.fire({ 
-            title: 'Application Details', 
-            html: html, 
-            width: '950px', 
-            showConfirmButton: true, 
-            confirmButtonColor: '#D4AF37', 
+        const result = await Swal.fire({
+            title: 'Application Details',
+            html: modalHtml,
+            width: '950px',
+            showConfirmButton: true,
             confirmButtonText: 'Close',
+            confirmButtonColor: '#D4AF37',
             didOpen: (modal) => {
-                // Get all tab buttons and content
+                // Get elements
                 const tabBtns = modal.querySelectorAll('.modal-detail-tab');
-                const tabContents = {
+                const contents = {
                     form1: modal.querySelector('#tabForm1'),
                     form2: modal.querySelector('#tabForm2'),
                     cv: modal.querySelector('#tabCV'),
@@ -1276,46 +1223,40 @@ async function viewApplicationDetails(appId) {
                     checks: modal.querySelector('#tabChecks')
                 };
                 
-                // Hide all contents first
-                Object.values(tabContents).forEach(content => {
-                    if (content) content.style.display = 'none';
-                });
-                // Show active content (form1)
-                if (tabContents.form1) tabContents.form1.style.display = 'block';
+                // Hide all content
+                Object.values(contents).forEach(c => { if (c) c.style.display = 'none'; });
+                if (contents.form1) contents.form1.style.display = 'block';
                 
-                // Add click handlers to tabs
+                // Tab click handlers
                 tabBtns.forEach(btn => {
-                    btn.onclick = () => {
-                        // Remove active class from all tabs
+                    btn.addEventListener('click', () => {
+                        const tabId = btn.getAttribute('data-tab');
+                        
+                        // Update button active state
                         tabBtns.forEach(b => b.classList.remove('active'));
-                        // Add active class to clicked tab
                         btn.classList.add('active');
                         
-                        // Hide all contents
-                        Object.values(tabContents).forEach(content => {
-                            if (content) content.style.display = 'none';
-                        });
+                        // Hide all content
+                        Object.values(contents).forEach(c => { if (c) c.style.display = 'none'; });
                         
                         // Show selected content
-                        const tabId = btn.getAttribute('data-tab');
-                        if (tabContents[tabId]) {
-                            tabContents[tabId].style.display = 'block';
-                        }
-                    };
+                        if (contents[tabId]) contents[tabId].style.display = 'block';
+                    });
                 });
                 
-                // Attach handlers for CV and Check stages
+                // Attach handlers
                 attachCVHandlersInModal(modal, app.userEmail, app.id);
                 attachCheckStageHandlers(modal, app.userEmail, app.id, app.status);
                 attachExternalReviewerHandlers(modal, app.userEmail, app.id);
             }
         });
     } catch (error) {
-        console.error('Error viewing application:', error);
+        console.error('Error:', error);
         Swal.fire({ icon: 'error', title: 'Error', text: 'Application not found!' });
     }
 }
 
+// Render Form 1 Content
 function renderForm1Content(app) {
     let html = '<div class="detail-section"><h4>📌 Project Profile</h4>';
     html += `<div class="detail-field"><strong>Project Title:</strong> ${escapeHtml(app.proposalTitle || 'N/A')}</div>`;
@@ -1353,11 +1294,12 @@ function renderForm1Content(app) {
             html += `<tr><td>${escapeHtml(item.category)}</td><td>${escapeHtml(item.itemName)}</td><td>${escapeHtml(item.specs || '')}</td><td style="text-align:right;">₱${(item.unitCost || 0).toLocaleString()}</td><td style="text-align:center;">${item.qty || 1}</td><td style="text-align:right;">₱${it.toLocaleString()}</td></tr>`;
         });
         html += `<tr style="background:#f0f0f0; font-weight:bold;"><td colspan="5" style="text-align:right;">GRAND TOTAL</td><td style="text-align:right;">₱${total.toLocaleString()}</td></tr>`;
-        html += '</tbody>}</div>';
+        html += '</tbody></table></div>';
     }
     return html;
 }
 
+// Render Form 2 Content
 function renderForm2Content(app) {
     let chairSigned = app.signatures?.chair ? '✅ Signed' : '⏳ Pending';
     let deanSigned = app.signatures?.dean ? '✅ Signed' : '⏳ Pending';
@@ -1373,27 +1315,22 @@ function renderForm2Content(app) {
     <div class="detail-section"><h4>✍️ Digital Signatures</h4>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
             <div style="background: white; border-radius: 0.8rem; padding: 1rem; border-left: 4px solid var(--gold);">
-                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-                    <i class="fas fa-user-tie" style="color: var(--gold);"></i>
-                    <strong>Department Chair</strong>
-                </div>
-                <div class="detail-field"><strong>Name:</strong> ${escapeHtml(app.fromChair || 'N/A')}</div>
-                <div class="detail-field"><strong>Email:</strong> ${escapeHtml(app.chairEmail || 'N/A')}</div>
-                <div class="detail-field"><strong>Status:</strong> <span class="status-badge ${app.signatures?.chair ? 'approved' : 'pending'}">${chairSigned}</span> ${chairDate ? `📅 ${chairDate}` : ''}</div>
+                <div><i class="fas fa-user-tie"></i> <strong>Department Chair</strong></div>
+                <div><strong>Name:</strong> ${escapeHtml(app.fromChair || 'N/A')}</div>
+                <div><strong>Email:</strong> ${escapeHtml(app.chairEmail || 'N/A')}</div>
+                <div><strong>Status:</strong> ${chairSigned} ${chairDate ? `📅 ${chairDate}` : ''}</div>
             </div>
             <div style="background: white; border-radius: 0.8rem; padding: 1rem; border-left: 4px solid var(--gold);">
-                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-                    <i class="fas fa-university" style="color: var(--gold);"></i>
-                    <strong>Dean</strong>
-                </div>
-                <div class="detail-field"><strong>Name:</strong> ${escapeHtml(app.deanName || 'N/A')}</div>
-                <div class="detail-field"><strong>Email:</strong> ${escapeHtml(app.deanEmail || 'N/A')}</div>
-                <div class="detail-field"><strong>Status:</strong> <span class="status-badge ${app.signatures?.dean ? 'approved' : 'pending'}">${deanSigned}</span> ${deanDate ? `📅 ${deanDate}` : ''}</div>
+                <div><i class="fas fa-university"></i> <strong>Dean</strong></div>
+                <div><strong>Name:</strong> ${escapeHtml(app.deanName || 'N/A')}</div>
+                <div><strong>Email:</strong> ${escapeHtml(app.deanEmail || 'N/A')}</div>
+                <div><strong>Status:</strong> ${deanSigned} ${deanDate ? `📅 ${deanDate}` : ''}</div>
             </div>
         </div>
     </div>`;
 }
 
+// Render CV Review Content
 function renderCVReviewContent(app) {
     let html = '<div class="detail-section"><h4>📎 CV Review & Eligibility Status</h4><p style="font-size:0.75rem; margin-bottom:1rem;">Review each CV and mark as Eligible, Ineligible, or Pending.</p>';
     
@@ -1402,7 +1339,7 @@ function renderCVReviewContent(app) {
         let piStatus = app.piCVStatus || 'pending';
         let bgColor = piStatus === 'eligible' ? '#d4edda' : (piStatus === 'ineligible' ? '#f8d7da' : '#fff3cd');
         html += `<div style="background: white; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; border-left: 4px solid var(--gold);">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
                 <div><i class="fas fa-user-tie"></i> <strong>Principal Investigator:</strong> ${escapeHtml(app.piName || 'PI')}<br><small>${escapeHtml(app.piCVName)}</small></div>
                 <div><select class="cv-status-change" data-type="pi" data-idx="0" style="padding: 0.4rem 0.8rem; border-radius: 20px; background: ${bgColor};">
                     <option value="pending" ${piStatus === 'pending' ? 'selected' : ''}>⏳ Pending</option>
@@ -1417,7 +1354,7 @@ function renderCVReviewContent(app) {
     
     // Team CVs
     if (app.teamMembers && app.teamMembers.length > 0) {
-        html += `<h4 style="margin-top: 1rem;"><i class="fas fa-users"></i> Research Team (${app.teamMembers.length})</h4>`;
+        html += `<h4><i class="fas fa-users"></i> Research Team (${app.teamMembers.length})</h4>`;
         for (let i = 0; i < app.teamMembers.length; i++) {
             const member = app.teamMembers[i];
             let cv = app.teamCVs && app.teamCVs[i] ? app.teamCVs[i] : null;
@@ -1425,7 +1362,7 @@ function renderCVReviewContent(app) {
             let cvStatus = (cv && cv.status) ? cv.status : 'pending';
             let bgColor = cvStatus === 'eligible' ? '#d4edda' : (cvStatus === 'ineligible' ? '#f8d7da' : '#fff3cd');
             html += `<div style="background: white; border-radius: 12px; padding: 1rem; margin-bottom: 0.8rem; border-left: 4px solid ${hasCV ? 'var(--gold)' : '#e74c3c'};">
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
                     <div><i class="fas fa-user"></i> <strong>${escapeHtml(member.name)}</strong> ${member.role ? `<span style="color: #666;">(${escapeHtml(member.role)})</span>` : ''}<br>${hasCV ? `<small>${escapeHtml(cv.name)}</small>` : '<small style="color: #e74c3c;">No CV uploaded</small>'}</div>
                     <div>${hasCV ? `<select class="cv-status-change" data-type="team" data-idx="${i}" style="padding: 0.3rem 0.8rem; border-radius: 20px; background: ${bgColor};">
                         <option value="pending" ${cvStatus === 'pending' ? 'selected' : ''}>⏳ Pending</option>
@@ -1446,13 +1383,11 @@ function renderCVReviewContent(app) {
 }
 
 // Render External Reviewers Content
-
 function renderExternalReviewersContent(app) {
     let assignedReviewers = app.assignedReviewers || [];
     let html = '<div class="detail-section"><h4>👥 External Reviewers</h4><p style="font-size:0.75rem; margin-bottom:1rem;">Assign external reviewers to evaluate this application.</p>';
     
     if (assignedReviewers.length > 0) {
-        html += '<div style="margin-bottom: 1rem;">';
         for (let i = 0; i < assignedReviewers.length; i++) {
             const reviewer = assignedReviewers[i];
             const hasReview = reviewer.status === 'completed';
@@ -1468,15 +1403,13 @@ function renderExternalReviewersContent(app) {
                 </div>
             </div>`;
         }
-        html += '</div>';
     } else {
         html += '<div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; text-align: center; color: #666;"><i class="fas fa-info-circle"></i> No external reviewers assigned yet.</div>';
     }
     
-    // Only show add reviewer form if user is Check 3 or Super Admin
     if (isCheck3 || isSuperAdmin) {
         html += `<div style="margin-top: 1.5rem; background: white; border-radius: 12px; padding: 1rem; border-left: 4px solid var(--gold);">
-            <h4 style="color: var(--primary); margin-bottom: 0.8rem;"><i class="fas fa-user-plus"></i> Assign New Reviewer</h4>
+            <h4><i class="fas fa-user-plus"></i> Assign New Reviewer</h4>
             <input type="email" id="newReviewerEmail" placeholder="reviewer@xu.edu.ph" style="width: 100%; padding: 0.5rem; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 0.5rem;">
             <button id="addManualReviewerBtn" class="btn-primary"><i class="fas fa-user-plus"></i> Assign Reviewer</button>
         </div>`;
@@ -1488,12 +1421,11 @@ function renderExternalReviewersContent(app) {
 
 // Render Check Stages Content
 function renderCheckStagesContent(app) {
-    const isReturned = app.status === 'Returned';
     const currentStatus = app.status;
     const stages = [
-        { num: 1, name: 'Eligibility Review', status: 'Pending Eligibility Check', checker: 'Check 1', icon: '🔍', description: 'CV verification & eligibility check' },
-        { num: 2, name: 'Secondary Review', status: 'Pending Secondary Check', checker: 'Check 2', icon: '📋', description: 'Technical & methodology review' },
-        { num: 3, name: 'Final Review', status: 'Pending Final Check', checker: 'Check 3', icon: '⭐', description: 'Final approval & recommendation' }
+        { num: 1, name: 'Eligibility Review', status: 'Pending Eligibility Check', checker: 'Check 1', icon: '🔍' },
+        { num: 2, name: 'Secondary Review', status: 'Pending Secondary Check', checker: 'Check 2', icon: '📋' },
+        { num: 3, name: 'Final Review', status: 'Pending Final Check', checker: 'Check 3', icon: '⭐' }
     ];
     
     let completedCount = 0;
@@ -1506,7 +1438,7 @@ function renderCheckStagesContent(app) {
     const progressPercent = (completedCount / stages.length) * 100;
     
     let html = `<div class="detail-section"><h4>📊 Multi-Stage Review Process</h4>
-    <div style="margin-bottom: 1rem;"><div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">`;
+    <div style="margin-bottom: 1rem;"><div style="display: flex; justify-content: space-between; gap: 0.5rem;">`;
     
     for (let i = 0; i < stages.length; i++) {
         const stage = stages[i];
@@ -1537,7 +1469,7 @@ function renderCheckStagesContent(app) {
             <div><i class="fas fa-search"></i> <strong>Check 1: Eligibility Review</strong><br><small>Eligibility Officer</small></div>
             <span style="background: ${isCheck1Completed ? '#d4edda' : (isCheck1Current ? '#cce5ff' : '#e9ecef')}; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.7rem;">${isCheck1Completed ? '✅ Completed' : (isCheck1Current ? '🔄 In Progress' : '⏳ Pending')}</span>
         </div>
-        ${app.check1Feedback ? `<div style="margin-top: 0.5rem; padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem; font-size: 0.75rem;"><strong>Feedback:</strong> ${escapeHtml(app.check1Feedback)}</div>` : ''}
+        ${app.check1Feedback ? `<div style="margin-top: 0.5rem; padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem;"><strong>Feedback:</strong> ${escapeHtml(app.check1Feedback)}</div>` : ''}
         ${isCheck1Current ? `<div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e0e0e0;">
             ${canActOnCheck1 ? `
                 <label style="font-weight: 600; font-size: 0.75rem;">Decision:</label>
@@ -1546,7 +1478,7 @@ function renderCheckStagesContent(app) {
                     <button class="btn-sm return-check1" style="background: #e74c3c; color: white;"><i class="fas fa-undo-alt"></i> Return to Faculty</button>
                 </div>
                 <textarea id="check1Feedback" rows="2" style="width: 100%; margin-top: 0.5rem; padding: 0.4rem; border-radius: 0.5rem; font-size: 0.75rem;" placeholder="Feedback (required if returning)..."></textarea>
-            ` : `<div style="padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem; text-align: center; font-size: 0.75rem;"><i class="fas fa-lock"></i> Only Check 1 can review this stage.</div>`}
+            ` : `<div style="padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem; text-align: center;"><i class="fas fa-lock"></i> Only Check 1 can review this stage.</div>`}
         </div>` : ''}
     </div>`;
     
@@ -1560,7 +1492,7 @@ function renderCheckStagesContent(app) {
             <div><i class="fas fa-clipboard-list"></i> <strong>Check 2: Secondary Review</strong><br><small>Secondary Checker</small></div>
             <span style="background: ${isCheck2Completed ? '#d4edda' : (isCheck2Current ? '#cce5ff' : '#e9ecef')}; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.7rem;">${isCheck2Completed ? '✅ Completed' : (isCheck2Current ? '🔄 In Progress' : '⏳ Pending')}</span>
         </div>
-        ${app.check2Feedback ? `<div style="margin-top: 0.5rem; padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem; font-size: 0.75rem;"><strong>Feedback:</strong> ${escapeHtml(app.check2Feedback)}</div>` : ''}
+        ${app.check2Feedback ? `<div style="margin-top: 0.5rem; padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem;"><strong>Feedback:</strong> ${escapeHtml(app.check2Feedback)}</div>` : ''}
         ${isCheck2Current ? `<div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e0e0e0;">
             ${canActOnCheck2 ? `
                 <label style="font-weight: 600; font-size: 0.75rem;">Decision:</label>
@@ -1569,7 +1501,7 @@ function renderCheckStagesContent(app) {
                     <button class="btn-sm return-check2" style="background: #e74c3c; color: white;"><i class="fas fa-undo-alt"></i> Return to Faculty</button>
                 </div>
                 <textarea id="check2Feedback" rows="2" style="width: 100%; margin-top: 0.5rem; padding: 0.4rem; border-radius: 0.5rem; font-size: 0.75rem;" placeholder="Feedback (required if returning)..."></textarea>
-            ` : `<div style="padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem; text-align: center; font-size: 0.75rem;"><i class="fas fa-lock"></i> Only Check 2 can review this stage.</div>`}
+            ` : `<div style="padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem; text-align: center;"><i class="fas fa-lock"></i> Only Check 2 can review this stage.</div>`}
         </div>` : ''}
     </div>`;
     
@@ -1583,7 +1515,7 @@ function renderCheckStagesContent(app) {
             <div><i class="fas fa-check-double"></i> <strong>Check 3: Final Review</strong><br><small>Final Approver</small></div>
             <span style="background: ${isCheck3Completed ? '#d4edda' : (isCheck3Current ? '#cce5ff' : '#e9ecef')}; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.7rem;">${isCheck3Completed ? '✅ Completed' : (isCheck3Current ? '🔄 In Progress' : '⏳ Pending')}</span>
         </div>
-        ${app.check3Feedback ? `<div style="margin-top: 0.5rem; padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem; font-size: 0.75rem;"><strong>Feedback:</strong> ${escapeHtml(app.check3Feedback)}</div>` : ''}
+        ${app.check3Feedback ? `<div style="margin-top: 0.5rem; padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem;"><strong>Feedback:</strong> ${escapeHtml(app.check3Feedback)}</div>` : ''}
         ${isCheck3Current ? `<div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e0e0e0;">
             ${canActOnCheck3 ? `
                 <label style="font-weight: 600; font-size: 0.75rem;">Decision:</label>
@@ -1592,21 +1524,21 @@ function renderCheckStagesContent(app) {
                     <button class="btn-sm return-check3" style="background: #e74c3c; color: white;"><i class="fas fa-undo-alt"></i> Return to Faculty</button>
                 </div>
                 <textarea id="check3Feedback" rows="2" style="width: 100%; margin-top: 0.5rem; padding: 0.4rem; border-radius: 0.5rem; font-size: 0.75rem;" placeholder="Feedback (required if returning)..."></textarea>
-            ` : `<div style="padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem; text-align: center; font-size: 0.75rem;"><i class="fas fa-lock"></i> Only Check 3 can review this stage.</div>`}
+            ` : `<div style="padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem; text-align: center;"><i class="fas fa-lock"></i> Only Check 3 can review this stage.</div>`}
         </div>` : ''}
     </div>`;
     
-    if (isReturned) {
+    if (app.status === 'Returned') {
         html += `<div style="background: #fff3cd; margin-top: 1rem; padding: 1rem; border-radius: 0.8rem;">
             <i class="fas fa-undo-alt"></i> <strong>Application Returned</strong><br>
-            This application has been returned to the faculty for revision. Once resubmitted, the review process will restart from Check 1.
+            This application has been returned to the faculty for revision.
         </div>`;
     }
     
     return html;
 }
 
-// Event Handlers
+// Event Handlers for modals
 function attachCVHandlersInModal(modal, email, appId) {
     const cvSelects = modal.querySelectorAll('.cv-status-change');
     cvSelects.forEach(select => {
@@ -1618,7 +1550,7 @@ function attachCVHandlersInModal(modal, email, appId) {
                 if (type === 'pi') await KURO_API.updatePICVStatus(appId, newStatus);
                 else await KURO_API.updateTeamCVStatus(appId, idx, newStatus);
                 showToast(`CV status changed to ${newStatus}`, 'success');
-                renderDashboard();
+                viewApplicationDetails(appId);
             } catch (error) { showToast('Failed to update CV status', 'error'); }
         };
     });
@@ -1630,6 +1562,7 @@ function attachCVHandlersInModal(modal, email, appId) {
             try {
                 await KURO_API.saveCVFeedback(appId, feedback);
                 showToast('Feedback saved!', 'success');
+                viewApplicationDetails(appId);
             } catch (error) { showToast('Failed to save feedback', 'error'); }
         };
     }
@@ -1638,90 +1571,102 @@ function attachCVHandlersInModal(modal, email, appId) {
 function attachCheckStageHandlers(modal, email, appId, currentStatus) {
     // Check 1
     const approveCheck1 = modal.querySelector('.approve-check1');
-    if (approveCheck1) approveCheck1.onclick = async () => {
-        const feedback = modal.querySelector('#check1Feedback')?.value || '';
-        const result = await Swal.fire({ title: 'Approve Check 1?', text: 'This will move the application to Secondary Review.', icon: 'question', showCancelButton: true, confirmButtonColor: '#2ecc71', confirmButtonText: 'Yes, Approve' });
-        if (result.isConfirmed) {
-            try {
-                await KURO_API.approveCheck1(appId, feedback);
-                showToast('Application moved to Secondary Review', 'success');
-                Swal.close();
-                renderDashboard();
-            } catch (error) { showToast('Failed to approve', 'error'); }
-        }
-    };
+    if (approveCheck1) {
+        approveCheck1.onclick = async () => {
+            const feedback = modal.querySelector('#check1Feedback')?.value || '';
+            const result = await Swal.fire({ title: 'Approve Check 1?', text: 'This will move the application to Secondary Review.', icon: 'question', showCancelButton: true, confirmButtonColor: '#2ecc71' });
+            if (result.isConfirmed) {
+                try {
+                    await KURO_API.approveCheck1(appId, feedback);
+                    showToast('Application moved to Secondary Review', 'success');
+                    Swal.close();
+                    renderDashboard();
+                } catch (error) { showToast('Failed to approve', 'error'); }
+            }
+        };
+    }
     const returnCheck1 = modal.querySelector('.return-check1');
-    if (returnCheck1) returnCheck1.onclick = async () => {
-        const feedback = modal.querySelector('#check1Feedback')?.value;
-        if (!feedback) { showToast('Please provide feedback', 'error'); return; }
-        const result = await Swal.fire({ title: 'Return Application?', text: 'This will return the application to the faculty.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e74c3c', confirmButtonText: 'Yes, Return' });
-        if (result.isConfirmed) {
-            try {
-                await KURO_API.returnCheck1(appId, feedback);
-                showToast('Application returned to faculty', 'success');
-                Swal.close();
-                renderDashboard();
-            } catch (error) { showToast('Failed to return', 'error'); }
-        }
-    };
+    if (returnCheck1) {
+        returnCheck1.onclick = async () => {
+            const feedback = modal.querySelector('#check1Feedback')?.value;
+            if (!feedback) { showToast('Please provide feedback', 'error'); return; }
+            const result = await Swal.fire({ title: 'Return Application?', text: 'This will return the application to the faculty.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e74c3c' });
+            if (result.isConfirmed) {
+                try {
+                    await KURO_API.returnCheck1(appId, feedback);
+                    showToast('Application returned to faculty', 'success');
+                    Swal.close();
+                    renderDashboard();
+                } catch (error) { showToast('Failed to return', 'error'); }
+            }
+        };
+    }
     
     // Check 2
     const approveCheck2 = modal.querySelector('.approve-check2');
-    if (approveCheck2) approveCheck2.onclick = async () => {
-        const feedback = modal.querySelector('#check2Feedback')?.value || '';
-        const result = await Swal.fire({ title: 'Approve Check 2?', text: 'This will move the application to Final Review.', icon: 'question', showCancelButton: true, confirmButtonColor: '#2ecc71', confirmButtonText: 'Yes, Approve' });
-        if (result.isConfirmed) {
-            try {
-                await KURO_API.approveCheck2(appId, feedback);
-                showToast('Application moved to Final Review', 'success');
-                Swal.close();
-                renderDashboard();
-            } catch (error) { showToast('Failed to approve', 'error'); }
-        }
-    };
+    if (approveCheck2) {
+        approveCheck2.onclick = async () => {
+            const feedback = modal.querySelector('#check2Feedback')?.value || '';
+            const result = await Swal.fire({ title: 'Approve Check 2?', text: 'This will move the application to Final Review.', icon: 'question', showCancelButton: true, confirmButtonColor: '#2ecc71' });
+            if (result.isConfirmed) {
+                try {
+                    await KURO_API.approveCheck2(appId, feedback);
+                    showToast('Application moved to Final Review', 'success');
+                    Swal.close();
+                    renderDashboard();
+                } catch (error) { showToast('Failed to approve', 'error'); }
+            }
+        };
+    }
     const returnCheck2 = modal.querySelector('.return-check2');
-    if (returnCheck2) returnCheck2.onclick = async () => {
-        const feedback = modal.querySelector('#check2Feedback')?.value;
-        if (!feedback) { showToast('Please provide feedback', 'error'); return; }
-        const result = await Swal.fire({ title: 'Return Application?', text: 'This will return the application to the faculty.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e74c3c', confirmButtonText: 'Yes, Return' });
-        if (result.isConfirmed) {
-            try {
-                await KURO_API.returnCheck2(appId, feedback);
-                showToast('Application returned to faculty', 'success');
-                Swal.close();
-                renderDashboard();
-            } catch (error) { showToast('Failed to return', 'error'); }
-        }
-    };
+    if (returnCheck2) {
+        returnCheck2.onclick = async () => {
+            const feedback = modal.querySelector('#check2Feedback')?.value;
+            if (!feedback) { showToast('Please provide feedback', 'error'); return; }
+            const result = await Swal.fire({ title: 'Return Application?', text: 'This will return the application to the faculty.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e74c3c' });
+            if (result.isConfirmed) {
+                try {
+                    await KURO_API.returnCheck2(appId, feedback);
+                    showToast('Application returned to faculty', 'success');
+                    Swal.close();
+                    renderDashboard();
+                } catch (error) { showToast('Failed to return', 'error'); }
+            }
+        };
+    }
     
     // Check 3
     const approveCheck3 = modal.querySelector('.approve-check3');
-    if (approveCheck3) approveCheck3.onclick = async () => {
-        const feedback = modal.querySelector('#check3Feedback')?.value || '';
-        const result = await Swal.fire({ title: 'Final Approval?', text: 'This will mark the application as APPROVED.', icon: 'question', showCancelButton: true, confirmButtonColor: '#2ecc71', confirmButtonText: 'Yes, Approve' });
-        if (result.isConfirmed) {
-            try {
-                await KURO_API.approveCheck3(appId, feedback);
-                showToast('Application approved!', 'success');
-                Swal.close();
-                renderDashboard();
-            } catch (error) { showToast('Failed to approve', 'error'); }
-        }
-    };
+    if (approveCheck3) {
+        approveCheck3.onclick = async () => {
+            const feedback = modal.querySelector('#check3Feedback')?.value || '';
+            const result = await Swal.fire({ title: 'Final Approval?', text: 'This will mark the application as APPROVED.', icon: 'question', showCancelButton: true, confirmButtonColor: '#2ecc71' });
+            if (result.isConfirmed) {
+                try {
+                    await KURO_API.approveCheck3(appId, feedback);
+                    showToast('Application approved!', 'success');
+                    Swal.close();
+                    renderDashboard();
+                } catch (error) { showToast('Failed to approve', 'error'); }
+            }
+        };
+    }
     const returnCheck3 = modal.querySelector('.return-check3');
-    if (returnCheck3) returnCheck3.onclick = async () => {
-        const feedback = modal.querySelector('#check3Feedback')?.value;
-        if (!feedback) { showToast('Please provide feedback', 'error'); return; }
-        const result = await Swal.fire({ title: 'Return Application?', text: 'This will return the application to the faculty.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e74c3c', confirmButtonText: 'Yes, Return' });
-        if (result.isConfirmed) {
-            try {
-                await KURO_API.returnCheck3(appId, feedback);
-                showToast('Application returned to faculty', 'success');
-                Swal.close();
-                renderDashboard();
-            } catch (error) { showToast('Failed to return', 'error'); }
-        }
-    };
+    if (returnCheck3) {
+        returnCheck3.onclick = async () => {
+            const feedback = modal.querySelector('#check3Feedback')?.value;
+            if (!feedback) { showToast('Please provide feedback', 'error'); return; }
+            const result = await Swal.fire({ title: 'Return Application?', text: 'This will return the application to the faculty.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e74c3c' });
+            if (result.isConfirmed) {
+                try {
+                    await KURO_API.returnCheck3(appId, feedback);
+                    showToast('Application returned to faculty', 'success');
+                    Swal.close();
+                    renderDashboard();
+                } catch (error) { showToast('Failed to return', 'error'); }
+            }
+        };
+    }
 }
 
 function attachExternalReviewerHandlers(modal, email, appId) {
@@ -1801,7 +1746,8 @@ async function deleteApplicationHandler(appId) {
     }
 }
 
-// Super Admin Settings
+// ============ SUPER ADMIN SETTINGS ============
+
 async function openSuperuserSettings() {
     if (!isSuperAdmin) {
         Swal.fire({ icon: 'error', title: 'Access Denied', text: 'Only Super Admin can access these settings.' });
@@ -1809,13 +1755,9 @@ async function openSuperuserSettings() {
     }
     
     // Show loading
-    Swal.fire({
-        title: 'Loading Settings...',
-        allowOutsideClick: false,
-        didOpen: () => { Swal.showLoading(); }
-    });
+    Swal.fire({ title: 'Loading Settings...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
     
-    // Load all data
+    // Load data
     let superAdmins = [], adminEmails = [], checkerRoles = {}, externalReviewers = [], auditLogs = [];
     try {
         [superAdmins, adminEmails, checkerRoles, externalReviewers, auditLogs] = await Promise.all([
@@ -1831,57 +1773,39 @@ async function openSuperuserSettings() {
     
     const modalHtml = `
         <div style="max-height: 70vh; overflow-y: auto; padding-right: 0.5rem;">
-            <!-- Modern Tab Navigation -->
-            <div class="settings-tab-nav" style="display: flex; gap: 0.5rem; border-bottom: 2px solid #eef2f0; margin-bottom: 1.5rem; flex-wrap: wrap; padding: 0 0.5rem;">
-                <button class="settings-tab-btn active" data-tab="superadmins" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.2rem; background: none; border: none; cursor: pointer; font-weight: 600; color: var(--primary); border-bottom: 3px solid var(--gold); transition: all 0.2s;">
-                    <i class="fas fa-crown" style="color: var(--gold);"></i> Super Admins
+            <!-- Tab Navigation -->
+            <div style="display: flex; gap: 0.5rem; border-bottom: 2px solid #eef2f0; margin-bottom: 1.5rem; flex-wrap: wrap; padding: 0 0.5rem;">
+                <button class="settings-tab-btn active" data-tab="superadmins" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.2rem; background: none; border: none; cursor: pointer; font-weight: 600; color: var(--primary); border-bottom: 3px solid var(--gold);">
+                    <i class="fas fa-crown"></i> Super Admins
                 </button>
-                <button class="settings-tab-btn" data-tab="admins" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.2rem; background: none; border: none; cursor: pointer; font-weight: 600; color: #666; border-bottom: 3px solid transparent; transition: all 0.2s;">
+                <button class="settings-tab-btn" data-tab="admins" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.2rem; background: none; border: none; cursor: pointer; font-weight: 600; color: #666; border-bottom: 3px solid transparent;">
                     <i class="fas fa-user-shield"></i> Admin Users
                 </button>
-                <button class="settings-tab-btn" data-tab="checkers" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.2rem; background: none; border: none; cursor: pointer; font-weight: 600; color: #666; border-bottom: 3px solid transparent; transition: all 0.2s;">
+                <button class="settings-tab-btn" data-tab="checkers" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.2rem; background: none; border: none; cursor: pointer; font-weight: 600; color: #666; border-bottom: 3px solid transparent;">
                     <i class="fas fa-check-double"></i> Checker Roles
                 </button>
-                <button class="settings-tab-btn" data-tab="reviewers" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.2rem; background: none; border: none; cursor: pointer; font-weight: 600; color: #666; border-bottom: 3px solid transparent; transition: all 0.2s;">
+                <button class="settings-tab-btn" data-tab="reviewers" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.2rem; background: none; border: none; cursor: pointer; font-weight: 600; color: #666; border-bottom: 3px solid transparent;">
                     <i class="fas fa-users"></i> Reviewers Pool
                 </button>
-                <button class="settings-tab-btn" data-tab="audit" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.2rem; background: none; border: none; cursor: pointer; font-weight: 600; color: #666; border-bottom: 3px solid transparent; transition: all 0.2s;">
+                <button class="settings-tab-btn" data-tab="audit" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.2rem; background: none; border: none; cursor: pointer; font-weight: 600; color: #666; border-bottom: 3px solid transparent;">
                     <i class="fas fa-history"></i> Audit Log
                 </button>
             </div>
             
             <!-- Super Admins Tab -->
             <div id="tabSuperadmins" class="settings-tab-pane" style="display: block;">
-                <div class="settings-card" style="background: white; border-radius: 1rem; border: 1px solid #eef2f0; overflow: hidden;">
-                    <div class="settings-card-header" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); padding: 1rem 1.2rem; color: white;">
-                        <div style="display: flex; align-items: center; gap: 0.8rem;">
-                            <i class="fas fa-crown" style="font-size: 1.3rem; color: var(--gold);"></i>
-                            <div>
-                                <h3 style="margin: 0; font-size: 1rem;">Super Admin Accounts</h3>
-                                <p style="margin: 0.2rem 0 0 0; font-size: 0.7rem; opacity: 0.8;">Full access to all settings and features</p>
-                            </div>
+                <div class="settings-card">
+                    <div class="settings-card-header"><i class="fas fa-crown"></i> Super Admin Accounts</div>
+                    <div class="settings-card-body">
+                        <div class="add-item-bar">
+                            <input type="email" id="newSuperAdminEmail" placeholder="email@xu.edu.ph">
+                            <button id="addSuperAdminBtn" class="btn-primary"><i class="fas fa-plus"></i> Add</button>
                         </div>
-                    </div>
-                    <div class="settings-card-body" style="padding: 1.2rem;">
-                        <div class="add-item-bar" style="display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;">
-                            <input type="email" id="newSuperAdminEmail" placeholder="email@xu.edu.ph" style="flex: 1; padding: 0.6rem 1rem; border: 1px solid #ddd; border-radius: 40px; font-size: 0.8rem;">
-                            <button id="addSuperAdminBtn" class="btn-primary" style="padding: 0.6rem 1.2rem;"><i class="fas fa-plus"></i> Add Super Admin</button>
-                        </div>
-                        <table style="width: 100%; border-collapse: collapse;">
-                            <thead>
-                                <tr style="background: #f8f9fa; border-bottom: 2px solid #eef2f0;">
-                                    <th style="padding: 0.8rem 0.5rem; text-align: left; font-size: 0.75rem; color: var(--primary);">Email</th>
-                                    <th style="padding: 0.8rem 0.5rem; text-align: left; font-size: 0.75rem; color: var(--primary);">Actions</th>
-                                </tr>
-                            </thead>
+                        <table class="settings-table">
+                            <thead><tr><th>Email</th><th>Actions</th></tr></thead>
                             <tbody id="superAdminsList">
-                                ${superAdmins.map(email => `
-                                    <tr style="border-bottom: 1px solid #eef2f0;">
-                                        <td style="padding: 0.7rem 0.5rem; font-size: 0.8rem;">${escapeHtml(email)}</td>
-                                        <td style="padding: 0.7rem 0.5rem;"><button class="remove-superadmin-btn btn-danger" data-email="${escapeHtml(email)}" style="background: #e74c3c; color: white; border: none; padding: 0.3rem 0.8rem; border-radius: 20px; cursor: pointer; font-size: 0.7rem;"><i class="fas fa-trash"></i> Remove</button></td>
-                                    </tr>
-                                `).join('')}
-                                ${superAdmins.length === 0 ? '<tr><td colspan="2" style="padding: 2rem; text-align: center; color: #999;">No super admins configured</td></tr>' : ''}
+                                ${superAdmins.map(email => `<tr><td>${escapeHtml(email)}</td><td><button class="remove-superadmin-btn btn-danger" data-email="${escapeHtml(email)}">Remove</button></td></tr>`).join('')}
+                                ${superAdmins.length === 0 ? '<tr><td colspan="2" class="empty-state">No super admins</td></tr>' : ''}
                             </tbody>
                         </table>
                     </div>
@@ -1890,36 +1814,18 @@ async function openSuperuserSettings() {
             
             <!-- Admin Users Tab -->
             <div id="tabAdmins" class="settings-tab-pane" style="display: none;">
-                <div class="settings-card" style="background: white; border-radius: 1rem; border: 1px solid #eef2f0; overflow: hidden;">
-                    <div class="settings-card-header" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); padding: 1rem 1.2rem; color: white;">
-                        <div style="display: flex; align-items: center; gap: 0.8rem;">
-                            <i class="fas fa-user-shield" style="font-size: 1.3rem; color: var(--gold);"></i>
-                            <div>
-                                <h3 style="margin: 0; font-size: 1rem;">Admin Users</h3>
-                                <p style="margin: 0.2rem 0 0 0; font-size: 0.7rem; opacity: 0.8;">Can access admin dashboard but cannot modify system settings</p>
-                            </div>
+                <div class="settings-card">
+                    <div class="settings-card-header"><i class="fas fa-user-shield"></i> Admin Users</div>
+                    <div class="settings-card-body">
+                        <div class="add-item-bar">
+                            <input type="email" id="newAdminEmail" placeholder="email@xu.edu.ph">
+                            <button id="addAdminBtn" class="btn-primary"><i class="fas fa-plus"></i> Add</button>
                         </div>
-                    </div>
-                    <div class="settings-card-body" style="padding: 1.2rem;">
-                        <div class="add-item-bar" style="display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;">
-                            <input type="email" id="newAdminEmail" placeholder="email@xu.edu.ph" style="flex: 1; padding: 0.6rem 1rem; border: 1px solid #ddd; border-radius: 40px; font-size: 0.8rem;">
-                            <button id="addAdminBtn" class="btn-primary" style="padding: 0.6rem 1.2rem;"><i class="fas fa-plus"></i> Add Admin</button>
-                        </div>
-                        <table style="width: 100%; border-collapse: collapse;">
-                            <thead>
-                                <tr style="background: #f8f9fa; border-bottom: 2px solid #eef2f0;">
-                                    <th style="padding: 0.8rem 0.5rem; text-align: left; font-size: 0.75rem; color: var(--primary);">Email</th>
-                                    <th style="padding: 0.8rem 0.5rem; text-align: left; font-size: 0.75rem; color: var(--primary);">Actions</th>
-                                </tr>
-                            </thead>
+                        <table class="settings-table">
+                            <thead><tr><th>Email</th><th>Actions</th></tr></thead>
                             <tbody id="adminsList">
-                                ${adminEmails.map(email => `
-                                    <tr style="border-bottom: 1px solid #eef2f0;">
-                                        <td style="padding: 0.7rem 0.5rem; font-size: 0.8rem;">${escapeHtml(email)}</td>
-                                        <td style="padding: 0.7rem 0.5rem;"><button class="remove-admin-btn btn-danger" data-email="${escapeHtml(email)}" style="background: #e74c3c; color: white; border: none; padding: 0.3rem 0.8rem; border-radius: 20px; cursor: pointer; font-size: 0.7rem;"><i class="fas fa-trash"></i> Remove</button></td>
-                                    </tr>
-                                `).join('')}
-                                ${adminEmails.length === 0 ? '<tr><td colspan="2" style="padding: 2rem; text-align: center; color: #999;">No admin users configured</td></tr>' : ''}
+                                ${adminEmails.map(email => `<tr><td>${escapeHtml(email)}</td><td><button class="remove-admin-btn btn-danger" data-email="${escapeHtml(email)}">Remove</button></td></tr>`).join('')}
+                                ${adminEmails.length === 0 ? '<tr><td colspan="2" class="empty-state">No admin users</td></tr>' : ''}
                             </tbody>
                         </table>
                     </div>
@@ -1928,56 +1834,21 @@ async function openSuperuserSettings() {
             
             <!-- Checker Roles Tab -->
             <div id="tabCheckers" class="settings-tab-pane" style="display: none;">
-                <div class="settings-card" style="background: white; border-radius: 1rem; border: 1px solid #eef2f0; overflow: hidden;">
-                    <div class="settings-card-header" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); padding: 1rem 1.2rem; color: white;">
-                        <div style="display: flex; align-items: center; gap: 0.8rem;">
-                            <i class="fas fa-check-double" style="font-size: 1.3rem; color: var(--gold);"></i>
-                            <div>
-                                <h3 style="margin: 0; font-size: 1rem;">Checker Role Assignments</h3>
-                                <p style="margin: 0.2rem 0 0 0; font-size: 0.7rem; opacity: 0.8;">Assign admin users to specific review stages</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="settings-card-body" style="padding: 1.2rem;">
-                        <table style="width: 100%; border-collapse: collapse;">
-                            <thead>
-                                <tr style="background: #f8f9fa; border-bottom: 2px solid #eef2f0;">
-                                    <th style="padding: 0.8rem 0.5rem; text-align: left; font-size: 0.75rem; color: var(--primary);">Check Stage</th>
-                                    <th style="padding: 0.8rem 0.5rem; text-align: left; font-size: 0.75rem; color: var(--primary);">Assigned Admin</th>
-                                    <th style="padding: 0.8rem 0.5rem; text-align: left; font-size: 0.75rem; color: var(--primary);">Actions</th>
-                                </tr>
-                            </thead>
+                <div class="settings-card">
+                    <div class="settings-card-header"><i class="fas fa-check-double"></i> Checker Roles</div>
+                    <div class="settings-card-body">
+                        <table class="settings-table">
+                            <thead><tr><th>Stage</th><th>Assigned Admin</th><th>Action</th></tr></thead>
                             <tbody>
-                                <tr style="border-bottom: 1px solid #eef2f0;">
-                                    <td style="padding: 0.7rem 0.5rem;"><strong>🔍 Check 1</strong><br><small style="color: #666;">Eligibility Review</small></td>
-                                    <td style="padding: 0.7rem 0.5rem;">
-                                        <select id="roleSelect_check1" class="role-select" style="padding: 0.5rem; border-radius: 8px; border: 1px solid #ddd; width: 100%;">
-                                            <option value="">-- Select Admin --</option>
-                                            ${adminEmails.map(e => `<option value="${e}" ${checkerRoles.check1 === e ? 'selected' : ''}>${e}</option>`).join('')}
-                                        </select>
-                                    </td>
-                                    <td style="padding: 0.7rem 0.5rem;"><button class="save-role-btn btn-primary" data-role="check1" style="background: var(--gold); color: var(--primary); padding: 0.4rem 1rem; border-radius: 20px; border: none; cursor: pointer;">Save</button></td>
-                                </tr>
-                                <tr style="border-bottom: 1px solid #eef2f0;">
-                                    <td style="padding: 0.7rem 0.5rem;"><strong>📋 Check 2</strong><br><small style="color: #666;">Secondary Review</small></td>
-                                    <td style="padding: 0.7rem 0.5rem;">
-                                        <select id="roleSelect_check2" class="role-select" style="padding: 0.5rem; border-radius: 8px; border: 1px solid #ddd; width: 100%;">
-                                            <option value="">-- Select Admin --</option>
-                                            ${adminEmails.map(e => `<option value="${e}" ${checkerRoles.check2 === e ? 'selected' : ''}>${e}</option>`).join('')}
-                                        </select>
-                                    </td>
-                                    <td style="padding: 0.7rem 0.5rem;"><button class="save-role-btn btn-primary" data-role="check2" style="background: var(--gold); color: var(--primary); padding: 0.4rem 1rem; border-radius: 20px; border: none; cursor: pointer;">Save</button></td>
-                                </tr>
-                                <tr>
-                                    <td style="padding: 0.7rem 0.5rem;"><strong>✅ Check 3</strong><br><small style="color: #666;">Final Review + External Assigner</small></td>
-                                    <td style="padding: 0.7rem 0.5rem;">
-                                        <select id="roleSelect_check3" class="role-select" style="padding: 0.5rem; border-radius: 8px; border: 1px solid #ddd; width: 100%;">
-                                            <option value="">-- Select Admin --</option>
-                                            ${adminEmails.map(e => `<option value="${e}" ${checkerRoles.check3 === e ? 'selected' : ''}>${e}</option>`).join('')}
-                                        </select>
-                                    </td>
-                                    <td style="padding: 0.7rem 0.5rem;"><button class="save-role-btn btn-primary" data-role="check3" style="background: var(--gold); color: var(--primary); padding: 0.4rem 1rem; border-radius: 20px; border: none; cursor: pointer;">Save</button></td>
-                                </tr>
+                                <tr><td><strong>🔍 Check 1</strong><br><small>Eligibility Review</small></td>
+                                    <td><select id="roleSelect_check1" class="role-select"><option value="">-- Select --</option>${adminEmails.map(e => `<option value="${e}" ${checkerRoles.check1 === e ? 'selected' : ''}>${e}</option>`).join('')}</select></td>
+                                    <td><button class="save-role-btn btn-primary" data-role="check1">Save</button></td></tr>
+                                <tr><td><strong>📋 Check 2</strong><br><small>Secondary Review</small></td>
+                                    <td><select id="roleSelect_check2" class="role-select"><option value="">-- Select --</option>${adminEmails.map(e => `<option value="${e}" ${checkerRoles.check2 === e ? 'selected' : ''}>${e}</option>`).join('')}</select></td>
+                                    <td><button class="save-role-btn btn-primary" data-role="check2">Save</button></td></tr>
+                                <tr><td><strong>✅ Check 3</strong><br><small>Final Review</small></td>
+                                    <td><select id="roleSelect_check3" class="role-select"><option value="">-- Select --</option>${adminEmails.map(e => `<option value="${e}" ${checkerRoles.check3 === e ? 'selected' : ''}>${e}</option>`).join('')}</select></td>
+                                    <td><button class="save-role-btn btn-primary" data-role="check3">Save</button></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1986,39 +1857,19 @@ async function openSuperuserSettings() {
             
             <!-- External Reviewers Pool Tab -->
             <div id="tabReviewers" class="settings-tab-pane" style="display: none;">
-                <div class="settings-card" style="background: white; border-radius: 1rem; border: 1px solid #eef2f0; overflow: hidden;">
-                    <div class="settings-card-header" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); padding: 1rem 1.2rem; color: white;">
-                        <div style="display: flex; align-items: center; gap: 0.8rem;">
-                            <i class="fas fa-users" style="font-size: 1.3rem; color: var(--gold);"></i>
-                            <div>
-                                <h3 style="margin: 0; font-size: 1rem;">External Reviewers Pool</h3>
-                                <p style="margin: 0.2rem 0 0 0; font-size: 0.7rem; opacity: 0.8;">Pre-approved reviewers that can be assigned to applications</p>
-                            </div>
+                <div class="settings-card">
+                    <div class="settings-card-header"><i class="fas fa-users"></i> External Reviewers Pool</div>
+                    <div class="settings-card-body">
+                        <div class="add-item-bar">
+                            <input type="email" id="newReviewerEmail" placeholder="reviewer@xu.edu.ph">
+                            <input type="text" id="newReviewerName" placeholder="Full Name (optional)">
+                            <button id="addReviewerBtn" class="btn-primary"><i class="fas fa-plus"></i> Add</button>
                         </div>
-                    </div>
-                    <div class="settings-card-body" style="padding: 1.2rem;">
-                        <div class="add-item-bar" style="display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;">
-                            <input type="email" id="newReviewerEmail" placeholder="reviewer@xu.edu.ph" style="flex: 1; padding: 0.6rem 1rem; border: 1px solid #ddd; border-radius: 40px; font-size: 0.8rem;">
-                            <input type="text" id="newReviewerName" placeholder="Full Name (optional)" style="flex: 1; padding: 0.6rem 1rem; border: 1px solid #ddd; border-radius: 40px; font-size: 0.8rem;">
-                            <button id="addReviewerBtn" class="btn-primary" style="padding: 0.6rem 1.2rem;"><i class="fas fa-plus"></i> Add Reviewer</button>
-                        </div>
-                        <table style="width: 100%; border-collapse: collapse;">
-                            <thead>
-                                <tr style="background: #f8f9fa; border-bottom: 2px solid #eef2f0;">
-                                    <th style="padding: 0.8rem 0.5rem; text-align: left; font-size: 0.75rem; color: var(--primary);">Email</th>
-                                    <th style="padding: 0.8rem 0.5rem; text-align: left; font-size: 0.75rem; color: var(--primary);">Name</th>
-                                    <th style="padding: 0.8rem 0.5rem; text-align: left; font-size: 0.75rem; color: var(--primary);">Actions</th>
-                                </tr>
-                            </thead>
+                        <table class="settings-table">
+                            <thead><tr><th>Email</th><th>Name</th><th>Actions</th></tr></thead>
                             <tbody id="reviewersList">
-                                ${externalReviewers.map(r => `
-                                    <tr style="border-bottom: 1px solid #eef2f0;">
-                                        <td style="padding: 0.7rem 0.5rem; font-size: 0.8rem;">${escapeHtml(r.email)}</td>
-                                        <td style="padding: 0.7rem 0.5rem; font-size: 0.8rem;">${escapeHtml(r.name || '')}</td>
-                                        <td style="padding: 0.7rem 0.5rem;"><button class="remove-reviewer-pool-btn btn-danger" data-email="${escapeHtml(r.email)}" style="background: #e74c3c; color: white; border: none; padding: 0.3rem 0.8rem; border-radius: 20px; cursor: pointer; font-size: 0.7rem;"><i class="fas fa-trash"></i> Remove</button></td>
-                                    </tr>
-                                `).join('')}
-                                ${externalReviewers.length === 0 ? '<tr><td colspan="3" style="padding: 2rem; text-align: center; color: #999;">No external reviewers in pool</td></tr>' : ''}
+                                ${externalReviewers.map(r => `<tr><td>${escapeHtml(r.email)}</td><td>${escapeHtml(r.name || '')}</td><td><button class="remove-reviewer-pool-btn btn-danger" data-email="${escapeHtml(r.email)}">Remove</button></td></tr>`).join('')}
+                                ${externalReviewers.length === 0 ? '<tr><td colspan="3" class="empty-state">No external reviewers</td></tr>' : ''}
                             </tbody>
                         </table>
                     </div>
@@ -2027,28 +1878,17 @@ async function openSuperuserSettings() {
             
             <!-- Audit Log Tab -->
             <div id="tabAudit" class="settings-tab-pane" style="display: none;">
-                <div class="settings-card" style="background: white; border-radius: 1rem; border: 1px solid #eef2f0; overflow: hidden;">
-                    <div class="settings-card-header" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); padding: 1rem 1.2rem; color: white;">
-                        <div style="display: flex; align-items: center; gap: 0.8rem;">
-                            <i class="fas fa-history" style="font-size: 1.3rem; color: var(--gold);"></i>
-                            <div>
-                                <h3 style="margin: 0; font-size: 1rem;">Audit Log</h3>
-                                <p style="margin: 0.2rem 0 0 0; font-size: 0.7rem; opacity: 0.8;">Track all changes made to system settings</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="settings-card-body" style="padding: 1.2rem; max-height: 500px; overflow-y: auto;">
+                <div class="settings-card">
+                    <div class="settings-card-header"><i class="fas fa-history"></i> Audit Log</div>
+                    <div class="settings-card-body" style="max-height: 500px; overflow-y: auto;">
                         ${auditLogs.map(log => `
-                            <div style="background: #f8f9fa; padding: 0.8rem; margin-bottom: 0.8rem; border-radius: 0.5rem; border-left: 3px solid var(--gold);">
-                                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 0.3rem;">
-                                    <span style="font-weight: 600; color: var(--primary);">${escapeHtml(log.action)}</span>
-                                    <span style="font-size: 0.65rem; color: #999;"><i class="fas fa-user"></i> ${escapeHtml(log.performedBy)}</span>
-                                </div>
-                                <div style="font-size: 0.7rem; color: #666; margin-bottom: 0.3rem;"><i class="fas fa-clock"></i> ${new Date(log.timestamp).toLocaleString()}</div>
-                                <div style="font-size: 0.7rem; color: #888; background: white; padding: 0.4rem; border-radius: 0.3rem; margin-top: 0.3rem; word-break: break-all;">${JSON.stringify(log.changes)}</div>
+                            <div class="audit-item">
+                                <div><strong>${escapeHtml(log.action)}</strong> by ${escapeHtml(log.performedBy)}</div>
+                                <div class="time">${new Date(log.timestamp).toLocaleString()}</div>
+                                <div class="details">${JSON.stringify(log.changes)}</div>
                             </div>
                         `).join('')}
-                        ${auditLogs.length === 0 ? '<div style="text-align: center; padding: 2rem; color: #999;">No audit logs available</div>' : ''}
+                        ${auditLogs.length === 0 ? '<div class="empty-state">No audit logs available</div>' : ''}
                     </div>
                 </div>
             </div>
@@ -2056,27 +1896,22 @@ async function openSuperuserSettings() {
     `;
     
     const result = await Swal.fire({
-        title: '<div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;"><i class="fas fa-shield-alt" style="color: #e74c3c;"></i> <span>System Administration</span></div>',
+        title: '<i class="fas fa-shield-alt"></i> System Administration',
         html: modalHtml,
         width: '950px',
         showConfirmButton: true,
         confirmButtonText: 'Close',
         confirmButtonColor: '#D4AF37',
         didOpen: (modal) => {
-            // Tab switching - FIXED!
+            // Tab switching
             const tabBtns = modal.querySelectorAll('.settings-tab-btn');
             const tabPanes = modal.querySelectorAll('.settings-tab-pane');
             
             function switchTab(tabId) {
-                // Hide all panes
-                tabPanes.forEach(pane => {
-                    pane.style.display = 'none';
-                });
-                // Show selected pane
+                tabPanes.forEach(pane => pane.style.display = 'none');
                 const selectedPane = modal.querySelector(`#tab${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`);
                 if (selectedPane) selectedPane.style.display = 'block';
                 
-                // Update button styles
                 tabBtns.forEach(btn => {
                     const btnTabId = btn.getAttribute('data-tab');
                     if (btnTabId === tabId) {
@@ -2089,7 +1924,6 @@ async function openSuperuserSettings() {
                 });
             }
             
-            // Add click handlers to tabs
             tabBtns.forEach(btn => {
                 btn.addEventListener('click', () => {
                     const tabId = btn.getAttribute('data-tab');
@@ -2097,13 +1931,14 @@ async function openSuperuserSettings() {
                 });
             });
             
-            // Add Super Admin
+            // Add Super Admin - Clear input after add
             modal.querySelector('#addSuperAdminBtn')?.addEventListener('click', async () => {
                 const email = modal.querySelector('#newSuperAdminEmail').value;
                 if (!email) { Swal.fire('Error', 'Please enter an email', 'error'); return; }
                 try {
                     await KURO_API.addSuperAdmin(email);
                     showToast(`Added ${email} as Super Admin`, 'success');
+                    modal.querySelector('#newSuperAdminEmail').value = ''; // Clear input
                     Swal.close();
                     openSuperuserSettings();
                 } catch (error) { showToast('Failed to add', 'error'); }
@@ -2123,13 +1958,14 @@ async function openSuperuserSettings() {
                 });
             });
             
-            // Add Admin
+            // Add Admin - Clear input after add
             modal.querySelector('#addAdminBtn')?.addEventListener('click', async () => {
                 const email = modal.querySelector('#newAdminEmail').value;
                 if (!email) { Swal.fire('Error', 'Please enter an email', 'error'); return; }
                 try {
                     await KURO_API.addAdmin(email);
                     showToast(`Added ${email} as Admin`, 'success');
+                    modal.querySelector('#newAdminEmail').value = ''; // Clear input
                     Swal.close();
                     openSuperuserSettings();
                 } catch (error) { showToast('Failed to add', 'error'); }
@@ -2166,7 +2002,7 @@ async function openSuperuserSettings() {
                 });
             });
             
-            // Add External Reviewer to Pool
+            // Add External Reviewer - Clear inputs after add
             modal.querySelector('#addReviewerBtn')?.addEventListener('click', async () => {
                 const email = modal.querySelector('#newReviewerEmail').value;
                 const name = modal.querySelector('#newReviewerName').value;
@@ -2174,12 +2010,14 @@ async function openSuperuserSettings() {
                 try {
                     await KURO_API.addExternalReviewerToPool(email, name);
                     showToast(`Added ${email} to reviewers pool`, 'success');
+                    modal.querySelector('#newReviewerEmail').value = ''; // Clear input
+                    modal.querySelector('#newReviewerName').value = ''; // Clear input
                     Swal.close();
                     openSuperuserSettings();
                 } catch (error) { showToast('Failed to add', 'error'); }
             });
             
-            // Remove External Reviewer from Pool
+            // Remove External Reviewer
             modal.querySelectorAll('.remove-reviewer-pool-btn').forEach(btn => {
                 btn.addEventListener('click', async () => {
                     const email = btn.getAttribute('data-email');
