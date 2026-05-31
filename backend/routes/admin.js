@@ -1,26 +1,13 @@
-// routes/admin.js
 const express = require('express');
 const Application = require('../models/Application');
 const User = require('../models/User');
 const Notification = require('../models/Notification');
+const Settings = require('../models/Settings');
+const AuditLog = require('../models/AuditLog');
+const ExternalReviewer = require('../models/ExternalReviewer');
 const router = express.Router();
 
 // ============ APPLICATION MANAGEMENT ============
-
-// Dashboard stats
-router.get('/stats', async (req, res) => {
-    try {
-        const total = await Application.countDocuments();
-        const pending = await Application.countDocuments({
-            status: { $in: ['Pending Eligibility Check', 'Pending Secondary Check', 'Pending Final Check'] }
-        });
-        const approved = await Application.countDocuments({ status: 'Approved' });
-        const returned = await Application.countDocuments({ status: 'Returned' });
-        res.json({ total, pending, approved, returned });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
 
 // Get all applications (admin view)
 router.get('/applications', async (req, res) => {
@@ -66,26 +53,27 @@ router.delete('/applications/:id', async (req, res) => {
 
 // ============ CHECK STAGE MANAGEMENT ============
 
-// Approve Check 1 (Eligibility Review)
+// Approve Check 1
 router.post('/applications/:id/check1/approve', async (req, res) => {
     try {
-        const { feedback } = req.body;
+        const { feedback, updatedBy } = req.body;
         const app = await Application.findOne({ id: req.params.id });
         if (!app) return res.status(404).json({ error: 'Not found' });
         
         app.status = 'Pending Secondary Check';
         app.check1Feedback = feedback;
         app.check1CompletedAt = new Date().toISOString();
-        app.check1CompletedBy = req.body.updatedBy;
+        app.check1CompletedBy = updatedBy;
         await app.save();
         
-        // Get checker emails from settings
-        const settings = await getCheckerSettings();
+        // Get checker settings
+        const settings = await Settings.findOne({ key: 'checker_roles' });
+        const checkerRoles = settings?.value || { check1: '', check2: '', check3: '' };
         
-        // Notify Check 2 reviewer
-        if (settings.check2) {
+        // Notify Check 2
+        if (checkerRoles.check2) {
             await Notification.create({
-                userEmail: settings.check2,
+                userEmail: checkerRoles.check2,
                 type: 'review_request',
                 title: '📋 New Application for Review',
                 message: `Application "${app.proposalTitle}" is ready for Secondary Review.`,
@@ -101,7 +89,7 @@ router.post('/applications/:id/check1/approve', async (req, res) => {
             userEmail: app.userEmail,
             type: 'check_completed',
             title: '✅ Check 1 Completed',
-            message: `Your application "${app.proposalTitle}" has passed Eligibility Review and moved to Secondary Review.`,
+            message: `Your application "${app.proposalTitle}" has passed Eligibility Review.`,
             appId: app.id,
             icon: '✅',
             color: '#2ecc71'
@@ -116,7 +104,7 @@ router.post('/applications/:id/check1/approve', async (req, res) => {
 // Return Check 1
 router.post('/applications/:id/check1/return', async (req, res) => {
     try {
-        const { feedback } = req.body;
+        const { feedback, updatedBy } = req.body;
         const app = await Application.findOne({ id: req.params.id });
         if (!app) return res.status(404).json({ error: 'Not found' });
         
@@ -124,10 +112,9 @@ router.post('/applications/:id/check1/return', async (req, res) => {
         app.returnedFeedback = feedback;
         app.returnedFromStage = 'check1';
         app.returnedAt = new Date().toISOString();
-        app.returnedBy = req.body.updatedBy;
+        app.returnedBy = updatedBy;
         await app.save();
         
-        // Notify faculty
         await Notification.create({
             userEmail: app.userEmail,
             type: 'application_returned',
@@ -144,26 +131,25 @@ router.post('/applications/:id/check1/return', async (req, res) => {
     }
 });
 
-// Approve Check 2 (Secondary Review)
+// Approve Check 2
 router.post('/applications/:id/check2/approve', async (req, res) => {
     try {
-        const { feedback } = req.body;
+        const { feedback, updatedBy } = req.body;
         const app = await Application.findOne({ id: req.params.id });
         if (!app) return res.status(404).json({ error: 'Not found' });
         
         app.status = 'Pending Final Check';
         app.check2Feedback = feedback;
         app.check2CompletedAt = new Date().toISOString();
-        app.check2CompletedBy = req.body.updatedBy;
+        app.check2CompletedBy = updatedBy;
         await app.save();
         
-        // Get checker emails from settings
-        const settings = await getCheckerSettings();
+        const settings = await Settings.findOne({ key: 'checker_roles' });
+        const checkerRoles = settings?.value || { check1: '', check2: '', check3: '' };
         
-        // Notify Check 3 reviewer
-        if (settings.check3) {
+        if (checkerRoles.check3) {
             await Notification.create({
-                userEmail: settings.check3,
+                userEmail: checkerRoles.check3,
                 type: 'review_request',
                 title: '📋 Final Review Required',
                 message: `Application "${app.proposalTitle}" is ready for Final Review.`,
@@ -174,12 +160,11 @@ router.post('/applications/:id/check2/approve', async (req, res) => {
             });
         }
         
-        // Notify faculty
         await Notification.create({
             userEmail: app.userEmail,
             type: 'check_completed',
             title: '✅ Check 2 Completed',
-            message: `Your application "${app.proposalTitle}" has passed Secondary Review and moved to Final Review.`,
+            message: `Your application "${app.proposalTitle}" has passed Secondary Review.`,
             appId: app.id,
             icon: '✅',
             color: '#2ecc71'
@@ -194,7 +179,7 @@ router.post('/applications/:id/check2/approve', async (req, res) => {
 // Return Check 2
 router.post('/applications/:id/check2/return', async (req, res) => {
     try {
-        const { feedback } = req.body;
+        const { feedback, updatedBy } = req.body;
         const app = await Application.findOne({ id: req.params.id });
         if (!app) return res.status(404).json({ error: 'Not found' });
         
@@ -202,7 +187,7 @@ router.post('/applications/:id/check2/return', async (req, res) => {
         app.returnedFeedback = feedback;
         app.returnedFromStage = 'check2';
         app.returnedAt = new Date().toISOString();
-        app.returnedBy = req.body.updatedBy;
+        app.returnedBy = updatedBy;
         await app.save();
         
         await Notification.create({
@@ -221,21 +206,20 @@ router.post('/applications/:id/check2/return', async (req, res) => {
     }
 });
 
-// Approve Check 3 (Final Approval)
+// Approve Check 3
 router.post('/applications/:id/check3/approve', async (req, res) => {
     try {
-        const { feedback } = req.body;
+        const { feedback, updatedBy } = req.body;
         const app = await Application.findOne({ id: req.params.id });
         if (!app) return res.status(404).json({ error: 'Not found' });
         
         app.status = 'Approved';
         app.check3Feedback = feedback;
         app.check3CompletedAt = new Date().toISOString();
-        app.check3CompletedBy = req.body.updatedBy;
+        app.check3CompletedBy = updatedBy;
         app.approvedAt = new Date().toISOString();
         await app.save();
         
-        // Notify faculty
         await Notification.create({
             userEmail: app.userEmail,
             type: 'application_approved',
@@ -255,7 +239,7 @@ router.post('/applications/:id/check3/approve', async (req, res) => {
 // Return Check 3
 router.post('/applications/:id/check3/return', async (req, res) => {
     try {
-        const { feedback } = req.body;
+        const { feedback, updatedBy } = req.body;
         const app = await Application.findOne({ id: req.params.id });
         if (!app) return res.status(404).json({ error: 'Not found' });
         
@@ -263,7 +247,7 @@ router.post('/applications/:id/check3/return', async (req, res) => {
         app.returnedFeedback = feedback;
         app.returnedFromStage = 'check3';
         app.returnedAt = new Date().toISOString();
-        app.returnedBy = req.body.updatedBy;
+        app.returnedBy = updatedBy;
         await app.save();
         
         await Notification.create({
@@ -287,14 +271,13 @@ router.post('/applications/:id/check3/return', async (req, res) => {
 // Update PI CV status
 router.put('/applications/:id/cv/pi', async (req, res) => {
     try {
-        const { status } = req.body;
+        const { status, updatedBy } = req.body;
         const app = await Application.findOne({ id: req.params.id });
         if (!app) return res.status(404).json({ error: 'Not found' });
         
         app.piCVStatus = status;
         await app.save();
         
-        // Notify faculty
         await Notification.create({
             userEmail: app.userEmail,
             type: 'cv_status',
@@ -315,7 +298,7 @@ router.put('/applications/:id/cv/pi', async (req, res) => {
 // Update Team CV status
 router.put('/applications/:id/cv/team/:index', async (req, res) => {
     try {
-        const { status } = req.body;
+        const { status, updatedBy } = req.body;
         const index = parseInt(req.params.index);
         const app = await Application.findOne({ id: req.params.id });
         if (!app) return res.status(404).json({ error: 'Not found' });
@@ -347,7 +330,7 @@ router.put('/applications/:id/cv/team/:index', async (req, res) => {
 // Save CV feedback
 router.post('/applications/:id/cv/feedback', async (req, res) => {
     try {
-        const { feedback } = req.body;
+        const { feedback, updatedBy } = req.body;
         const app = await Application.findOne({ id: req.params.id });
         if (!app) return res.status(404).json({ error: 'Not found' });
         
@@ -378,7 +361,6 @@ router.get('/applications/:id/reviewers', async (req, res) => {
     try {
         const app = await Application.findOne({ id: req.params.id });
         if (!app) return res.status(404).json({ error: 'Not found' });
-        
         res.json(app.assignedReviewers || []);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -394,7 +376,6 @@ router.post('/applications/:id/reviewers', async (req, res) => {
         
         if (!app.assignedReviewers) app.assignedReviewers = [];
         
-        // Check if already assigned
         if (app.assignedReviewers.some(r => r.email === reviewerEmail)) {
             return res.status(400).json({ error: 'Reviewer already assigned' });
         }
@@ -409,7 +390,6 @@ router.post('/applications/:id/reviewers', async (req, res) => {
         
         await app.save();
         
-        // Notify the reviewer
         await Notification.create({
             userEmail: reviewerEmail,
             type: 'reviewer_assigned',
@@ -441,120 +421,32 @@ router.delete('/applications/:id/reviewers/:email', async (req, res) => {
     }
 });
 
-// ============ CHECKER ROLE MANAGEMENT (Super Admin) ============
-
-// Get checker role assignments
-router.get('/checker-roles', async (req, res) => {
-    try {
-        // Get from database or a settings collection
-        let settings = await Settings.findOne({ key: 'checker_roles' });
-        if (!settings) {
-            settings = { value: { check1: '', check2: '', check3: '' } };
-        }
-        res.json(settings.value);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Update checker role assignments
-router.put('/checker-roles', async (req, res) => {
-    try {
-        const roles = req.body;
-        await Settings.findOneAndUpdate(
-            { key: 'checker_roles' },
-            { value: roles, updatedAt: new Date(), updatedBy: req.body.updatedBy },
-            { upsert: true }
-        );
-        
-        // Log to audit trail
-        await AuditLog.create({
-            action: 'UPDATE_CHECKER_ROLES',
-            changes: roles,
-            performedBy: req.body.updatedBy,
-            timestamp: new Date()
-        });
-        
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Get audit log
-router.get('/audit-log', async (req, res) => {
-    try {
-        const logs = await AuditLog.find().sort({ timestamp: -1 }).limit(100);
-        res.json(logs);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Helper function to get checker settings
-async function getCheckerSettings() {
-    const settings = await Settings.findOne({ key: 'checker_roles' });
-    return settings?.value || { check1: '', check2: '', check3: '' };
-}
-
-// Add to routes/admin.js
-
 // ============ SUPER ADMIN SETTINGS MANAGEMENT ============
 
-// Get all settings
-router.get('/settings', async (req, res) => {
-    try {
-        const settings = await Settings.find();
-        const settingsMap = {};
-        settings.forEach(s => { settingsMap[s.key] = s.value; });
-        res.json(settingsMap);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Update specific setting
-router.put('/settings/:key', async (req, res) => {
-    try {
-        const { key } = req.params;
-        const { value, updatedBy } = req.body;
-        
-        await Settings.findOneAndUpdate(
-            { key },
-            { value, updatedAt: new Date(), updatedBy },
-            { upsert: true }
-        );
-        
-        // Log to audit
-        await AuditLog.create({
-            action: `UPDATE_SETTING_${key}`,
-            changes: value,
-            performedBy: updatedBy,
-            timestamp: new Date()
-        });
-        
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Get all super admin emails (exempted accounts)
+// Get all super admins
 router.get('/super-admins', async (req, res) => {
     try {
-        const setting = await Settings.findOne({ key: 'super_admins' });
-        res.json(setting?.value || []);
+        let setting = await Settings.findOne({ key: 'super_admins' });
+        if (!setting) {
+            // Initialize with default super admin
+            setting = await Settings.create({
+                key: 'super_admins',
+                value: ['200520181@my.xu.edu.ph'],
+                description: 'List of super admin emails with full system access'
+            });
+        }
+        res.json(setting.value);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-// Add super admin email
+// Add super admin
 router.post('/super-admins', async (req, res) => {
     try {
         const { email, addedBy } = req.body;
-        let superAdmins = await Settings.findOne({ key: 'super_admins' });
-        let list = superAdmins?.value || [];
+        let setting = await Settings.findOne({ key: 'super_admins' });
+        let list = setting?.value || ['200520181@my.xu.edu.ph'];
         
         if (!list.includes(email)) {
             list.push(email);
@@ -577,13 +469,13 @@ router.post('/super-admins', async (req, res) => {
     }
 });
 
-// Remove super admin email
+// Remove super admin
 router.delete('/super-admins/:email', async (req, res) => {
     try {
         const { email } = req.params;
         const { removedBy } = req.body;
-        let superAdmins = await Settings.findOne({ key: 'super_admins' });
-        let list = superAdmins?.value || [];
+        let setting = await Settings.findOne({ key: 'super_admins' });
+        let list = setting?.value || ['200520181@my.xu.edu.ph'];
         
         list = list.filter(e => e !== email);
         await Settings.findOneAndUpdate(
@@ -605,22 +497,29 @@ router.delete('/super-admins/:email', async (req, res) => {
     }
 });
 
-// Get all admin emails
+// Get all admins
 router.get('/admins', async (req, res) => {
     try {
-        const setting = await Settings.findOne({ key: 'admin_emails' });
-        res.json(setting?.value || []);
+        let setting = await Settings.findOne({ key: 'admin_emails' });
+        if (!setting) {
+            setting = await Settings.create({
+                key: 'admin_emails',
+                value: ['200520181@my.xu.edu.ph'],
+                description: 'List of admin emails with dashboard access'
+            });
+        }
+        res.json(setting.value);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-// Add admin email
+// Add admin
 router.post('/admins', async (req, res) => {
     try {
         const { email, addedBy } = req.body;
-        let admins = await Settings.findOne({ key: 'admin_emails' });
-        let list = admins?.value || [];
+        let setting = await Settings.findOne({ key: 'admin_emails' });
+        let list = setting?.value || ['200520181@my.xu.edu.ph'];
         
         if (!list.includes(email)) {
             list.push(email);
@@ -643,13 +542,13 @@ router.post('/admins', async (req, res) => {
     }
 });
 
-// Remove admin email
+// Remove admin
 router.delete('/admins/:email', async (req, res) => {
     try {
         const { email } = req.params;
         const { removedBy } = req.body;
-        let admins = await Settings.findOne({ key: 'admin_emails' });
-        let list = admins?.value || [];
+        let setting = await Settings.findOne({ key: 'admin_emails' });
+        let list = setting?.value || ['200520181@my.xu.edu.ph'];
         
         list = list.filter(e => e !== email);
         await Settings.findOneAndUpdate(
@@ -671,9 +570,52 @@ router.delete('/admins/:email', async (req, res) => {
     }
 });
 
-// ============ EXTERNAL REVIEWERS POOL MANAGEMENT ============
+// Get checker roles
+router.get('/checker-roles', async (req, res) => {
+    try {
+        let setting = await Settings.findOne({ key: 'checker_roles' });
+        if (!setting) {
+            setting = await Settings.create({
+                key: 'checker_roles',
+                value: { check1: '', check2: '', check3: '' },
+                description: 'Assignment of check stage reviewers'
+            });
+        }
+        res.json(setting.value);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
 
-// Get all external reviewers (pool)
+// Update checker roles
+router.put('/checker-roles', async (req, res) => {
+    try {
+        const roles = req.body;
+        const { updatedBy } = req.body;
+        
+        // Remove updatedBy from roles object
+        delete roles.updatedBy;
+        
+        await Settings.findOneAndUpdate(
+            { key: 'checker_roles' },
+            { value: roles, updatedAt: new Date(), updatedBy: updatedBy },
+            { upsert: true }
+        );
+        
+        await AuditLog.create({
+            action: 'UPDATE_CHECKER_ROLES',
+            changes: roles,
+            performedBy: updatedBy,
+            timestamp: new Date()
+        });
+        
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get external reviewers pool
 router.get('/external-reviewers', async (req, res) => {
     try {
         const reviewers = await ExternalReviewer.find({ isActive: true }).sort({ name: 1 });
@@ -686,7 +628,7 @@ router.get('/external-reviewers', async (req, res) => {
 // Add external reviewer to pool
 router.post('/external-reviewers', async (req, res) => {
     try {
-        const { email, name, department, expertise, addedBy } = req.body;
+        const { email, name, addedBy } = req.body;
         
         let reviewer = await ExternalReviewer.findOne({ email });
         if (reviewer) {
@@ -697,8 +639,6 @@ router.post('/external-reviewers', async (req, res) => {
             reviewer = new ExternalReviewer({
                 email,
                 name: name || email.split('@')[0],
-                department,
-                expertise: expertise || [],
                 addedBy
             });
             await reviewer.save();
@@ -732,41 +672,6 @@ router.delete('/external-reviewers/:email', async (req, res) => {
             action: 'REMOVE_EXTERNAL_REVIEWER',
             changes: { email },
             performedBy: removedBy,
-            timestamp: new Date()
-        });
-        
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Get checker role assignments
-router.get('/checker-roles', async (req, res) => {
-    try {
-        const setting = await Settings.findOne({ key: 'checker_roles' });
-        res.json(setting?.value || { check1: '', check2: '', check3: '' });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Update checker role assignments
-router.put('/checker-roles', async (req, res) => {
-    try {
-        const roles = req.body;
-        const { updatedBy } = req.body;
-        
-        await Settings.findOneAndUpdate(
-            { key: 'checker_roles' },
-            { value: roles, updatedAt: new Date(), updatedBy },
-            { upsert: true }
-        );
-        
-        await AuditLog.create({
-            action: 'UPDATE_CHECKER_ROLES',
-            changes: roles,
-            performedBy: updatedBy,
             timestamp: new Date()
         });
         

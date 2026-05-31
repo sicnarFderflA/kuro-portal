@@ -1,4 +1,3 @@
-// models/ExternalReviewer.js
 const mongoose = require('mongoose');
 
 const ExternalReviewerSchema = new mongoose.Schema({

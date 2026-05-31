@@ -1,4 +1,3 @@
-// models/Settings.js (Update existing or create new)
 const mongoose = require('mongoose');
 
 const SettingsSchema = new mongoose.Schema({
