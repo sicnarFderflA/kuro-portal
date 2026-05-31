@@ -1297,6 +1297,8 @@ function renderForm1Content(app) {
         html += '<div class="detail-section"><h4>📑 Literature Cited</h4><ul>';
         app.references.forEach(ref => html += `<li>${escapeHtml(ref)}</li>`);
         html += '</ul></div>';
+    } else {
+        html += '<div class="detail-section"><h4>📑 Literature Cited</h4><div style="color: #999; text-align: center; padding: 0.5rem;">No references added</div></div>';
     }
     
     // Team Members
@@ -1304,9 +1306,11 @@ function renderForm1Content(app) {
         html += '<div class="detail-section"><h4>👥 Research Team Members</h4><ul>';
         app.teamMembers.forEach(m => html += `<li><strong>${escapeHtml(m.name)}</strong> - ${escapeHtml(m.role)}</li>`);
         html += '</ul></div>';
+    } else {
+        html += '<div class="detail-section"><h4>👥 Research Team Members</h4><div style="color: #999; text-align: center; padding: 0.5rem;">No team members added</div></div>';
     }
     
-    // Activities
+    // ========== ACTIVITIES SECTION - FIXED! ==========
     if (app.activities && app.activities.length > 0) {
         html += '<div class="detail-section"><h4>📅 Major Activities & Workplan</h4>';
         app.activities.forEach((act, idx) => {
@@ -1333,10 +1337,13 @@ function renderForm1Content(app) {
             html += `<tr><td>${escapeHtml(item.category || 'N/A')}</td><td>${escapeHtml(item.itemName || 'N/A')}</td><td>${escapeHtml(item.specs || '')}</td>
                     <td style="text-align:right;">₱${(item.unitCost || 0).toLocaleString()}</td>
                     <td style="text-align:center;">${item.qty || 1}</td>
-                    <td style="text-align:right;">₱${it.toLocaleString()}</td></tr>`;
+                    <td style="text-align:right;">₱${it.toLocaleString()}</td>
+                </tr>`;
         });
         html += `<tr style="background:#f0f0f0; font-weight:bold;"><td colspan="5" style="text-align:right;">GRAND TOTAL</td><td style="text-align:right;">₱${total.toLocaleString()}</td></tr>`;
-        html += '</tbody>}</div>';
+        html += '</tbody></table></div>';
+    } else {
+        html += '<div class="detail-section"><h4>💰 Budgetary Requirements</h4><div style="color: #999; text-align: center; padding: 1rem;">No budget items added</div></div>';
     }
     
     return html;
@@ -1495,19 +1502,22 @@ function renderCheckStagesContent(app) {
     <div style="margin-bottom: 1rem;">
         <div style="display: flex; justify-content: space-between; gap: 0.5rem; margin-bottom: 1rem;">
             <div style="flex: 1; text-align: center;">
-                <div style="width: 40px; height: 40px; background: ${completedCount >= 1 ? '#2ecc71' : (currentStatus === 'Pending Eligibility Check' ? '#3498db' : '#e0e0e0')}; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem; color: white;">${completedCount >= 1 ? '✓' : (currentStatus === 'Pending Eligibility Check' ? '◉' : '○')}</div>
+                <div style="width: 40px; height: 40px; background: ${completedCount >= 1 ? '#2ecc71' : (currentStatus === 'Pending Eligibility Check' ? '#3498db' : '#e0e0e0')}; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem; color: white; font-weight: bold;">${completedCount >= 1 ? '✓' : (currentStatus === 'Pending Eligibility Check' ? '◉' : '○')}</div>
                 <div style="font-weight: 700; font-size: 0.8rem;">Check 1</div>
-                <div style="font-size: 0.7rem;">Eligibility Review</div>
+                <div style="font-size: 0.7rem; color: #666;">Eligibility Review</div>
+                <div style="font-size: 0.65rem; margin-top: 0.2rem;">${completedCount >= 1 ? '✅ Completed' : (currentStatus === 'Pending Eligibility Check' ? '🔄 In Progress' : '⏳ Pending')}</div>
             </div>
             <div style="flex: 1; text-align: center;">
-                <div style="width: 40px; height: 40px; background: ${completedCount >= 2 ? '#2ecc71' : (currentStatus === 'Pending Secondary Check' ? '#3498db' : '#e0e0e0')}; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem; color: white;">${completedCount >= 2 ? '✓' : (currentStatus === 'Pending Secondary Check' ? '◉' : '○')}</div>
+                <div style="width: 40px; height: 40px; background: ${completedCount >= 2 ? '#2ecc71' : (currentStatus === 'Pending Secondary Check' ? '#3498db' : '#e0e0e0')}; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem; color: white; font-weight: bold;">${completedCount >= 2 ? '✓' : (currentStatus === 'Pending Secondary Check' ? '◉' : '○')}</div>
                 <div style="font-weight: 700; font-size: 0.8rem;">Check 2</div>
-                <div style="font-size: 0.7rem;">Secondary Review</div>
+                <div style="font-size: 0.7rem; color: #666;">Secondary Review</div>
+                <div style="font-size: 0.65rem; margin-top: 0.2rem;">${completedCount >= 2 ? '✅ Completed' : (currentStatus === 'Pending Secondary Check' ? '🔄 In Progress' : '⏳ Pending')}</div>
             </div>
             <div style="flex: 1; text-align: center;">
-                <div style="width: 40px; height: 40px; background: ${completedCount >= 3 ? '#2ecc71' : (currentStatus === 'Pending Final Check' ? '#3498db' : '#e0e0e0')}; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem; color: white;">${completedCount >= 3 ? '✓' : (currentStatus === 'Pending Final Check' ? '◉' : '○')}</div>
+                <div style="width: 40px; height: 40px; background: ${completedCount >= 3 ? '#2ecc71' : (currentStatus === 'Pending Final Check' ? '#3498db' : '#e0e0e0')}; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem; color: white; font-weight: bold;">${completedCount >= 3 ? '✓' : (currentStatus === 'Pending Final Check' ? '◉' : '○')}</div>
                 <div style="font-weight: 700; font-size: 0.8rem;">Check 3</div>
-                <div style="font-size: 0.7rem;">Final Review</div>
+                <div style="font-size: 0.7rem; color: #666;">Final Review</div>
+                <div style="font-size: 0.65rem; margin-top: 0.2rem;">${completedCount >= 3 ? '✅ Completed' : (currentStatus === 'Pending Final Check' ? '🔄 In Progress' : '⏳ Pending')}</div>
             </div>
         </div>
         <div style="margin-top: 1rem;">
@@ -1533,7 +1543,7 @@ function renderCheckStagesContent(app) {
         </div>
         ${app.check1Feedback ? `<div style="margin-top: 0.5rem; padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem;"><strong>Feedback:</strong> ${escapeHtml(app.check1Feedback)}</div>` : ''}
         ${isCheck1Current ? `
-            <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e0e0e0;">
+            <div class="check-stage-actions" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e0e0e0;">
                 ${canActOnCheck1 ? `
                     <label style="font-weight: 600; font-size: 0.75rem;">Decision:</label>
                     <div style="display: flex; gap: 0.5rem; margin-top: 0.3rem; flex-wrap: wrap;">
@@ -1541,8 +1551,7 @@ function renderCheckStagesContent(app) {
                         <button class="btn-sm return-check1" style="background: #e74c3c; color: white;"><i class="fas fa-undo-alt"></i> Return to Faculty</button>
                     </div>
                     <textarea id="check1Feedback" rows="2" style="width: 100%; margin-top: 0.5rem; padding: 0.4rem; border-radius: 0.5rem; font-size: 0.75rem;" placeholder="Feedback (required if returning)..."></textarea>
-                ` : `<div style="padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem; text-align: center;"><i class="fas fa-lock"></i> Only Check 1 can review this stage.</div>`
-                }
+                ` : `<div style="padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem; text-align: center;"><i class="fas fa-lock"></i> Only Check 1 can review this stage.</div>`}
             </div>
         ` : ''}
     </div>`;
@@ -1559,7 +1568,7 @@ function renderCheckStagesContent(app) {
         </div>
         ${app.check2Feedback ? `<div style="margin-top: 0.5rem; padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem;"><strong>Feedback:</strong> ${escapeHtml(app.check2Feedback)}</div>` : ''}
         ${isCheck2Current ? `
-            <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e0e0e0;">
+            <div class="check-stage-actions" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e0e0e0;">
                 ${canActOnCheck2 ? `
                     <label style="font-weight: 600; font-size: 0.75rem;">Decision:</label>
                     <div style="display: flex; gap: 0.5rem; margin-top: 0.3rem; flex-wrap: wrap;">
@@ -1567,8 +1576,7 @@ function renderCheckStagesContent(app) {
                         <button class="btn-sm return-check2" style="background: #e74c3c; color: white;"><i class="fas fa-undo-alt"></i> Return to Faculty</button>
                     </div>
                     <textarea id="check2Feedback" rows="2" style="width: 100%; margin-top: 0.5rem; padding: 0.4rem; border-radius: 0.5rem; font-size: 0.75rem;" placeholder="Feedback (required if returning)..."></textarea>
-                ` : `<div style="padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem; text-align: center;"><i class="fas fa-lock"></i> Only Check 2 can review this stage.</div>`
-                }
+                ` : `<div style="padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem; text-align: center;"><i class="fas fa-lock"></i> Only Check 2 can review this stage.</div>`}
             </div>
         ` : ''}
     </div>`;
@@ -1585,7 +1593,7 @@ function renderCheckStagesContent(app) {
         </div>
         ${app.check3Feedback ? `<div style="margin-top: 0.5rem; padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem;"><strong>Feedback:</strong> ${escapeHtml(app.check3Feedback)}</div>` : ''}
         ${isCheck3Current ? `
-            <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e0e0e0;">
+            <div class="check-stage-actions" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e0e0e0;">
                 ${canActOnCheck3 ? `
                     <label style="font-weight: 600; font-size: 0.75rem;">Decision:</label>
                     <div style="display: flex; gap: 0.5rem; margin-top: 0.3rem; flex-wrap: wrap;">
@@ -1593,8 +1601,7 @@ function renderCheckStagesContent(app) {
                         <button class="btn-sm return-check3" style="background: #e74c3c; color: white;"><i class="fas fa-undo-alt"></i> Return to Faculty</button>
                     </div>
                     <textarea id="check3Feedback" rows="2" style="width: 100%; margin-top: 0.5rem; padding: 0.4rem; border-radius: 0.5rem; font-size: 0.75rem;" placeholder="Feedback (required if returning)..."></textarea>
-                ` : `<div style="padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem; text-align: center;"><i class="fas fa-lock"></i> Only Check 3 can review this stage.</div>`
-                }
+                ` : `<div style="padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem; text-align: center;"><i class="fas fa-lock"></i> Only Check 3 can review this stage.</div>`}
             </div>
         ` : ''}
     </div>`;
@@ -1602,7 +1609,8 @@ function renderCheckStagesContent(app) {
     if (app.status === 'Returned') {
         html += `<div style="background: #fff3cd; margin-top: 1rem; padding: 1rem; border-radius: 0.8rem; border-left: 4px solid #e74c3c;">
             <i class="fas fa-undo-alt"></i> <strong>Application Returned</strong><br>
-            This application has been returned to the faculty for revision.
+            <strong>Reason:</strong> ${escapeHtml(app.returnedFeedback || 'No specific feedback provided.')}<br>
+            <small>Please address the feedback and resubmit.</small>
         </div>`;
     }
     
@@ -1671,101 +1679,170 @@ function attachCVHandlersInModal(modal, email, appId) {
 }
 
 function attachCheckStageHandlers(modal, email, appId, currentStatus) {
-    // Check 1
+    // Check 1 Approve
     const approveCheck1 = modal.querySelector('.approve-check1');
     if (approveCheck1) {
         approveCheck1.onclick = async () => {
             const feedback = modal.querySelector('#check1Feedback')?.value || '';
-            const result = await Swal.fire({ title: 'Approve Check 1?', text: 'This will move the application to Secondary Review.', icon: 'question', showCancelButton: true, confirmButtonColor: '#2ecc71' });
+            const result = await Swal.fire({ 
+                title: 'Approve Check 1?', 
+                text: 'This will move the application to Secondary Review.', 
+                icon: 'question', 
+                showCancelButton: true, 
+                confirmButtonColor: '#2ecc71',
+                confirmButtonText: 'Yes, Approve'
+            });
             if (result.isConfirmed) {
                 try {
                     await KURO_API.approveCheck1(appId, feedback);
                     showToast('Application moved to Secondary Review', 'success');
                     Swal.close();
                     renderDashboard();
-                } catch (error) { showToast('Failed to approve', 'error'); }
+                } catch (error) { 
+                    showToast('Failed to approve: ' + error.message, 'error'); 
+                }
             }
         };
     }
+    
+    // Check 1 Return
     const returnCheck1 = modal.querySelector('.return-check1');
     if (returnCheck1) {
         returnCheck1.onclick = async () => {
             const feedback = modal.querySelector('#check1Feedback')?.value;
-            if (!feedback) { showToast('Please provide feedback', 'error'); return; }
-            const result = await Swal.fire({ title: 'Return Application?', text: 'This will return the application to the faculty.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e74c3c' });
+            if (!feedback) { 
+                showToast('Please provide feedback explaining why the application is being returned.', 'error'); 
+                return; 
+            }
+            const result = await Swal.fire({ 
+                title: 'Return Application?', 
+                text: 'This will return the application to the faculty for revision.', 
+                icon: 'warning', 
+                showCancelButton: true, 
+                confirmButtonColor: '#e74c3c',
+                confirmButtonText: 'Yes, Return'
+            });
             if (result.isConfirmed) {
                 try {
                     await KURO_API.returnCheck1(appId, feedback);
                     showToast('Application returned to faculty', 'success');
                     Swal.close();
                     renderDashboard();
-                } catch (error) { showToast('Failed to return', 'error'); }
+                } catch (error) { 
+                    showToast('Failed to return: ' + error.message, 'error'); 
+                }
             }
         };
     }
     
-    // Check 2
+    // Check 2 Approve
     const approveCheck2 = modal.querySelector('.approve-check2');
     if (approveCheck2) {
         approveCheck2.onclick = async () => {
             const feedback = modal.querySelector('#check2Feedback')?.value || '';
-            const result = await Swal.fire({ title: 'Approve Check 2?', text: 'This will move the application to Final Review.', icon: 'question', showCancelButton: true, confirmButtonColor: '#2ecc71' });
+            const result = await Swal.fire({ 
+                title: 'Approve Check 2?', 
+                text: 'This will move the application to Final Review.', 
+                icon: 'question', 
+                showCancelButton: true, 
+                confirmButtonColor: '#2ecc71',
+                confirmButtonText: 'Yes, Approve'
+            });
             if (result.isConfirmed) {
                 try {
                     await KURO_API.approveCheck2(appId, feedback);
                     showToast('Application moved to Final Review', 'success');
                     Swal.close();
                     renderDashboard();
-                } catch (error) { showToast('Failed to approve', 'error'); }
+                } catch (error) { 
+                    showToast('Failed to approve: ' + error.message, 'error'); 
+                }
             }
         };
     }
+    
+    // Check 2 Return
     const returnCheck2 = modal.querySelector('.return-check2');
     if (returnCheck2) {
         returnCheck2.onclick = async () => {
             const feedback = modal.querySelector('#check2Feedback')?.value;
-            if (!feedback) { showToast('Please provide feedback', 'error'); return; }
-            const result = await Swal.fire({ title: 'Return Application?', text: 'This will return the application to the faculty.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e74c3c' });
+            if (!feedback) { 
+                showToast('Please provide feedback explaining why the application is being returned.', 'error'); 
+                return; 
+            }
+            const result = await Swal.fire({ 
+                title: 'Return Application?', 
+                text: 'This will return the application to the faculty for revision.', 
+                icon: 'warning', 
+                showCancelButton: true, 
+                confirmButtonColor: '#e74c3c',
+                confirmButtonText: 'Yes, Return'
+            });
             if (result.isConfirmed) {
                 try {
                     await KURO_API.returnCheck2(appId, feedback);
                     showToast('Application returned to faculty', 'success');
                     Swal.close();
                     renderDashboard();
-                } catch (error) { showToast('Failed to return', 'error'); }
+                } catch (error) { 
+                    showToast('Failed to return: ' + error.message, 'error'); 
+                }
             }
         };
     }
     
-    // Check 3
+    // Check 3 Approve
     const approveCheck3 = modal.querySelector('.approve-check3');
     if (approveCheck3) {
         approveCheck3.onclick = async () => {
             const feedback = modal.querySelector('#check3Feedback')?.value || '';
-            const result = await Swal.fire({ title: 'Final Approval?', text: 'This will mark the application as APPROVED.', icon: 'question', showCancelButton: true, confirmButtonColor: '#2ecc71' });
+            const result = await Swal.fire({ 
+                title: 'Final Approval?', 
+                text: 'This will mark the application as APPROVED.', 
+                icon: 'question', 
+                showCancelButton: true, 
+                confirmButtonColor: '#2ecc71',
+                confirmButtonText: 'Yes, Approve'
+            });
             if (result.isConfirmed) {
                 try {
                     await KURO_API.approveCheck3(appId, feedback);
                     showToast('Application approved!', 'success');
                     Swal.close();
                     renderDashboard();
-                } catch (error) { showToast('Failed to approve', 'error'); }
+                } catch (error) { 
+                    showToast('Failed to approve: ' + error.message, 'error'); 
+                }
             }
         };
     }
+    
+    // Check 3 Return
     const returnCheck3 = modal.querySelector('.return-check3');
     if (returnCheck3) {
         returnCheck3.onclick = async () => {
             const feedback = modal.querySelector('#check3Feedback')?.value;
-            if (!feedback) { showToast('Please provide feedback', 'error'); return; }
-            const result = await Swal.fire({ title: 'Return Application?', text: 'This will return the application to the faculty.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e74c3c' });
+            if (!feedback) { 
+                showToast('Please provide feedback explaining why the application is being returned.', 'error'); 
+                return; 
+            }
+            const result = await Swal.fire({ 
+                title: 'Return Application?', 
+                text: 'This will return the application to the faculty for revision.', 
+                icon: 'warning', 
+                showCancelButton: true, 
+                confirmButtonColor: '#e74c3c',
+                confirmButtonText: 'Yes, Return'
+            });
             if (result.isConfirmed) {
                 try {
                     await KURO_API.returnCheck3(appId, feedback);
                     showToast('Application returned to faculty', 'success');
                     Swal.close();
                     renderDashboard();
-                } catch (error) { showToast('Failed to return', 'error'); }
+                } catch (error) { 
+                    showToast('Failed to return: ' + error.message, 'error'); 
+                }
             }
         };
     }
