@@ -741,15 +741,9 @@
             .actions-cell { flex-direction: column; gap: 0.2rem; }
         }
 
-        /* Override any hiding issues */
-        .modal-tab-content,
-        #tabContent1, #tabContent2, #tabContent3, #tabContent4, #tabContent5 {
-            display: block !important;
-        }
-
-        /* But we'll control visibility via inline styles, so remove the default hiding */
-        .modal-tab-content {
-            display: block !important;
+        /* Tab panes: hidden by default, shown via JS */
+        .tab-pane {
+            display: none;
         }
     </style>
 </head>
