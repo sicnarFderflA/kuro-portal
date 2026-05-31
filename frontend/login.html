@@ -544,7 +544,7 @@ async function validateAndRedirect(email, name, picture) {
     }
     
     // Domain check - skip for super admins and test emails
-    if (!isSuperAdminUser && !isTest) {
+    if (!isSuperAdminUser && !isAdminUser && !isTest) {
         if (!ALLOWED_DOMAINS.includes(domain)) {
             showError(`Access Denied: ${email} is not a Xavier University email (@xu.edu.ph or @my.xu.edu.ph).`);
             return false;
