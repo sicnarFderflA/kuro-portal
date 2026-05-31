@@ -1189,7 +1189,11 @@ async function viewApplicationDetails(appId) {
         const contentChecks = renderCheckStagesContent(app);
         
         const modalHtml = `
-            <div style="max-height: 65vh; overflow-y: auto; padding-right: 5px;">
+            <style>
+                .kuro-tab-pane { display: none !important; }
+                .kuro-tab-pane.kuro-active { display: block !important; }
+            </style>
+            <div style="padding-right: 5px;">
                 <div class="detail-section">
                     <h4>📋 Application Information</h4>
                     <div class="detail-field"><strong>ID:</strong> ${app.id}</div>
@@ -1201,18 +1205,18 @@ async function viewApplicationDetails(appId) {
                 </div>
                 
                 <div class="modal-detail-tabs">
-                    <button class="modal-detail-tab active" data-tab="1"><i class="fas fa-file-alt"></i> Research Proposal</button>
-                    <button class="modal-detail-tab" data-tab="2"><i class="fas fa-clipboard-list"></i> Endorsement</button>
-                    <button class="modal-detail-tab" data-tab="3"><i class="fas fa-file-pdf"></i> CV Review</button>
-                    <button class="modal-detail-tab" data-tab="4"><i class="fas fa-users"></i> External Reviewers</button>
-                    <button class="modal-detail-tab" data-tab="5"><i class="fas fa-check-double"></i> Check Stages</button>
+                    <button class="modal-detail-tab active" data-tab="tc1"><i class="fas fa-file-alt"></i> Research Proposal</button>
+                    <button class="modal-detail-tab" data-tab="tc2"><i class="fas fa-clipboard-list"></i> Endorsement</button>
+                    <button class="modal-detail-tab" data-tab="tc3"><i class="fas fa-file-pdf"></i> CV Review</button>
+                    <button class="modal-detail-tab" data-tab="tc4"><i class="fas fa-users"></i> External Reviewers</button>
+                    <button class="modal-detail-tab" data-tab="tc5"><i class="fas fa-check-double"></i> Check Stages</button>
                 </div>
                 
-                <div id="tabContent1" class="tab-pane" style="display: block;">${contentForm1}</div>
-                <div id="tabContent2" class="tab-pane" style="display: none;">${contentForm2}</div>
-                <div id="tabContent3" class="tab-pane" style="display: none;">${contentCV}</div>
-                <div id="tabContent4" class="tab-pane" style="display: none;">${contentExternal}</div>
-                <div id="tabContent5" class="tab-pane" style="display: none;">${contentChecks}</div>
+                <div id="tc1" class="kuro-tab-pane kuro-active">${contentForm1}</div>
+                <div id="tc2" class="kuro-tab-pane">${contentForm2}</div>
+                <div id="tc3" class="kuro-tab-pane">${contentCV}</div>
+                <div id="tc4" class="kuro-tab-pane">${contentExternal}</div>
+                <div id="tc5" class="kuro-tab-pane">${contentChecks}</div>
             </div>
         `;
         
@@ -1224,55 +1228,25 @@ async function viewApplicationDetails(appId) {
             confirmButtonText: 'Close',
             confirmButtonColor: '#D4AF37',
             didOpen: (modal) => {
-                // Get elements
-                const pane1 = modal.querySelector('#tabContent1');
-                const pane2 = modal.querySelector('#tabContent2');
-                const pane3 = modal.querySelector('#tabContent3');
-                const pane4 = modal.querySelector('#tabContent4');
-                const pane5 = modal.querySelector('#tabContent5');
                 const tabBtns = modal.querySelectorAll('.modal-detail-tab');
-                
-                console.log('Panes found:', {pane1: !!pane1, pane2: !!pane2, pane3: !!pane3, pane4: !!pane4, pane5: !!pane5});
-                
-                // Hide all panes
-                const hideAllPanes = () => {
-                    if (pane1) pane1.style.display = 'none';
-                    if (pane2) pane2.style.display = 'none';
-                    if (pane3) pane3.style.display = 'none';
-                    if (pane4) pane4.style.display = 'none';
-                    if (pane5) pane5.style.display = 'none';
-                };
-                
-                // Show specific pane
-                const showPane = (num) => {
-                    hideAllPanes();
-                    if (num === 1 && pane1) pane1.style.display = 'block';
-                    if (num === 2 && pane2) pane2.style.display = 'block';
-                    if (num === 3 && pane3) pane3.style.display = 'block';
-                    if (num === 4 && pane4) pane4.style.display = 'block';
-                    if (num === 5 && pane5) pane5.style.display = 'block';
-                    
-                    tabBtns.forEach((btn, idx) => {
-                        if (idx + 1 === num) {
-                            btn.classList.add('active');
-                        } else {
-                            btn.classList.remove('active');
-                        }
+
+                const switchTab = (targetId) => {
+                    modal.querySelectorAll('.kuro-tab-pane').forEach(pane => {
+                        pane.classList.toggle('kuro-active', pane.id === targetId);
+                    });
+                    tabBtns.forEach(btn => {
+                        btn.classList.toggle('active', btn.getAttribute('data-tab') === targetId);
                     });
                 };
-                
-                // Add click handlers
-                tabBtns.forEach((btn, idx) => {
-                    btn.onclick = (e) => {
+
+                tabBtns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
                         e.preventDefault();
-                        const tabNum = idx + 1;
-                        console.log('Tab clicked:', tabNum);
-                        showPane(tabNum);
-                    };
+                        switchTab(btn.getAttribute('data-tab'));
+                    });
                 });
-                
-                // Ensure first tab is visible
-                showPane(1);
+
+                switchTab('tc1');
                 
                 // Attach handlers
                 attachCVHandlersInModal(modal, app.userEmail, app.id);
