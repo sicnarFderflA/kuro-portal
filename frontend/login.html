@@ -344,7 +344,7 @@
     <div class="login-content">
         <!-- Exemption Message -->
         <div class="exemption-note" id="exemptionMessage" style="display: none;">
-            <i class="fas fa-star-of-life"></i> <strong>⭐ Exempted Account:</strong> Your XU email has full role-flexibility — you can sign in as any role without domain restrictions.
+            <i class="fas fa-star-of-life"></i> <strong>⭐ Super Admin Account:</strong> You have full access to all features and settings.
         </div>
         
         <div class="role-selection">
@@ -396,25 +396,7 @@ const API_URL = 'https://kuro-api-m4mb.onrender.com';
 // Allowed domains (standard)
 const ALLOWED_DOMAINS = ['xu.edu.ph', 'my.xu.edu.ph'];
 
-// ===== FIX: Add EXEMPTED_EMAIL (your superuser account) =====
-const EXEMPTED_EMAIL = '200520181@my.xu.edu.ph';
-
-// Admin accounts (only these can access admin dashboard)
-const EXEMPTED_EMAILS = ['200520181@my.xu.edu.ph', 'alfredrabanes@gmail.com', 'rabanes.francisalfred@gmail.com', 'excitegaming04@gmail.com'];
-
-const ADMIN_EMAILS = [
-    '200520181@my.xu.edu.ph',
-    'alfredrabanes@gmail.com',
-    'rabanes.francisalfred@gmail.com',
-    'excitegaming04@gmail.com'
-];
-
-// SUPERUSER_EMAILS - ONLY these have full access
-const SUPERUSER_EMAILS = [
-    '200520181@my.xu.edu.ph',  // Your main account
-];
-
-// Test emails for different roles (for testing without XU domain)
+// Test emails for development (remove in production)
 const TEST_EMAILS = {
     faculty: ['testfaculty@gmail.com', 'faculty@test.com'],
     student: ['teststudent@gmail.com', 'student@test.com'],
@@ -424,8 +406,49 @@ const TEST_EMAILS = {
     check3: ['check3@test.com', 'final@test.com']
 };
 
-function isSuperUser(email) {
-    return SUPERUSER_EMAILS.map(e => e.toLowerCase()).includes(email.toLowerCase());
+let selectedRole = null;
+let cachedSuperAdmins = null;
+let cachedAdmins = null;
+
+// ==================== API HELPER FUNCTIONS ====================
+async function fetchSuperAdmins() {
+    if (cachedSuperAdmins) return cachedSuperAdmins;
+    try {
+        const response = await fetch(`${API_URL}/api/admin/super-admins`);
+        if (response.ok) {
+            cachedSuperAdmins = await response.json();
+            return cachedSuperAdmins;
+        }
+    } catch (error) {
+        console.error('Failed to fetch super admins:', error);
+    }
+    // Fallback to default super admin
+    return ['200520181@my.xu.edu.ph'];
+}
+
+async function fetchAdmins() {
+    if (cachedAdmins) return cachedAdmins;
+    try {
+        const response = await fetch(`${API_URL}/api/admin/admins`);
+        if (response.ok) {
+            cachedAdmins = await response.json();
+            return cachedAdmins;
+        }
+    } catch (error) {
+        console.error('Failed to fetch admins:', error);
+    }
+    // Fallback to default admins
+    return ['200520181@my.xu.edu.ph', 'alfredrabanes@gmail.com', 'rabanes.francisalfred@gmail.com', 'excitegaming04@gmail.com'];
+}
+
+async function isSuperAdmin(email) {
+    const superAdmins = await fetchSuperAdmins();
+    return superAdmins.map(e => e.toLowerCase()).includes(email.toLowerCase());
+}
+
+async function isAdmin(email) {
+    const admins = await fetchAdmins();
+    return admins.map(e => e.toLowerCase()).includes(email.toLowerCase());
 }
 
 function isTestEmail(email) {
@@ -449,7 +472,9 @@ function getTestRole(email) {
     return null;
 }
 
-let selectedRole = null;
+function getDomain(email) {
+    return email.split('@')[1]?.toLowerCase();
+}
 
 // ==================== ROLE SELECTION ====================
 document.querySelectorAll('.role-btn').forEach(btn => {
@@ -489,119 +514,6 @@ function showLoading(show) {
     }
 }
 
-// ===== FIX: isExemptedAccount now works because EXEMPTED_EMAIL is defined =====
-function isExemptedAccount(email) {
-    return email && EXEMPTED_EMAILS.map(e => e.toLowerCase()).includes(email.toLowerCase());
-}
-
-function getDomain(email) {
-    return email.split('@')[1]?.toLowerCase();
-}
-
-function isAdminEmail(email) {
-    return ADMIN_EMAILS.map(e => e.toLowerCase()).includes(email.toLowerCase());
-}
-
-// ==================== CORE VALIDATION ====================
-function validateRoleAndRedirect(email, name, picture) {
-    const domain = getDomain(email);
-    const isExempted = isExemptedAccount(email);
-    const isAdminAccount = isAdminEmail(email);
-    const isTest = isTestEmail(email);
-    
-    console.log("Validating:", { email, domain, selectedRole, isExempted, isAdminAccount, isTest });
-    
-    // Show exemption message if applicable
-    if (isExempted) {
-        const exemptionDiv = document.getElementById('exemptionMessage');
-        if (exemptionDiv) exemptionDiv.style.display = 'block';
-    } else {
-        const exemptionDiv = document.getElementById('exemptionMessage');
-        if (exemptionDiv) exemptionDiv.style.display = 'none';
-    }
-    
-    // Domain check - skip for exempted accounts AND test emails
-    if (!isExempted && !isTest) {
-        if (!ALLOWED_DOMAINS.includes(domain)) {
-            showError(`Access Denied: ${email} is not a Xavier University email (@xu.edu.ph or @my.xu.edu.ph).`);
-            return false;
-        }
-    }
-    
-    // Role-specific validation
-    if (selectedRole === 'student') {
-        // Allow exempted accounts and test emails to bypass domain restriction
-        if (!isExempted && !isTest && domain !== 'my.xu.edu.ph') {
-            showError(`You selected "Student" but ${email} is not a @my.xu.edu.ph account.`);
-            return false;
-        }
-        redirectToStudent(email, name, picture);
-        return true;
-    }
-    
-    if (selectedRole === 'faculty') {
-        if (!isExempted && !isTest && domain !== 'xu.edu.ph') {
-            showError(`You selected "Faculty" but ${email} is not a @xu.edu.ph account.`);
-            return false;
-        }
-        redirectToFaculty(email, name, picture);
-        return true;
-    }
-    
-    if (selectedRole === 'admin') {
-        // Allow exempted account OR admin email OR test admin email
-        if (!isExempted && !isAdminAccount && !isTest) {
-            showError(`You selected "Admin" but ${email} is not an authorized admin account.`);
-            return false;
-        }
-        redirectToAdmin(email, name, picture);
-        return true;
-    }
-    
-    showError("Please select a valid role.");
-    return false;
-}
-
-// ==================== REDIRECT FUNCTIONS ====================
-function redirectToStudent(email, name, picture) {
-    const userData = {
-        name: name,
-        email: email,
-        picture: picture,
-        role: 'student',
-        isAdmin: false,
-        isExempted: isExemptedAccount(email)
-    };
-    sessionStorage.setItem('kuro_user', JSON.stringify(userData));
-    window.location.href = 'student-dashboard.html';
-}
-
-function redirectToFaculty(email, name, picture) {
-    const userData = {
-        name: name,
-        email: email,
-        picture: picture,
-        role: 'faculty',
-        isAdmin: false,
-        isExempted: isExemptedAccount(email)
-    };
-    sessionStorage.setItem('kuro_user', JSON.stringify(userData));
-    window.location.href = 'faculty-dashboard.html';
-}
-
-function redirectToAdmin(email, name, picture) {
-    const userData = {
-        name: name,
-        email: email,
-        picture: picture,
-        role: 'admin',
-        isAdmin: true,
-        isExempted: isExemptedAccount(email)
-    };
-    sessionStorage.setItem('kuro_user', JSON.stringify(userData));
-    window.location.href = 'kuro-admin.html';
-}
-
 // ==================== PARSE JWT TOKEN ====================
 function parseJwt(token) {
     try {
@@ -616,6 +528,103 @@ function parseJwt(token) {
     }
 }
 
+// ==================== VALIDATION AND REDIRECT ====================
+async function validateAndRedirect(email, name, picture) {
+    const domain = getDomain(email);
+    const isTest = isTestEmail(email);
+    const isSuperAdminUser = await isSuperAdmin(email);
+    const isAdminUser = await isAdmin(email);
+    
+    console.log("Validating:", { email, domain, selectedRole, isSuperAdminUser, isAdminUser, isTest });
+    
+    // Show exemption message for super admins
+    const exemptionDiv = document.getElementById('exemptionMessage');
+    if (exemptionDiv) {
+        exemptionDiv.style.display = isSuperAdminUser ? 'block' : 'none';
+    }
+    
+    // Domain check - skip for super admins and test emails
+    if (!isSuperAdminUser && !isTest) {
+        if (!ALLOWED_DOMAINS.includes(domain)) {
+            showError(`Access Denied: ${email} is not a Xavier University email (@xu.edu.ph or @my.xu.edu.ph).`);
+            return false;
+        }
+    }
+    
+    // Role-specific validation
+    if (selectedRole === 'student') {
+        // Allow super admins and test emails to bypass domain restriction
+        if (!isSuperAdminUser && !isTest && domain !== 'my.xu.edu.ph') {
+            showError(`You selected "Student" but ${email} is not a @my.xu.edu.ph account.`);
+            return false;
+        }
+        redirectToStudent(email, name, picture, isSuperAdminUser);
+        return true;
+    }
+    
+    if (selectedRole === 'faculty') {
+        if (!isSuperAdminUser && !isTest && domain !== 'xu.edu.ph') {
+            showError(`You selected "Faculty" but ${email} is not a @xu.edu.ph account.`);
+            return false;
+        }
+        redirectToFaculty(email, name, picture, isSuperAdminUser);
+        return true;
+    }
+    
+    if (selectedRole === 'admin') {
+        // Allow super admin OR admin email OR test admin email
+        if (!isSuperAdminUser && !isAdminUser && !isTest) {
+            showError(`You selected "Admin" but ${email} is not an authorized admin account.`);
+            return false;
+        }
+        redirectToAdmin(email, name, picture, isSuperAdminUser);
+        return true;
+    }
+    
+    showError("Please select a valid role.");
+    return false;
+}
+
+// ==================== REDIRECT FUNCTIONS ====================
+function redirectToStudent(email, name, picture, isSuperAdminUser) {
+    const userData = {
+        name: name,
+        email: email,
+        picture: picture,
+        role: 'student',
+        isAdmin: false,
+        isSuperAdmin: isSuperAdminUser
+    };
+    sessionStorage.setItem('kuro_user', JSON.stringify(userData));
+    window.location.href = 'student-dashboard.html';
+}
+
+function redirectToFaculty(email, name, picture, isSuperAdminUser) {
+    const userData = {
+        name: name,
+        email: email,
+        picture: picture,
+        role: 'faculty',
+        isAdmin: false,
+        isSuperAdmin: isSuperAdminUser
+    };
+    sessionStorage.setItem('kuro_user', JSON.stringify(userData));
+    window.location.href = 'faculty-dashboard.html';
+}
+
+function redirectToAdmin(email, name, picture, isSuperAdminUser) {
+    const userData = {
+        name: name,
+        email: email,
+        picture: picture,
+        role: 'admin',
+        isAdmin: true,
+        isSuperAdmin: isSuperAdminUser
+    };
+    sessionStorage.setItem('kuro_user', JSON.stringify(userData));
+    window.location.href = 'kuro-admin.html';
+}
+
 // ==================== GOOGLE SIGN-IN HANDLER ====================
 async function handleGoogleResponse(response) {
     if (!selectedRole) {
@@ -626,11 +635,34 @@ async function handleGoogleResponse(response) {
     showLoading(true);
     
     try {
-        console.log("Sending auth request for role:", selectedRole);
+        // Parse JWT to get user info for pre-validation
+        const payload = parseJwt(response.credential);
+        if (!payload || !payload.email) {
+            throw new Error("Failed to get user information");
+        }
         
+        const email = payload.email;
+        const name = payload.name;
+        const picture = payload.picture;
+        
+        // Pre-validate before sending to backend
+        const isValid = await validateAndRedirect(email, name, picture);
+        if (!isValid) {
+            showLoading(false);
+            return;
+        }
+        
+        // Send to backend for authentication
         const result = await window.KURO_API.googleSignIn(response.credential, selectedRole);
         
         console.log("Auth successful:", result);
+        
+        // Update user data with super admin flag from backend
+        if (result.user && result.user.isSuperAdmin !== undefined) {
+            const userData = JSON.parse(sessionStorage.getItem('kuro_user') || '{}');
+            userData.isSuperAdmin = result.user.isSuperAdmin;
+            sessionStorage.setItem('kuro_user', JSON.stringify(userData));
+        }
         
         // Redirect based on selected role
         if (selectedRole === 'student') {
@@ -644,7 +676,6 @@ async function handleGoogleResponse(response) {
     } catch (error) {
         console.error("Authentication error:", error);
         showError(error.message || "Authentication failed. Please try again.");
-    } finally {
         showLoading(false);
     }
 }
@@ -680,12 +711,21 @@ function initGoogleSignIn() {
 }
 
 // ==================== CHECK EXISTING SESSION ====================
-const existingUser = sessionStorage.getItem('kuro_user');
-if (existingUser) {
+async function checkExistingSession() {
+    const existingUser = sessionStorage.getItem('kuro_user');
+    if (!existingUser) return;
+    
     try {
         const user = JSON.parse(existingUser);
-        if (user.email && (isExemptedAccount(user.email) || ALLOWED_DOMAINS.includes(getDomain(user.email)) || isTestEmail(user.email))) {
-            if (user.role === 'admin') {
+        const isSuperAdminUser = await isSuperAdmin(user.email);
+        const isAdminUser = await isAdmin(user.email);
+        const isTest = isTestEmail(user.email);
+        const domain = getDomain(user.email);
+        
+        const isValidDomain = ALLOWED_DOMAINS.includes(domain) || isSuperAdminUser || isTest;
+        
+        if (isValidDomain) {
+            if (user.role === 'admin' && (isSuperAdminUser || isAdminUser || isTest)) {
                 window.location.href = 'kuro-admin.html';
             } else if (user.role === 'faculty') {
                 window.location.href = 'faculty-dashboard.html';
@@ -702,6 +742,8 @@ if (existingUser) {
     }
 }
 
+// Initialize
+checkExistingSession();
 initGoogleSignIn();
 </script>
 </body>

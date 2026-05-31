@@ -1,12 +1,11 @@
 // models/AuditLog.js
-const auditLogSchema = new mongoose.Schema({
-    userEmail: String,
-    action: { type: String, enum: ['create', 'update', 'delete', 'status_change', 'signature'] },
-    entityType: { type: String, enum: ['application', 'draft', 'user', 'notification'] },
-    entityId: String,
-    oldData: mongoose.Schema.Types.Mixed,
-    newData: mongoose.Schema.Types.Mixed,
-    ipAddress: String,
-    userAgent: String,
-    createdAt: { type: Date, default: Date.now }
+const mongoose = require('mongoose');
+
+const AuditLogSchema = new mongoose.Schema({
+    action: { type: String, required: true },
+    changes: { type: mongoose.Schema.Types.Mixed },
+    performedBy: { type: String, required: true },
+    timestamp: { type: Date, default: Date.now }
 });
+
+module.exports = mongoose.model('AuditLog', AuditLogSchema);

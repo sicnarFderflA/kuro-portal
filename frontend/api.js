@@ -18,7 +18,6 @@ async function apiRequest(endpoint, options = {}) {
     let url = `${API_BASE_URL}${endpoint}`;
     
     // Only add userEmail to GET requests that don't already have an ID in the path
-    // Skip if it's a single application endpoint (contains an ID)
     const isSingleAppEndpoint = endpoint.match(/\/applications\/[^\/]+$/) && !endpoint.includes('signature-status');
     const needsUserEmail = options.method !== 'POST' && 
                           options.method !== 'PUT' && 
@@ -48,6 +47,12 @@ async function apiRequest(endpoint, options = {}) {
     }
     
     return response.json();
+}
+
+// Helper to get current user email
+function getCurrentUserEmail() {
+    const user = JSON.parse(sessionStorage.getItem('kuro_user') || '{}');
+    return user.email || '';
 }
 
 // ==================== AUTH API ====================
@@ -101,9 +106,12 @@ async function getApplication(appId) {
     return apiRequest(`/applications/${appId}`);
 }
 
-// IMPORTANT: Use the correct endpoint from server.js
 async function getFacultyApplications() {
-    return apiRequest('/faculty/applications');  // ✅ Uses faculty applications endpoint
+    return apiRequest('/faculty/applications');
+}
+
+async function getAdminApplications() {
+    return apiRequest('/admin/applications');
 }
 
 async function createApplication(application) {
@@ -131,6 +139,116 @@ async function resubmitApplication(appId, data) {
     });
 }
 
+// ==================== CHECK STAGE API (ADMIN) ====================
+
+// Check 1 (Eligibility Review)
+async function approveCheck1(appId, feedback) {
+    return apiRequest(`/admin/applications/${appId}/check1/approve`, {
+        method: 'POST',
+        body: JSON.stringify({ feedback, updatedBy: getCurrentUserEmail() })
+    });
+}
+
+async function returnCheck1(appId, feedback) {
+    return apiRequest(`/admin/applications/${appId}/check1/return`, {
+        method: 'POST',
+        body: JSON.stringify({ feedback, updatedBy: getCurrentUserEmail() })
+    });
+}
+
+// Check 2 (Secondary Review)
+async function approveCheck2(appId, feedback) {
+    return apiRequest(`/admin/applications/${appId}/check2/approve`, {
+        method: 'POST',
+        body: JSON.stringify({ feedback, updatedBy: getCurrentUserEmail() })
+    });
+}
+
+async function returnCheck2(appId, feedback) {
+    return apiRequest(`/admin/applications/${appId}/check2/return`, {
+        method: 'POST',
+        body: JSON.stringify({ feedback, updatedBy: getCurrentUserEmail() })
+    });
+}
+
+// Check 3 (Final Review)
+async function approveCheck3(appId, feedback) {
+    return apiRequest(`/admin/applications/${appId}/check3/approve`, {
+        method: 'POST',
+        body: JSON.stringify({ feedback, updatedBy: getCurrentUserEmail() })
+    });
+}
+
+async function returnCheck3(appId, feedback) {
+    return apiRequest(`/admin/applications/${appId}/check3/return`, {
+        method: 'POST',
+        body: JSON.stringify({ feedback, updatedBy: getCurrentUserEmail() })
+    });
+}
+
+// ==================== CV REVIEW API (ADMIN) ====================
+
+async function updatePICVStatus(appId, status) {
+    return apiRequest(`/admin/applications/${appId}/cv/pi`, {
+        method: 'PUT',
+        body: JSON.stringify({ status, updatedBy: getCurrentUserEmail() })
+    });
+}
+
+async function updateTeamCVStatus(appId, index, status) {
+    return apiRequest(`/admin/applications/${appId}/cv/team/${index}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status, updatedBy: getCurrentUserEmail() })
+    });
+}
+
+async function saveCVFeedback(appId, feedback) {
+    return apiRequest(`/admin/applications/${appId}/cv/feedback`, {
+        method: 'POST',
+        body: JSON.stringify({ feedback, updatedBy: getCurrentUserEmail() })
+    });
+}
+
+// ==================== EXTERNAL REVIEWER API (ADMIN) ====================
+
+async function getExternalReviewers(appId) {
+    return apiRequest(`/admin/applications/${appId}/reviewers`);
+}
+
+async function assignExternalReviewer(appId, reviewerEmail, reviewerName) {
+    return apiRequest(`/admin/applications/${appId}/reviewers`, {
+        method: 'POST',
+        body: JSON.stringify({ 
+            reviewerEmail, 
+            reviewerName: reviewerName || reviewerEmail.split('@')[0],
+            assignedBy: getCurrentUserEmail() 
+        })
+    });
+}
+
+async function removeExternalReviewer(appId, reviewerEmail) {
+    return apiRequest(`/admin/applications/${appId}/reviewers/${encodeURIComponent(reviewerEmail)}`, {
+        method: 'DELETE'
+    });
+}
+
+// ==================== CHECKER ROLES API (SUPER ADMIN) ====================
+
+async function getCheckerRoles() {
+    return apiRequest('/admin/checker-roles');
+}
+
+async function updateCheckerRoles(roles) {
+    return apiRequest('/admin/checker-roles', {
+        method: 'PUT',
+        body: JSON.stringify({ ...roles, updatedBy: getCurrentUserEmail() })
+    });
+}
+
+async function getAuditLog() {
+    return apiRequest('/admin/audit-log');
+}
+
 // ==================== SIGNATURE API ====================
 async function generateSignatureLinks(appId, data) {
     return apiRequest(`/applications/${appId}/generate-signatures`, {
@@ -145,7 +263,6 @@ async function sendSignatureEmails(appId, data) {
         body: JSON.stringify(data)
     });
 }
-
 
 async function resendSignatureRequests(appId, data) {
     return apiRequest(`/applications/${appId}/resend-signatures`, {
@@ -162,7 +279,6 @@ async function getSignatureStatus(appId) {
         headers['Authorization'] = `Bearer ${token}`;
     }
     
-    // This is correct - API_BASE_URL already includes /api
     const url = `${API_BASE_URL}/applications/${appId}/signature-status`;
     
     console.log('Getting signature status:', url);
@@ -215,6 +331,62 @@ async function updateReviewerName(email, name) {
     });
 }
 
+// ============ SUPER ADMIN MANAGEMENT ============
+
+async function getSuperAdmins() {
+    return apiRequest('/admin/super-admins');
+}
+
+async function addSuperAdmin(email) {
+    return apiRequest('/admin/super-admins', {
+        method: 'POST',
+        body: JSON.stringify({ email, addedBy: getCurrentUserEmail() })
+    });
+}
+
+async function removeSuperAdmin(email) {
+    return apiRequest(`/admin/super-admins/${encodeURIComponent(email)}`, {
+        method: 'DELETE',
+        body: JSON.stringify({ removedBy: getCurrentUserEmail() })
+    });
+}
+
+async function getAdmins() {
+    return apiRequest('/admin/admins');
+}
+
+async function addAdmin(email) {
+    return apiRequest('/admin/admins', {
+        method: 'POST',
+        body: JSON.stringify({ email, addedBy: getCurrentUserEmail() })
+    });
+}
+
+async function removeAdmin(email) {
+    return apiRequest(`/admin/admins/${encodeURIComponent(email)}`, {
+        method: 'DELETE',
+        body: JSON.stringify({ removedBy: getCurrentUserEmail() })
+    });
+}
+
+async function getExternalReviewers() {
+    return apiRequest('/admin/external-reviewers');
+}
+
+async function addExternalReviewerToPool(email, name) {
+    return apiRequest('/admin/external-reviewers', {
+        method: 'POST',
+        body: JSON.stringify({ email, name, addedBy: getCurrentUserEmail() })
+    });
+}
+
+async function removeExternalReviewerFromPool(email) {
+    return apiRequest(`/admin/external-reviewers/${encodeURIComponent(email)}`, {
+        method: 'DELETE',
+        body: JSON.stringify({ removedBy: getCurrentUserEmail() })
+    });
+}
+
 // ==================== EXPORT ====================
 window.KURO_API = {
     // Auth
@@ -228,11 +400,35 @@ window.KURO_API = {
     
     // Applications
     getApplication,
-    getFacultyApplications,  // Now uses /my-submissions
+    getFacultyApplications,
+    getAdminApplications,
     createApplication,
     updateApplication,
     deleteApplication,
     resubmitApplication,
+    
+    // Check Stages (Admin)
+    approveCheck1,
+    returnCheck1,
+    approveCheck2,
+    returnCheck2,
+    approveCheck3,
+    returnCheck3,
+    
+    // CV Review (Admin)
+    updatePICVStatus,
+    updateTeamCVStatus,
+    saveCVFeedback,
+    
+    // External Reviewers (Admin)
+    getExternalReviewers,
+    assignExternalReviewer,
+    removeExternalReviewer,
+    
+    // Checker Roles (Super Admin)
+    getCheckerRoles,
+    updateCheckerRoles,
+    getAuditLog,
     
     // Signatures
     generateSignatureLinks,
@@ -248,7 +444,12 @@ window.KURO_API = {
     
     // Reviewer
     getReviewerTasks,
-    updateReviewerName
+    updateReviewerName,
+
+    // Admin Management
+    getSuperAdmins, addSuperAdmin, removeSuperAdmin,
+    getAdmins, addAdmin, removeAdmin,
+    getExternalReviewers, addExternalReviewerToPool, removeExternalReviewerFromPool
 };
 
-console.log('KURO_API loaded successfully');
+console.log('KURO_API loaded successfully with admin methods');
