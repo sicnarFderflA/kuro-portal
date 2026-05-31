@@ -1181,7 +1181,6 @@ async function viewApplicationDetails(appId) {
         if (!app.teamMembers) app.teamMembers = [];
         if (!app.assignedReviewers) app.assignedReviewers = [];
         
-        // Ensure teamCVs matches teamMembers length
         if (app.teamMembers.length > app.teamCVs.length) {
             for (let i = app.teamCVs.length; i < app.teamMembers.length; i++) {
                 app.teamCVs.push({ name: null, status: 'missing' });
@@ -1197,7 +1196,6 @@ async function viewApplicationDetails(appId) {
         
         const modalHtml = `
             <div style="max-height: 65vh; overflow-y: auto; padding-right: 5px;">
-                <!-- Header Info -->
                 <div class="detail-section">
                     <h4>📋 Application Information</h4>
                     <div class="detail-field"><strong>ID:</strong> ${app.id}</div>
@@ -1208,8 +1206,7 @@ async function viewApplicationDetails(appId) {
                     ${app.returnedFeedback ? `<div class="detail-field"><strong>Return Reason:</strong> ${escapeHtml(app.returnedFeedback)}</div>` : ''}
                 </div>
                 
-                <!-- Tabs -->
-                <div class="modal-detail-tabs" id="detailTabs">
+                <div class="modal-detail-tabs">
                     <button class="modal-detail-tab active" data-tab="1"><i class="fas fa-file-alt"></i> Research Proposal</button>
                     <button class="modal-detail-tab" data-tab="2"><i class="fas fa-clipboard-list"></i> Endorsement</button>
                     <button class="modal-detail-tab" data-tab="3"><i class="fas fa-file-pdf"></i> CV Review</button>
@@ -1217,16 +1214,15 @@ async function viewApplicationDetails(appId) {
                     <button class="modal-detail-tab" data-tab="5"><i class="fas fa-check-double"></i> Check Stages</button>
                 </div>
                 
-                <!-- Tab Contents -->
-                <div id="tabContent1" style="display: block; padding: 0.5rem 0;">${contentForm1}</div>
-                <div id="tabContent2" style="display: none; padding: 0.5rem 0;">${contentForm2}</div>
-                <div id="tabContent3" style="display: none; padding: 0.5rem 0;">${contentCV}</div>
-                <div id="tabContent4" style="display: none; padding: 0.5rem 0;">${contentExternal}</div>
-                <div id="tabContent5" style="display: none; padding: 0.5rem 0;">${contentChecks}</div>
+                <div id="tabContent1" class="tab-pane" style="display: block;">${contentForm1}</div>
+                <div id="tabContent2" class="tab-pane" style="display: none;">${contentForm2}</div>
+                <div id="tabContent3" class="tab-pane" style="display: none;">${contentCV}</div>
+                <div id="tabContent4" class="tab-pane" style="display: none;">${contentExternal}</div>
+                <div id="tabContent5" class="tab-pane" style="display: none;">${contentChecks}</div>
             </div>
         `;
         
-        Swal.fire({
+        await Swal.fire({
             title: 'Application Details',
             html: modalHtml,
             width: '950px',
@@ -1234,67 +1230,57 @@ async function viewApplicationDetails(appId) {
             confirmButtonText: 'Close',
             confirmButtonColor: '#D4AF37',
             didOpen: (modal) => {
-                // Get all tab content divs
-                const tab1 = modal.querySelector('#tabContent1');
-                const tab2 = modal.querySelector('#tabContent2');
-                const tab3 = modal.querySelector('#tabContent3');
-                const tab4 = modal.querySelector('#tabContent4');
-                const tab5 = modal.querySelector('#tabContent5');
-                
-                // Get all tab buttons
+                // Get elements
+                const pane1 = modal.querySelector('#tabContent1');
+                const pane2 = modal.querySelector('#tabContent2');
+                const pane3 = modal.querySelector('#tabContent3');
+                const pane4 = modal.querySelector('#tabContent4');
+                const pane5 = modal.querySelector('#tabContent5');
                 const tabBtns = modal.querySelectorAll('.modal-detail-tab');
                 
-                console.log('Tab buttons found:', tabBtns.length);
-                console.log('Tab content found:', {
-                    tab1: !!tab1, tab2: !!tab2, tab3: !!tab3, tab4: !!tab4, tab5: !!tab5
-                });
+                console.log('Panes found:', {pane1: !!pane1, pane2: !!pane2, pane3: !!pane3, pane4: !!pane4, pane5: !!pane5});
                 
-                // Hide all tabs function
-                function hideAllTabs() {
-                    if (tab1) tab1.style.display = 'none';
-                    if (tab2) tab2.style.display = 'none';
-                    if (tab3) tab3.style.display = 'none';
-                    if (tab4) tab4.style.display = 'none';
-                    if (tab5) tab5.style.display = 'none';
-                }
+                // Hide all panes
+                const hideAllPanes = () => {
+                    if (pane1) pane1.style.display = 'none';
+                    if (pane2) pane2.style.display = 'none';
+                    if (pane3) pane3.style.display = 'none';
+                    if (pane4) pane4.style.display = 'none';
+                    if (pane5) pane5.style.display = 'none';
+                };
                 
-                // Show specific tab
-                function showTab(tabNumber) {
-                    console.log('showTab called with:', tabNumber);
-                    hideAllTabs();
+                // Show specific pane
+                const showPane = (num) => {
+                    hideAllPanes();
+                    if (num === 1 && pane1) pane1.style.display = 'block';
+                    if (num === 2 && pane2) pane2.style.display = 'block';
+                    if (num === 3 && pane3) pane3.style.display = 'block';
+                    if (num === 4 && pane4) pane4.style.display = 'block';
+                    if (num === 5 && pane5) pane5.style.display = 'block';
                     
-                    if (tabNumber === 1 && tab1) tab1.style.display = 'block';
-                    if (tabNumber === 2 && tab2) tab2.style.display = 'block';
-                    if (tabNumber === 3 && tab3) tab3.style.display = 'block';
-                    if (tabNumber === 4 && tab4) tab4.style.display = 'block';
-                    if (tabNumber === 5 && tab5) tab5.style.display = 'block';
-                    
-                    // Update button active states
-                    tabBtns.forEach((btn, index) => {
-                        if ((index + 1) === tabNumber) {
+                    tabBtns.forEach((btn, idx) => {
+                        if (idx + 1 === num) {
                             btn.classList.add('active');
                         } else {
                             btn.classList.remove('active');
                         }
                     });
-                }
+                };
                 
-                // Attach click handlers to each button
-                for (let i = 0; i < tabBtns.length; i++) {
-                    const btn = tabBtns[i];
-                    const tabNum = i + 1;
-                    btn.onclick = function(e) {
+                // Add click handlers
+                tabBtns.forEach((btn, idx) => {
+                    btn.onclick = (e) => {
                         e.preventDefault();
-                        e.stopPropagation();
-                        console.log('Tab button clicked:', tabNum);
-                        showTab(tabNum);
+                        const tabNum = idx + 1;
+                        console.log('Tab clicked:', tabNum);
+                        showPane(tabNum);
                     };
-                }
+                });
                 
-                // Make sure tab 1 is visible
-                showTab(1);
+                // Ensure first tab is visible
+                showPane(1);
                 
-                // Attach all handlers
+                // Attach handlers
                 attachCVHandlersInModal(modal, app.userEmail, app.id);
                 attachCheckStageHandlers(modal, app.userEmail, app.id, app.status);
                 attachExternalReviewerHandlers(modal, app.userEmail, app.id);
@@ -1302,7 +1288,7 @@ async function viewApplicationDetails(appId) {
         });
         
     } catch (error) {
-        console.error('Error viewing application:', error);
+        console.error('Error:', error);
         Swal.fire({ icon: 'error', title: 'Error', text: 'Application not found!' });
     }
 }
@@ -1388,14 +1374,15 @@ function renderForm2Content(app) {
     let chairDate = app.signatures?.chair?.signedDate ? new Date(app.signatures.chair.signedDate).toLocaleDateString() : '';
     let deanDate = app.signatures?.dean?.signedDate ? new Date(app.signatures.dean.signedDate).toLocaleDateString() : '';
     
-    let html = `<div class="detail-section"><h4>📌 Endorsement Information</h4>
+    return `<div class="detail-section">
+        <h4>📌 Endorsement Information</h4>
         <div class="detail-field"><strong>Date:</strong> ${escapeHtml(app.endorsementDate || 'N/A')}</div>
         <div class="detail-field"><strong>School Year:</strong> ${escapeHtml(app.schoolYear || 'N/A')}</div>
         <div class="detail-field"><strong>Department:</strong> ${escapeHtml(app.endorseDept || 'N/A')}</div>
         <div class="detail-field"><strong>School/College:</strong> ${escapeHtml(app.endorseSchool || 'N/A')}</div>
-    </div>`;
-    
-    html += `<div class="detail-section"><h4>✍️ Digital Signatures</h4>
+    </div>
+    <div class="detail-section">
+        <h4>✍️ Digital Signatures</h4>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
             <div style="background: white; border-radius: 0.8rem; padding: 1rem; border-left: 4px solid var(--gold);">
                 <div><i class="fas fa-user-tie"></i> <strong>Department Chair</strong></div>
@@ -1411,8 +1398,6 @@ function renderForm2Content(app) {
             </div>
         </div>
     </div>`;
-    
-    return html;
 }
 
 // Render CV Review Content
@@ -1478,6 +1463,7 @@ function renderCVReviewContent(app) {
         <h4><i class="fas fa-comment-dots"></i> Reviewer Feedback on CVs</h4>
         <textarea id="cvFeedbackText" rows="3" class="feedback-textarea" placeholder="Leave feedback about CV submissions...">${escapeHtml(app.uploadFeedback || '')}</textarea>
         <button class="save-feedback-btn btn-primary" style="margin-top: 0.5rem;"><i class="fas fa-save"></i> Save Feedback</button>
+    </div>
     </div>`;
     
     return html;
@@ -1485,12 +1471,9 @@ function renderCVReviewContent(app) {
 
 // Render External Reviewers Content
 function renderExternalReviewersContent(app) {
-    console.log('renderExternalReviewersContent called');
-    
     let assignedReviewers = app.assignedReviewers || [];
     let html = '<div class="detail-section"><h4>👥 External Reviewers</h4>';
     
-    // Always show the assign form
     html += `<div style="margin-top: 1rem; background: #f8f9fa; border-radius: 12px; padding: 1rem;">
         <h4 style="color: var(--primary); margin-bottom: 0.8rem;"><i class="fas fa-user-plus"></i> Assign New Reviewer</h4>
         <input type="email" id="newReviewerEmail" placeholder="reviewer@xu.edu.ph" style="width: 100%; padding: 0.5rem; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 0.5rem;">
@@ -1513,17 +1496,14 @@ function renderExternalReviewersContent(app) {
     }
     
     html += '</div>';
-    
     return html;
 }
 
+
 // Render Check Stages Content
 function renderCheckStagesContent(app) {
-    console.log('renderCheckStagesContent called, status:', app.status);
-    
     let html = '<div class="detail-section"><h4>📊 Review Stages</h4>';
     
-    // Always show the three stages
     const stages = [
         { name: 'Check 1: Eligibility Review', status: app.status === 'Pending Eligibility Check' ? 'current' : (app.status === 'Pending Secondary Check' || app.status === 'Pending Final Check' || app.status === 'Approved' ? 'completed' : 'pending'), icon: '🔍' },
         { name: 'Check 2: Secondary Review', status: app.status === 'Pending Secondary Check' ? 'current' : (app.status === 'Pending Final Check' || app.status === 'Approved' ? 'completed' : 'pending'), icon: '📋' },
@@ -1557,13 +1537,11 @@ function renderCheckStagesContent(app) {
         </div>`;
     }
     
-    // Show current status info
     html += `<div style="margin-top: 1rem; padding: 0.8rem; background: #f0f2f5; border-radius: 8px;">
         <strong>Current Status:</strong> ${app.status}<br>
         ${app.returnedFeedback ? `<strong>Return Reason:</strong> ${escapeHtml(app.returnedFeedback)}` : ''}
+    </div>
     </div>`;
-    
-    html += '</div>';
     
     return html;
 }
