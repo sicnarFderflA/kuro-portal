@@ -1217,12 +1217,11 @@ async function viewApplicationDetails(appId) {
                     <button class="modal-detail-tab" data-tab="5"><i class="fas fa-check-double"></i> Check Stages</button>
                 </div>
                 
-                <!-- Tab Contents - Note: No CSS classes, just IDs -->
-                <div id="tabContent1" style="display: block; padding: 0.5rem 0;">${contentForm1}</div>
-                <div id="tabContent2" style="display: none; padding: 0.5rem 0;">${contentForm2}</div>
-                <div id="tabContent3" style="display: none; padding: 0.5rem 0;">${contentCV}</div>
-                <div id="tabContent4" style="display: none; padding: 0.5rem 0;">${contentExternal}</div>
-                <div id="tabContent5" style="display: none; padding: 0.5rem 0;">${contentChecks}</div>
+                <div id="tabContent1" class="tab-content-item" style="display: block; padding: 0.5rem 0;">${contentForm1}</div>
+                <div id="tabContent2" class="tab-content-item" style="display: none; padding: 0.5rem 0;">${contentForm2}</div>
+                <div id="tabContent3" class="tab-content-item" style="display: none; padding: 0.5rem 0;">${contentCV}</div>
+                <div id="tabContent4" class="tab-content-item" style="display: none; padding: 0.5rem 0;">${contentExternal}</div>
+                <div id="tabContent5" class="tab-content-item" style="display: none; padding: 0.5rem 0;">${contentChecks}</div>
             </div>
         `;
         
@@ -1388,13 +1387,14 @@ function renderForm2Content(app) {
     let chairDate = app.signatures?.chair?.signedDate ? new Date(app.signatures.chair.signedDate).toLocaleDateString() : '';
     let deanDate = app.signatures?.dean?.signedDate ? new Date(app.signatures.dean.signedDate).toLocaleDateString() : '';
     
-    return `<div class="detail-section"><h4>📌 Endorsement Information</h4>
+    let html = `<div class="detail-section"><h4>📌 Endorsement Information</h4>
         <div class="detail-field"><strong>Date:</strong> ${escapeHtml(app.endorsementDate || 'N/A')}</div>
         <div class="detail-field"><strong>School Year:</strong> ${escapeHtml(app.schoolYear || 'N/A')}</div>
         <div class="detail-field"><strong>Department:</strong> ${escapeHtml(app.endorseDept || 'N/A')}</div>
         <div class="detail-field"><strong>School/College:</strong> ${escapeHtml(app.endorseSchool || 'N/A')}</div>
-    </div>
-    <div class="detail-section"><h4>✍️ Digital Signatures</h4>
+    </div>`;
+    
+    html += `<div class="detail-section"><h4>✍️ Digital Signatures</h4>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
             <div style="background: white; border-radius: 0.8rem; padding: 1rem; border-left: 4px solid var(--gold);">
                 <div><i class="fas fa-user-tie"></i> <strong>Department Chair</strong></div>
@@ -1410,6 +1410,8 @@ function renderForm2Content(app) {
             </div>
         </div>
     </div>`;
+    
+    return html;
 }
 
 // Render CV Review Content
@@ -1510,6 +1512,7 @@ function renderExternalReviewersContent(app) {
     }
     
     html += '</div>';
+    
     return html;
 }
 
@@ -1560,6 +1563,7 @@ function renderCheckStagesContent(app) {
     </div>`;
     
     html += '</div>';
+    
     return html;
 }
 
