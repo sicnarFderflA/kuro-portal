@@ -593,11 +593,36 @@
         .detail-field { margin-bottom: 0.3rem; font-size: 0.8rem; text-align: left; }
         .detail-field strong { color: var(--primary); display: inline-block; min-width: 180px; }
         
-        .modal-detail-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 2px solid #e0e0e0; flex-wrap: wrap; }
-        .modal-detail-tab { background: none; border: none; padding: 0.6rem 1.2rem; font-size: 0.85rem; font-weight: 600; color: var(--gray-text); cursor: pointer; border-radius: 8px 8px 0 0; transition: 0.2s; position: relative; }
-        .modal-detail-tab.active { color: var(--primary); background: #f0f2f5; }
-        .modal-detail-tab.active::after { content: ''; position: absolute; bottom: -2px; left: 0; right: 0; height: 2px; background: var(--gold); }
-        .modal-tab-content { display: none; }
+        .modal-detail-tabs {
+            display: flex;
+            gap: 0.3rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #e0e0e0;
+            flex-wrap: wrap;
+            background: #f8f9fa;
+            padding: 0.5rem 0.5rem 0 0.5rem;
+            border-radius: 12px 12px 0 0;
+        }
+        .modal-detail-tab {
+            background: none;
+            border: none;
+            padding: 0.7rem 1.2rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--gray-text);
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+            transition: 0.2s;
+            position: relative;
+        }
+        .modal-detail-tab i { margin-right: 0.4rem; }
+        .modal-detail-tab:hover { background: rgba(212, 175, 55, 0.1); }
+        .modal-detail-tab.active {
+            color: var(--primary);
+            background: white;
+            border-bottom: 3px solid var(--gold);
+        }
+        .modal-tab-content { display: none; padding: 0.5rem 0; }
         .modal-tab-content.active { display: block; }
         
         .status-badge { padding: 0.2rem 0.7rem; border-radius: 40px; font-size: 0.7rem; font-weight: 600; display: inline-block; }
@@ -655,6 +680,89 @@
         .swal2-popup { max-height: 90vh !important; overflow-y: auto !important; }
         .swal2-html-container { max-height: 70vh !important; overflow-y: auto !important; }
         footer { text-align: center; font-size: 0.65rem; color: var(--gray-text); padding: 1rem; margin-top: 1rem; }
+
+        /* Super Admin Settings - Modern UI */
+        .settings-card {
+            background: white;
+            border-radius: 1rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #eef2f0;
+            overflow: hidden;
+        }
+        .settings-card-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            padding: 1rem 1.2rem;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        .settings-card-header i { font-size: 1.3rem; color: var(--gold); }
+        .settings-card-header h3 { font-size: 1rem; margin: 0; font-weight: 600; }
+        .settings-card-header p { font-size: 0.7rem; margin: 0.2rem 0 0 0; opacity: 0.8; }
+        .settings-card-body { padding: 1.2rem; }
+        
+        .settings-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .settings-table th {
+            text-align: left;
+            padding: 0.8rem 0.5rem;
+            background: #f8f9fa;
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 0.75rem;
+        }
+        .settings-table td {
+            padding: 0.7rem 0.5rem;
+            border-bottom: 1px solid #eef2f0;
+            font-size: 0.8rem;
+        }
+        .settings-table tr:last-child td { border-bottom: none; }
+        
+        .add-item-bar {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .add-item-bar input {
+            flex: 1;
+            padding: 0.6rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            outline: none;
+            transition: 0.2s;
+        }
+        .add-item-bar input:focus { border-color: var(--gold); }
+        
+        .role-select {
+            padding: 0.5rem;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-size: 0.75rem;
+            width: 100%;
+        }
+        
+        .audit-item {
+            background: #f8f9fa;
+            padding: 0.8rem;
+            margin-bottom: 0.5rem;
+            border-radius: 0.5rem;
+            border-left: 3px solid var(--gold);
+        }
+        .audit-item .action { font-weight: 600; color: var(--primary); }
+        .audit-item .by { font-size: 0.7rem; color: var(--gold); }
+        .audit-item .time { font-size: 0.65rem; color: #999; }
+        .audit-item .details { font-size: 0.7rem; color: #666; margin-top: 0.3rem; }
+        
+        .empty-state-small {
+            text-align: center;
+            padding: 2rem;
+            color: #999;
+        }
 
         @media (max-width: 1000px) { .stats-compact-grid { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 768px) {
@@ -1067,9 +1175,9 @@ function renderCompactApplicationsList(filtered) {
             <td class="title-cell" title="${escapeHtml(app.proposalTitle || 'N/A')}">${escapeHtml(app.proposalTitle || 'N/A').substring(0, 45)}</td>
             <td class="applicant-cell">${escapeHtml(app.piName || app.userEmail?.split('@')[0] || 'N/A')}</td>
             <td class="date-cell">${app.submittedDate || 'N/A'}</td>
-            <td>${cvIcon}</td>
-            <td>${sigIcon}</td>
-            <td><span class="status-compact ${statusClass}">${statusIcon} ${app.status === 'Pending Eligibility Check' ? 'Check 1' : (app.status === 'Pending Secondary Check' ? 'Check 2' : (app.status === 'Pending Final Check' ? 'Check 3' : (app.status === 'Approved' ? 'Approved' : 'Returned')))}</span></td>
+            <td class="cv-cell">${cvIcon}</td>
+            <td class="sig-cell">${sigIcon}</td>
+            <td class="status-cell"><span class="status-compact ${statusClass}">${statusIcon} ${app.status === 'Pending Eligibility Check' ? 'Check 1' : (app.status === 'Pending Secondary Check' ? 'Check 2' : (app.status === 'Pending Final Check' ? 'Check 3' : (app.status === 'Approved' ? 'Approved' : 'Returned')))}</span></td>
             <td class="actions-cell">
                 <button class="action-btn view-btn" data-id="${app.id}" title="View Details"><i class="fas fa-eye"></i></button>
                 <button class="action-btn edit-status-btn" data-id="${app.id}" title="Change Status"><i class="fas fa-edit"></i></button>
@@ -1112,41 +1220,48 @@ async function viewApplicationDetails(appId) {
         // Check Stages Progress
         const isReturned = app.status === 'Returned';
         if (!isReturned && app.status !== 'Awaiting Signatures' && app.status !== 'Approved') {
-            html += `<div class="detail-section"><h4>📊 Review Progress</h4><div style="display: flex;">`;
+            html += `<div class="detail-section"><h4>📊 Review Progress</h4><div style="display: flex; gap: 0.5rem;">`;
             const stages = ['Pending Eligibility Check', 'Pending Secondary Check', 'Pending Final Check'];
             let foundCurrent = false;
             for (let i = 0; i < stages.length; i++) {
                 const isCompleted = !foundCurrent && app.status !== stages[i] && app.status !== 'Awaiting Signatures' && app.status !== 'Returned';
                 const isCurrent = app.status === stages[i];
                 if (isCurrent) foundCurrent = true;
-                html += `<div style="flex: 1; text-align: center;"><div style="width: 30px; height: 30px; border-radius: 50%; background: ${isCompleted ? '#2ecc71' : (isCurrent ? '#3498db' : '#ddd')}; color: white; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem;">${isCompleted ? '✓' : (isCurrent ? '◉' : '○')}</div><div style="font-size: 0.65rem; font-weight: ${isCurrent ? 'bold' : 'normal'}; color: ${isCurrent ? '#3498db' : '#666'};">${stages[i] === 'Pending Eligibility Check' ? 'Eligibility' : (stages[i] === 'Pending Secondary Check' ? 'Secondary' : 'Final')}</div>${i < 2 ? `<div style="position: absolute; top: 15px; left: 50%; width: 100%; height: 2px; background: ${isCompleted ? '#2ecc71' : '#ddd'};"></div>` : ''}</div>`;
+                html += `<div style="flex: 1; text-align: center;">
+                    <div style="width: 30px; height: 30px; border-radius: 50%; background: ${isCompleted ? '#2ecc71' : (isCurrent ? '#3498db' : '#ddd')}; color: white; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem;">${isCompleted ? '✓' : (isCurrent ? '◉' : '○')}</div>
+                    <div style="font-size: 0.65rem; font-weight: ${isCurrent ? 'bold' : 'normal'}; color: ${isCurrent ? '#3498db' : '#666'};">${stages[i] === 'Pending Eligibility Check' ? 'Eligibility' : (stages[i] === 'Pending Secondary Check' ? 'Secondary' : 'Final')}</div>
+                </div>`;
             }
             html += `</div></div>`;
         }
         
         html += `<div class="modal-detail-tabs">
-            <button class="modal-detail-tab active" data-tab="form1">📝 Research Proposal</button>
-            <button class="modal-detail-tab" data-tab="form2">📋 Endorsement</button>
-            <button class="modal-detail-tab" data-tab="cv">📎 CV Review</button>
-            <button class="modal-detail-tab" data-tab="external">👥 External Reviewers</button>
-            <button class="modal-detail-tab" data-tab="checks">✓ Check Stages</button>
+            <button class="modal-detail-tab active" data-tab="form1"><i class="fas fa-file-alt"></i> Research Proposal</button>
+            <button class="modal-detail-tab" data-tab="form2"><i class="fas fa-clipboard-list"></i> Endorsement</button>
+            <button class="modal-detail-tab" data-tab="cv"><i class="fas fa-file-pdf"></i> CV Review</button>
+            <button class="modal-detail-tab" data-tab="external"><i class="fas fa-users"></i> External Reviewers</button>
+            <button class="modal-detail-tab" data-tab="checks"><i class="fas fa-check-double"></i> Check Stages</button>
         </div>
         <div id="tabForm1" class="modal-tab-content active">${renderForm1Content(app)}</div>
         <div id="tabForm2" class="modal-tab-content">${renderForm2Content(app)}</div>
-        <div id="tabCV" class="modal-tab-content">${renderCVReviewContent(app, app.userEmail, appId)}</div>
-        <div id="tabExternal" class="modal-tab-content">${renderExternalReviewersContent(app, app.userEmail, appId)}</div>
-        <div id="tabChecks" class="modal-tab-content">${renderCheckStagesContent(app, app.userEmail, appId)}</div>
+        <div id="tabCV" class="modal-tab-content">${renderCVReviewContent(app)}</div>
+        <div id="tabExternal" class="modal-tab-content">${renderExternalReviewersContent(app)}</div>
+        <div id="tabChecks" class="modal-tab-content">${renderCheckStagesContent(app)}</div>
         </div>`;
         
         Swal.fire({ title: 'Application Details', html: html, width: '950px', showConfirmButton: true, confirmButtonColor: '#D4AF37', confirmButtonText: 'Close',
             didOpen: (modal) => {
-                const tabs = ['form1', 'form2', 'cv', 'external', 'checks'];
                 const contents = {
-                    form1: modal.querySelector('#tabForm1'), form2: modal.querySelector('#tabForm2'),
-                    cv: modal.querySelector('#tabCV'), external: modal.querySelector('#tabExternal'), checks: modal.querySelector('#tabChecks')
+                    form1: modal.querySelector('#tabForm1'),
+                    form2: modal.querySelector('#tabForm2'),
+                    cv: modal.querySelector('#tabCV'),
+                    external: modal.querySelector('#tabExternal'),
+                    checks: modal.querySelector('#tabChecks')
                 };
+                // Hide all, show active
                 Object.values(contents).forEach(c => { if (c) c.style.display = 'none'; });
                 if (contents.form1) contents.form1.style.display = 'block';
+                
                 const tabBtns = modal.querySelectorAll('.modal-detail-tab');
                 tabBtns.forEach(btn => {
                     btn.onclick = () => {
@@ -1157,9 +1272,9 @@ async function viewApplicationDetails(appId) {
                         if (contents[tabId]) contents[tabId].style.display = 'block';
                     };
                 });
-                attachCVHandlersInModal(modal, app.userEmail, appId);
-                attachCheckStageHandlers(modal, app.userEmail, appId, app.status);
-                attachExternalReviewerHandlers(modal, app.userEmail, appId);
+                attachCVHandlersInModal(modal, app.userEmail, app.id);
+                attachCheckStageHandlers(modal, app.userEmail, app.id, app.status);
+                attachExternalReviewerHandlers(modal, app.userEmail, app.id);
             }
         });
     } catch (error) {
@@ -1198,7 +1313,8 @@ function renderForm1Content(app) {
             total += it;
             html += `<tr><td>${escapeHtml(item.category)}</td><td>${escapeHtml(item.itemName)}</td><td>${escapeHtml(item.specs || '')}</td><td style="text-align:right;">₱${(item.unitCost || 0).toLocaleString()}</td><td style="text-align:center;">${item.qty || 1}</td><td style="text-align:right;">₱${it.toLocaleString()}</td></tr>`;
         });
-        html += `<tr style="background:#f0f0f0; font-weight:bold;"><td colspan="5" style="text-align:right;">GRAND TOTAL</td><td style="text-align:right;">₱${total.toLocaleString()}</td></tr></tbody>}</div>`;
+        html += `<tr style="background:#f0f0f0; font-weight:bold;"><td colspan="5" style="text-align:right;">GRAND TOTAL</td><td style="text-align:right;">₱${total.toLocaleString()}</td></tr>`;
+        html += '</tbody>}</div>';
     }
     return html;
 }
@@ -1214,7 +1330,7 @@ function renderForm2Content(app) {
     </div>`;
 }
 
-function renderCVReviewContent(app, email, appId) {
+function renderCVReviewContent(app) {
     let html = '<div class="detail-section"><h4>📎 CV Review & Eligibility Status</h4><p style="font-size:0.75rem; margin-bottom:1rem;">Review each CV and mark as Eligible, Ineligible, or Pending.</p>';
     
     // PI CV
@@ -1253,44 +1369,56 @@ function renderCVReviewContent(app, email, appId) {
         <h4><i class="fas fa-comment-dots"></i> Reviewer Feedback on CVs</h4>
         <textarea id="cvFeedbackText" rows="3" class="feedback-textarea" placeholder="Leave feedback about CV submissions...">${escapeHtml(app.uploadFeedback || '')}</textarea>
         <button class="save-feedback-btn btn-primary" style="margin-top: 0.5rem;"><i class="fas fa-save"></i> Save Feedback</button>
-    </div></div>`;
+    </div>`;
     return html;
 }
 
-function renderExternalReviewersContent(app, email, appId) {
+function renderExternalReviewersContent(app) {
     let assignedReviewers = app.assignedReviewers || [];
-    let html = '<div class="detail-section"><h4>👥 External Reviewers</h4><p style="font-size:0.75rem; margin-bottom:1rem;">Assign external reviewers by email.</p>';
+    let html = '<div class="detail-section"><h4>👥 External Reviewers</h4><p style="font-size:0.75rem; margin-bottom:1rem;">Assign external reviewers to evaluate this application.</p>';
     
     if (assignedReviewers.length > 0) {
-        html += '<h4 style="color: var(--primary);">📋 Assigned Reviewers</h4>';
+        html += '<div style="margin-bottom: 1rem;">';
         for (let i = 0; i < assignedReviewers.length; i++) {
             const reviewer = assignedReviewers[i];
+            const hasReview = reviewer.status === 'completed';
             html += `<div style="background: white; border-radius: 12px; padding: 0.8rem; margin-bottom: 0.8rem; border: 1px solid #e0e0e0;">
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
-                    <div><i class="fas fa-user-check"></i> <strong>${escapeHtml(reviewer.name || reviewer.email.split('@')[0])}</strong><br><small>${escapeHtml(reviewer.email)}</small></div>
+                    <div>
+                        <i class="fas fa-user-check" style="color: ${hasReview ? '#2ecc71' : '#f39c12'};"></i>
+                        <strong>${escapeHtml(reviewer.name || reviewer.email.split('@')[0])}</strong>
+                        <div><small>${escapeHtml(reviewer.email)}</small></div>
+                        <span style="font-size: 0.65rem; background: ${hasReview ? '#d4edda' : '#fff3cd'}; padding: 0.2rem 0.5rem; border-radius: 20px;">${hasReview ? 'Review Submitted' : 'Pending'}</span>
+                    </div>
                     <button class="remove-reviewer-btn btn-danger" data-reviewer-email="${escapeHtml(reviewer.email)}"><i class="fas fa-trash"></i> Remove</button>
                 </div>
             </div>`;
         }
+        html += '</div>';
     } else {
         html += '<div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; text-align: center; color: #666;"><i class="fas fa-info-circle"></i> No external reviewers assigned yet.</div>';
     }
     
-    html += `<div style="margin-top: 1.5rem; background: white; border-radius: 12px; padding: 1rem; border-left: 4px solid var(--gold);">
-        <h4 style="color: var(--primary);">➕ Assign New Reviewer</h4>
-        <input type="email" id="newReviewerEmail" placeholder="reviewer@xu.edu.ph" style="width: 100%; padding: 0.5rem; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 0.5rem;">
-        <button id="addManualReviewerBtn" class="btn-primary"><i class="fas fa-user-plus"></i> Assign Reviewer</button>
-    </div></div>`;
+    // Only show add reviewer form if user is Check 3 or Super Admin
+    if (isCheck3 || isSuperAdmin) {
+        html += `<div style="margin-top: 1.5rem; background: white; border-radius: 12px; padding: 1rem; border-left: 4px solid var(--gold);">
+            <h4 style="color: var(--primary); margin-bottom: 0.8rem;"><i class="fas fa-user-plus"></i> Assign New Reviewer</h4>
+            <input type="email" id="newReviewerEmail" placeholder="reviewer@xu.edu.ph" style="width: 100%; padding: 0.5rem; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 0.5rem;">
+            <button id="addManualReviewerBtn" class="btn-primary"><i class="fas fa-user-plus"></i> Assign Reviewer</button>
+        </div>`;
+    } else {
+        html += `<div class="demo-note" style="margin-top: 1rem; text-align: center;"><i class="fas fa-lock"></i> Only Check 3 and Super Admin can assign external reviewers.</div>`;
+    }
     return html;
 }
 
-function renderCheckStagesContent(app, email, appId) {
+function renderCheckStagesContent(app) {
     const isReturned = app.status === 'Returned';
     const currentStatus = app.status;
     const stages = [
-        { num: 1, name: 'Eligibility Review', status: 'Pending Eligibility Check', checker: 'Check 1', icon: '🔍' },
-        { num: 2, name: 'Secondary Review', status: 'Pending Secondary Check', checker: 'Check 2', icon: '📋' },
-        { num: 3, name: 'Final Review', status: 'Pending Final Check', checker: 'Check 3', icon: '⭐' }
+        { num: 1, name: 'Eligibility Review', status: 'Pending Eligibility Check', checker: 'Check 1', icon: '🔍', description: 'CV verification & eligibility check' },
+        { num: 2, name: 'Secondary Review', status: 'Pending Secondary Check', checker: 'Check 2', icon: '📋', description: 'Technical & methodology review' },
+        { num: 3, name: 'Final Review', status: 'Pending Final Check', checker: 'Check 3', icon: '⭐', description: 'Final approval & recommendation' }
     ];
     
     let completedCount = 0;
@@ -1531,7 +1659,6 @@ async function editApplicationStatus(appId) {
                 const newStatus = document.getElementById('newStatus').value;
                 const feedback = document.getElementById('feedbackText')?.value;
                 if (newStatus === 'Returned' && !feedback) { Swal.showValidationMessage('Please provide feedback'); return false; }
-                // Map to appropriate API call
                 if (newStatus === 'Pending Secondary Check') await KURO_API.approveCheck1(appId, feedback);
                 else if (newStatus === 'Pending Final Check') await KURO_API.approveCheck2(appId, feedback);
                 else if (newStatus === 'Approved') await KURO_API.approveCheck3(appId, feedback);
@@ -1559,7 +1686,7 @@ async function deleteApplicationHandler(appId) {
     }
 }
 
-// Super Admin Settings
+// Super Admin Settings - Modern UI
 async function openSuperuserSettings() {
     if (!isSuperAdmin) {
         Swal.fire({ icon: 'error', title: 'Access Denied', text: 'Only Super Admin can access these settings.' });
@@ -1578,134 +1705,103 @@ async function openSuperuserSettings() {
     
     const modalHtml = `
         <div style="max-height: 70vh; overflow-y: auto; padding-right: 0.5rem;">
-            <div class="settings-tabs" style="display: flex; gap: 0.5rem; border-bottom: 2px solid #e0e0e0; margin-bottom: 1rem; flex-wrap: wrap;">
-                <button class="settings-tab active" data-tab="superadmins">👑 Super Admins</button>
-                <button class="settings-tab" data-tab="admins">👥 Admin Users</button>
-                <button class="settings-tab" data-tab="checkers">✅ Checker Roles</button>
-                <button class="settings-tab" data-tab="reviewers">📋 External Reviewers</button>
-                <button class="settings-tab" data-tab="audit">📜 Audit Log</button>
+            <!-- Tab Navigation -->
+            <div style="display: flex; gap: 0.3rem; border-bottom: 2px solid #eef2f0; margin-bottom: 1.5rem; flex-wrap: wrap;">
+                <button class="settings-tab active" data-tab="superadmins" style="padding: 0.6rem 1.2rem; background: none; border: none; cursor: pointer; font-weight: 600; color: var(--primary); border-bottom: 3px solid var(--gold);"><i class="fas fa-crown"></i> Super Admins</button>
+                <button class="settings-tab" data-tab="admins" style="padding: 0.6rem 1.2rem; background: none; border: none; cursor: pointer; font-weight: 600; color: #666;"><i class="fas fa-user-shield"></i> Admin Users</button>
+                <button class="settings-tab" data-tab="checkers" style="padding: 0.6rem 1.2rem; background: none; border: none; cursor: pointer; font-weight: 600; color: #666;"><i class="fas fa-check-double"></i> Checker Roles</button>
+                <button class="settings-tab" data-tab="reviewers" style="padding: 0.6rem 1.2rem; background: none; border: none; cursor: pointer; font-weight: 600; color: #666;"><i class="fas fa-users"></i> External Reviewers</button>
+                <button class="settings-tab" data-tab="audit" style="padding: 0.6rem 1.2rem; background: none; border: none; cursor: pointer; font-weight: 600; color: #666;"><i class="fas fa-history"></i> Audit Log</button>
             </div>
             
             <!-- Super Admins Tab -->
             <div id="tabSuperadmins" class="settings-tab-content active">
-                <div class="superuser-note">
-                    <i class="fas fa-crown"></i> <strong>Super Admin Accounts</strong><br>
-                    Super Admins have FULL access to all settings and can approve/reject any check stage.
-                </div>
-                <div class="add-item-form" style="background: #f8f9fa; padding: 1rem; border-radius: 0.8rem; margin-bottom: 1rem;">
-                    <h4><i class="fas fa-plus-circle"></i> Add Super Admin</h4>
-                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                        <input type="email" id="newSuperAdminEmail" placeholder="email@xu.edu.ph" style="flex: 1; padding: 0.5rem; border-radius: 0.5rem; border: 1px solid #ddd;">
-                        <button id="addSuperAdminBtn" class="btn-primary"><i class="fas fa-user-plus"></i> Add</button>
+                <div class="settings-card">
+                    <div class="settings-card-header"><i class="fas fa-crown"></i><div><h3>Super Admin Accounts</h3><p>Full access to all settings and features</p></div></div>
+                    <div class="settings-card-body">
+                        <div class="add-item-bar"><input type="email" id="newSuperAdminEmail" placeholder="email@xu.edu.ph"><button id="addSuperAdminBtn" class="btn-primary"><i class="fas fa-plus"></i> Add</button></div>
+                        <table class="settings-table"><thead><tr><th>Email</th><th>Actions</th></tr></thead><tbody id="superAdminsList">
+                            ${superAdmins.map(email => `<tr><td>${escapeHtml(email)}</td><td><button class="remove-superadmin-btn btn-danger" data-email="${escapeHtml(email)}"><i class="fas fa-trash"></i> Remove</button></td></tr>`).join('')}
+                            ${superAdmins.length === 0 ? '<tr><td colspan="2" class="empty-state-small">No super admins configured</td></tr>' : ''}
+                        </tbody></table>
                     </div>
                 </div>
-                <table style="width: 100%; border-collapse: collapse;">
-                    <thead><tr style="background: #f0f2f5;"><th style="padding: 0.5rem; text-align: left;">Email</th><th style="padding: 0.5rem; text-align: left;">Actions</th></tr></thead>
-                    <tbody id="superAdminsList">
-                        ${superAdmins.map(email => `
-                            <tr><td style="padding: 0.5rem; border-bottom: 1px solid #eee;">${escapeHtml(email)}</td>
-                            <td><button class="remove-superadmin-btn btn-sm" data-email="${escapeHtml(email)}" style="background: #e74c3c; color: white;">Remove</button></td></tr>
-                        `).join('')}
-                    </tbody>
-                </table>
             </div>
             
             <!-- Admin Users Tab -->
             <div id="tabAdmins" class="settings-tab-content">
-                <div class="superuser-note">
-                    <i class="fas fa-user-shield"></i> <strong>Admin Users</strong><br>
-                    Admin users can access the admin dashboard but cannot modify system settings.
-                </div>
-                <div class="add-item-form" style="background: #f8f9fa; padding: 1rem; border-radius: 0.8rem; margin-bottom: 1rem;">
-                    <h4><i class="fas fa-plus-circle"></i> Add Admin User</h4>
-                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                        <input type="email" id="newAdminEmail" placeholder="email@xu.edu.ph" style="flex: 1; padding: 0.5rem; border-radius: 0.5rem; border: 1px solid #ddd;">
-                        <button id="addAdminBtn" class="btn-primary"><i class="fas fa-user-plus"></i> Add</button>
+                <div class="settings-card">
+                    <div class="settings-card-header"><i class="fas fa-user-shield"></i><div><h3>Admin Users</h3><p>Can access admin dashboard but cannot modify system settings</p></div></div>
+                    <div class="settings-card-body">
+                        <div class="add-item-bar"><input type="email" id="newAdminEmail" placeholder="email@xu.edu.ph"><button id="addAdminBtn" class="btn-primary"><i class="fas fa-plus"></i> Add</button></div>
+                        <table class="settings-table"><thead><tr><th>Email</th><th>Actions</th></tr></thead><tbody id="adminsList">
+                            ${adminEmails.map(email => `<tr><td>${escapeHtml(email)}</td><td><button class="remove-admin-btn btn-danger" data-email="${escapeHtml(email)}"><i class="fas fa-trash"></i> Remove</button></td></tr>`).join('')}
+                            ${adminEmails.length === 0 ? '<tr><td colspan="2" class="empty-state-small">No admin users configured</td></tr>' : ''}
+                        </tbody></table>
                     </div>
                 </div>
-                <table style="width: 100%; border-collapse: collapse;">
-                    <thead><tr style="background: #f0f2f5;"><th style="padding: 0.5rem; text-align: left;">Email</th><th style="padding: 0.5rem; text-align: left;">Actions</th></tr></thead>
-                    <tbody id="adminsList">
-                        ${adminEmails.map(email => `
-                            <tr><td style="padding: 0.5rem; border-bottom: 1px solid #eee;">${escapeHtml(email)}</td>
-                            <td><button class="remove-admin-btn btn-sm" data-email="${escapeHtml(email)}" style="background: #e74c3c; color: white;">Remove</button></td></tr>
-                        `).join('')}
-                    </tbody>
-                </table>
             </div>
             
             <!-- Checker Roles Tab -->
             <div id="tabCheckers" class="settings-tab-content">
-                <div class="superuser-note">
-                    <i class="fas fa-user-tag"></i> <strong>Checker Role Assignments</strong><br>
-                    Assign which admin users are responsible for each check stage.
-                </div>
-                <div style="background: #f8f9fa; border-radius: 0.8rem; padding: 1rem;">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead><tr><th style="padding: 0.5rem;">Check Stage</th><th style="padding: 0.5rem;">Assigned Admin</th><th style="padding: 0.5rem;">Actions</th></tr></thead>
-                        <tbody>
-                            <tr><td><strong>🔍 Check 1</strong><br><small>Eligibility Review</small></td>
-                                <td><select id="roleSelect_check1" style="width: 100%; padding: 0.5rem;"><option value="">-- Select Admin --</option>${adminEmails.map(e => `<option value="${e}" ${checkerRoles.check1 === e ? 'selected' : ''}>${e}</option>`).join('')}</select></td>
-                                <td><button class="save-role-btn btn-sm" data-role="check1">Save</button></td></tr>
-                            <tr><td><strong>📋 Check 2</strong><br><small>Secondary Review</small></td>
-                                <td><select id="roleSelect_check2" style="width: 100%; padding: 0.5rem;"><option value="">-- Select Admin --</option>${adminEmails.map(e => `<option value="${e}" ${checkerRoles.check2 === e ? 'selected' : ''}>${e}</option>`).join('')}</select></td>
-                                <td><button class="save-role-btn btn-sm" data-role="check2">Save</button></td></tr>
-                            <tr><td><strong>✅ Check 3</strong><br><small>Final Review + External Assigner</small></td>
-                                <td><select id="roleSelect_check3" style="width: 100%; padding: 0.5rem;"><option value="">-- Select Admin --</option>${adminEmails.map(e => `<option value="${e}" ${checkerRoles.check3 === e ? 'selected' : ''}>${e}</option>`).join('')}</select></td>
-                                <td><button class="save-role-btn btn-sm" data-role="check3">Save</button></td></tr>
-                        </tbody>
-                    </table>
+                <div class="settings-card">
+                    <div class="settings-card-header"><i class="fas fa-check-double"></i><div><h3>Checker Role Assignments</h3><p>Assign admin users to specific review stages</p></div></div>
+                    <div class="settings-card-body">
+                        <table class="settings-table">
+                            <thead><tr><th>Check Stage</th><th>Assigned Admin</th><th>Actions</th></tr></thead>
+                            <tbody>
+                                <tr><td><strong>🔍 Check 1</strong><br><small>Eligibility Review</small></td>
+                                    <td><select id="roleSelect_check1" class="role-select"><option value="">-- Select Admin --</option>${adminEmails.map(e => `<option value="${e}" ${checkerRoles.check1 === e ? 'selected' : ''}>${e}</option>`).join('')}</select></td>
+                                    <td><button class="save-role-btn btn-primary" data-role="check1">Save</button></td></tr>
+                                <tr><td><strong>📋 Check 2</strong><br><small>Secondary Review</small></td>
+                                    <td><select id="roleSelect_check2" class="role-select"><option value="">-- Select Admin --</option>${adminEmails.map(e => `<option value="${e}" ${checkerRoles.check2 === e ? 'selected' : ''}>${e}</option>`).join('')}</select></td>
+                                    <td><button class="save-role-btn btn-primary" data-role="check2">Save</button></td></tr>
+                                <tr><td><strong>✅ Check 3</strong><br><small>Final Review + External Assigner</small></td>
+                                    <td><select id="roleSelect_check3" class="role-select"><option value="">-- Select Admin --</option>${adminEmails.map(e => `<option value="${e}" ${checkerRoles.check3 === e ? 'selected' : ''}>${e}</option>`).join('')}</select></td>
+                                    <td><button class="save-role-btn btn-primary" data-role="check3">Save</button></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
             
             <!-- External Reviewers Pool Tab -->
             <div id="tabReviewers" class="settings-tab-content">
-                <div class="superuser-note">
-                    <i class="fas fa-users"></i> <strong>External Reviewers Pool</strong><br>
-                    These reviewers can be assigned to applications for external review.
-                </div>
-                <div class="add-item-form" style="background: #f8f9fa; padding: 1rem; border-radius: 0.8rem; margin-bottom: 1rem;">
-                    <h4><i class="fas fa-plus-circle"></i> Add External Reviewer</h4>
-                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                        <input type="email" id="newReviewerEmail" placeholder="reviewer@xu.edu.ph" style="flex: 1; padding: 0.5rem; border-radius: 0.5rem; border: 1px solid #ddd;">
-                        <input type="text" id="newReviewerName" placeholder="Full Name (optional)" style="flex: 1; padding: 0.5rem; border-radius: 0.5rem; border: 1px solid #ddd;">
-                        <button id="addReviewerBtn" class="btn-primary"><i class="fas fa-user-plus"></i> Add</button>
+                <div class="settings-card">
+                    <div class="settings-card-header"><i class="fas fa-users"></i><div><h3>External Reviewers Pool</h3><p>Pre-approved reviewers that can be assigned to applications</p></div></div>
+                    <div class="settings-card-body">
+                        <div class="add-item-bar"><input type="email" id="newReviewerEmail" placeholder="reviewer@xu.edu.ph"><input type="text" id="newReviewerName" placeholder="Full Name (optional)"><button id="addReviewerBtn" class="btn-primary"><i class="fas fa-plus"></i> Add</button></div>
+                        <table class="settings-table"><thead><tr><th>Email</th><th>Name</th><th>Assignments</th><th>Actions</th></tr></thead><tbody id="reviewersList">
+                            ${externalReviewers.map(r => `<tr><td>${escapeHtml(r.email)}</td><td>${escapeHtml(r.name || '')}</td><td>${r.totalAssignments || 0}</td><td><button class="remove-reviewer-pool-btn btn-danger" data-email="${escapeHtml(r.email)}"><i class="fas fa-trash"></i> Remove</button></td></tr>`).join('')}
+                            ${externalReviewers.length === 0 ? '<tr><td colspan="4" class="empty-state-small">No external reviewers in pool</td></tr>' : ''}
+                        </tbody></table>
                     </div>
                 </div>
-                <table style="width: 100%; border-collapse: collapse;">
-                    <thead><tr style="background: #f0f2f5;"><th style="padding: 0.5rem;">Email</th><th style="padding: 0.5rem;">Name</th><th style="padding: 0.5rem;">Assignments</th><th style="padding: 0.5rem;">Actions</th></tr></thead>
-                    <tbody id="reviewersList">
-                        ${externalReviewers.map(r => `
-                            <tr><td style="padding: 0.5rem;">${escapeHtml(r.email)}</td>
-                            <td>${escapeHtml(r.name || '')}</td>
-                            <td>${r.totalAssignments || 0}</td>
-                            <td><button class="remove-reviewer-pool-btn btn-sm" data-email="${escapeHtml(r.email)}" style="background: #e74c3c; color: white;">Remove</button></td></tr>
-                        `).join('')}
-                    </tbody>
-                </table>
             </div>
             
             <!-- Audit Log Tab -->
             <div id="tabAudit" class="settings-tab-content">
-                <div class="superuser-note">
-                    <i class="fas fa-history"></i> <strong>Audit Log</strong><br>
-                    Track all changes made to system settings.
-                </div>
-                <div id="auditLogList" style="max-height: 400px; overflow-y: auto;">
-                    ${auditLogs.map(log => `
-                        <div style="background: #f8f9fa; padding: 0.5rem; margin-bottom: 0.5rem; border-radius: 0.5rem; border-left: 3px solid var(--gold);">
-                            <div><strong>${escapeHtml(log.action)}</strong> by ${escapeHtml(log.performedBy)}</div>
-                            <div style="font-size: 0.7rem; color: #666;">${new Date(log.timestamp).toLocaleString()}</div>
-                            <div style="font-size: 0.7rem;">${JSON.stringify(log.changes)}</div>
+                <div class="settings-card">
+                    <div class="settings-card-header"><i class="fas fa-history"></i><div><h3>Audit Log</h3><p>Track all changes made to system settings</p></div></div>
+                    <div class="settings-card-body">
+                        <div id="auditLogList">
+                            ${auditLogs.map(log => `
+                                <div class="audit-item">
+                                    <div><span class="action">${escapeHtml(log.action)}</span> <span class="by">by ${escapeHtml(log.performedBy)}</span></div>
+                                    <div class="time"><i class="fas fa-clock"></i> ${new Date(log.timestamp).toLocaleString()}</div>
+                                    <div class="details">${JSON.stringify(log.changes)}</div>
+                                </div>
+                            `).join('')}
+                            ${auditLogs.length === 0 ? '<div class="empty-state-small">No audit logs available</div>' : ''}
                         </div>
-                    `).join('')}
+                    </div>
                 </div>
             </div>
         </div>
     `;
     
     const result = await Swal.fire({
-        title: '<i class="fas fa-shield-alt" style="color: #e74c3c;"></i> Super Admin Settings',
+        title: '<i class="fas fa-shield-alt" style="color: #e74c3c;"></i> System Administration',
         html: modalHtml,
         width: '900px',
         showConfirmButton: true,
@@ -1716,9 +1812,13 @@ async function openSuperuserSettings() {
             modal.querySelectorAll('.settings-tab').forEach(tab => {
                 tab.addEventListener('click', () => {
                     const tabId = tab.getAttribute('data-tab');
-                    modal.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+                    modal.querySelectorAll('.settings-tab').forEach(t => {
+                        t.style.color = '#666';
+                        t.style.borderBottom = 'none';
+                    });
                     modal.querySelectorAll('.settings-tab-content').forEach(c => c.classList.remove('active'));
-                    tab.classList.add('active');
+                    tab.style.color = 'var(--primary)';
+                    tab.style.borderBottom = '3px solid var(--gold)';
                     modal.querySelector(`#tab${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`).classList.add('active');
                 });
             });
