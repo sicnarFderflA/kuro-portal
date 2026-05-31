@@ -1209,7 +1209,7 @@ async function viewApplicationDetails(appId) {
                 </div>
                 
                 <!-- Tabs -->
-                <div class="modal-detail-tabs">
+                <div class="modal-detail-tabs" id="detailTabs">
                     <button class="modal-detail-tab active" data-tab="1"><i class="fas fa-file-alt"></i> Research Proposal</button>
                     <button class="modal-detail-tab" data-tab="2"><i class="fas fa-clipboard-list"></i> Endorsement</button>
                     <button class="modal-detail-tab" data-tab="3"><i class="fas fa-file-pdf"></i> CV Review</button>
@@ -1218,11 +1218,11 @@ async function viewApplicationDetails(appId) {
                 </div>
                 
                 <!-- Tab Contents -->
-                <div id="tabContent1" class="tab-content-item" style="display: block; padding: 0.5rem 0;">${contentForm1}</div>
-                <div id="tabContent2" class="tab-content-item" style="display: none; padding: 0.5rem 0;">${contentForm2}</div>
-                <div id="tabContent3" class="tab-content-item" style="display: none; padding: 0.5rem 0;">${contentCV}</div>
-                <div id="tabContent4" class="tab-content-item" style="display: none; padding: 0.5rem 0;">${contentExternal}</div>
-                <div id="tabContent5" class="tab-content-item" style="display: none; padding: 0.5rem 0;">${contentChecks}</div>
+                <div id="tabContent1" style="display: block; padding: 0.5rem 0;">${contentForm1}</div>
+                <div id="tabContent2" style="display: none; padding: 0.5rem 0;">${contentForm2}</div>
+                <div id="tabContent3" style="display: none; padding: 0.5rem 0;">${contentCV}</div>
+                <div id="tabContent4" style="display: none; padding: 0.5rem 0;">${contentExternal}</div>
+                <div id="tabContent5" style="display: none; padding: 0.5rem 0;">${contentChecks}</div>
             </div>
         `;
         
@@ -1234,29 +1234,35 @@ async function viewApplicationDetails(appId) {
             confirmButtonText: 'Close',
             confirmButtonColor: '#D4AF37',
             didOpen: (modal) => {
-                // Get all elements
+                // Get all tab content divs
                 const tab1 = modal.querySelector('#tabContent1');
                 const tab2 = modal.querySelector('#tabContent2');
                 const tab3 = modal.querySelector('#tabContent3');
                 const tab4 = modal.querySelector('#tabContent4');
                 const tab5 = modal.querySelector('#tabContent5');
+                
+                // Get all tab buttons
                 const tabBtns = modal.querySelectorAll('.modal-detail-tab');
                 
-                console.log('Tab elements found:', {
+                console.log('Tab buttons found:', tabBtns.length);
+                console.log('Tab content found:', {
                     tab1: !!tab1, tab2: !!tab2, tab3: !!tab3, tab4: !!tab4, tab5: !!tab5
                 });
                 
-                // Function to show tab
-                const showTab = (tabNumber) => {
-                    console.log('Showing tab:', tabNumber);
-                    // Hide all tabs
+                // Hide all tabs function
+                function hideAllTabs() {
                     if (tab1) tab1.style.display = 'none';
                     if (tab2) tab2.style.display = 'none';
                     if (tab3) tab3.style.display = 'none';
                     if (tab4) tab4.style.display = 'none';
                     if (tab5) tab5.style.display = 'none';
+                }
+                
+                // Show specific tab
+                function showTab(tabNumber) {
+                    console.log('showTab called with:', tabNumber);
+                    hideAllTabs();
                     
-                    // Show selected tab
                     if (tabNumber === 1 && tab1) tab1.style.display = 'block';
                     if (tabNumber === 2 && tab2) tab2.style.display = 'block';
                     if (tabNumber === 3 && tab3) tab3.style.display = 'block';
@@ -1265,35 +1271,30 @@ async function viewApplicationDetails(appId) {
                     
                     // Update button active states
                     tabBtns.forEach((btn, index) => {
-                        if (index + 1 === tabNumber) {
+                        if ((index + 1) === tabNumber) {
                             btn.classList.add('active');
                         } else {
                             btn.classList.remove('active');
                         }
                     });
-                };
-                
-                // Attach click handlers - SIMPLE AND DIRECT
-                if (tabBtns.length >= 1) {
-                    tabBtns[0].onclick = (e) => { e.preventDefault(); showTab(1); };
-                }
-                if (tabBtns.length >= 2) {
-                    tabBtns[1].onclick = (e) => { e.preventDefault(); showTab(2); };
-                }
-                if (tabBtns.length >= 3) {
-                    tabBtns[2].onclick = (e) => { e.preventDefault(); showTab(3); };
-                }
-                if (tabBtns.length >= 4) {
-                    tabBtns[3].onclick = (e) => { e.preventDefault(); showTab(4); };
-                }
-                if (tabBtns.length >= 5) {
-                    tabBtns[4].onclick = (e) => { e.preventDefault(); showTab(5); };
                 }
                 
-                // Show tab 1 by default
+                // Attach click handlers to each button
+                for (let i = 0; i < tabBtns.length; i++) {
+                    const btn = tabBtns[i];
+                    const tabNum = i + 1;
+                    btn.onclick = function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Tab button clicked:', tabNum);
+                        showTab(tabNum);
+                    };
+                }
+                
+                // Make sure tab 1 is visible
                 showTab(1);
                 
-                // Attach handlers for CV, Check Stages, External Reviewers
+                // Attach all handlers
                 attachCVHandlersInModal(modal, app.userEmail, app.id);
                 attachCheckStageHandlers(modal, app.userEmail, app.id, app.status);
                 attachExternalReviewerHandlers(modal, app.userEmail, app.id);
