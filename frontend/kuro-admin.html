@@ -1374,27 +1374,30 @@ function renderForm2Content(app) {
     let chairDate = app.signatures?.chair?.signedDate ? new Date(app.signatures.chair.signedDate).toLocaleDateString() : '';
     let deanDate = app.signatures?.dean?.signedDate ? new Date(app.signatures.dean.signedDate).toLocaleDateString() : '';
     
-    return `<div class="detail-section">
-        <h4>📌 Endorsement Information</h4>
-        <div class="detail-field"><strong>Date:</strong> ${escapeHtml(app.endorsementDate || 'N/A')}</div>
-        <div class="detail-field"><strong>School Year:</strong> ${escapeHtml(app.schoolYear || 'N/A')}</div>
-        <div class="detail-field"><strong>Department:</strong> ${escapeHtml(app.endorseDept || 'N/A')}</div>
-        <div class="detail-field"><strong>School/College:</strong> ${escapeHtml(app.endorseSchool || 'N/A')}</div>
-    </div>
-    <div class="detail-section">
-        <h4>✍️ Digital Signatures</h4>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-            <div style="background: white; border-radius: 0.8rem; padding: 1rem; border-left: 4px solid var(--gold);">
-                <div><i class="fas fa-user-tie"></i> <strong>Department Chair</strong></div>
-                <div><strong>Name:</strong> ${escapeHtml(app.fromChair || 'N/A')}</div>
-                <div><strong>Email:</strong> ${escapeHtml(app.chairEmail || 'N/A')}</div>
-                <div><strong>Status:</strong> ${chairSigned} ${chairDate ? `📅 ${chairDate}` : ''}</div>
-            </div>
-            <div style="background: white; border-radius: 0.8rem; padding: 1rem; border-left: 4px solid var(--gold);">
-                <div><i class="fas fa-university"></i> <strong>Dean</strong></div>
-                <div><strong>Name:</strong> ${escapeHtml(app.deanName || 'N/A')}</div>
-                <div><strong>Email:</strong> ${escapeHtml(app.deanEmail || 'N/A')}</div>
-                <div><strong>Status:</strong> ${deanSigned} ${deanDate ? `📅 ${deanDate}` : ''}</div>
+    // Return a SINGLE wrapper div
+    return `<div>
+        <div class="detail-section">
+            <h4>📌 Endorsement Information</h4>
+            <div class="detail-field"><strong>Date:</strong> ${escapeHtml(app.endorsementDate || 'N/A')}</div>
+            <div class="detail-field"><strong>School Year:</strong> ${escapeHtml(app.schoolYear || 'N/A')}</div>
+            <div class="detail-field"><strong>Department:</strong> ${escapeHtml(app.endorseDept || 'N/A')}</div>
+            <div class="detail-field"><strong>School/College:</strong> ${escapeHtml(app.endorseSchool || 'N/A')}</div>
+        </div>
+        <div class="detail-section">
+            <h4>✍️ Digital Signatures</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div style="background: white; border-radius: 0.8rem; padding: 1rem; border-left: 4px solid var(--gold);">
+                    <div><i class="fas fa-user-tie"></i> <strong>Department Chair</strong></div>
+                    <div><strong>Name:</strong> ${escapeHtml(app.fromChair || 'N/A')}</div>
+                    <div><strong>Email:</strong> ${escapeHtml(app.chairEmail || 'N/A')}</div>
+                    <div><strong>Status:</strong> ${chairSigned} ${chairDate ? `📅 ${chairDate}` : ''}</div>
+                </div>
+                <div style="background: white; border-radius: 0.8rem; padding: 1rem; border-left: 4px solid var(--gold);">
+                    <div><i class="fas fa-university"></i> <strong>Dean</strong></div>
+                    <div><strong>Name:</strong> ${escapeHtml(app.deanName || 'N/A')}</div>
+                    <div><strong>Email:</strong> ${escapeHtml(app.deanEmail || 'N/A')}</div>
+                    <div><strong>Status:</strong> ${deanSigned} ${deanDate ? `📅 ${deanDate}` : ''}</div>
+                </div>
             </div>
         </div>
     </div>`;
@@ -1402,7 +1405,8 @@ function renderForm2Content(app) {
 
 // Render CV Review Content
 function renderCVReviewContent(app) {
-    let html = '<div class="detail-section"><h4>📎 CV Review & Eligibility Status</h4><p style="font-size:0.75rem; margin-bottom:1rem;">Review each CV and mark as Eligible, Ineligible, or Pending.</p>';
+    let html = '<div>';
+    html += '<div class="detail-section"><h4>📎 CV Review & Eligibility Status</h4><p style="font-size:0.75rem; margin-bottom:1rem;">Review each CV and mark as Eligible, Ineligible, or Pending.</p>';
     
     // PI CV
     if (app.piCVName && app.piCVName.trim() !== '') {
@@ -1463,16 +1467,16 @@ function renderCVReviewContent(app) {
         <h4><i class="fas fa-comment-dots"></i> Reviewer Feedback on CVs</h4>
         <textarea id="cvFeedbackText" rows="3" class="feedback-textarea" placeholder="Leave feedback about CV submissions...">${escapeHtml(app.uploadFeedback || '')}</textarea>
         <button class="save-feedback-btn btn-primary" style="margin-top: 0.5rem;"><i class="fas fa-save"></i> Save Feedback</button>
-    </div>
     </div>`;
     
+    html += '</div></div>';
     return html;
 }
 
 // Render External Reviewers Content
 function renderExternalReviewersContent(app) {
     let assignedReviewers = app.assignedReviewers || [];
-    let html = '<div class="detail-section"><h4>👥 External Reviewers</h4>';
+    let html = '<div><div class="detail-section"><h4>👥 External Reviewers</h4>';
     
     html += `<div style="margin-top: 1rem; background: #f8f9fa; border-radius: 12px; padding: 1rem;">
         <h4 style="color: var(--primary); margin-bottom: 0.8rem;"><i class="fas fa-user-plus"></i> Assign New Reviewer</h4>
@@ -1495,14 +1499,14 @@ function renderExternalReviewersContent(app) {
         html += '<div style="margin-top: 1rem; padding: 1rem; background: #fff3cd; border-radius: 8px; text-align: center;">No external reviewers assigned yet. Use the form above to assign one.</div>';
     }
     
-    html += '</div>';
+    html += '</div></div>';
     return html;
 }
 
 
 // Render Check Stages Content
 function renderCheckStagesContent(app) {
-    let html = '<div class="detail-section"><h4>📊 Review Stages</h4>';
+    let html = '<div><div class="detail-section"><h4>📊 Review Stages</h4>';
     
     const stages = [
         { name: 'Check 1: Eligibility Review', status: app.status === 'Pending Eligibility Check' ? 'current' : (app.status === 'Pending Secondary Check' || app.status === 'Pending Final Check' || app.status === 'Approved' ? 'completed' : 'pending'), icon: '🔍' },
@@ -1540,9 +1544,9 @@ function renderCheckStagesContent(app) {
     html += `<div style="margin-top: 1rem; padding: 0.8rem; background: #f0f2f5; border-radius: 8px;">
         <strong>Current Status:</strong> ${app.status}<br>
         ${app.returnedFeedback ? `<strong>Return Reason:</strong> ${escapeHtml(app.returnedFeedback)}` : ''}
-    </div>
     </div>`;
     
+    html += '</div></div>';
     return html;
 }
 
