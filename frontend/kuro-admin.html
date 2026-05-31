@@ -1177,7 +1177,13 @@ async function viewApplicationDetails(appId) {
             }
         }
         
-        // Build the modal HTML
+        // Render all tab contents
+        const contentForm1 = renderForm1Content(app);
+        const contentForm2 = renderForm2Content(app);
+        const contentCV = renderCVReviewContent(app);
+        const contentExternal = renderExternalReviewersContent(app);
+        const contentChecks = renderCheckStagesContent(app);
+        
         const modalHtml = `
             <div style="max-height: 65vh; overflow-y: auto; padding-right: 5px;">
                 <!-- Header Info -->
@@ -1193,23 +1199,23 @@ async function viewApplicationDetails(appId) {
                 
                 <!-- Tabs -->
                 <div class="modal-detail-tabs">
-                    <button class="modal-detail-tab active" data-tab="tabForm1"><i class="fas fa-file-alt"></i> Research Proposal</button>
-                    <button class="modal-detail-tab" data-tab="tabForm2"><i class="fas fa-clipboard-list"></i> Endorsement</button>
-                    <button class="modal-detail-tab" data-tab="tabCV"><i class="fas fa-file-pdf"></i> CV Review</button>
-                    <button class="modal-detail-tab" data-tab="tabExternal"><i class="fas fa-users"></i> External Reviewers</button>
-                    <button class="modal-detail-tab" data-tab="tabChecks"><i class="fas fa-check-double"></i> Check Stages</button>
+                    <button class="modal-detail-tab active" data-tab="1"><i class="fas fa-file-alt"></i> Research Proposal</button>
+                    <button class="modal-detail-tab" data-tab="2"><i class="fas fa-clipboard-list"></i> Endorsement</button>
+                    <button class="modal-detail-tab" data-tab="3"><i class="fas fa-file-pdf"></i> CV Review</button>
+                    <button class="modal-detail-tab" data-tab="4"><i class="fas fa-users"></i> External Reviewers</button>
+                    <button class="modal-detail-tab" data-tab="5"><i class="fas fa-check-double"></i> Check Stages</button>
                 </div>
                 
                 <!-- Tab Contents -->
-                <div id="tabForm1" class="modal-tab-content active">${renderForm1Content(app)}</div>
-                <div id="tabForm2" class="modal-tab-content">${renderForm2Content(app)}</div>
-                <div id="tabCV" class="modal-tab-content">${renderCVReviewContent(app)}</div>
-                <div id="tabExternal" class="modal-tab-content">${renderExternalReviewersContent(app)}</div>
-                <div id="tabChecks" class="modal-tab-content">${renderCheckStagesContent(app)}</div>
+                <div id="tabContent1" class="modal-tab-content active">${contentForm1}</div>
+                <div id="tabContent2" class="modal-tab-content">${contentForm2}</div>
+                <div id="tabContent3" class="modal-tab-content">${contentCV}</div>
+                <div id="tabContent4" class="modal-tab-content">${contentExternal}</div>
+                <div id="tabContent5" class="modal-tab-content">${contentChecks}</div>
             </div>
         `;
         
-        const result = await Swal.fire({
+        Swal.fire({
             title: 'Application Details',
             html: modalHtml,
             width: '950px',
@@ -1217,43 +1223,52 @@ async function viewApplicationDetails(appId) {
             confirmButtonText: 'Close',
             confirmButtonColor: '#D4AF37',
             didOpen: (modal) => {
-                // Get elements
+                // Get all tab buttons and content divs
                 const tabBtns = modal.querySelectorAll('.modal-detail-tab');
-                const tabContents = {
-                    tabForm1: modal.querySelector('#tabForm1'),
-                    tabForm2: modal.querySelector('#tabForm2'),
-                    tabCV: modal.querySelector('#tabCV'),
-                    tabExternal: modal.querySelector('#tabExternal'),
-                    tabChecks: modal.querySelector('#tabChecks')
-                };
+                const tab1 = modal.querySelector('#tabContent1');
+                const tab2 = modal.querySelector('#tabContent2');
+                const tab3 = modal.querySelector('#tabContent3');
+                const tab4 = modal.querySelector('#tabContent4');
+                const tab5 = modal.querySelector('#tabContent5');
+                const allContents = [tab1, tab2, tab3, tab4, tab5];
                 
-                // Tab click handlers
-                tabBtns.forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const tabId = btn.getAttribute('data-tab');
-                        
-                        // Update button active state
-                        tabBtns.forEach(b => b.classList.remove('active'));
-                        btn.classList.add('active');
-                        
-                        // Hide all content
-                        Object.values(tabContents).forEach(content => {
-                            if (content) content.style.display = 'none';
-                        });
-                        
-                        // Show selected content
-                        if (tabContents[tabId]) {
-                            tabContents[tabId].style.display = 'block';
+                // Function to show specific tab
+                function showTab(tabNumber) {
+                    // Hide all contents
+                    allContents.forEach(content => {
+                        if (content) content.style.display = 'none';
+                    });
+                    // Show selected content
+                    const selectedContent = modal.querySelector(`#tabContent${tabNumber}`);
+                    if (selectedContent) selectedContent.style.display = 'block';
+                    
+                    // Update button active states
+                    tabBtns.forEach((btn, index) => {
+                        if (index + 1 === tabNumber) {
+                            btn.classList.add('active');
+                        } else {
+                            btn.classList.remove('active');
                         }
+                    });
+                }
+                
+                // Add click handlers to tabs
+                tabBtns.forEach((btn, index) => {
+                    btn.addEventListener('click', () => {
+                        showTab(index + 1);
                     });
                 });
                 
-                // Attach handlers
+                // Show first tab by default
+                showTab(1);
+                
+                // Attach all handlers
                 attachCVHandlersInModal(modal, app.userEmail, app.id);
                 attachCheckStageHandlers(modal, app.userEmail, app.id, app.status);
                 attachExternalReviewerHandlers(modal, app.userEmail, app.id);
             }
         });
+        
     } catch (error) {
         console.error('Error viewing application:', error);
         Swal.fire({ icon: 'error', title: 'Error', text: 'Application not found!' });
@@ -1870,14 +1885,20 @@ async function openSuperuserSettings() {
             
             <div id="tabSuperadmins" class="settings-tab-pane" style="display: block;">
                 <div class="settings-card"><div class="settings-card-header"><i class="fas fa-crown"></i> Super Admin Accounts</div><div class="settings-card-body">
-                    <div class="add-item-bar"><input type="email" id="newSuperAdminEmail" placeholder="email@xu.edu.ph"><button id="addSuperAdminBtn" class="btn-primary"><i class="fas fa-plus"></i> Add</button></div>
+                    <div class="add-item-bar">
+                        <input type="email" id="newSuperAdminEmail" placeholder="email@xu.edu.ph" autocomplete="off" autofill="off" name="no-autofill">
+                        <button id="addSuperAdminBtn" class="btn-primary"><i class="fas fa-plus"></i> Add</button>
+                    </div>
                     <table class="settings-table"><thead><tr><th>Email</th><th>Actions</th></tr></thead><tbody id="superAdminsList">${superAdmins.map(email => `<tr><td>${escapeHtml(email)}</td><td><button class="remove-superadmin-btn btn-danger" data-email="${escapeHtml(email)}">Remove</button></td></tr>`).join('')}${superAdmins.length === 0 ? '<tr><td colspan="2" class="empty-state">No super admins</td></tr>' : ''}</tbody></table>
                 </div></div></div>
             
             <div id="tabAdmins" class="settings-tab-pane" style="display: none;">
                 <div class="settings-card"><div class="settings-card-header"><i class="fas fa-user-shield"></i> Admin Users</div><div class="settings-card-body">
-                    <div class="add-item-bar"><input type="email" id="newAdminEmail" placeholder="email@xu.edu.ph"><button id="addAdminBtn" class="btn-primary"><i class="fas fa-plus"></i> Add</button></div>
-                    <table class="settings-table"><thead><tr><th>Email</th><th>Actions</th></tr></thead><tbody id="adminsList">${adminEmails.map(email => `<tr><td>${escapeHtml(email)}</td><td><button class="remove-admin-btn btn-danger" data-email="${escapeHtml(email)}">Remove</button></td></tr>`).join('')}${adminEmails.length === 0 ? '<tr><td colspan="2" class="empty-state">No admin users</td></tr>' : ''}</tbody></table>
+                    <div class="add-item-bar">
+                        <input type="email" id="newAdminEmail" placeholder="email@xu.edu.ph" autocomplete="off" autofill="off" name="no-autofill">
+                        <button id="addAdminBtn" class="btn-primary"><i class="fas fa-plus"></i> Add</button>
+                    </div>
+                    <table class="settings-table"><thead><tr><th>Email</th><th>Actions</th></tr></thead><tbody id="adminsList">${adminEmails.map(email => `<td>${escapeHtml(email)}</td><td><button class="remove-admin-btn btn-danger" data-email="${escapeHtml(email)}">Remove</button></td></tr>`).join('')}${adminEmails.length === 0 ? '<tr><td colspan="2" class="empty-state">No admin users</td></tr>' : ''}</tbody></table>
                 </div></div></div>
             
             <div id="tabCheckers" class="settings-tab-pane" style="display: none;">
@@ -1891,7 +1912,11 @@ async function openSuperuserSettings() {
             
             <div id="tabReviewers" class="settings-tab-pane" style="display: none;">
                 <div class="settings-card"><div class="settings-card-header"><i class="fas fa-users"></i> External Reviewers Pool</div><div class="settings-card-body">
-                    <div class="add-item-bar"><input type="email" id="newReviewerEmail" placeholder="reviewer@xu.edu.ph"><input type="text" id="newReviewerName" placeholder="Full Name (optional)"><button id="addReviewerBtn" class="btn-primary"><i class="fas fa-plus"></i> Add</button></div>
+                    <div class="add-item-bar">
+                        <input type="email" id="newReviewerEmail" placeholder="reviewer@xu.edu.ph" autocomplete="off" autofill="off" name="no-autofill">
+                        <input type="text" id="newReviewerName" placeholder="Full Name (optional)" autocomplete="off">
+                        <button id="addReviewerBtn" class="btn-primary"><i class="fas fa-plus"></i> Add</button>
+                    </div>
                     <table class="settings-table"><thead><tr><th>Email</th><th>Name</th><th>Actions</th></tr></thead><tbody id="reviewersList">${externalReviewers.map(r => `<tr><td>${escapeHtml(r.email)}</td><td>${escapeHtml(r.name || '')}</td><td><button class="remove-reviewer-pool-btn btn-danger" data-email="${escapeHtml(r.email)}">Remove</button></td></tr>`).join('')}${externalReviewers.length === 0 ? '<tr><td colspan="3" class="empty-state">No external reviewers</td></tr>' : ''}</tbody></table>
                 </div></div></div>
             
@@ -1933,6 +1958,7 @@ async function openSuperuserSettings() {
             
             tabBtns.forEach(btn => btn.addEventListener('click', () => switchTab(btn.getAttribute('data-tab'))));
             
+            // Add Super Admin - Clear input after add
             modal.querySelector('#addSuperAdminBtn')?.addEventListener('click', async () => {
                 const email = modal.querySelector('#newSuperAdminEmail').value;
                 if (!email) { Swal.fire('Error', 'Please enter an email', 'error'); return; }
@@ -1958,6 +1984,7 @@ async function openSuperuserSettings() {
                 });
             });
             
+            // Add Admin - Clear input after add
             modal.querySelector('#addAdminBtn')?.addEventListener('click', async () => {
                 const email = modal.querySelector('#newAdminEmail').value;
                 if (!email) { Swal.fire('Error', 'Please enter an email', 'error'); return; }
@@ -1983,6 +2010,7 @@ async function openSuperuserSettings() {
                 });
             });
             
+            // Save Checker Roles
             modal.querySelectorAll('.save-role-btn').forEach(btn => {
                 btn.addEventListener('click', async () => {
                     const role = btn.getAttribute('data-role');
@@ -1999,6 +2027,7 @@ async function openSuperuserSettings() {
                 });
             });
             
+            // Add External Reviewer - Clear inputs after add
             modal.querySelector('#addReviewerBtn')?.addEventListener('click', async () => {
                 const email = modal.querySelector('#newReviewerEmail').value;
                 const name = modal.querySelector('#newReviewerName').value;
