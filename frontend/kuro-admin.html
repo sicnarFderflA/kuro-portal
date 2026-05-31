@@ -1184,16 +1184,6 @@ async function viewApplicationDetails(appId) {
         const contentExternal = renderExternalReviewersContent(app);
         const contentChecks = renderCheckStagesContent(app);
         
-        console.log('Content lengths:', {
-            form1: contentForm1.length,
-            form2: contentForm2.length,
-            cv: contentCV.length,
-            external: contentExternal.length,
-            checks: contentChecks.length
-        });
-        console.log('External content preview:', contentExternal.substring(0, 200));
-        console.log('Checks content preview:', contentChecks.substring(0, 200));
-
         const modalHtml = `
             <div style="max-height: 65vh; overflow-y: auto; padding-right: 5px;">
                 <!-- Header Info -->
@@ -1216,12 +1206,12 @@ async function viewApplicationDetails(appId) {
                     <button class="modal-detail-tab" data-tab="5"><i class="fas fa-check-double"></i> Check Stages</button>
                 </div>
                 
-                <!-- Tab Contents -->
-                <div id="tabContent1" class="modal-tab-content" style="display: block;">${contentForm1}</div>
-                <div id="tabContent2" class="modal-tab-content" style="display: none;">${contentForm2}</div>
-                <div id="tabContent3" class="modal-tab-content" style="display: none;">${contentCV}</div>
-                <div id="tabContent4" class="modal-tab-content" style="display: none;">${contentExternal}</div>
-                <div id="tabContent5" class="modal-tab-content" style="display: none;">${contentChecks}</div>
+                <!-- Tab Contents - Note: No CSS classes, just IDs -->
+                <div id="tabContent1" style="display: block; padding: 0.5rem 0;">${contentForm1}</div>
+                <div id="tabContent2" style="display: none; padding: 0.5rem 0;">${contentForm2}</div>
+                <div id="tabContent3" style="display: none; padding: 0.5rem 0;">${contentCV}</div>
+                <div id="tabContent4" style="display: none; padding: 0.5rem 0;">${contentExternal}</div>
+                <div id="tabContent5" style="display: none; padding: 0.5rem 0;">${contentChecks}</div>
             </div>
         `;
         
@@ -1235,40 +1225,40 @@ async function viewApplicationDetails(appId) {
             didOpen: (modal) => {
                 // Get all tab buttons and content divs
                 const tabBtns = modal.querySelectorAll('.modal-detail-tab');
-                const tabContent1 = modal.querySelector('#tabContent1');
-                const tabContent2 = modal.querySelector('#tabContent2');
-                const tabContent3 = modal.querySelector('#tabContent3');
-                const tabContent4 = modal.querySelector('#tabContent4');
-                const tabContent5 = modal.querySelector('#tabContent5');
+                const tab1 = modal.querySelector('#tabContent1');
+                const tab2 = modal.querySelector('#tabContent2');
+                const tab3 = modal.querySelector('#tabContent3');
+                const tab4 = modal.querySelector('#tabContent4');
+                const tab5 = modal.querySelector('#tabContent5');
                 
-                console.log('Tab content elements:', {
-                    tab1: tabContent1,
-                    tab2: tabContent2,
-                    tab3: tabContent3,
-                    tab4: tabContent4,
-                    tab5: tabContent5
+                console.log('Tab elements found:', {
+                    tab1: !!tab1,
+                    tab2: !!tab2,
+                    tab3: !!tab3,
+                    tab4: !!tab4,
+                    tab5: !!tab5
                 });
                 
                 // Function to show specific tab
                 function showTab(tabNumber) {
                     console.log('Showing tab:', tabNumber);
-                    // Hide all contents
-                    if (tabContent1) tabContent1.style.display = 'none';
-                    if (tabContent2) tabContent2.style.display = 'none';
-                    if (tabContent3) tabContent3.style.display = 'none';
-                    if (tabContent4) tabContent4.style.display = 'none';
-                    if (tabContent5) tabContent5.style.display = 'none';
+                    // Hide all tabs
+                    if (tab1) tab1.style.display = 'none';
+                    if (tab2) tab2.style.display = 'none';
+                    if (tab3) tab3.style.display = 'none';
+                    if (tab4) tab4.style.display = 'none';
+                    if (tab5) tab5.style.display = 'none';
                     
-                    // Show selected content
-                    if (tabNumber === 1 && tabContent1) tabContent1.style.display = 'block';
-                    if (tabNumber === 2 && tabContent2) tabContent2.style.display = 'block';
-                    if (tabNumber === 3 && tabContent3) tabContent3.style.display = 'block';
-                    if (tabNumber === 4 && tabContent4) tabContent4.style.display = 'block';
-                    if (tabNumber === 5 && tabContent5) tabContent5.style.display = 'block';
+                    // Show selected tab
+                    if (tabNumber === 1 && tab1) tab1.style.display = 'block';
+                    if (tabNumber === 2 && tab2) tab2.style.display = 'block';
+                    if (tabNumber === 3 && tab3) tab3.style.display = 'block';
+                    if (tabNumber === 4 && tab4) tab4.style.display = 'block';
+                    if (tabNumber === 5 && tab5) tab5.style.display = 'block';
                     
                     // Update button active states
                     tabBtns.forEach((btn, index) => {
-                        if ((index + 1) === tabNumber) {
+                        if (index + 1 === tabNumber) {
                             btn.classList.add('active');
                         } else {
                             btn.classList.remove('active');
