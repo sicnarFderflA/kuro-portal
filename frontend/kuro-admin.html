@@ -740,6 +740,17 @@
             .filter-search { max-width: 100%; }
             .actions-cell { flex-direction: column; gap: 0.2rem; }
         }
+
+        /* Override any hiding issues */
+        .modal-tab-content,
+        #tabContent1, #tabContent2, #tabContent3, #tabContent4, #tabContent5 {
+            display: block !important;
+        }
+
+        /* But we'll control visibility via inline styles, so remove the default hiding */
+        .modal-tab-content {
+            display: block !important;
+        }
     </style>
 </head>
 <body>
@@ -1241,40 +1252,44 @@ async function viewApplicationDetails(appId) {
                 
                 // Function to show specific tab
                 function showTab(tabNumber) {
-                    console.log('Showing tab:', tabNumber);
-                    // Hide all tabs
-                    if (tab1) tab1.style.display = 'none';
-                    if (tab2) tab2.style.display = 'none';
-                    if (tab3) tab3.style.display = 'none';
-                    if (tab4) tab4.style.display = 'none';
-                    if (tab5) tab5.style.display = 'none';
-                    
-                    // Show selected tab
-                    if (tabNumber === 1 && tab1) tab1.style.display = 'block';
-                    if (tabNumber === 2 && tab2) tab2.style.display = 'block';
-                    if (tabNumber === 3 && tab3) tab3.style.display = 'block';
-                    if (tabNumber === 4 && tab4) tab4.style.display = 'block';
-                    if (tabNumber === 5 && tab5) tab5.style.display = 'block';
-                    
-                    // Update button active states
-                    tabBtns.forEach((btn, index) => {
-                        if (index + 1 === tabNumber) {
-                            btn.classList.add('active');
-                        } else {
-                            btn.classList.remove('active');
-                        }
-                    });
-                }
+                console.log('Showing tab:', tabNumber);
                 
-                // Add click handlers to tabs
+                // Get all tab content divs
+                const content1 = modal.querySelector('#tabContent1');
+                const content2 = modal.querySelector('#tabContent2');
+                const content3 = modal.querySelector('#tabContent3');
+                const content4 = modal.querySelector('#tabContent4');
+                const content5 = modal.querySelector('#tabContent5');
+                
+                // Force hide all using inline styles with !important
+                if (content1) content1.setAttribute('style', 'display: none !important; padding: 0.5rem 0;');
+                if (content2) content2.setAttribute('style', 'display: none !important; padding: 0.5rem 0;');
+                if (content3) content3.setAttribute('style', 'display: none !important; padding: 0.5rem 0;');
+                if (content4) content4.setAttribute('style', 'display: none !important; padding: 0.5rem 0;');
+                if (content5) content5.setAttribute('style', 'display: none !important; padding: 0.5rem 0;');
+                
+                // Show selected tab
+                if (tabNumber === 1 && content1) content1.setAttribute('style', 'display: block !important; padding: 0.5rem 0;');
+                if (tabNumber === 2 && content2) content2.setAttribute('style', 'display: block !important; padding: 0.5rem 0;');
+                if (tabNumber === 3 && content3) content3.setAttribute('style', 'display: block !important; padding: 0.5rem 0;');
+                if (tabNumber === 4 && content4) content4.setAttribute('style', 'display: block !important; padding: 0.5rem 0;');
+                if (tabNumber === 5 && content5) content5.setAttribute('style', 'display: block !important; padding: 0.5rem 0;');
+                
+                // Update button active states
                 tabBtns.forEach((btn, index) => {
-                    btn.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        const tabNumber = parseInt(btn.getAttribute('data-tab'));
-                        console.log('Tab clicked:', tabNumber);
-                        showTab(tabNumber);
-                    });
+                    if (index + 1 === tabNumber) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
                 });
+                
+                // Log for debugging
+                const selectedContent = tabNumber === 1 ? content1 : (tabNumber === 2 ? content2 : (tabNumber === 3 ? content3 : (tabNumber === 4 ? content4 : content5)));
+                if (selectedContent) {
+                    console.log('Selected tab display after fix:', selectedContent.getAttribute('style'));
+                }
+            }
                 
                 // Show tab 1 by default
                 showTab(1);
