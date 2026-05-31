@@ -1225,27 +1225,36 @@ async function viewApplicationDetails(appId) {
             didOpen: (modal) => {
                 // Get all tab buttons and content divs
                 const tabBtns = modal.querySelectorAll('.modal-detail-tab');
-                const tabContents = {
-                    1: modal.querySelector('#tabContent1'),
-                    2: modal.querySelector('#tabContent2'),
-                    3: modal.querySelector('#tabContent3'),
-                    4: modal.querySelector('#tabContent4'),
-                    5: modal.querySelector('#tabContent5')
-                };
+                const tabContent1 = modal.querySelector('#tabContent1');
+                const tabContent2 = modal.querySelector('#tabContent2');
+                const tabContent3 = modal.querySelector('#tabContent3');
+                const tabContent4 = modal.querySelector('#tabContent4');
+                const tabContent5 = modal.querySelector('#tabContent5');
+                
+                console.log('Tab content elements:', {
+                    tab1: tabContent1,
+                    tab2: tabContent2,
+                    tab3: tabContent3,
+                    tab4: tabContent4,
+                    tab5: tabContent5
+                });
                 
                 // Function to show specific tab
                 function showTab(tabNumber) {
                     console.log('Showing tab:', tabNumber);
                     // Hide all contents
-                    for (let i = 1; i <= 5; i++) {
-                        if (tabContents[i]) {
-                            tabContents[i].style.display = 'none';
-                        }
-                    }
+                    if (tabContent1) tabContent1.style.display = 'none';
+                    if (tabContent2) tabContent2.style.display = 'none';
+                    if (tabContent3) tabContent3.style.display = 'none';
+                    if (tabContent4) tabContent4.style.display = 'none';
+                    if (tabContent5) tabContent5.style.display = 'none';
+                    
                     // Show selected content
-                    if (tabContents[tabNumber]) {
-                        tabContents[tabNumber].style.display = 'block';
-                    }
+                    if (tabNumber === 1 && tabContent1) tabContent1.style.display = 'block';
+                    if (tabNumber === 2 && tabContent2) tabContent2.style.display = 'block';
+                    if (tabNumber === 3 && tabContent3) tabContent3.style.display = 'block';
+                    if (tabNumber === 4 && tabContent4) tabContent4.style.display = 'block';
+                    if (tabNumber === 5 && tabContent5) tabContent5.style.display = 'block';
                     
                     // Update button active states
                     tabBtns.forEach((btn, index) => {
@@ -1267,8 +1276,7 @@ async function viewApplicationDetails(appId) {
                     });
                 });
                 
-                // Also add click handlers to any buttons inside tabs that might need to switch
-                // Make sure tab 1 is visible by default
+                // Show tab 1 by default
                 showTab(1);
                 
                 // Attach all handlers
@@ -1459,10 +1467,14 @@ function renderCVReviewContent(app) {
 
 // Render External Reviewers Content
 function renderExternalReviewersContent(app) {
+    console.log('renderExternalReviewersContent called with app:', app);
+    console.log('assignedReviewers:', app.assignedReviewers);
+    
     let assignedReviewers = app.assignedReviewers || [];
     let html = '<div class="detail-section"><h4>👥 External Reviewers</h4><p style="font-size:0.75rem; margin-bottom:1rem;">External reviewers assigned to evaluate this application.</p>';
     
     if (assignedReviewers.length > 0) {
+        html += '<div style="margin-bottom: 1rem;">';
         for (let i = 0; i < assignedReviewers.length; i++) {
             const reviewer = assignedReviewers[i];
             const hasReview = reviewer.status === 'completed';
@@ -1478,6 +1490,7 @@ function renderExternalReviewersContent(app) {
                 </div>
             </div>`;
         }
+        html += '</div>';
     } else {
         html += '<div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; text-align: center; color: #666;"><i class="fas fa-info-circle"></i> No external reviewers assigned yet.</div>';
     }
@@ -1493,11 +1506,15 @@ function renderExternalReviewersContent(app) {
         html += `<div class="demo-note" style="margin-top: 1rem; text-align: center;"><i class="fas fa-lock"></i> Only Check 3 and Super Admin can assign external reviewers.</div>`;
     }
     
+    console.log('External reviewers HTML length:', html.length);
     return html;
 }
 
 // Render Check Stages Content
 function renderCheckStagesContent(app) {
+    console.log('renderCheckStagesContent called with app:', app);
+    console.log('Current status:', app.status);
+    
     const currentStatus = app.status;
     
     // Calculate progress
@@ -1623,6 +1640,7 @@ function renderCheckStagesContent(app) {
         </div>`;
     }
     
+    console.log('Check stages HTML length:', html.length);
     return html;
 }
 
