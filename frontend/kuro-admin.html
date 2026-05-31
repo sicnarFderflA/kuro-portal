@@ -1477,6 +1477,12 @@ function renderExternalReviewersContent(app) {
 function renderCheckStagesContent(app) {
     const currentStatus = app.status;
     
+    // Re-evaluate roles at render time so async-loaded checkerRoles is used
+    const currentUserRole = getUserCheckerRole(currentUser.email);
+    const canCheck1 = isSuperAdmin || currentUserRole === 'check1';
+    const canCheck2 = isSuperAdmin || currentUserRole === 'check2';
+    const canCheck3 = isSuperAdmin || currentUserRole === 'check3';
+    
     // Calculate progress
     let completedCount = 0;
     if (currentStatus === 'Pending Secondary Check') completedCount = 1;
@@ -1523,7 +1529,7 @@ function renderCheckStagesContent(app) {
     // Check 1 Details
     const isCheck1Completed = completedCount >= 1;
     const isCheck1Current = currentStatus === 'Pending Eligibility Check';
-    const canActOnCheck1 = (isSuperAdmin || isCheck1) && isCheck1Current;
+    const canActOnCheck1 = canCheck1 && isCheck1Current;
     
     html += `<div style="margin-bottom: 1rem; background: ${isCheck1Completed ? '#f0fff4' : (isCheck1Current ? '#e8f0fe' : '#f8f9fa')}; border-radius: 0.8rem; padding: 1rem; border-left: 4px solid ${isCheck1Completed ? '#2ecc71' : (isCheck1Current ? '#3498db' : '#ddd')};">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
@@ -1555,7 +1561,7 @@ function renderCheckStagesContent(app) {
     // Check 2 Details
     const isCheck2Completed = completedCount >= 2;
     const isCheck2Current = currentStatus === 'Pending Secondary Check';
-    const canActOnCheck2 = (isSuperAdmin || isCheck2) && isCheck2Current;
+    const canActOnCheck2 = canCheck2 && isCheck2Current;
     
     html += `<div style="margin-bottom: 1rem; background: ${isCheck2Completed ? '#f0fff4' : (isCheck2Current ? '#e8f0fe' : '#f8f9fa')}; border-radius: 0.8rem; padding: 1rem; border-left: 4px solid ${isCheck2Completed ? '#2ecc71' : (isCheck2Current ? '#3498db' : '#ddd')};">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
@@ -1587,7 +1593,7 @@ function renderCheckStagesContent(app) {
     // Check 3 Details
     const isCheck3Completed = completedCount >= 3;
     const isCheck3Current = currentStatus === 'Pending Final Check';
-    const canActOnCheck3 = (isSuperAdmin || isCheck3) && isCheck3Current;
+    const canActOnCheck3 = canCheck3 && isCheck3Current;
     
     html += `<div style="margin-bottom: 1rem; background: ${isCheck3Completed ? '#f0fff4' : (isCheck3Current ? '#e8f0fe' : '#f8f9fa')}; border-radius: 0.8rem; padding: 1rem; border-left: 4px solid ${isCheck3Completed ? '#2ecc71' : (isCheck3Current ? '#3498db' : '#ddd')};">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
