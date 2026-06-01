@@ -396,16 +396,6 @@ const API_URL = 'https://kuro-api-m4mb.onrender.com';
 // Allowed domains (standard)
 const ALLOWED_DOMAINS = ['xu.edu.ph', 'my.xu.edu.ph'];
 
-// Test emails for development (remove in production)
-const TEST_EMAILS = {
-    faculty: ['testfaculty@gmail.com', 'faculty@test.com'],
-    student: ['teststudent@gmail.com', 'student@test.com'],
-    admin: ['testadmin@gmail.com', 'admin@test.com'],
-    check1: ['check1@test.com', 'eligibility@test.com'],
-    check2: ['check2@test.com', 'secondary@test.com'],
-    check3: ['check3@test.com', 'final@test.com']
-};
-
 let selectedRole = null;
 let cachedSuperAdmins = null;
 let cachedAdmins = null;
@@ -451,10 +441,58 @@ async function isAdmin(email) {
     return admins.map(e => e.toLowerCase()).includes(email.toLowerCase());
 }
 
+// ==================== TEST EMAIL MANAGEMENT ====================
+let dynamicTestEmails = {
+    faculty: [],
+    student: [],
+    admin: [],
+    check1: [],
+    check2: [],
+    check3: []
+};
+
+async function fetchTestEmails() {
+    try {
+        const response = await fetch(`${API_URL}/api/admin/test-emails`);
+        if (response.ok) {
+            const testEmails = await response.json();
+            // Reset the object
+            dynamicTestEmails = {
+                faculty: [],
+                student: [],
+                admin: [],
+                check1: [],
+                check2: [],
+                check3: []
+            };
+            // Populate based on role
+            testEmails.forEach(item => {
+                if (item.isActive && dynamicTestEmails[item.role]) {
+                    dynamicTestEmails[item.role].push(item.email.toLowerCase());
+                }
+            });
+            console.log('Loaded test emails:', dynamicTestEmails);
+            return true;
+        }
+    } catch (error) {
+        console.error('Failed to fetch test emails:', error);
+    }
+    // Fallback to hardcoded defaults if API fails
+    dynamicTestEmails = {
+        faculty: ['testfaculty@gmail.com', 'faculty@test.com'],
+        student: ['teststudent@gmail.com', 'student@test.com'],
+        admin: ['testadmin@gmail.com', 'admin@test.com'],
+        check1: ['check1@test.com', 'eligibility@test.com'],
+        check2: ['check2@test.com', 'secondary@test.com'],
+        check3: ['check3@test.com', 'final@test.com']
+    };
+    return false;
+}
+
 function isTestEmail(email) {
     email = email.toLowerCase();
-    for (let role in TEST_EMAILS) {
-        if (TEST_EMAILS[role] && TEST_EMAILS[role].includes(email)) {
+    for (let role in dynamicTestEmails) {
+        if (dynamicTestEmails[role] && dynamicTestEmails[role].includes(email)) {
             return true;
         }
     }
@@ -463,12 +501,12 @@ function isTestEmail(email) {
 
 function getTestRole(email) {
     email = email.toLowerCase();
-    if (TEST_EMAILS.faculty && TEST_EMAILS.faculty.includes(email)) return 'faculty';
-    if (TEST_EMAILS.student && TEST_EMAILS.student.includes(email)) return 'student';
-    if (TEST_EMAILS.admin && TEST_EMAILS.admin.includes(email)) return 'admin';
-    if (TEST_EMAILS.check1 && TEST_EMAILS.check1.includes(email)) return 'check1';
-    if (TEST_EMAILS.check2 && TEST_EMAILS.check2.includes(email)) return 'check2';
-    if (TEST_EMAILS.check3 && TEST_EMAILS.check3.includes(email)) return 'check3';
+    if (dynamicTestEmails.faculty?.includes(email)) return 'faculty';
+    if (dynamicTestEmails.student?.includes(email)) return 'student';
+    if (dynamicTestEmails.admin?.includes(email)) return 'admin';
+    if (dynamicTestEmails.check1?.includes(email)) return 'check1';
+    if (dynamicTestEmails.check2?.includes(email)) return 'check2';
+    if (dynamicTestEmails.check3?.includes(email)) return 'check3';
     return null;
 }
 
@@ -532,10 +570,15 @@ function parseJwt(token) {
 async function validateAndRedirect(email, name, picture) {
     const domain = getDomain(email);
     const isTest = isTestEmail(email);
+    
+    // ========== STEP 1: ALWAYS CHECK EXEMPTED/SUPER ADMIN FIRST ==========
     const isSuperAdminUser = await isSuperAdmin(email);
     const isAdminUser = await isAdmin(email);
     
-    console.log("Validating:", { email, domain, selectedRole, isSuperAdminUser, isAdminUser, isTest });
+    console.log("Validation checks:", { 
+        email, domain, selectedRole, 
+        isSuperAdminUser, isAdminUser, isTest 
+    });
     
     // Show exemption message for super admins
     const exemptionDiv = document.getElementById('exemptionMessage');
@@ -543,41 +586,65 @@ async function validateAndRedirect(email, name, picture) {
         exemptionDiv.style.display = isSuperAdminUser ? 'block' : 'none';
     }
     
-    // Domain check - skip for super admins and test emails
-    if (!isSuperAdminUser && !isAdminUser && !isTest) {
-        if (!ALLOWED_DOMAINS.includes(domain)) {
-            showError(`Access Denied: ${email} is not a Xavier University email (@xu.edu.ph or @my.xu.edu.ph).`);
-            return false;
+    // ========== STEP 2: SUPER ADMIN BYPASSES ALL DOMAIN CHECKS ==========
+    // Super admins can log in as ANY role regardless of domain
+    if (isSuperAdminUser) {
+        console.log("Super admin detected - bypassing domain restrictions");
+        
+        if (selectedRole === 'student') {
+            redirectToStudent(email, name, picture, true);
+            return true;
         }
+        if (selectedRole === 'faculty') {
+            redirectToFaculty(email, name, picture, true);
+            return true;
+        }
+        if (selectedRole === 'admin') {
+            redirectToAdmin(email, name, picture, true);
+            return true;
+        }
+        showError("Please select a valid role.");
+        return false;
     }
     
-    // Role-specific validation
+    // ========== STEP 3: DOMAIN CHECK FOR NORMAL USERS ==========
+    // Only check domain for non-super-admin users
+    if (!isTest && !ALLOWED_DOMAINS.includes(domain)) {
+        showError(`Access Denied: ${email} is not a Xavier University email (@xu.edu.ph or @my.xu.edu.ph).`);
+        return false;
+    }
+    
+    // ========== STEP 4: ROLE-SPECIFIC VALIDATION ==========
+    
+    // Student Role
     if (selectedRole === 'student') {
-        // Allow super admins and test emails to bypass domain restriction
-        if (!isSuperAdminUser && !isTest && domain !== 'my.xu.edu.ph') {
+        // Allow test emails to bypass domain restriction
+        if (!isTest && domain !== 'my.xu.edu.ph') {
             showError(`You selected "Student" but ${email} is not a @my.xu.edu.ph account.`);
             return false;
         }
-        redirectToStudent(email, name, picture, isSuperAdminUser);
+        redirectToStudent(email, name, picture, false);
         return true;
     }
     
+    // Faculty Role
     if (selectedRole === 'faculty') {
-        if (!isSuperAdminUser && !isTest && domain !== 'xu.edu.ph') {
+        if (!isTest && domain !== 'xu.edu.ph') {
             showError(`You selected "Faculty" but ${email} is not a @xu.edu.ph account.`);
             return false;
         }
-        redirectToFaculty(email, name, picture, isSuperAdminUser);
+        redirectToFaculty(email, name, picture, false);
         return true;
     }
     
+    // Admin Role
     if (selectedRole === 'admin') {
-        // Allow super admin OR admin email OR test admin email
-        if (!isSuperAdminUser && !isAdminUser && !isTest) {
+        // Allow admin users OR test admin emails
+        if (!isAdminUser && !isTest) {
             showError(`You selected "Admin" but ${email} is not an authorized admin account.`);
             return false;
         }
-        redirectToAdmin(email, name, picture, isSuperAdminUser);
+        redirectToAdmin(email, name, picture, false);
         return true;
     }
     
@@ -719,7 +786,7 @@ async function checkExistingSession() {
         const user = JSON.parse(existingUser);
         const isSuperAdminUser = await isSuperAdmin(user.email);
         const isAdminUser = await isAdmin(user.email);
-        const isTest = isTestEmail(user.email);
+        const isTest = isTestEmail(user.email);  // Now uses dynamic
         const domain = getDomain(user.email);
         
         const isValidDomain = ALLOWED_DOMAINS.includes(domain) || isSuperAdminUser || isTest;
@@ -742,9 +809,12 @@ async function checkExistingSession() {
     }
 }
 
-// Initialize
-checkExistingSession();
-initGoogleSignIn();
+(async function() {
+    await fetchTestEmails();
+    await checkExistingSession();
+    initGoogleSignIn();
+})();
+
 </script>
 </body>
 </html>

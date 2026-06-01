@@ -387,6 +387,33 @@ async function removeExternalReviewerFromPool(email) {
     });
 }
 
+// ============ TEST EMAIL API ============
+
+async function getTestEmails() {
+    return apiRequest('/admin/test-emails');
+}
+
+async function addTestEmail(email, role, name, description) {
+    return apiRequest('/admin/test-emails', {
+        method: 'POST',
+        body: JSON.stringify({ email, role, name, description, addedBy: getCurrentUserEmail() })
+    });
+}
+
+async function updateTestEmail(id, data) {
+    return apiRequest(`/admin/test-emails/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ ...data, updatedBy: getCurrentUserEmail() })
+    });
+}
+
+async function deleteTestEmail(id) {
+    return apiRequest(`/admin/test-emails/${id}`, {
+        method: 'DELETE',
+        body: JSON.stringify({ removedBy: getCurrentUserEmail() })
+    });
+}
+
 // ==================== EXPORT ====================
 window.KURO_API = {
     // Auth
@@ -449,7 +476,8 @@ window.KURO_API = {
     // Admin Management
     getSuperAdmins, addSuperAdmin, removeSuperAdmin,
     getAdmins, addAdmin, removeAdmin,
-    getExternalReviewers, addExternalReviewerToPool, removeExternalReviewerFromPool
+    getExternalReviewers, addExternalReviewerToPool, removeExternalReviewerFromPool,
+    getTestEmails, addTestEmail, updateTestEmail, deleteTestEmail
 };
 
 console.log('KURO_API loaded successfully with admin methods');

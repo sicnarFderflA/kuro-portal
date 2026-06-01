@@ -1952,7 +1952,6 @@ async function deleteApplicationHandler(appId) {
 }
 
 // ============ SUPER ADMIN SETTINGS ============
-
 async function openSuperuserSettings() {
     if (!isSuperAdmin) {
         Swal.fire({ icon: 'error', title: 'Access Denied', text: 'Only Super Admin can access these settings.' });
@@ -1963,18 +1962,44 @@ async function openSuperuserSettings() {
     Swal.fire({ title: 'Loading Settings...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
     
     // Load data
-    let superAdmins = [], adminEmails = [], checkerRoles = {}, externalReviewers = [], auditLogs = [];
+    let superAdmins = [], adminEmails = [], checkerRoles = {}, externalReviewers = [], auditLogs = [], testEmails = [];
     try {
-        [superAdmins, adminEmails, checkerRoles, externalReviewers, auditLogs] = await Promise.all([
+        [superAdmins, adminEmails, checkerRoles, externalReviewers, auditLogs, testEmails] = await Promise.all([
             KURO_API.getSuperAdmins().catch(() => []),
             KURO_API.getAdmins().catch(() => []),
             KURO_API.getCheckerRoles().catch(() => ({ check1: '', check2: '', check3: '' })),
             KURO_API.getExternalReviewers().catch(() => []),
-            KURO_API.getAuditLog().catch(() => [])
+            KURO_API.getAuditLog().catch(() => []),
+            KURO_API.getTestEmails().catch(() => [])
         ]);
     } catch(e) { console.error('Failed to load settings:', e); }
     
     Swal.close();
+    
+    // Helper function to render test emails table
+    const renderTestEmailsTable = () => {
+        const roleNames = {
+            student: '🎓 Student',
+            faculty: '👨‍🏫 Faculty',
+            admin: '👑 Admin',
+            check1: '🔍 Check 1',
+            check2: '📋 Check 2',
+            check3: '✅ Check 3'
+        };
+        
+        if (testEmails.length === 0) {
+            return '<tr><td colspan="4" class="empty-state">No test emails configured</td></tr>';
+        }
+        
+        return testEmails.map(email => `
+            <tr>
+                <td>${escapeHtml(email.email)}</td>
+                <td><span style="background: var(--primary); color: white; padding: 0.2rem 0.6rem; border-radius: 20px;">${roleNames[email.role] || email.role}</span></td>
+                <td>${escapeHtml(email.name || '-')}</td>
+                <td><button class="remove-test-email-btn btn-danger" data-id="${email._id}" data-email="${escapeHtml(email.email)}">Remove</button></td>
+            </tr>
+        `).join('');
+    };
     
     const modalHtml = `
         <div style="max-height: 70vh; overflow-y: auto; padding-right: 0.5rem;">
@@ -1984,12 +2009,13 @@ async function openSuperuserSettings() {
                 <button class="settings-tab-btn" data-tab="checkers" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.2rem; background: none; border: none; cursor: pointer; font-weight: 600; color: #666; border-bottom: 3px solid transparent;"><i class="fas fa-check-double"></i> Checker Roles</button>
                 <button class="settings-tab-btn" data-tab="reviewers" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.2rem; background: none; border: none; cursor: pointer; font-weight: 600; color: #666; border-bottom: 3px solid transparent;"><i class="fas fa-users"></i> Reviewers Pool</button>
                 <button class="settings-tab-btn" data-tab="audit" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.2rem; background: none; border: none; cursor: pointer; font-weight: 600; color: #666; border-bottom: 3px solid transparent;"><i class="fas fa-history"></i> Audit Log</button>
+                <button class="settings-tab-btn" data-tab="testaccounts" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.2rem; background: none; border: none; cursor: pointer; font-weight: 600; color: #666; border-bottom: 3px solid transparent;"><i class="fas fa-vial"></i> Test Accounts</button>
             </div>
             
             <div id="tabSuperadmins" class="settings-tab-pane" style="display: block;">
                 <div class="settings-card"><div class="settings-card-header"><i class="fas fa-crown"></i> Super Admin Accounts</div><div class="settings-card-body">
                     <div class="add-item-bar">
-                        <input type="email" id="newSuperAdminEmail" placeholder="email@xu.edu.ph" autocomplete="off" autofill="off" name="no-autofill">
+                        <input type="email" id="newSuperAdminEmail" placeholder="email@xu.edu.ph" autocomplete="off">
                         <button id="addSuperAdminBtn" class="btn-primary"><i class="fas fa-plus"></i> Add</button>
                     </div>
                     <table class="settings-table"><thead><tr><th>Email</th><th>Actions</th></tr></thead><tbody id="superAdminsList">${superAdmins.map(email => `<tr><td>${escapeHtml(email)}</td><td><button class="remove-superadmin-btn btn-danger" data-email="${escapeHtml(email)}">Remove</button></td></tr>`).join('')}${superAdmins.length === 0 ? '<tr><td colspan="2" class="empty-state">No super admins</td></tr>' : ''}</tbody></table>
@@ -1998,10 +2024,10 @@ async function openSuperuserSettings() {
             <div id="tabAdmins" class="settings-tab-pane" style="display: none;">
                 <div class="settings-card"><div class="settings-card-header"><i class="fas fa-user-shield"></i> Admin Users</div><div class="settings-card-body">
                     <div class="add-item-bar">
-                        <input type="email" id="newAdminEmail" placeholder="email@xu.edu.ph" autocomplete="off" autofill="off" name="no-autofill">
+                        <input type="email" id="newAdminEmail" placeholder="email@xu.edu.ph" autocomplete="off">
                         <button id="addAdminBtn" class="btn-primary"><i class="fas fa-plus"></i> Add</button>
                     </div>
-                    <table class="settings-table"><thead><tr><th>Email</th><th>Actions</th></tr></thead><tbody id="adminsList">${adminEmails.map(email => `<td>${escapeHtml(email)}</td><td><button class="remove-admin-btn btn-danger" data-email="${escapeHtml(email)}">Remove</button></td></tr>`).join('')}${adminEmails.length === 0 ? '<tr><td colspan="2" class="empty-state">No admin users</td></tr>' : ''}</tbody></table>
+                    <table class="settings-table"><thead><tr><th>Email</th><th>Actions</th></tr></thead><tbody id="adminsList">${adminEmails.map(email => `<tr><td>${escapeHtml(email)}</td><td><button class="remove-admin-btn btn-danger" data-email="${escapeHtml(email)}">Remove</button></td></tr>`).join('')}${adminEmails.length === 0 ? '<tr><td colspan="2" class="empty-state">No admin users</td></tr>' : ''}</tbody></table>
                 </div></div></div>
             
             <div id="tabCheckers" class="settings-tab-pane" style="display: none;">
@@ -2016,7 +2042,7 @@ async function openSuperuserSettings() {
             <div id="tabReviewers" class="settings-tab-pane" style="display: none;">
                 <div class="settings-card"><div class="settings-card-header"><i class="fas fa-users"></i> External Reviewers Pool</div><div class="settings-card-body">
                     <div class="add-item-bar">
-                        <input type="email" id="newReviewerEmail" placeholder="reviewer@xu.edu.ph" autocomplete="off" autofill="off" name="no-autofill">
+                        <input type="email" id="newReviewerEmail" placeholder="reviewer@xu.edu.ph" autocomplete="off">
                         <input type="text" id="newReviewerName" placeholder="Full Name (optional)" autocomplete="off">
                         <button id="addReviewerBtn" class="btn-primary"><i class="fas fa-plus"></i> Add</button>
                     </div>
@@ -2028,6 +2054,40 @@ async function openSuperuserSettings() {
                     ${auditLogs.map(log => `<div class="audit-item"><div><strong>${escapeHtml(log.action)}</strong> by ${escapeHtml(log.performedBy)}</div><div class="time">${new Date(log.timestamp).toLocaleString()}</div><div class="details">${JSON.stringify(log.changes)}</div></div>`).join('')}
                     ${auditLogs.length === 0 ? '<div class="empty-state">No audit logs available</div>' : ''}
                 </div></div></div>
+            
+            <div id="tabTestaccounts" class="settings-tab-pane" style="display: none;">
+                <div class="settings-card"><div class="settings-card-header"><i class="fas fa-vial"></i> Test Email Accounts</div>
+                <div class="settings-card-body">
+                    <div class="add-item-bar">
+                        <input type="email" id="newTestEmail" placeholder="test@example.com" autocomplete="off" style="flex: 2;">
+                        <select id="newTestRole" style="padding: 0.6rem 1rem; border: 1px solid #ddd; border-radius: 40px;">
+                            <option value="student">Student</option>
+                            <option value="faculty">Faculty</option>
+                            <option value="admin">Admin</option>
+                            <option value="check1">Check 1</option>
+                            <option value="check2">Check 2</option>
+                            <option value="check3">Check 3</option>
+                        </select>
+                        <input type="text" id="newTestName" placeholder="Name (optional)" autocomplete="off" style="flex: 1;">
+                        <button id="addTestEmailBtn" class="btn-primary"><i class="fas fa-plus"></i> Add</button>
+                    </div>
+                    <table class="settings-table">
+                        <thead>
+                            <tr>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Name</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="testEmailsList">
+                            ${renderTestEmailsTable()}
+                        </tbody>
+                    </table>
+                    <div class="demo-note" style="margin-top: 1rem;">
+                        <i class="fas fa-info-circle"></i> Test emails can log in without domain restrictions. Useful for testing different roles.
+                    </div>
+                </div>
             </div>
         </div>
     `;
@@ -2061,7 +2121,7 @@ async function openSuperuserSettings() {
             
             tabBtns.forEach(btn => btn.addEventListener('click', () => switchTab(btn.getAttribute('data-tab'))));
             
-            // Add Super Admin - Clear input after add
+            // Add Super Admin
             modal.querySelector('#addSuperAdminBtn')?.addEventListener('click', async () => {
                 const email = modal.querySelector('#newSuperAdminEmail').value;
                 if (!email) { Swal.fire('Error', 'Please enter an email', 'error'); return; }
@@ -2087,7 +2147,7 @@ async function openSuperuserSettings() {
                 });
             });
             
-            // Add Admin - Clear input after add
+            // Add Admin
             modal.querySelector('#addAdminBtn')?.addEventListener('click', async () => {
                 const email = modal.querySelector('#newAdminEmail').value;
                 if (!email) { Swal.fire('Error', 'Please enter an email', 'error'); return; }
@@ -2130,7 +2190,7 @@ async function openSuperuserSettings() {
                 });
             });
             
-            // Add External Reviewer - Clear inputs after add
+            // Add External Reviewer
             modal.querySelector('#addReviewerBtn')?.addEventListener('click', async () => {
                 const email = modal.querySelector('#newReviewerEmail').value;
                 const name = modal.querySelector('#newReviewerName').value;
@@ -2152,6 +2212,45 @@ async function openSuperuserSettings() {
                     if (result.isConfirmed) {
                         await KURO_API.removeExternalReviewerFromPool(email);
                         showToast(`Removed ${email}`, 'success');
+                        Swal.close();
+                        openSuperuserSettings();
+                    }
+                });
+            });
+            
+            // ========== TEST EMAILS HANDLERS ==========
+            // Add Test Email
+            modal.querySelector('#addTestEmailBtn')?.addEventListener('click', async () => {
+                const email = modal.querySelector('#newTestEmail').value;
+                const role = modal.querySelector('#newTestRole').value;
+                const name = modal.querySelector('#newTestName').value;
+                
+                if (!email) {
+                    Swal.fire('Error', 'Please enter an email address', 'error');
+                    return;
+                }
+                
+                try {
+                    await KURO_API.addTestEmail(email, role, name, '');
+                    showToast(`Added ${email} as test ${role} account`, 'success');
+                    modal.querySelector('#newTestEmail').value = '';
+                    modal.querySelector('#newTestName').value = '';
+                    Swal.close();
+                    openSuperuserSettings();
+                } catch (error) {
+                    showToast('Failed to add test email', 'error');
+                }
+            });
+            
+            // Remove Test Email
+            modal.querySelectorAll('.remove-test-email-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const id = btn.getAttribute('data-id');
+                    const emailText = btn.getAttribute('data-email');
+                    const result = await Swal.fire({ title: 'Remove Test Email?', text: `Remove ${emailText}?`, icon: 'warning', showCancelButton: true });
+                    if (result.isConfirmed) {
+                        await KURO_API.deleteTestEmail(id);
+                        showToast(`Removed ${emailText}`, 'success');
                         Swal.close();
                         openSuperuserSettings();
                     }

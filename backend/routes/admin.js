@@ -691,4 +691,131 @@ router.get('/audit-log', async (req, res) => {
     }
 });
 
+// Get all test emails
+router.get('/test-emails', async (req, res) => {
+    try {
+        const testEmails = await TestEmail.find({ isActive: true }).sort({ role: 1, email: 1 });
+        res.json(testEmails);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Add test email
+router.post('/test-emails', async (req, res) => {
+    try {
+        const { email, role, name, description, addedBy } = req.body;
+        
+        // Check if email already exists
+        const existing = await TestEmail.findOne({ email });
+        if (existing) {
+            // Reactivate if exists but inactive
+            if (!existing.isActive) {
+                existing.isActive = true;
+                existing.role = role;
+                existing.name = name || existing.name;
+                existing.description = description || existing.description;
+                existing.updatedBy = addedBy;
+                existing.updatedAt = new Date();
+                await existing.save();
+                
+                await AuditLog.create({
+                    action: 'REACTIVATE_TEST_EMAIL',
+                    changes: { email, role },
+                    performedBy: addedBy,
+                    timestamp: new Date()
+                });
+                
+                return res.json({ success: true, testEmail: existing });
+            }
+            return res.status(400).json({ error: 'Email already exists in test emails' });
+        }
+        
+        const testEmail = new TestEmail({
+            email,
+            role,
+            name: name || '',
+            description: description || '',
+            createdBy: addedBy
+        });
+        
+        await testEmail.save();
+        
+        await AuditLog.create({
+            action: 'ADD_TEST_EMAIL',
+            changes: { email, role, name },
+            performedBy: addedBy,
+            timestamp: new Date()
+        });
+        
+        res.json({ success: true, testEmail });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Update test email
+router.put('/test-emails/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { role, name, description, isActive, updatedBy } = req.body;
+        
+        const testEmail = await TestEmail.findById(id);
+        if (!testEmail) {
+            return res.status(404).json({ error: 'Test email not found' });
+        }
+        
+        const oldValues = { role: testEmail.role, isActive: testEmail.isActive };
+        
+        if (role) testEmail.role = role;
+        if (name !== undefined) testEmail.name = name;
+        if (description !== undefined) testEmail.description = description;
+        if (isActive !== undefined) testEmail.isActive = isActive;
+        testEmail.updatedBy = updatedBy;
+        testEmail.updatedAt = new Date();
+        
+        await testEmail.save();
+        
+        await AuditLog.create({
+            action: 'UPDATE_TEST_EMAIL',
+            changes: { email: testEmail.email, old: oldValues, new: { role: testEmail.role, isActive: testEmail.isActive } },
+            performedBy: updatedBy,
+            timestamp: new Date()
+        });
+        
+        res.json({ success: true, testEmail });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Delete test email (soft delete)
+router.delete('/test-emails/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { removedBy } = req.body;
+        
+        const testEmail = await TestEmail.findById(id);
+        if (!testEmail) {
+            return res.status(404).json({ error: 'Test email not found' });
+        }
+        
+        testEmail.isActive = false;
+        testEmail.updatedBy = removedBy;
+        testEmail.updatedAt = new Date();
+        await testEmail.save();
+        
+        await AuditLog.create({
+            action: 'DELETE_TEST_EMAIL',
+            changes: { email: testEmail.email, role: testEmail.role },
+            performedBy: removedBy,
+            timestamp: new Date()
+        });
+        
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 module.exports = router;
