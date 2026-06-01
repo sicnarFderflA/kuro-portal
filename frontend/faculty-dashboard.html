@@ -3359,6 +3359,14 @@ function validateActivityDates(activities) {
 function validateAndHighlightFields(formData, modalElement) {
     const errors = [];
     
+    // Helper: Check if we're editing an existing application
+    const isEditingExisting = isEditMode && editAppId && currentDraftData && Object.keys(currentDraftData).length > 0;
+    
+    // Helper function to safely check if a field has value (from either formData or currentDraftData)
+    function hasValue(value) {
+        return value && value.toString().trim() !== '';
+    }
+    
     function markField(field, errorMessage) {
         if (!field) return;
         const formGroup = field.closest('.form-group, .budget-field, .activity-field');
@@ -3414,116 +3422,95 @@ function validateAndHighlightFields(formData, modalElement) {
         }
     }
     
-    // Helper to safely get element value
-    function getFieldValue(id) {
-        const el = modalElement?.querySelector(`#${id}`) || document.getElementById(id);
-        return el?.value || '';
-    }
-    
     // ========== FORM 1 VALIDATION ==========
     
-    // Project Profile Section
-    if (!formData.proposalTitle || formData.proposalTitle.trim() === '') {
+    // Project Profile - Check if empty AND not editing existing with value
+    if (!hasValue(formData.proposalTitle) && (!isEditingExisting || !hasValue(currentDraftData?.proposalTitle))) {
         const field = modalElement?.querySelector('#projTitle');
         markField(field, 'Project Title is required');
         highlightSubsectionByText('📌 Project Profile');
     }
     
-    if (!formData.piName || formData.piName.trim() === '') {
+    if (!hasValue(formData.piName) && (!isEditingExisting || !hasValue(currentDraftData?.piName))) {
         const field = modalElement?.querySelector('#piName');
         markField(field, 'Principal Investigator name is required');
         highlightSubsectionByText('📌 Project Profile');
     }
     
-    if (!formData.piEmail || formData.piEmail.trim() === '') {
+    if (!hasValue(formData.piEmail) && (!isEditingExisting || !hasValue(currentDraftData?.piEmail))) {
         const field = modalElement?.querySelector('#piEmail');
         markField(field, 'Email Address is required');
         highlightSubsectionByText('📌 Project Profile');
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.piEmail)) {
+    } else if (hasValue(formData.piEmail) && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.piEmail)) {
         const field = modalElement?.querySelector('#piEmail');
         markField(field, 'Valid email address is required');
         highlightSubsectionByText('📌 Project Profile');
     }
     
-    if (!formData.dept || formData.dept.trim() === '') {
+    if (!hasValue(formData.dept) && (!isEditingExisting || !hasValue(currentDraftData?.dept))) {
         const field = modalElement?.querySelector('#dept');
         markField(field, 'Department is required');
         highlightSubsectionByText('📌 Project Profile');
     }
     
-    if (!formData.school || formData.school.trim() === '') {
+    if (!hasValue(formData.school) && (!isEditingExisting || !hasValue(currentDraftData?.school))) {
         const field = modalElement?.querySelector('#school');
         markField(field, 'School/College is required');
         highlightSubsectionByText('📌 Project Profile');
     }
     
-    if (!formData.extension || formData.extension.trim() === '') {
+    if (!hasValue(formData.extension) && (!isEditingExisting || !hasValue(currentDraftData?.extension))) {
         const field = modalElement?.querySelector('#extension');
-        if (field) {
-            markField(field, 'Local Extension is required');
-            highlightSubsectionByText('📌 Project Profile');
-        } else {
-            console.warn('Extension field not found in DOM');
-            errors.push({ field: 'extension', message: 'Local Extension is required' });
-        }
+        markField(field, 'Local Extension is required');
+        highlightSubsectionByText('📌 Project Profile');
     }
     
-    if (!formData.duration || formData.duration.trim() === '') {
+    if (!hasValue(formData.duration) && (!isEditingExisting || !hasValue(currentDraftData?.duration))) {
         const field = modalElement?.querySelector('#duration');
-        if (field) {
-            markField(field, 'Project Duration is required');
-            highlightSubsectionByText('📌 Project Profile');
-        } else {
-            console.warn('Duration field not found in DOM');
-            errors.push({ field: 'duration', message: 'Project Duration is required' });
-        }
+        markField(field, 'Project Duration is required');
+        highlightSubsectionByText('📌 Project Profile');
     }
     
     // Rationale
-    if (!formData.rationale || formData.rationale.trim() === '') {
+    if (!hasValue(formData.rationale) && (!isEditingExisting || !hasValue(currentDraftData?.rationale))) {
         const field = modalElement?.querySelector('#rationale');
         markField(field, 'Rationale is required');
         highlightSubsectionByText('📖 Rationale');
     }
     
     // Literature Review
-    if (!formData.litReview || formData.litReview.trim() === '') {
+    if (!hasValue(formData.litReview) && (!isEditingExisting || !hasValue(currentDraftData?.litReview))) {
         const field = modalElement?.querySelector('#litReview');
-        if (field) {
-            markField(field, 'Review of Literature is required');
-            highlightSubsectionByText('📚 Review of Literature');
-        } else {
-            console.warn('litReview field not found in DOM');
-            errors.push({ field: 'litReview', message: 'Review of Literature is required' });
-        }
+        markField(field, 'Review of Literature is required');
+        highlightSubsectionByText('📚 Review of Literature');
     }
     
     // Objectives
-    if (!formData.objectives || formData.objectives.trim() === '') {
+    if (!hasValue(formData.objectives) && (!isEditingExisting || !hasValue(currentDraftData?.objectives))) {
         const field = modalElement?.querySelector('#objectives');
         markField(field, 'Objectives are required');
         highlightSubsectionByText('🎯 Objectives');
     }
     
     // Methodology
-    if (!formData.methodology || formData.methodology.trim() === '') {
+    if (!hasValue(formData.methodology) && (!isEditingExisting || !hasValue(currentDraftData?.methodology))) {
         const field = modalElement?.querySelector('#methodology');
         markField(field, 'Methodology is required');
         highlightSubsectionByText('🔬 Methodology');
     }
     
     // Expected Outputs
-    if (!formData.outputs || formData.outputs.trim() === '') {
+    if (!hasValue(formData.outputs) && (!isEditingExisting || !hasValue(currentDraftData?.outputs))) {
         const field = modalElement?.querySelector('#outputs');
         markField(field, 'Expected Outputs are required');
         highlightSubsectionByText('📊 Target Accomplishments');
     }
     
-    // Literature Cited
-    const hasValidReference = formData.references && formData.references.length > 0 && 
-                            formData.references.some(r => r && r.trim() !== '');
+    // Literature Cited - Check if references exist in either formData OR currentDraftData
+    const hasReferences = (formData.references && formData.references.length > 0 && formData.references.some(r => r && r.trim() !== '')) ||
+                          (isEditingExisting && currentDraftData?.references && currentDraftData.references.length > 0);
     
-    if (!hasValidReference) {
+    if (!hasReferences) {
         const refContainer = modalElement?.querySelector('#referencesContainer');
         if (refContainer) {
             refContainer.style.border = '2px solid #e74c3c';
@@ -3539,35 +3526,18 @@ function validateAndHighlightFields(formData, modalElement) {
                 errorSpan.style.fontSize = '0.7rem';
                 errorSpan.style.display = 'block';
                 errorSpan.style.marginTop = '0.5rem';
-                errorSpan.style.marginBottom = '0.5rem';
                 errorSpan.innerHTML = '⚠️ Please add at least one Literature Cited';
                 refContainer.parentElement?.appendChild(errorSpan);
             }
         }
         errors.push({ field: 'references', message: 'Please add at least one Literature Cited' });
-    } else {
-        const refContainer = modalElement?.querySelector('#referencesContainer');
-        if (refContainer) {
-            refContainer.style.border = '';
-            refContainer.style.borderRadius = '';
-            refContainer.style.padding = '';
-        }
-        const errorMsg = modalElement?.querySelector('.container-error-message');
-        if (errorMsg) errorMsg.remove();
-        const subsections = modalElement?.querySelectorAll('.form-subsection-title') || [];
-        for (const subsection of subsections) {
-            if (subsection.textContent.includes('📑 Literature Cited')) {
-                subsection.style.color = '';
-                subsection.style.borderLeftColor = '';
-                break;
-            }
-        }
     }
     
     // Research Team Members
-    const hasValidTeamMember = formData.teamMembers && formData.teamMembers.length > 0 && 
-                              formData.teamMembers.some(m => m.name && m.name.trim() !== '');
-    if (!hasValidTeamMember) {
+    const hasTeamMembers = (formData.teamMembers && formData.teamMembers.length > 0 && formData.teamMembers.some(m => m.name && m.name.trim() !== '')) ||
+                           (isEditingExisting && currentDraftData?.teamMembers && currentDraftData.teamMembers.length > 0);
+    
+    if (!hasTeamMembers) {
         const teamContainer = modalElement?.querySelector('#teamMembersContainer');
         if (teamContainer) {
             teamContainer.style.border = '2px solid #e74c3c';
@@ -3578,221 +3548,58 @@ function validateAndHighlightFields(formData, modalElement) {
         errors.push({ field: 'teamMembers', message: 'Please add at least one Research Team Member' });
     }
     
-    // Activities Validation
-    const activityCards = modalElement?.querySelectorAll('.activity-card') || [];
-    let hasValidActivity = false;
-    
-    if (activityCards.length === 0) {
-        highlightSubsectionByText('📅 Major Activities');
-        errors.push({ field: 'activities', message: 'Please add at least one activity' });
-    } else {
-        activityCards.forEach((card, idx) => {
-            const activityName = card.querySelector('.act-name')?.value;
-            const startDate = card.querySelector('.act-start-date')?.value;
-            const endDate = card.querySelector('.act-end-date')?.value;
-            const isCardValid = activityName && activityName.trim() !== '' && startDate && endDate;
-            
-            if (!isCardValid) {
-                let missingField = '';
-                if (!activityName || activityName.trim() === '') missingField = 'Activity Name';
-                else if (!startDate) missingField = 'Start Date';
-                else if (!endDate) missingField = 'End Date';
-                markCard(card, `Activity ${idx + 1}: ${missingField} is required`);
-                
-                if (!activityName || activityName.trim() === '') {
-                    const nameField = card.querySelector('.act-name');
-                    if (nameField) markField(nameField, 'Activity Name is required');
-                }
-                if (!startDate) {
-                    const startField = card.querySelector('.act-start-date');
-                    if (startField) markField(startField, 'Start Date is required');
-                }
-                if (!endDate) {
-                    const endField = card.querySelector('.act-end-date');
-                    if (endField) markField(endField, 'End Date is required');
-                }
-            } else {
-                hasValidActivity = true;
-            }
-        });
-        
-        if (!hasValidActivity && activityCards.length > 0) {
-            highlightSubsectionByText('📅 Major Activities');
-        }
-    }
-    
-    // Budget Validation
-    const budgetCards = modalElement?.querySelectorAll('.budget-card') || [];
-    let hasValidBudget = false;
-    
-    if (budgetCards.length === 0) {
-        highlightSubsectionByText('💰 Budgetary Requirements');
-        errors.push({ field: 'budget', message: 'Please add at least one budget item' });
-    } else {
-        budgetCards.forEach((card, idx) => {
-            const category = card.querySelector('.budget-category')?.value;
-            const item = card.querySelector('.budget-item-select')?.value;
-            const unitCost = parseFloat(card.querySelector('.budget-unit-cost')?.value);
-            const isCardValid = category && item && unitCost > 0;
-            
-            if (!isCardValid) {
-                let missingField = '';
-                if (!category) missingField = 'Category';
-                else if (!item) missingField = 'Item';
-                else if (!unitCost || unitCost <= 0) missingField = 'Unit Cost';
-                markCard(card, `Budget Item ${idx + 1}: ${missingField} is required`);
-            } else {
-                hasValidBudget = true;
-            }
-        });
-        
-        if (!hasValidBudget && budgetCards.length > 0) {
-            highlightSubsectionByText('💰 Budgetary Requirements');
-        }
-    }
-    
     // ========== FORM 2 VALIDATION ==========
     
-    // Endorsement Information
-    if (!formData.endorsementDate || formData.endorsementDate.trim() === '') {
+    if (!hasValue(formData.endorsementDate) && (!isEditingExisting || !hasValue(currentDraftData?.endorsementDate))) {
         const field = modalElement?.querySelector('#endorsementDate');
         markField(field, 'Date is required');
         highlightSubsectionByText('📌 Endorsement Information');
     }
     
-    if (!formData.fromChair || formData.fromChair.trim() === '') {
+    if (!hasValue(formData.fromChair) && (!isEditingExisting || !hasValue(currentDraftData?.fromChair))) {
         const field = modalElement?.querySelector('#fromChair');
         markField(field, 'Department Chair name is required');
         highlightSubsectionByText('✍️ Digital Signatures');
     }
     
-    if (!formData.chairEmail || formData.chairEmail.trim() === '') {
+    if (!hasValue(formData.chairEmail) && (!isEditingExisting || !hasValue(currentDraftData?.chairEmail))) {
         const field = modalElement?.querySelector('#chairEmail');
         markField(field, 'Department Chair email is required');
         highlightSubsectionByText('✍️ Digital Signatures');
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.chairEmail)) {
-        const field = modalElement?.querySelector('#chairEmail');
-        markField(field, 'Valid chair email is required');
-        highlightSubsectionByText('✍️ Digital Signatures');
     }
     
-    if (!formData.deanName || formData.deanName.trim() === '') {
+    if (!hasValue(formData.deanName) && (!isEditingExisting || !hasValue(currentDraftData?.deanName))) {
         const field = modalElement?.querySelector('#deanName');
         markField(field, 'Dean name is required');
         highlightSubsectionByText('✍️ Digital Signatures');
     }
     
-    if (!formData.deanEmail || formData.deanEmail.trim() === '') {
+    if (!hasValue(formData.deanEmail) && (!isEditingExisting || !hasValue(currentDraftData?.deanEmail))) {
         const field = modalElement?.querySelector('#deanEmail');
         markField(field, 'Dean email is required');
         highlightSubsectionByText('✍️ Digital Signatures');
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.deanEmail)) {
-        const field = modalElement?.querySelector('#deanEmail');
-        markField(field, 'Valid dean email is required');
-        highlightSubsectionByText('✍️ Digital Signatures');
     }
     
-    if (!formData.endorseDept || formData.endorseDept.trim() === '') {
+    if (!hasValue(formData.endorseDept) && (!isEditingExisting || !hasValue(currentDraftData?.endorseDept))) {
         const field = modalElement?.querySelector('#endorseDept');
         markField(field, 'Department is required');
         highlightSubsectionByText('📌 Endorsement Information');
     }
     
-    if (!formData.endorseSchool || formData.endorseSchool.trim() === '') {
+    if (!hasValue(formData.endorseSchool) && (!isEditingExisting || !hasValue(currentDraftData?.endorseSchool))) {
         const field = modalElement?.querySelector('#endorseSchool');
         markField(field, 'School/College is required');
         highlightSubsectionByText('📌 Endorsement Information');
     }
     
-    if (!formData.schoolYear || formData.schoolYear.trim() === '') {
+    if (!hasValue(formData.schoolYear) && (!isEditingExisting || !hasValue(currentDraftData?.schoolYear))) {
         const field = modalElement?.querySelector('#schoolYear');
         markField(field, 'School Year is required');
         highlightSubsectionByText('📌 Endorsement Information');
     }
     
-    // ========== CV UPLOADS VALIDATION ==========
-    const hasPiCV = formData.piCVName && formData.piCVName.trim() !== '';
-    const piCVSection = modalElement?.querySelector('#piCVSection');
-
-    if (!hasPiCV) {
-        if (piCVSection) {
-            const pendingStatus = piCVSection.querySelector('.cv-pending-status');
-            if (pendingStatus) {
-                pendingStatus.style.border = '2px solid #e74c3c';
-                pendingStatus.style.backgroundColor = '#fff5f5';
-                pendingStatus.style.animation = 'shake 0.3s ease-in-out';
-                pendingStatus.classList.add('cv-error');
-                setTimeout(() => { if (pendingStatus) pendingStatus.style.animation = ''; }, 300);
-                
-                const existingError = pendingStatus.querySelector('.status-error-message');
-                if (existingError) existingError.remove();
-                const errorSpan = document.createElement('small');
-                errorSpan.className = 'status-error-message';
-                errorSpan.style.color = '#e74c3c';
-                errorSpan.style.fontSize = '0.65rem';
-                errorSpan.style.display = 'block';
-                errorSpan.style.marginTop = '0.25rem';
-                errorSpan.innerHTML = '⚠️ PI CV is required';
-                pendingStatus.appendChild(errorSpan);
-            }
-        }
-        errors.push({ field: 'piCV', message: 'Principal Investigator CV is required' });
-    } else {
-        if (piCVSection) {
-            const pendingStatus = piCVSection.querySelector('.cv-pending-status');
-            if (pendingStatus) {
-                pendingStatus.style.border = '';
-                pendingStatus.style.backgroundColor = '';
-                pendingStatus.classList.remove('cv-error');
-                const existingError = pendingStatus.querySelector('.status-error-message');
-                if (existingError) existingError.remove();
-            }
-        }
-    }
-    
-    // Team Member CVs validation
-    if (formData.teamMembers && formData.teamMembers.length > 0) {
-        formData.teamMembers.forEach((member, idx) => {
-            const hasMemberCV = formData.teamCVs && formData.teamCVs[idx] && formData.teamCVs[idx].name && formData.teamCVs[idx].name.trim() !== '';
-            const teamCVSection = modalElement?.querySelector(`.cv-upload-card[data-member-index="${idx}"]`);
-            
-            if (!hasMemberCV) {
-                if (teamCVSection) {
-                    const pendingStatus = teamCVSection.querySelector('.cv-pending-status');
-                    if (pendingStatus) {
-                        pendingStatus.style.border = '2px solid #e74c3c';
-                        pendingStatus.style.backgroundColor = '#fff5f5';
-                        pendingStatus.style.animation = 'shake 0.3s ease-in-out';
-                        pendingStatus.classList.add('cv-error');
-                        setTimeout(() => { if (pendingStatus) pendingStatus.style.animation = ''; }, 300);
-                        
-                        const existingError = pendingStatus.querySelector('.status-error-message');
-                        if (existingError) existingError.remove();
-                        const errorSpan = document.createElement('small');
-                        errorSpan.className = 'status-error-message';
-                        errorSpan.style.color = '#e74c3c';
-                        errorSpan.style.fontSize = '0.65rem';
-                        errorSpan.style.display = 'block';
-                        errorSpan.style.marginTop = '0.25rem';
-                        errorSpan.innerHTML = `⚠️ CV for ${member.name || `Team Member ${idx + 1}`} is required`;
-                        pendingStatus.appendChild(errorSpan);
-                    }
-                }
-                errors.push({ field: `teamCV_${idx}`, message: `CV for ${member.name || `Team Member ${idx + 1}`} is required` });
-            } else {
-                if (teamCVSection) {
-                    const pendingStatus = teamCVSection.querySelector('.cv-pending-status');
-                    if (pendingStatus) {
-                        pendingStatus.style.border = '';
-                        pendingStatus.style.backgroundColor = '';
-                        pendingStatus.classList.remove('cv-error');
-                        const existingError = pendingStatus.querySelector('.status-error-message');
-                        if (existingError) existingError.remove();
-                    }
-                }
-            }
-        });
-    }
+    console.log(`Validation complete: ${errors.length} errors found`);
+    console.log('Edit mode:', isEditingExisting);
     
     return errors;
 }
