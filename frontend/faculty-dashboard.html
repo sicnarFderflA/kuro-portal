@@ -3164,15 +3164,9 @@ async function collectFormData() {
     let piCVName = '';
     let piCVData = '';
     
-    // FIRST, check if we're editing an existing application and preserve its CV data
-    if (isEditMode && currentDraftData && currentDraftData.piCVName) {
-        piCVName = currentDraftData.piCVName;
-        piCVData = currentDraftData.piCVData || '';
-        console.log('Preserved PI CV from existing data:', piCVName);
-    }
-    
+    // ========== PI CV - ALWAYS check for new file upload FIRST ==========
     const piCVInput = document.getElementById('piCV');
-    if (piCVInput && piCVInput.files && piCVInput.files[0]) {
+    if (piCVInput && piCVInput.files && piCVInput.files.length > 0) {
         const file = piCVInput.files[0];
         if (file.size > 10 * 1024 * 1024) {
             showFormNotification('CV file exceeds 10MB limit', true);
@@ -3180,8 +3174,14 @@ async function collectFormData() {
         } else {
             piCVName = file.name;
             piCVData = await fileToBase64(file);
-            console.log('New PI CV uploaded:', piCVName);
+            console.log('✅ NEW PI CV captured:', piCVName);
         }
+    }
+    // ONLY if no new file was selected, preserve existing from currentDraftData
+    else if (currentDraftData && currentDraftData.piCVName) {
+        piCVName = currentDraftData.piCVName;
+        piCVData = currentDraftData.piCVData || '';
+        console.log('📁 Preserved existing PI CV:', piCVName);
     }
     
     // Get team members from DOM
@@ -3192,60 +3192,41 @@ async function collectFormData() {
         }))
         .filter(member => member.name !== '');
     
-    // Preserve existing teamCVs AND teamCVData
-    let teamCVs = [];
-    let teamCVData = [];
+    // Initialize arrays
+    let teamCVs = new Array(teamMembers.length).fill(null);
+    let teamCVData = new Array(teamMembers.length).fill(null);
     
-    // FIRST, check if we're editing and preserve existing team CV data
-    if (isEditMode && currentDraftData && currentDraftData.teamCVs) {
-        console.log('Preserving existing team CVs from edit mode');
-        for (let i = 0; i < teamMembers.length; i++) {
-            if (currentDraftData.teamCVs[i] && currentDraftData.teamCVs[i].name) {
-                teamCVs[i] = { ...currentDraftData.teamCVs[i] };
-                if (currentDraftData.teamCVData && currentDraftData.teamCVData[i]) {
-                    teamCVData[i] = currentDraftData.teamCVData[i];
-                }
-            } else {
-                teamCVs[i] = null;
-            }
-        }
-    } else if (currentDraftData && currentDraftData.teamCVs) {
-        // Also check currentDraftData (for drafts)
-        for (let i = 0; i < teamMembers.length; i++) {
-            if (currentDraftData.teamCVs[i] && currentDraftData.teamCVs[i].name) {
-                teamCVs[i] = { ...currentDraftData.teamCVs[i] };
-                if (currentDraftData.teamCVData && currentDraftData.teamCVData[i]) {
-                    teamCVData[i] = currentDraftData.teamCVData[i];
-                }
-            } else {
-                teamCVs[i] = null;
-            }
-        }
-    } else {
-        teamCVs = new Array(teamMembers.length).fill(null);
-        teamCVData = new Array(teamMembers.length).fill(null);
-    }
-    
-    // Handle new CV file uploads for team members (these override existing)
+    // ========== TEAM CVs - ALWAYS check for new file uploads FIRST ==========
     for (let i = 0; i < teamMembers.length; i++) {
         const teamCVInput = document.getElementById('teamCV_' + i);
-        if (teamCVInput && teamCVInput.files && teamCVInput.files[0]) {
+        
+        // Check if a NEW file was uploaded
+        if (teamCVInput && teamCVInput.files && teamCVInput.files.length > 0) {
             const file = teamCVInput.files[0];
             if (file.size > 10 * 1024 * 1024) {
                 showFormNotification('CV file for team member exceeds 10MB limit', true);
                 teamCVInput.value = '';
             } else {
                 const base64Data = await fileToBase64(file);
-                if (!teamCVs[i]) teamCVs[i] = {};
-                teamCVs[i].name = file.name;
-                if (!teamCVs[i].status) teamCVs[i].status = 'pending';
+                teamCVs[i] = { 
+                    name: file.name,
+                    status: 'pending'
+                };
                 teamCVData[i] = base64Data;
-                console.log(`New CV uploaded for team member ${i}:`, file.name);
+                console.log(`✅ NEW team CV captured for member ${i}:`, file.name);
             }
+        }
+        // ONLY if no new file, preserve existing from currentDraftData
+        else if (currentDraftData && currentDraftData.teamCVs && currentDraftData.teamCVs[i] && currentDraftData.teamCVs[i].name) {
+            teamCVs[i] = { ...currentDraftData.teamCVs[i] };
+            if (currentDraftData.teamCVData && currentDraftData.teamCVData[i]) {
+                teamCVData[i] = currentDraftData.teamCVData[i];
+            }
+            console.log(`📁 Preserved existing team CV for member ${i}:`, teamCVs[i].name);
         }
     }
     
-    // Collect activities - FIX THIS
+    // Collect activities
     const activities = [];
     const activityCards = document.querySelectorAll('#activitiesContainer .activity-card');
     activityCards.forEach(card => {
@@ -3257,13 +3238,12 @@ async function collectFormData() {
             startDate: card.querySelector('.act-start-date')?.value || '',
             endDate: card.querySelector('.act-end-date')?.value || ''
         };
-        // Only add if it has a name (not empty)
         if (activity.name.trim() !== '') {
             activities.push(activity);
         }
     });
     
-    // Collect budget items - FIX THIS
+    // Collect budget items
     const budgetItems = [];
     const budgetCards = document.querySelectorAll('.budget-card');
     budgetCards.forEach(card => {
@@ -3274,7 +3254,6 @@ async function collectFormData() {
         const unitCost = parseFloat(card.querySelector('.budget-unit-cost')?.value) || 0;
         const qty = parseFloat(card.querySelector('.budget-qty')?.value) || 1;
         
-        // Only add if it has at least a category or item name
         if (category !== '' || itemName !== '') {
             budgetItems.push({
                 category: category,
@@ -3325,11 +3304,11 @@ async function collectFormData() {
         // Signatures status
         signatures: { chair: false, dean: false },
         
-        // CV Uploads - NOW WITH PRESERVED DATA
+        // CV Uploads - NEW files take priority over existing
         piCVName: piCVName,
         piCVData: piCVData,
         teamCVs: teamCVs,
-        teamCVData: teamCVData  // ← Make sure this is included!
+        teamCVData: teamCVData
     };
 }
 
