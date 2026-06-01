@@ -4549,107 +4549,134 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                     e.stopPropagation();
                     e.preventDefault();
                     
-                    const currentFormData = collectFormData();
+                    const currentFormData = await collectFormData();
                     const hasTitle = currentFormData.proposalTitle && currentFormData.proposalTitle.trim() !== '';
-                    
-                    // Check if there's any content beyond just selecting a grant
-                    const hasAnyContent = currentFormData.piName || 
-                                        currentFormData.piEmail ||
-                                        currentFormData.dept ||
-                                        currentFormData.school ||
-                                        currentFormData.rationale ||
-                                        currentFormData.objectives ||
-                                        currentFormData.methodology ||
-                                        (currentFormData.teamMembers && currentFormData.teamMembers.length > 0 && currentFormData.teamMembers.some(m => m.name)) ||
-                                        (currentFormData.budgetItems && currentFormData.budgetItems.length > 0 && currentFormData.budgetItems.some(b => b.category || b.itemName)) ||
-                                        (currentFormData.activities && currentFormData.activities.length > 0 && currentFormData.activities.some(a => a.name));
                     
                     // Check if this is a new application (not edit, not existing draft)
                     const isNewApplication = !isEditMode && !editAppId && !currentDraftData?.draftId;
                     
-                    // Check if editing an existing draft that originally had a title
+                    // Check if editing an existing application or draft
                     const isEditingExistingWithTitle = (editDraftId !== null && currentDraftData?.proposalTitle) || (isEditMode && editAppId);
                     
+                    // For NEW applications
                     if (isNewApplication) {
-                        // New application logic
-                        if (hasAnyContent && !hasTitle) {
-                            // Has content but no title - save temporarily, close modal, then show confirmation
-                            
-                            // Store the current form data temporarily in sessionStorage
-                            const tempKey = 'temp_discard_data_' + Date.now();
-                            const tempData = {
-                                grantTitle: selectedGrant,
-                                formData: currentFormData,
-                                timestamp: Date.now()
-                            };
-                            sessionStorage.setItem(tempKey, JSON.stringify(tempData));
-                            sessionStorage.setItem('pending_discard_key', tempKey);
-                            
-                            // Close the current modal
-                            Swal.close();
-                            
-                            // Show confirmation modal
-                            const result = await Swal.fire({
-                                title: 'Discard changes?',
-                                text: 'You have unsaved changes without a project title. What would you like to do?',
-                                icon: 'warning',
-                                showCancelButton: true,
-                                confirmButtonColor: '#e74c3c',
-                                cancelButtonColor: '#D4AF37',
-                                confirmButtonText: 'Yes, discard',
-                                cancelButtonText: 'No, keep editing'
-                            });
-                            
-                            if (result.isConfirmed) {
-                                // Discard - delete the temporary data
-                                sessionStorage.removeItem(tempKey);
-                                sessionStorage.removeItem('pending_discard_key');
-                                renderApplicant();
-                                showInlineNotification(null, 'Changes discarded', false);
-                            } else {
-                                // Keep editing - reopen the form with the saved data
-                                const savedData = JSON.parse(sessionStorage.getItem(tempKey));
-                                if (savedData) {
-                                    selectedGrant = savedData.grantTitle;
-                                    currentDraftData = savedData.formData;
-                                    isEditMode = false;
-                                    editAppId = null;
-                                    editDraftId = null;
-                                    
-                                    // Clean up temp storage
-                                    sessionStorage.removeItem(tempKey);
-                                    sessionStorage.removeItem('pending_discard_key');
-                                    
-                                    // Reopen the form
-                                    setTimeout(() => {
-                                        openApplicationForm(false);
-                                    }, 100);
-                                } else {
-                                    renderApplicant();
-                                }
-                            }
-                            return;
-                        } else if (hasTitle) {
-                            // Has title - auto-save and close
-                            const draftId = 'DRF_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
-                            sessionStorage.setItem('current_draft_id', draftId);
-                            
-                            if (!currentDraftData) currentDraftData = {};
-                            Object.assign(currentDraftData, currentFormData);
-                            currentDraftData.grantTitle = selectedGrant;
-                            currentDraftData.draftId = draftId;
-                            currentDraftData.lastSaved = new Date().toISOString().slice(0, 10);
-                            currentDraftData.lastSavedTime = new Date().toISOString();
-                            
-                            draftsDB.push(currentDraftData);
-                            saveDrafts();
-                            
-                            showInlineNotification(modal, '📝 Draft saved!', true);
-                            setTimeout(() => {
+                        // Check if there's any content filled
+                        const hasAnyContent = currentFormData.piName || 
+                                            currentFormData.piEmail ||
+                                            currentFormData.dept ||
+                                            currentFormData.school ||
+                                            currentFormData.rationale ||
+                                            currentFormData.objectives ||
+                                            (currentFormData.teamMembers && currentFormData.teamMembers.length > 0 && currentFormData.teamMembers.some(m => m.name)) ||
+                                            (currentFormData.budgetItems && currentFormData.budgetItems.length > 0 && currentFormData.budgetItems.some(b => b.category || b.itemName));
+                        
+                        if (hasAnyContent) {
+                            if (!hasTitle) {
+                                // Has content but no title - REQUIRE title to save
                                 Swal.close();
-                                renderApplicant();
-                            }, 300);
-                            return;
+                                
+                                const result = await Swal.fire({
+                                    title: 'Project Title Required',
+                                    html: `
+                                        <div style="text-align: left;">
+                                            <p>You have entered data but no project title.</p>
+                                            <div class="form-group" style="margin-top: 1rem;">
+                                                <label style="font-weight: 600; color: #0B2B4F;">Project Title <span style="color: #e74c3c;">*</span></label>
+                                                <input type="text" id="requiredTitleInput" class="swal2-input" placeholder="Enter project title" style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #ddd;">
+                                            </div>
+                                            <p class="demo-note" style="margin-top: 1rem; font-size: 0.7rem;">
+                                                <i class="fas fa-info-circle"></i> A project title is required to save your work as a draft.
+                                            </p>
+                                        </div>
+                                    `,
+                                    icon: 'warning',
+                                    showCancelButton: true,
+                                    confirmButtonColor: '#D4AF37',
+                                    cancelButtonColor: '#6c757d',
+                                    confirmButtonText: 'Save Draft with Title',
+                                    cancelButtonText: 'Discard Changes',
+                                    didOpen: () => {
+                                        const titleInput = document.getElementById('requiredTitleInput');
+                                        if (titleInput) {
+                                            titleInput.focus();
+                                            titleInput.addEventListener('keypress', (e) => {
+                                                if (e.key === 'Enter') {
+                                                    Swal.clickConfirm();
+                                                }
+                                            });
+                                        }
+                                    },
+                                    preConfirm: () => {
+                                        const title = document.getElementById('requiredTitleInput')?.value;
+                                        if (!title || title.trim() === '') {
+                                            Swal.showValidationMessage('Project Title is required to save');
+                                            return false;
+                                        }
+                                        return title;
+                                    }
+                                });
+                                
+                                if (result.isConfirmed && result.value) {
+                                    // User entered a title - save draft
+                                    const enteredTitle = result.value;
+                                    currentFormData.proposalTitle = enteredTitle;
+                                    
+                                    const draftId = 'DRF_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+                                    sessionStorage.setItem('current_draft_id', draftId);
+                                    
+                                    if (!currentDraftData) currentDraftData = {};
+                                    Object.assign(currentDraftData, currentFormData);
+                                    currentDraftData.grantTitle = selectedGrant;
+                                    currentDraftData.draftId = draftId;
+                                    currentDraftData.lastSaved = new Date().toISOString().slice(0, 10);
+                                    currentDraftData.proposalTitle = enteredTitle;
+                                    
+                                    await saveDrafts();
+                                    showInlineNotification(modal, '📝 Draft saved successfully!', true);
+                                    setTimeout(() => {
+                                        Swal.close();
+                                        renderApplicant();
+                                    }, 500);
+                                } else if (result.dismiss === Swal.DismissReason.cancel) {
+                                    // User chose to discard - just close
+                                    Swal.close();
+                                    renderApplicant();
+                                    showInlineNotification(null, 'Changes discarded', false);
+                                }
+                                return;
+                            } else {
+                                // Has title - auto-save draft
+                                const result = await Swal.fire({
+                                    title: 'Save as Draft?',
+                                    text: 'Would you like to save your progress as a draft before closing?',
+                                    icon: 'question',
+                                    showCancelButton: true,
+                                    confirmButtonColor: '#D4AF37',
+                                    cancelButtonColor: '#6c757d',
+                                    confirmButtonText: 'Yes, Save Draft',
+                                    cancelButtonText: 'No, Discard'
+                                });
+                                
+                                if (result.isConfirmed) {
+                                    const draftId = 'DRF_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+                                    sessionStorage.setItem('current_draft_id', draftId);
+                                    
+                                    if (!currentDraftData) currentDraftData = {};
+                                    Object.assign(currentDraftData, currentFormData);
+                                    currentDraftData.grantTitle = selectedGrant;
+                                    currentDraftData.draftId = draftId;
+                                    currentDraftData.lastSaved = new Date().toISOString().slice(0, 10);
+                                    
+                                    await saveDrafts();
+                                    showInlineNotification(modal, '📝 Draft saved!', true);
+                                }
+                                
+                                setTimeout(() => {
+                                    Swal.close();
+                                    renderApplicant();
+                                }, 300);
+                                return;
+                            }
                         } else {
                             // No content at all - just close
                             Swal.close();
@@ -4658,48 +4685,71 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                         }
                     }
                     
-                    // Editing existing application or draft
+                    // For EDITING existing applications or drafts
                     if (isEditingExistingWithTitle) {
-                        // Check if title exists
-                        if (!hasTitle) {
-                            // No title - block closing and show error
-                            showFormNotification('⚠️ Project Title is required. Please add a title before closing.', true, modal);
-                            const titleField = modal.querySelector('#projTitle');
-                            if (titleField) {
-                                titleField.style.border = '2px solid #e74c3c';
-                                titleField.style.backgroundColor = '#fff5f5';
-                                titleField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            }
-                            return; // Don't close
-                        }
+                        // Check if any actual changes were made
+                        let hasChanges = false;
                         
-                        // Has title - auto-save changes
                         if (currentDraftData) {
-                            Object.assign(currentDraftData, currentFormData);
-                            currentDraftData.lastSaved = new Date().toISOString().slice(0, 10);
-                            currentDraftData.lastSavedTime = new Date().toISOString();
+                            const originalData = currentDraftData;
                             
-                            // Update in draftsDB if it's a draft
-                            if (editDraftId !== null && draftsDB[editDraftId]) {
-                                draftsDB[editDraftId] = currentDraftData;
-                                saveDrafts();
-                            } else if (currentDraftData.draftId) {
-                                const existingIdx = draftsDB.findIndex(d => d.draftId === currentDraftData.draftId);
-                                if (existingIdx !== -1) {
-                                    draftsDB[existingIdx] = currentDraftData;
-                                    saveDrafts();
+                            // Simple comparison for text fields
+                            const textFields = ['proposalTitle', 'piName', 'piEmail', 'dept', 'school', 'rationale', 'objectives', 'methodology', 'outputs'];
+                            for (const field of textFields) {
+                                if (currentFormData[field] !== (originalData[field] || '')) {
+                                    hasChanges = true;
+                                    break;
                                 }
                             }
                             
-                            // Show toast notification
-                            showInlineNotification(modal, '📝 Changes auto-saved!', true);
+                            // Check references
+                            if (JSON.stringify(currentFormData.references) !== JSON.stringify(originalData.references || [])) {
+                                hasChanges = true;
+                            }
+                            
+                            // Check team members
+                            if (JSON.stringify(currentFormData.teamMembers) !== JSON.stringify(originalData.teamMembers || [])) {
+                                hasChanges = true;
+                            }
                         }
                         
-                        // Close after auto-save
-                        setTimeout(() => {
+                        if (!hasChanges) {
+                            // No changes made - just close without saving
+                            console.log('No changes detected, closing without save');
                             Swal.close();
                             renderApplicant();
-                        }, 300);
+                            return;
+                        }
+                        
+                        // Has changes - ask if user wants to save
+                        const result = await Swal.fire({
+                            title: 'Save Changes?',
+                            text: 'You have unsaved changes. Would you like to save them before closing?',
+                            icon: 'question',
+                            showCancelButton: true,
+                            confirmButtonColor: '#D4AF37',
+                            cancelButtonColor: '#6c757d',
+                            confirmButtonText: 'Yes, Save',
+                            cancelButtonText: 'No, Discard'
+                        });
+                        
+                        if (result.isConfirmed) {
+                            // Save changes
+                            if (currentDraftData) {
+                                Object.assign(currentDraftData, currentFormData);
+                                currentDraftData.lastSaved = new Date().toISOString().slice(0, 10);
+                                await saveDrafts();
+                                showInlineNotification(modal, '📝 Changes saved!', true);
+                            }
+                        }
+                        
+                        // Close regardless
+                        Swal.close();
+                        renderApplicant();
+                    } else {
+                        // Fallback - just close
+                        Swal.close();
+                        renderApplicant();
                     }
                 });
             }
@@ -4904,34 +4954,64 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                         return;
                     }
                     
-                    const formData = collectFormData();
+                    const formData = await collectFormData();
                     
                     // Check if project title exists
                     if (!formData.proposalTitle || formData.proposalTitle.trim() === '') {
-                        showFormNotification('⚠️ Please add a Project Title before saving as draft.', true, modal);
+                        // Show modal asking for title
+                        const result = await Swal.fire({
+                            title: 'Project Title Required',
+                            html: `
+                                <div style="text-align: left;">
+                                    <p>A project title is required to save your work as a draft.</p>
+                                    <div class="form-group" style="margin-top: 1rem;">
+                                        <label style="font-weight: 600; color: #0B2B4F;">Project Title <span style="color: #e74c3c;">*</span></label>
+                                        <input type="text" id="draftTitleInput" class="swal2-input" placeholder="Enter project title" style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #ddd;">
+                                    </div>
+                                </div>
+                            `,
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#D4AF37',
+                            cancelButtonColor: '#6c757d',
+                            confirmButtonText: 'Save Draft',
+                            cancelButtonText: 'Cancel',
+                            didOpen: () => {
+                                const titleInput = document.getElementById('draftTitleInput');
+                                if (titleInput) {
+                                    titleInput.focus();
+                                    titleInput.addEventListener('keypress', (e) => {
+                                        if (e.key === 'Enter') {
+                                            Swal.clickConfirm();
+                                        }
+                                    });
+                                }
+                            },
+                            preConfirm: () => {
+                                const title = document.getElementById('draftTitleInput')?.value;
+                                if (!title || title.trim() === '') {
+                                    Swal.showValidationMessage('Project Title is required');
+                                    return false;
+                                }
+                                return title;
+                            }
+                        });
                         
-                        // Highlight the title field
+                        if (!result.isConfirmed) {
+                            return; // User cancelled
+                        }
+                        
+                        // Set the title from the modal
+                        formData.proposalTitle = result.value;
+                        
+                        // Also update the DOM input
                         const titleField = modal.querySelector('#projTitle');
                         if (titleField) {
-                            titleField.style.border = '2px solid #e74c3c';
-                            titleField.style.backgroundColor = '#fff5f5';
-                            titleField.style.animation = 'shake 0.3s ease-in-out';
-                            titleField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            setTimeout(() => {
-                                if (titleField) titleField.style.animation = '';
-                            }, 300);
+                            titleField.value = result.value;
                         }
-                        return; // Don't save, keep modal open
                     }
                     
-                    // Clear error styling if present
-                    const titleField = modal.querySelector('#projTitle');
-                    if (titleField) {
-                        titleField.style.border = '';
-                        titleField.style.backgroundColor = '';
-                    }
-                    
-                    // Save the draft
+                    // Continue with saving the draft...
                     if (currentDraftData) {
                         Object.assign(currentDraftData, formData);
                         currentDraftData.grantTitle = selectedGrant;
@@ -4947,19 +5027,13 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                         sessionStorage.setItem('current_draft_id', draftId);
                     }
                     currentDraftData.draftId = draftId;
-                    currentDraftData.userEmail = currentUser.email; // Add user email for API
+                    currentDraftData.userEmail = currentUser.email;
                     
                     try {
-                        // Save draft via API instead of localStorage
-                        const savedDraft = await KURO_API.saveFacultyDraft(currentDraftData);
-                        
-                        // Update local reference
-                        editDraftId = savedDraft.index;
-                        
-                        // Show success message
+                        await KURO_API.saveFacultyDraft(currentDraftData);
+                        editDraftId = null; // Reset after save
                         showFormNotification('✓ Draft saved successfully!', false, modal);
                         
-                        // Close the modal after successful save
                         setTimeout(() => {
                             Swal.close();
                             renderApplicant();
