@@ -404,7 +404,7 @@ let cachedAdmins = null;
 async function fetchSuperAdmins() {
     if (cachedSuperAdmins) return cachedSuperAdmins;
     try {
-        const response = await fetch(`${API_URL}/api/admin/super-admins`);
+        const response = await fetch(`${API_URL}/api/admin/public/super-admins`);
         if (response.ok) {
             cachedSuperAdmins = await response.json();
             return cachedSuperAdmins;
@@ -419,7 +419,7 @@ async function fetchSuperAdmins() {
 async function fetchAdmins() {
     if (cachedAdmins) return cachedAdmins;
     try {
-        const response = await fetch(`${API_URL}/api/admin/admins`);
+        const response = await fetch(`${API_URL}/api/admin/public/admins`);
         if (response.ok) {
             cachedAdmins = await response.json();
             return cachedAdmins;
@@ -453,7 +453,7 @@ let dynamicTestEmails = {
 
 async function fetchTestEmails() {
     try {
-        const response = await fetch(`${API_URL}/api/admin/test-emails`);
+        const response = await fetch(`${API_URL}/api/admin/public/test-emails`);
         if (response.ok) {
             const testEmails = await response.json();
             // Reset the object

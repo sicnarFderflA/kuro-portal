@@ -716,6 +716,51 @@ router.get('/audit-log', async (req, res) => {
 
 // ============ TEST EMAILS MANAGEMENT ============
 
+// Get all test emails (PUBLIC - for login validation)
+router.get('/public/test-emails', async (req, res) => {
+    try {
+        const testEmails = await TestEmail.find({ isActive: true }).sort({ role: 1, email: 1 });
+        res.json(testEmails);
+    } catch (error) {
+        console.error('Error fetching test emails:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get all super admins (PUBLIC - for login validation)
+router.get('/public/super-admins', async (req, res) => {
+    try {
+        let setting = await Settings.findOne({ key: 'super_admins' });
+        if (!setting) {
+            setting = await Settings.create({
+                key: 'super_admins',
+                value: ['200520181@my.xu.edu.ph'],
+                description: 'List of super admin emails with full system access'
+            });
+        }
+        res.json(setting.value);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get all admins (PUBLIC - for login validation)
+router.get('/public/admins', async (req, res) => {
+    try {
+        let setting = await Settings.findOne({ key: 'admin_emails' });
+        if (!setting) {
+            setting = await Settings.create({
+                key: 'admin_emails',
+                value: ['200520181@my.xu.edu.ph'],
+                description: 'List of admin emails with dashboard access'
+            });
+        }
+        res.json(setting.value);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Get all test emails (protected)
 router.get('/test-emails', isSuperAdmin, async (req, res) => {
     try {

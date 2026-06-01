@@ -32,7 +32,12 @@ const app = express();
 
 // CORS configuration
 app.use(cors({
-    origin: ['https://kuro-portal.vercel.app', 'http://localhost:5500', 'http://localhost:3000'],
+    origin: [
+        'https://kuro-portal.vercel.app',
+        'https://kuro-portal-bolh5jg78-sicnar-fdefl-a-s-projects.vercel.app',
+        'http://localhost:5500',
+        'http://localhost:3000'
+    ],
     credentials: true
 }));
 app.use(express.json());
