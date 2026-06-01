@@ -4645,16 +4645,20 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                         if (result.isConfirmed) {
                             // Save changes - trigger the submit button
                             console.log('Saving changes...');
-                            // Close the current SweetAlert modal first
-                            Swal.close();
-                            // Small delay to allow modal to close, then click submit
-                            setTimeout(() => {
-                                const submitBtn = document.querySelector('#customSubmitBtn');
-                                if (submitBtn) {
-                                    submitBtn.click();
-                                }
-                            }, 100);
-                            return;
+                            
+                            // DON'T close the modal yet - find the submit button inside the current modal
+                            const submitBtn = modal.querySelector('#customSubmitBtn');
+                            if (submitBtn) {
+                                console.log('Found submit button, clicking it...');
+                                // Click the submit button - it will handle saving and then close the modal
+                                submitBtn.click();
+                            } else {
+                                console.error('Submit button not found');
+                                showInlineNotification(modal, 'Could not save changes', false);
+                                Swal.close();
+                                renderApplicant();
+                            }
+                            return; // Don't close here - let the submit handler close it
                         } else if (result.isDenied) {
                             // Discard changes - just close
                             console.log('Discarding changes');
@@ -4662,9 +4666,44 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                             renderApplicant();
                             return;
                         } else {
-                            // Cancel - stay in modal (do nothing, modal stays open)
-                            console.log('Staying in modal');
-                            return;
+                            // Cancel - user wants to stay and continue editing
+                            console.log('User chose to stay, reopening form with unsaved data');
+                            
+                            // Close the confirmation modal
+                            Swal.close();
+                            
+                            // Store the current unsaved data
+                            const unsavedFormData = currentFormData;
+                            const currentGrant = selectedGrant;
+                            const currentEditMode = isEditMode;
+                            const currentEditAppId = editAppId;
+                            const currentEditDraftId = editDraftId;
+                            
+                            // Store in a temporary variable that openApplicationForm can read
+                            window._pendingUnsavedData = {
+                                formData: unsavedFormData,
+                                grantTitle: currentGrant,
+                                isEditMode: currentEditMode,
+                                editAppId: currentEditAppId,
+                                editDraftId: currentEditDraftId,
+                                timestamp: Date.now()
+                            };
+                            
+                            // Reopen the form after a short delay
+                            setTimeout(async () => {
+                                // Restore the data
+                                currentDraftData = unsavedFormData;
+                                selectedGrant = currentGrant;
+                                isEditMode = currentEditMode;
+                                editAppId = currentEditAppId;
+                                editDraftId = currentEditDraftId;
+                                
+                                // Reopen the form
+                                await openApplicationForm(isEditMode, currentActiveTab);
+                                
+                                // Clear the temporary storage
+                                delete window._pendingUnsavedData;
+                            }, 100);
                         }
                     }
                     
