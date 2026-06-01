@@ -472,32 +472,22 @@ app.get('/api/reviewer/tasks', async (req, res) => {
         
         const db = mongoose.connection.db;
         
-        // Find applications assigned to this reviewer based on their checker role
-        let assignedTasks = [];
+        // Find all applications where this user is in assignedReviewers
+        const submissions = await db.collection('submissions').find({
+            'assignedReviewers.email': userEmail
+        }).toArray();
         
-        // Get user from MongoDB instead of usersDB
-        const user = await User.findOne({ email: userEmail });
-        
-        if (user && user.checkerRole) {
-            // Get checker roles from settings
-            const settings = await Settings.findOne({ key: 'checker_roles' });
-            const checkerRoles = settings?.value || { check1: '', check2: '', check3: '' };
-            
-            let statusFilter = '';
-            if (user.checkerRole === 'check1') statusFilter = 'Pending Eligibility Check';
-            else if (user.checkerRole === 'check2') statusFilter = 'Pending Secondary Check';
-            else if (user.checkerRole === 'check3') statusFilter = 'Pending Final Check';
-            
-            if (statusFilter) {
-                assignedTasks = await db.collection('submissions').find({
-                    status: statusFilter
-                }).toArray();
-            }
-        }
+        const assignedTasks = submissions.map(sub => ({
+            id: sub.id,
+            grantTitle: sub.grantTitle,
+            proposalTitle: sub.proposalTitle,
+            userEmail: sub.userEmail,
+            status: sub.assignedReviewers?.find(r => r.email === userEmail)?.status || 'pending'
+        }));
         
         res.json({ 
             assignedTasks: assignedTasks,
-            checkerRole: user?.checkerRole || null
+            checkerRole: null
         });
         
     } catch (error) {

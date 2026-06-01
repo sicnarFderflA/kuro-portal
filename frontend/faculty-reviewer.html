@@ -614,7 +614,6 @@ function initNotificationSystem() {
 
 async function getMyAssignedTasks() {
     try {
-        // Get current user's email
         const userEmail = currentUser.email;
         
         // Fetch all applications from API
@@ -622,21 +621,39 @@ async function getMyAssignedTasks() {
         const allApps = await response.json();
         
         // Filter applications where this external reviewer is assigned
+        // Look in BOTH possible locations for reviewer assignments
         const assignedApps = allApps.filter(app => {
-            if (!app.externalReview?.reviewers) return false;
-            return app.externalReview.reviewers.some(r => r.email === userEmail);
+            // Check assignedReviewers (from admin panel)
+            if (app.assignedReviewers && Array.isArray(app.assignedReviewers)) {
+                const found = app.assignedReviewers.some(r => r.email === userEmail);
+                if (found) return true;
+            }
+            // Check externalReview.reviewers (legacy/alternative structure)
+            if (app.externalReview?.reviewers && Array.isArray(app.externalReview.reviewers)) {
+                const found = app.externalReview.reviewers.some(r => r.email === userEmail);
+                if (found) return true;
+            }
+            return false;
         });
         
         // Format tasks
         myAssignedApps = assignedApps.map(app => {
-            const myReview = app.externalReview?.reviewers?.find(r => r.email === userEmail);
+            // Find the specific reviewer assignment
+            let myReview = null;
+            if (app.assignedReviewers) {
+                myReview = app.assignedReviewers.find(r => r.email === userEmail);
+            }
+            if (!myReview && app.externalReview?.reviewers) {
+                myReview = app.externalReview.reviewers.find(r => r.email === userEmail);
+            }
+            
             return {
                 applicationId: app.id,
                 grantTitle: app.grantTitle,
                 proposalTitle: app.proposalTitle,
-                applicantEmail: app.userEmail,
-                assignedDate: app.externalReview?.assignedAt || app.createdAt,
-                dueDate: app.externalReview?.dueDate || null,
+                userEmail: app.userEmail,
+                assignedDate: myReview?.assignedAt || app.createdAt,
+                dueDate: app.dueDate || null,
                 status: myReview?.status || 'pending',
                 application: app
             };

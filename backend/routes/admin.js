@@ -408,11 +408,12 @@ router.post('/applications/:id/reviewers', async (req, res) => {
             name: reviewerName || reviewerEmail.split('@')[0],
             assignedAt: new Date().toISOString(),
             assignedBy: assignedBy,
-            status: 'pending'
+            status: 'pending'  // ← IMPORTANT: Set initial status
         });
         
         await app.save();
         
+        // Also create a notification for the reviewer
         await Notification.create({
             userEmail: reviewerEmail,
             type: 'reviewer_assigned',
@@ -420,7 +421,8 @@ router.post('/applications/:id/reviewers', async (req, res) => {
             message: `You have been assigned to review "${app.proposalTitle}". Please log in to submit your evaluation.`,
             appId: app.id,
             icon: '📋',
-            color: '#3498db'
+            color: '#3498db',
+            tab: 'reviews'
         });
         
         res.json({ success: true, reviewers: app.assignedReviewers });
