@@ -5,7 +5,30 @@ const Notification = require('../models/Notification');
 const Settings = require('../models/Settings');
 const AuditLog = require('../models/AuditLog');
 const ExternalReviewer = require('../models/ExternalReviewer');
+const TestEmail = require('../models/TestEmail');
 const router = express.Router();
+
+// ============ MIDDLEWARE ============
+const isSuperAdmin = async (req, res, next) => {
+    try {
+        const userEmail = req.query.userEmail || req.body.userEmail;
+        
+        if (!userEmail) {
+            return res.status(401).json({ error: 'User email required' });
+        }
+        
+        const settings = await Settings.findOne({ key: 'super_admins' });
+        const superAdmins = settings?.value || ['200520181@my.xu.edu.ph'];
+        
+        if (!superAdmins.includes(userEmail)) {
+            return res.status(403).json({ error: 'Access denied. Super admin only.' });
+        }
+        next();
+    } catch (error) {
+        console.error('Super admin check error:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
 
 // ============ APPLICATION MANAGEMENT ============
 
@@ -691,20 +714,26 @@ router.get('/audit-log', async (req, res) => {
     }
 });
 
-// Get all test emails
-router.get('/test-emails', async (req, res) => {
+// ============ TEST EMAILS MANAGEMENT ============
+
+// Get all test emails (protected)
+router.get('/test-emails', isSuperAdmin, async (req, res) => {
     try {
         const testEmails = await TestEmail.find({ isActive: true }).sort({ role: 1, email: 1 });
         res.json(testEmails);
     } catch (error) {
+        console.error('Error fetching test emails:', error);
         res.status(500).json({ error: error.message });
     }
 });
 
-// Add test email
-router.post('/test-emails', async (req, res) => {
+// Add test email (protected)
+router.post('/test-emails', isSuperAdmin, async (req, res) => {
     try {
-        const { email, role, name, description, addedBy } = req.body;
+        const { email, role, name, description, addedBy, userEmail } = req.body;
+        
+        // Use addedBy from request body, or fallback to the authenticated user's email
+        const createdBy = addedBy || userEmail;
         
         // Check if email already exists
         const existing = await TestEmail.findOne({ email });
@@ -715,14 +744,14 @@ router.post('/test-emails', async (req, res) => {
                 existing.role = role;
                 existing.name = name || existing.name;
                 existing.description = description || existing.description;
-                existing.updatedBy = addedBy;
+                existing.updatedBy = createdBy;
                 existing.updatedAt = new Date();
                 await existing.save();
                 
                 await AuditLog.create({
                     action: 'REACTIVATE_TEST_EMAIL',
                     changes: { email, role },
-                    performedBy: addedBy,
+                    performedBy: createdBy,
                     timestamp: new Date()
                 });
                 
@@ -734,9 +763,9 @@ router.post('/test-emails', async (req, res) => {
         const testEmail = new TestEmail({
             email,
             role,
-            name: name || '',
-            description: description || '',
-            createdBy: addedBy
+            name: name || email.split('@')[0],
+            description: description || `Test ${role} account`,
+            createdBy: createdBy
         });
         
         await testEmail.save();
@@ -744,56 +773,24 @@ router.post('/test-emails', async (req, res) => {
         await AuditLog.create({
             action: 'ADD_TEST_EMAIL',
             changes: { email, role, name },
-            performedBy: addedBy,
+            performedBy: createdBy,
             timestamp: new Date()
         });
         
-        res.json({ success: true, testEmail });
+        res.status(201).json({ success: true, testEmail });
     } catch (error) {
+        console.error('Error adding test email:', error);
         res.status(500).json({ error: error.message });
     }
 });
 
-// Update test email
-router.put('/test-emails/:id', async (req, res) => {
+// Delete test email (protected)
+router.delete('/test-emails/:id', isSuperAdmin, async (req, res) => {
     try {
         const { id } = req.params;
-        const { role, name, description, isActive, updatedBy } = req.body;
+        const { removedBy, userEmail } = req.body;
         
-        const testEmail = await TestEmail.findById(id);
-        if (!testEmail) {
-            return res.status(404).json({ error: 'Test email not found' });
-        }
-        
-        const oldValues = { role: testEmail.role, isActive: testEmail.isActive };
-        
-        if (role) testEmail.role = role;
-        if (name !== undefined) testEmail.name = name;
-        if (description !== undefined) testEmail.description = description;
-        if (isActive !== undefined) testEmail.isActive = isActive;
-        testEmail.updatedBy = updatedBy;
-        testEmail.updatedAt = new Date();
-        
-        await testEmail.save();
-        
-        await AuditLog.create({
-            action: 'UPDATE_TEST_EMAIL',
-            changes: { email: testEmail.email, old: oldValues, new: { role: testEmail.role, isActive: testEmail.isActive } },
-            performedBy: updatedBy,
-            timestamp: new Date()
-        });
-        
-        res.json({ success: true, testEmail });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Delete test email (soft delete)
-router.delete('/test-emails/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { removedBy } = req.body;
+        const deletedBy = removedBy || userEmail;
         
         const testEmail = await TestEmail.findById(id);
         if (!testEmail) {
@@ -801,19 +798,20 @@ router.delete('/test-emails/:id', async (req, res) => {
         }
         
         testEmail.isActive = false;
-        testEmail.updatedBy = removedBy;
+        testEmail.updatedBy = deletedBy;
         testEmail.updatedAt = new Date();
         await testEmail.save();
         
         await AuditLog.create({
             action: 'DELETE_TEST_EMAIL',
             changes: { email: testEmail.email, role: testEmail.role },
-            performedBy: removedBy,
+            performedBy: deletedBy,
             timestamp: new Date()
         });
         
         res.json({ success: true });
     } catch (error) {
+        console.error('Error deleting test email:', error);
         res.status(500).json({ error: error.message });
     }
 });
