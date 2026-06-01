@@ -4569,46 +4569,108 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                         if (currentDraftData) {
                             const originalData = currentDraftData;
                             
+                            // Helper function to compare values ignoring whitespace and empty strings
+                            function isDifferent(val1, val2) {
+                                const v1 = (val1 || '').trim();
+                                const v2 = (val2 || '').trim();
+                                return v1 !== v2;
+                            }
+                            
+                            // Helper function to compare arrays by content
+                            function areArraysDifferent(arr1, arr2) {
+                                if (!arr1 && !arr2) return false;
+                                if (!arr1 && arr2 && arr2.length === 0) return false;
+                                if (!arr2 && arr1 && arr1.length === 0) return false;
+                                if ((!arr1 && arr2) || (arr1 && !arr2)) return true;
+                                
+                                // Compare lengths
+                                if (arr1.length !== arr2.length) return true;
+                                
+                                // Deep compare each item
+                                for (let i = 0; i < arr1.length; i++) {
+                                    if (JSON.stringify(arr1[i]) !== JSON.stringify(arr2[i])) {
+                                        return true;
+                                    }
+                                }
+                                return false;
+                            }
+                            
                             // Compare text fields
-                            const textFields = ['proposalTitle', 'piName', 'piEmail', 'dept', 'school', 'rationale', 'objectives', 'methodology', 'outputs', 'duration', 'extension', 'litReview'];
+                            const textFields = ['proposalTitle', 'piName', 'piEmail', 'dept', 'school', 'rationale', 'objectives', 'methodology', 'outputs', 'duration', 'extension', 'litReview', 'fromChair', 'chairEmail', 'deanName', 'deanEmail', 'endorseDept', 'endorseSchool', 'schoolYear'];
                             for (const field of textFields) {
-                                const currentVal = (currentFormData[field] || '').trim();
-                                const originalVal = (originalData[field] || '').trim();
-                                if (currentVal !== originalVal) {
-                                    console.log(`Change detected in ${field}: "${originalVal}" → "${currentVal}"`);
+                                if (isDifferent(currentFormData[field], originalData[field])) {
+                                    console.log(`Change detected in ${field}: "${originalData[field]}" → "${currentFormData[field]}"`);
                                     hasChanges = true;
                                     break;
                                 }
                             }
                             
-                            // Check references
-                            if (JSON.stringify(currentFormData.references || []) !== JSON.stringify(originalData.references || [])) {
-                                console.log('Change detected in references');
-                                hasChanges = true;
+                            // Only check arrays if no change found yet
+                            if (!hasChanges) {
+                                // Check references
+                                if (areArraysDifferent(currentFormData.references, originalData.references)) {
+                                    console.log('Change detected in references');
+                                    hasChanges = true;
+                                }
                             }
                             
-                            // Check team members
-                            if (JSON.stringify(currentFormData.teamMembers || []) !== JSON.stringify(originalData.teamMembers || [])) {
-                                console.log('Change detected in team members');
-                                hasChanges = true;
+                            // Only check team members if no change found yet
+                            if (!hasChanges) {
+                                // Check team members - ignore empty role fields
+                                const currentTeamSimplified = (currentFormData.teamMembers || []).map(m => ({ name: (m.name || '').trim() }));
+                                const originalTeamSimplified = (originalData.teamMembers || []).map(m => ({ name: (m.name || '').trim() }));
+                                if (areArraysDifferent(currentTeamSimplified, originalTeamSimplified)) {
+                                    console.log('Change detected in team members');
+                                    hasChanges = true;
+                                }
                             }
                             
-                            // Check activities
-                            if (JSON.stringify(currentFormData.activities || []) !== JSON.stringify(originalData.activities || [])) {
-                                console.log('Change detected in activities');
-                                hasChanges = true;
+                            // Only check activities if no change found yet
+                            if (!hasChanges) {
+                                // Check activities - compare simplified version (ignoring _id)
+                                const currentActivitiesSimplified = (currentFormData.activities || []).map(a => ({
+                                    name: (a.name || '').trim(),
+                                    startDate: a.startDate || '',
+                                    endDate: a.endDate || ''
+                                }));
+                                const originalActivitiesSimplified = (originalData.activities || []).map(a => ({
+                                    name: (a.name || '').trim(),
+                                    startDate: a.startDate || '',
+                                    endDate: a.endDate || ''
+                                }));
+                                if (areArraysDifferent(currentActivitiesSimplified, originalActivitiesSimplified)) {
+                                    console.log('Change detected in activities');
+                                    hasChanges = true;
+                                }
                             }
                             
-                            // Check budget items
-                            if (JSON.stringify(currentFormData.budgetItems || []) !== JSON.stringify(originalData.budgetItems || [])) {
-                                console.log('Change detected in budget items');
-                                hasChanges = true;
+                            // Only check budget items if no change found yet
+                            if (!hasChanges) {
+                                // Check budget items - compare simplified version
+                                const currentBudgetSimplified = (currentFormData.budgetItems || []).map(b => ({
+                                    category: (b.category || '').trim(),
+                                    itemName: (b.itemName || '').trim(),
+                                    unitCost: b.unitCost || 0,
+                                    qty: b.qty || 1
+                                }));
+                                const originalBudgetSimplified = (originalData.budgetItems || []).map(b => ({
+                                    category: (b.category || '').trim(),
+                                    itemName: (b.itemName || '').trim(),
+                                    unitCost: b.unitCost || 0,
+                                    qty: b.qty || 1
+                                }));
+                                if (areArraysDifferent(currentBudgetSimplified, originalBudgetSimplified)) {
+                                    console.log('Change detected in budget items');
+                                    hasChanges = true;
+                                }
                             }
                         }
                         
+                        console.log('Has changes detected:', hasChanges);
+                        
                         if (!hasChanges) {
                             // No changes - just close
-                            console.log('No changes detected, closing without save');
+                            console.log('No actual changes detected, closing without save');
                             Swal.close();
                             renderApplicant();
                             return;
@@ -4640,7 +4702,6 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                                 Swal.close();
                                 renderApplicant();
                             }
-                            // Don't close the modal here - let the submit handler handle it
                             return;
                         } else if (result.isDenied) {
                             // User wants to discard changes - just close
