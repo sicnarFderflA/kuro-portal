@@ -49,34 +49,6 @@ const googleClient = new OAuth2Client(
     '1074730624717-8u9auss3uqp5grgs7e4padhothotmfrf.apps.googleusercontent.com'
 );
 
-// User database (temporary - will move to MongoDB)
-const usersDB = {
-    '200520181@my.xu.edu.ph': {
-        name: 'Super Admin',
-        email: '200520181@my.xu.edu.ph',
-        role: 'admin',
-        isSuperAdmin: true
-    },
-    'alfredrabanes@gmail.com': {
-        name: 'Alfred Rabanes',
-        email: 'alfredrabanes@gmail.com',
-        role: 'admin',
-        checkerRole: 'check1'
-    },
-    'rabanes.francisalfred@gmail.com': {
-        name: 'Francis Rabanes',
-        email: 'rabanes.francisalfred@gmail.com',
-        role: 'admin',
-        checkerRole: 'check2'
-    },
-    'excitegaming04@gmail.com': {
-        name: 'Excite Gaming',
-        email: 'excitegaming04@gmail.com',
-        role: 'admin',
-        checkerRole: 'check3'
-    }
-};
-
 // ========== GOOGLE AUTH ENDPOINT ==========
 app.post('/api/auth/google', async (req, res) => {
     console.log('📥 Received auth request');
@@ -100,29 +72,58 @@ app.post('/api/auth/google', async (req, res) => {
         
         console.log(`✅ User authenticated: ${email}`);
         
-        // Get user from memory (will move to MongoDB)
-        let user = usersDB[email];
+        // Check if user exists in MongoDB
+        let user = await User.findOne({ email });
         
         if (!user) {
-            let userRole = email.endsWith('@xu.edu.ph') ? 'faculty' : 'student';
-            user = {
-                name: name,
-                email: email,
-                picture: picture,
+            // Check if this is a test email
+            const testEmail = await TestEmail.findOne({ email, isActive: true });
+            
+            let userRole;
+            let isSuperAdmin = false;
+            let checkerRole = null;
+            
+            if (testEmail) {
+                // Test account - use the role from test email
+                userRole = testEmail.role;
+                console.log(`📧 Test account login: ${email} as ${userRole}`);
+            } else {
+                // Regular user
+                userRole = email.endsWith('@xu.edu.ph') ? 'faculty' : 'student';
+            }
+            
+            // Check if this email should be super admin
+            const superAdminsSetting = await Settings.findOne({ key: 'super_admins' });
+            const superAdmins = superAdminsSetting?.value || ['200520181@my.xu.edu.ph'];
+            isSuperAdmin = superAdmins.includes(email);
+            
+            // Create new user
+            user = new User({
+                email,
+                name,
+                picture,
                 role: userRole,
-                isSuperAdmin: false,
-                checkerRole: null
-            };
-            usersDB[email] = user;
+                isSuperAdmin: isSuperAdmin,
+                checkerRole: checkerRole,
+                isTestAccount: !!testEmail
+            });
+            
+            await user.save();
+            console.log(`✅ Created new user: ${email} with role ${userRole}`);
+        } else {
+            console.log(`✅ Existing user: ${email} with role ${user.role}`);
         }
         
         // Check role permission
-        const isExempted = email === '200520181@my.xu.edu.ph';
+        const superAdminsSetting = await Settings.findOne({ key: 'super_admins' });
+        const superAdmins = superAdminsSetting?.value || ['200520181@my.xu.edu.ph'];
+        const isSuperAdminUser = superAdmins.includes(email);
+        
         let allowed = false;
         
-        if (role === 'student') allowed = (user.role === 'student' || isExempted);
-        else if (role === 'faculty') allowed = (user.role === 'faculty' || isExempted);
-        else if (role === 'admin') allowed = (user.isSuperAdmin || user.role === 'admin' || isExempted);
+        if (role === 'student') allowed = (user.role === 'student' || isSuperAdminUser);
+        else if (role === 'faculty') allowed = (user.role === 'faculty' || isSuperAdminUser);
+        else if (role === 'admin') allowed = (isSuperAdminUser || user.role === 'admin');
         
         if (!allowed) {
             return res.status(403).json({ error: `You cannot sign in as ${role}` });
@@ -137,7 +138,7 @@ app.post('/api/auth/google', async (req, res) => {
                 picture: user.picture || null,
                 role: role,
                 checkerRole: user.checkerRole,
-                isSuperAdmin: user.isSuperAdmin || false
+                isSuperAdmin: isSuperAdminUser
             }
         });
         
@@ -435,17 +436,26 @@ app.get('/api/reviewer/tasks', async (req, res) => {
         const db = mongoose.connection.db;
         
         // Find applications assigned to this reviewer based on their checker role
-        // You'll need to define which applications go to which reviewer
         let assignedTasks = [];
         
-        // Check if user has a checker role
-        const user = usersDB[userEmail];
+        // Get user from MongoDB instead of usersDB
+        const user = await User.findOne({ email: userEmail });
+        
         if (user && user.checkerRole) {
-            // For now, return empty array - implement based on your business logic
-            assignedTasks = await db.collection('submissions').find({
-                status: 'Pending Eligibility Check', // or whatever status
-                // Add logic to filter by checker role
-            }).toArray();
+            // Get checker roles from settings
+            const settings = await Settings.findOne({ key: 'checker_roles' });
+            const checkerRoles = settings?.value || { check1: '', check2: '', check3: '' };
+            
+            let statusFilter = '';
+            if (user.checkerRole === 'check1') statusFilter = 'Pending Eligibility Check';
+            else if (user.checkerRole === 'check2') statusFilter = 'Pending Secondary Check';
+            else if (user.checkerRole === 'check3') statusFilter = 'Pending Final Check';
+            
+            if (statusFilter) {
+                assignedTasks = await db.collection('submissions').find({
+                    status: statusFilter
+                }).toArray();
+            }
         }
         
         res.json({ 
@@ -459,14 +469,17 @@ app.get('/api/reviewer/tasks', async (req, res) => {
     }
 });
 
+
 // Update reviewer name (sync from Google)
 app.put('/api/users/reviewer-name', async (req, res) => {
     try {
         const { email, name } = req.body;
         
-        if (usersDB[email]) {
-            usersDB[email].name = name;
-        }
+        // Update in MongoDB instead of usersDB
+        await User.findOneAndUpdate(
+            { email },
+            { name, updatedAt: new Date() }
+        );
         
         res.json({ success: true });
     } catch (error) {
