@@ -3164,10 +3164,11 @@ async function collectFormData() {
     let piCVName = '';
     let piCVData = '';
     
-    // ========== PI CV - ALWAYS check for new file upload FIRST ==========
+    // ========== PI CV - ALWAYS check file input FIRST ==========
     const piCVInput = document.getElementById('piCV');
     if (piCVInput && piCVInput.files && piCVInput.files.length > 0) {
         const file = piCVInput.files[0];
+        console.log('🔍 Found NEW PI CV file in input:', file.name);
         if (file.size > 10 * 1024 * 1024) {
             showFormNotification('CV file exceeds 10MB limit', true);
             piCVInput.value = '';
@@ -3177,11 +3178,11 @@ async function collectFormData() {
             console.log('✅ NEW PI CV captured:', piCVName);
         }
     }
-    // ONLY if no new file was selected, preserve existing from currentDraftData
+    // ONLY if no file was selected, then preserve existing
     else if (currentDraftData && currentDraftData.piCVName) {
         piCVName = currentDraftData.piCVName;
         piCVData = currentDraftData.piCVData || '';
-        console.log('📁 Preserved existing PI CV:', piCVName);
+        console.log('📁 No new PI CV - preserved existing:', piCVName);
     }
     
     // Get team members from DOM
@@ -3196,13 +3197,14 @@ async function collectFormData() {
     let teamCVs = new Array(teamMembers.length).fill(null);
     let teamCVData = new Array(teamMembers.length).fill(null);
     
-    // ========== TEAM CVs - ALWAYS check for new file uploads FIRST ==========
+    // ========== TEAM CVs - ALWAYS check file inputs FIRST ==========
     for (let i = 0; i < teamMembers.length; i++) {
         const teamCVInput = document.getElementById('teamCV_' + i);
         
-        // Check if a NEW file was uploaded
+        // FIRST: Check if a NEW file was uploaded
         if (teamCVInput && teamCVInput.files && teamCVInput.files.length > 0) {
             const file = teamCVInput.files[0];
+            console.log(`🔍 Found NEW team CV file for member ${i}:`, file.name);
             if (file.size > 10 * 1024 * 1024) {
                 showFormNotification('CV file for team member exceeds 10MB limit', true);
                 teamCVInput.value = '';
@@ -3216,13 +3218,13 @@ async function collectFormData() {
                 console.log(`✅ NEW team CV captured for member ${i}:`, file.name);
             }
         }
-        // ONLY if no new file, preserve existing from currentDraftData
+        // ONLY if no new file, preserve existing
         else if (currentDraftData && currentDraftData.teamCVs && currentDraftData.teamCVs[i] && currentDraftData.teamCVs[i].name) {
             teamCVs[i] = { ...currentDraftData.teamCVs[i] };
             if (currentDraftData.teamCVData && currentDraftData.teamCVData[i]) {
                 teamCVData[i] = currentDraftData.teamCVData[i];
             }
-            console.log(`📁 Preserved existing team CV for member ${i}:`, teamCVs[i].name);
+            console.log(`📁 No new file for member ${i} - preserved existing:`, teamCVs[i].name);
         }
     }
     
@@ -3304,7 +3306,7 @@ async function collectFormData() {
         // Signatures status
         signatures: { chair: false, dean: false },
         
-        // CV Uploads - NEW files take priority over existing
+        // CV Uploads
         piCVName: piCVName,
         piCVData: piCVData,
         teamCVs: teamCVs,
