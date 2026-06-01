@@ -390,27 +390,34 @@ async function removeExternalReviewerFromPool(email) {
 // ============ TEST EMAIL API ============
 
 async function getTestEmails() {
-    return apiRequest('/admin/test-emails');
+    // GET requests need userEmail in query params
+    const user = JSON.parse(sessionStorage.getItem('kuro_user') || '{}');
+    return apiRequest(`/admin/test-emails?userEmail=${encodeURIComponent(user.email)}`);
 }
 
 async function addTestEmail(email, role, name, description) {
+    const user = JSON.parse(sessionStorage.getItem('kuro_user') || '{}');
     return apiRequest('/admin/test-emails', {
         method: 'POST',
-        body: JSON.stringify({ email, role, name, description, addedBy: getCurrentUserEmail() })
-    });
-}
-
-async function updateTestEmail(id, data) {
-    return apiRequest(`/admin/test-emails/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify({ ...data, updatedBy: getCurrentUserEmail() })
+        body: JSON.stringify({ 
+            userEmail: user.email,  // ← ADD THIS
+            email, 
+            role, 
+            name, 
+            description, 
+            addedBy: user.email 
+        })
     });
 }
 
 async function deleteTestEmail(id) {
+    const user = JSON.parse(sessionStorage.getItem('kuro_user') || '{}');
     return apiRequest(`/admin/test-emails/${id}`, {
         method: 'DELETE',
-        body: JSON.stringify({ removedBy: getCurrentUserEmail() })
+        body: JSON.stringify({ 
+            userEmail: user.email,  // ← ADD THIS
+            removedBy: user.email 
+        })
     });
 }
 
@@ -477,7 +484,7 @@ window.KURO_API = {
     getSuperAdmins, addSuperAdmin, removeSuperAdmin,
     getAdmins, addAdmin, removeAdmin,
     getExternalReviewers, addExternalReviewerToPool, removeExternalReviewerFromPool,
-    getTestEmails, addTestEmail, updateTestEmail, deleteTestEmail
+    getTestEmails, addTestEmail, deleteTestEmail
 };
 
 console.log('KURO_API loaded successfully with admin methods');
