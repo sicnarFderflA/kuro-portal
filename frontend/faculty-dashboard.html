@@ -3771,6 +3771,7 @@ async function saveDrafts() {
 }
 
 function attachCVFileHandlers(modalElement) {
+    // ========== PI CV UPLOAD HANDLER ==========
     const piCVInput = modalElement.querySelector('#piCV');
     if (piCVInput) {
         piCVInput.removeEventListener('change', piCVInput._listener);
@@ -3810,7 +3811,7 @@ function attachCVFileHandlers(modalElement) {
         piCVInput.addEventListener('change', piCVInput._listener);
     }
     
-    // Handle team CV uploads
+    // ========== TEAM CV UPLOAD HANDLER ==========
     modalElement.addEventListener('change', async function(e) {
         const input = e.target;
         if (input && input.id && input.id.startsWith('teamCV_')) {
@@ -3836,7 +3837,6 @@ function attachCVFileHandlers(modalElement) {
                     : null;
                 
                 if (currentDraftData) {
-                    const base64Data = await fileToBase64(file);
                     if (!currentDraftData.teamCVs) currentDraftData.teamCVs = [];
                     if (!currentDraftData.teamCVData) currentDraftData.teamCVData = [];
                     currentDraftData.teamCVs[memberIdx] = { 
@@ -3845,7 +3845,7 @@ function attachCVFileHandlers(modalElement) {
                     };
                     currentDraftData.teamCVData[memberIdx] = base64Data;
                     
-                    await saveDrafts(); // Use API save
+                    await saveDrafts();
                     refreshCVTabContentAfterUpload(modalElement);
                     
                     const memberName = (getCurrentTeamMembersFromForm1(modalElement)[memberIdx]?.name) || 'Team member';
@@ -3860,7 +3860,7 @@ function attachCVFileHandlers(modalElement) {
         }
     });
     
-    // Remove PI CV button handler
+    // ========== REMOVE PI CV BUTTON HANDLER ==========
     const removePiBtn = modalElement.querySelector('.remove-pi-cv-btn');
     if (removePiBtn) {
         if (removePiBtn._handler) {
@@ -3891,9 +3891,10 @@ function attachCVFileHandlers(modalElement) {
                     
                     if (result.isConfirmed) {
                         currentDraftData.piCVName = '';
+                        currentDraftData.piCVData = '';
                         currentDraftData.piCVStatus = 'missing';
                         
-                        await saveDrafts(); // Use API save
+                        await saveDrafts();
                         
                         setTimeout(() => {
                             openApplicationForm(isEditMode, currentTab);
@@ -3913,7 +3914,7 @@ function attachCVFileHandlers(modalElement) {
         removePiBtn.addEventListener('click', removePiBtn._handler);
     }
 
-    // Remove Team CV button handler
+    // ========== REMOVE TEAM CV BUTTON HANDLER ==========
     if (modalElement._teamCVRemoveHandler) {
         modalElement.removeEventListener('click', modalElement._teamCVRemoveHandler);
     }
@@ -3955,8 +3956,11 @@ function attachCVFileHandlers(modalElement) {
                     
                     if (result.isConfirmed) {
                         currentDraftData.teamCVs[memberIdx] = null;
+                        if (currentDraftData.teamCVData) {
+                            currentDraftData.teamCVData[memberIdx] = null;
+                        }
                         
-                        await saveDrafts(); // Use API save
+                        await saveDrafts();
                         
                         setTimeout(() => {
                             openApplicationForm(isEditMode, currentTab);
@@ -3974,8 +3978,9 @@ function attachCVFileHandlers(modalElement) {
             }
         }
     };
+    modalElement.addEventListener('click', modalElement._teamCVRemoveHandler);
 
-    // View PI CV button handler
+    // ========== VIEW PI CV BUTTON HANDLER ==========
     const viewPiBtn = modalElement.querySelector('.view-pi-cv-btn');
     if (viewPiBtn) {
         if (viewPiBtn._viewHandler) {
@@ -3997,8 +4002,12 @@ function attachCVFileHandlers(modalElement) {
         viewPiBtn.addEventListener('click', viewPiBtn._viewHandler);
     }
 
-    // View Team CV button handler
-    modalElement._teamCVViewHandler = async function(e) {
+    // ========== VIEW TEAM CV BUTTON HANDLER ==========
+    if (modalElement._teamCVViewHandler) {
+        modalElement.removeEventListener('click', modalElement._teamCVViewHandler);
+    }
+    
+    modalElement._teamCVViewHandler = function(e) {
         const btn = e.target.closest('.view-team-cv-btn');
         if (btn) {
             e.preventDefault();
@@ -4242,39 +4251,43 @@ function renderCVUploadContent(draftData, teamMembersFromForm = []) {
     });
     const progressPercent = totalCount > 0 ? (uploadedCount / totalCount) * 100 : 0;
     
-    html += '<div class="cv-progress-wrapper">';
-    html += '<div class="cv-progress-header">';
-    html += '<span class="cv-progress-label">CV Upload Progress</span>';
-    html += '<span class="cv-progress-count">' + uploadedCount + ' / ' + totalCount + ' uploaded</span>';
+    html += '<div class="cv-progress-wrapper" style="margin-bottom: 1.5rem;">';
+    html += '<div class="cv-progress-header" style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">';
+    html += '<span class="cv-progress-label" style="font-size: 0.7rem; font-weight: 600;">CV Upload Progress</span>';
+    html += '<span class="cv-progress-count" style="font-size: 0.7rem;">' + uploadedCount + ' / ' + totalCount + ' uploaded</span>';
     html += '</div>';
-    html += '<div class="cv-progress-bar-bg">';
-    
+    html += '<div class="cv-progress-bar-bg" style="background: #e0e0e0; border-radius: 10px; height: 6px; overflow: hidden;">';
     const fillClass = uploadedCount === totalCount ? 'green' : 'gold';
-    // stylelint-disable-next-line
-    html += '<div class="cv-progress-fill ' + fillClass + '" style="width: ' + progressPercent + '%;"></div>';
-    html += '</div>';
-    html += '</div>';
+    html += '<div class="cv-progress-fill ' + fillClass + '" style="width: ' + progressPercent + '%; background: ' + (uploadedCount === totalCount ? '#2ecc71' : '#C9A03D') + '; height: 100%; border-radius: 10px;"></div>';
+    html += '</div></div>';
     
+    // ========== PRINCIPAL INVESTIGATOR SECTION ==========
     html += '<div class="form-subsection-title" style="margin-bottom: 0.8rem;">👤 Principal Investigator</div>';
     html += '<div id="piCVSection" class="cv-upload-card" style="background: #f8f9fa; border-radius: 0.8rem; padding: 1rem; margin-bottom: 1.5rem; border: 1px solid #e0e0e0;">';
     html += '<h4 style="color: var(--xavier-primary); margin-bottom: 0.75rem; text-align: left;">' + escapeHtml(piName || 'Not specified') + ' <span style="color: #e74c3c;">*</span></h4>';
-    html += '<div style="display: flex; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">';
-    html += '<div style="flex: 1; min-width: 200px;">';
+    html += '<div style="display: flex; flex-direction: column; gap: 1rem;">';
+    html += '<div style="width: 100%;">';
     html += '<input type="file" id="piCV" accept=".pdf" style="padding: 0.4rem; border: 1px solid #ddd; border-radius: 6px; width: 100%;">';
     html += '<small style="display: block; font-size: 0.65rem; color: #666; margin-top: 0.2rem;">Choose PDF file (Max 10MB)</small>';
     html += '</div>';
-    html += '<div style="flex: 1; min-width: 200px;">';
+    html += '<div style="width: 100%;">';
     
     if (piCVName && piCVName.trim() !== '') {
-        html += '<div style="background: #e8f5e9; padding: 0.5rem 0.8rem; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap;">';
-        html += '<span style="font-size: 0.8rem;"><i class="fas fa-file-pdf" style="color: #e74c3c;"></i> ' + escapeHtml(piCVName) + '</span>';
+        html += '<div style="background: #e8f5e9; padding: 0.75rem; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">';
+        html += '<span style="font-size: 0.8rem; word-break: break-all;"><i class="fas fa-file-pdf" style="color: #e74c3c;"></i> ' + escapeHtml(piCVName) + '</span>';
         html += '<div style="display: flex; gap: 0.5rem;">';
-        html += '<button type="button" class="view-pi-cv-btn" style="background: var(--xavier-gold); border: none; color: var(--xavier-primary); padding: 0.2rem 0.6rem; border-radius: 20px; cursor: pointer; font-size: 0.7rem;"><i class="fas fa-eye"></i> View</button>';
-        html += '<button type="button" class="remove-pi-cv-btn" style="background: #e74c3c; border: none; color: white; padding: 0.2rem 0.6rem; border-radius: 20px; cursor: pointer; font-size: 0.7rem;"><i class="fas fa-trash"></i> Remove</button>';
+        html += '<button type="button" class="view-pi-cv-btn" style="background: var(--xavier-gold); border: none; color: var(--xavier-primary); padding: 0.3rem 0.8rem; border-radius: 20px; cursor: pointer; font-size: 0.7rem; font-weight: 600;"><i class="fas fa-eye"></i> View</button>';
+        html += '<button type="button" class="remove-pi-cv-btn" style="background: #e74c3c; border: none; color: white; padding: 0.3rem 0.8rem; border-radius: 20px; cursor: pointer; font-size: 0.7rem; font-weight: 600;"><i class="fas fa-trash"></i> Remove</button>';
         html += '</div></div>';
-        html += '<small style="display: block; font-size: 0.65rem; color: #666; margin-top: 0.3rem;">Upload a new file to replace</small>';
+        html += '<small style="display: block; font-size: 0.65rem; color: #666; margin-top: 0.5rem;">Upload a new file to replace the current one</small>';
+    } else {
+        html += '<div class="cv-pending-status" style="background: #fff3e0; padding: 0.75rem; border-radius: 8px; text-align: center;">';
+        html += '<i class="fas fa-clock" style="color: #f39c12;"></i> <span style="font-size: 0.8rem;">No file uploaded yet</span>';
+        html += '</div>';
     }
-
+    html += '</div></div></div>';  // Close piCVSection divs
+    
+    // ========== RESEARCH TEAM MEMBERS SECTION ==========
     if (teamMembers.length > 0) {
         html += '<div class="form-subsection-title" style="margin-bottom: 0.8rem;">👥 Research Team Members</div>';
         
@@ -4285,22 +4298,27 @@ function renderCVUploadContent(draftData, teamMembersFromForm = []) {
             
             html += '<div class="cv-upload-card" data-member-index="' + i + '" style="background: #f8f9fa; border-radius: 0.8rem; padding: 1rem; margin-bottom: 1rem; border: 1px solid #e0e0e0;">';
             html += '<h4 style="color: var(--xavier-primary); margin-bottom: 0.75rem; text-align: left;">' + escapeHtml(memberName) + ' <span style="color: #e74c3c;">*</span></h4>';
-            html += '<div style="display: flex; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">';
-            html += '<div style="flex: 1; min-width: 200px;">';
+            html += '<div style="display: flex; flex-direction: column; gap: 1rem;">';
+            html += '<div style="width: 100%;">';
             html += '<input type="file" id="teamCV_' + i + '" accept=".pdf" style="padding: 0.4rem; border: 1px solid #ddd; border-radius: 6px; width: 100%;">';
             html += '<small style="display: block; font-size: 0.65rem; color: #666; margin-top: 0.2rem;">Choose PDF file for ' + escapeHtml(memberName) + '</small>';
             html += '</div>';
-            html += '<div style="flex: 1; min-width: 200px;">';
+            html += '<div style="width: 100%;">';
             
             if (hasCV) {
-                html += '<div style="background: #e8f5e9; padding: 0.5rem 0.8rem; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap;">';
-                html += '<span style="font-size: 0.8rem;"><i class="fas fa-file-pdf" style="color: #e74c3c;"></i> ' + escapeHtml(teamCVs[i].name) + '</span>';
+                html += '<div style="background: #e8f5e9; padding: 0.75rem; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">';
+                html += '<span style="font-size: 0.8rem; word-break: break-all;"><i class="fas fa-file-pdf" style="color: #e74c3c;"></i> ' + escapeHtml(teamCVs[i].name) + '</span>';
                 html += '<div style="display: flex; gap: 0.5rem;">';
-                html += '<button type="button" class="view-team-cv-btn" data-member-idx="' + i + '" style="background: var(--xavier-gold); border: none; color: var(--xavier-primary); padding: 0.2rem 0.6rem; border-radius: 20px; cursor: pointer; font-size: 0.7rem;"><i class="fas fa-eye"></i> View</button>';
-                html += '<button type="button" class="remove-team-cv-btn" data-member-idx="' + i + '" style="background: #e74c3c; border: none; color: white; padding: 0.2rem 0.6rem; border-radius: 20px; cursor: pointer; font-size: 0.7rem;"><i class="fas fa-trash"></i> Remove</button>';
+                html += '<button type="button" class="view-team-cv-btn" data-member-idx="' + i + '" style="background: var(--xavier-gold); border: none; color: var(--xavier-primary); padding: 0.3rem 0.8rem; border-radius: 20px; cursor: pointer; font-size: 0.7rem; font-weight: 600;"><i class="fas fa-eye"></i> View</button>';
+                html += '<button type="button" class="remove-team-cv-btn" data-member-idx="' + i + '" style="background: #e74c3c; border: none; color: white; padding: 0.3rem 0.8rem; border-radius: 20px; cursor: pointer; font-size: 0.7rem; font-weight: 600;"><i class="fas fa-trash"></i> Remove</button>';
                 html += '</div></div>';
-                html += '<small style="display: block; font-size: 0.65rem; color: #666; margin-top: 0.3rem;">Upload a new file to replace</small>';
+                html += '<small style="display: block; font-size: 0.65rem; color: #666; margin-top: 0.5rem;">Upload a new file to replace</small>';
+            } else {
+                html += '<div class="cv-pending-status" style="background: #fff3e0; padding: 0.75rem; border-radius: 8px; text-align: center;">';
+                html += '<i class="fas fa-clock" style="color: #f39c12;"></i> <span style="font-size: 0.8rem;">No file uploaded yet</span>';
+                html += '</div>';
             }
+            html += '</div></div></div>';  // Close team member card divs
         }
     } else {
         html += '<div class="demo-note" style="margin-top: 1rem; text-align: center;">';
@@ -4308,6 +4326,7 @@ function renderCVUploadContent(draftData, teamMembersFromForm = []) {
         html += '</div>';
     }
     
+    // ========== REVIEWER FEEDBACK SECTION ==========
     html += '<div style="background: #fff9e6; border-left: 4px solid var(--xavier-gold); padding: 1rem; margin-top: 1.5rem; border-radius: 0.5rem; width: 100%; box-sizing: border-box;">';
     html += '<div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">';
     html += '<i class="fas fa-comment-dots" style="color: var(--xavier-gold); font-size: 1rem;"></i>';
