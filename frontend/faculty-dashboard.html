@@ -4295,6 +4295,8 @@ function updateBudgetTotals() {
     if (summary) summary.innerHTML = 'GRAND TOTAL: ₱' + total.toLocaleString();
 }
 
+let mainModalRef = null;
+
 async function openApplicationForm(isEdit, restoreTab = null) {
     
     // Clean up any pending discard data when opening a new form
@@ -4397,6 +4399,7 @@ async function openApplicationForm(isEdit, restoreTab = null) {
         allowEscapeKey: false,
         backdrop: true,
         didOpen: (modal) => {
+            mainModalRef = modal;
             currentSwalInstance = modal;
             currentModalForCV = modal;
 
@@ -4519,7 +4522,7 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                     e.preventDefault();
                     
                     // Save current form data before changing grant
-                    const currentFormData = collectFormData();
+                    const currentFormData = await collectFormData();
                     
                     // Update currentDraftData with latest form data
                     if (currentDraftData) {
@@ -4665,29 +4668,76 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                                 currentDraftData = unsavedFormData;
                                 
                                 // Find and click the submit button in the original modal
-                                const submitBtn = document.querySelector('#customSubmitBtn');
+                                const submitBtn = mainModalRef?.querySelector('#customSubmitBtn');
                                 if (submitBtn) {
                                     console.log('Found submit button, clicking it...');
                                     submitBtn.click();
                                 } else {
                                     console.error('Submit button not found, trying to update directly');
-                                    // Fallback: direct update
-                                    try {
-                                        const formData = await collectFormData();
-                                        const result = await KURO_API.updateApplication(editAppId, {
-                                            ...formData,
-                                            id: editAppId,
-                                            grantTitle: selectedGrant,
-                                            userEmail: currentUser.email
-                                        });
-                                        console.log('Direct update successful:', result);
-                                        await renderApplicant();
-                                        showInlineNotification(null, 'Application updated successfully!', true);
-                                    } catch (error) {
-                                        console.error('Direct update failed:', error);
-                                        showInlineNotification(null, 'Failed to update application', false);
+                                        // Fallback: direct update with proper data merging
+                                        try {
+                                            const formData = await collectFormData();
+                                            const appId = editAppId;
+                                            
+                                            // Get the existing application first to preserve data
+                                            const response = await fetch(`${API_URL}/api/applications/${appId}`);
+                                            const existingApp = await response.json();
+                                            
+                                            // Merge: use formData values if present, otherwise use existing
+                                            const mergedData = {
+                                                id: appId,
+                                                userEmail: currentUser.email,
+                                                grantTitle: selectedGrant || existingApp.grantTitle,
+                                                grantType: "Faculty Research Grant",
+                                                status: existingApp.status,
+                                                submittedDate: existingApp.submittedDate,
+                                                signatures: existingApp.signatures,
+                                                signatureRequests: existingApp.signatureRequests,
+                                                // Form fields - use formData if has value, else existing
+                                                proposalTitle: formData.proposalTitle || existingApp.proposalTitle,
+                                                piName: formData.piName || existingApp.piName,
+                                                piEmail: formData.piEmail || existingApp.piEmail,
+                                                dept: formData.dept || existingApp.dept,
+                                                school: formData.school || existingApp.school,
+                                                extension: formData.extension || existingApp.extension,
+                                                duration: formData.duration || existingApp.duration,
+                                                rationale: formData.rationale || existingApp.rationale,
+                                                litReview: formData.litReview || existingApp.litReview,
+                                                objectives: formData.objectives || existingApp.objectives,
+                                                methodology: formData.methodology || existingApp.methodology,
+                                                outputs: formData.outputs || existingApp.outputs,
+                                                references: formData.references && formData.references.length > 0 ? formData.references : existingApp.references,
+                                                teamMembers: formData.teamMembers && formData.teamMembers.length > 0 ? formData.teamMembers : existingApp.teamMembers,
+                                                activities: formData.activities && formData.activities.length > 0 ? formData.activities : existingApp.activities,
+                                                budgetItems: formData.budgetItems && formData.budgetItems.length > 0 ? formData.budgetItems : existingApp.budgetItems,
+                                                fromChair: formData.fromChair || existingApp.fromChair,
+                                                chairEmail: formData.chairEmail || existingApp.chairEmail,
+                                                deanName: formData.deanName || existingApp.deanName,
+                                                deanEmail: formData.deanEmail || existingApp.deanEmail,
+                                                endorseDept: formData.endorseDept || existingApp.endorseDept,
+                                                endorseSchool: formData.endorseSchool || existingApp.endorseSchool,
+                                                schoolYear: formData.schoolYear || existingApp.schoolYear,
+                                                endorsementDate: formData.endorsementDate || existingApp.endorsementDate,
+                                                // CV data - preserve existing if no new files
+                                                piCVName: formData.piCVName || existingApp.piCVName,
+                                                piCVData: formData.piCVData || existingApp.piCVData,
+                                                piCVStatus: existingApp.piCVStatus || 'pending',
+                                                teamCVs: formData.teamCVs && formData.teamCVs.length > 0 ? formData.teamCVs : existingApp.teamCVs,
+                                                teamCVData: formData.teamCVData && formData.teamCVData.length > 0 ? formData.teamCVData : existingApp.teamCVData,
+                                            };
+                                            
+                                            console.log('Merged data for update:', mergedData);
+                                            
+                                            const result = await KURO_API.updateApplication(appId, mergedData);
+                                            console.log('Direct update successful:', result);
+                                            Swal.close();
+                                            await renderApplicant();
+                                            showInlineNotification(null, 'Application updated successfully!', true);
+                                        } catch (error) {
+                                            console.error('Direct update failed:', error);
+                                            showInlineNotification(null, 'Failed to update application: ' + error.message, false);
+                                        }
                                     }
-                                }
                             }, 100);
                             return;
                         } else if (result.isDenied) {
