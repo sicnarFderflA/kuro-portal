@@ -2978,29 +2978,89 @@ function attachCheckStageHandlers(modal, email, appId, currentStatus) {
 function attachExternalReviewerHandlers(modal, email, appId) {
     const addBtn = modal.querySelector('#addManualReviewerBtn');
     if (addBtn) {
-        addBtn.onclick = async () => {
+        // Remove existing listener to avoid duplicates
+        const newAddBtn = addBtn.cloneNode(true);
+        addBtn.parentNode.replaceChild(newAddBtn, addBtn);
+        
+        newAddBtn.onclick = async () => {
             const reviewerEmail = modal.querySelector('#newReviewerEmail')?.value;
-            if (!reviewerEmail) { showToast('Please enter reviewer email', 'error'); return; }
+            if (!reviewerEmail) { 
+                showToast('Please enter reviewer email', 'error'); 
+                return; 
+            }
+            
+            // Show loading state
+            newAddBtn.disabled = true;
+            newAddBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Assigning...';
+            
             try {
-                await KURO_API.assignExternalReviewer(appId, reviewerEmail, reviewerEmail.split('@')[0]);
-                showToast(`Reviewer ${reviewerEmail} assigned`, 'success');
-                Swal.close();
-                viewApplicationDetails(appId);
-            } catch (error) { showToast('Failed to assign reviewer', 'error'); }
+                const result = await KURO_API.assignExternalReviewer(appId, reviewerEmail, reviewerEmail.split('@')[0]);
+                console.log('Assign result:', result);
+                
+                if (result.success) {
+                    showToast(`Reviewer ${reviewerEmail} assigned`, 'success');
+                    
+                    // Clear the input field
+                    const emailInput = modal.querySelector('#newReviewerEmail');
+                    if (emailInput) emailInput.value = '';
+                    
+                    // Refresh the application details to show the new reviewer
+                    // First close current modal, then reopen with fresh data
+                    Swal.close();
+                    
+                    // Small delay to ensure modal is closed before reopening
+                    setTimeout(async () => {
+                        // Fetch fresh application data
+                        const response = await fetch(`${API_URL}/api/applications/${appId}`);
+                        const freshApp = await response.json();
+                        
+                        // Re-render with fresh data
+                        await viewApplicationDetails(appId);
+                    }, 300);
+                } else {
+                    showToast('Failed to assign reviewer', 'error');
+                }
+            } catch (error) {
+                console.error('Failed to assign reviewer:', error);
+                showToast('Failed to assign reviewer: ' + (error.message || 'Unknown error'), 'error');
+            } finally {
+                newAddBtn.disabled = false;
+                newAddBtn.innerHTML = '<i class="fas fa-plus"></i> Assign Reviewer';
+            }
         };
     }
+    
     const removeBtns = modal.querySelectorAll('.remove-reviewer-btn');
     removeBtns.forEach(btn => {
-        btn.onclick = async () => {
-            const reviewerEmail = btn.getAttribute('data-reviewer-email');
-            const result = await Swal.fire({ title: 'Remove Reviewer?', text: `Remove ${reviewerEmail}?`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#e74c3c' });
+        // Remove existing listener to avoid duplicates
+        const newRemoveBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newRemoveBtn, btn);
+        
+        newRemoveBtn.onclick = async () => {
+            const reviewerEmail = newRemoveBtn.getAttribute('data-reviewer-email');
+            const result = await Swal.fire({ 
+                title: 'Remove Reviewer?', 
+                text: `Remove ${reviewerEmail}?`, 
+                icon: 'warning', 
+                showCancelButton: true, 
+                confirmButtonColor: '#e74c3c' 
+            });
             if (result.isConfirmed) {
+                newRemoveBtn.disabled = true;
+                newRemoveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                
                 try {
                     await KURO_API.removeExternalReviewer(appId, reviewerEmail);
                     showToast('Reviewer removed', 'success');
                     Swal.close();
-                    viewApplicationDetails(appId);
-                } catch (error) { showToast('Failed to remove reviewer', 'error'); }
+                    setTimeout(async () => {
+                        await viewApplicationDetails(appId);
+                    }, 300);
+                } catch (error) { 
+                    showToast('Failed to remove reviewer', 'error');
+                    newRemoveBtn.disabled = false;
+                    newRemoveBtn.innerHTML = '<i class="fas fa-trash"></i> Remove';
+                }
             }
         };
     });
