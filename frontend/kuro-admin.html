@@ -1785,7 +1785,21 @@ async function viewApplicationDetails(appId) {
             }
         }
         
-        // Render all tab contents - using the original function names (they are already replaced with improved versions)
+        // Re-evaluate user role to ensure it's up to date
+        const currentUserEmail = currentUser.email;
+        const currentCheckerRoles = await KURO_API.getCheckerRoles().catch(() => ({ check1: '', check2: '', check3: '' }));
+        const userCheckerRole = getUserCheckerRole(currentUserEmail);
+        const isCurrentSuperAdmin = currentUserEmail === '200520181@my.xu.edu.ph';
+        const isCurrentCheck3 = userCheckerRole === 'check3';
+        
+        console.log('Role Check:', { 
+            isSuperAdmin: isCurrentSuperAdmin, 
+            isCheck3: isCurrentCheck3,
+            userRole: userCheckerRole,
+            checkerRoles: currentCheckerRoles
+        });
+        
+        // Render all tab contents
         const contentForm1 = renderForm1Content(app);
         const contentForm2 = renderForm2Content(app);
         const contentCV = renderCVReviewContent(app);
@@ -1813,14 +1827,14 @@ async function viewApplicationDetails(appId) {
                     <button class="modal-detail-tab" data-tab="tc2"><i class="fas fa-clipboard-list"></i> Endorsement</button>
                     <button class="modal-detail-tab" data-tab="tc3"><i class="fas fa-file-pdf"></i> CV Review</button>
                     <button class="modal-detail-tab" data-tab="tc5"><i class="fas fa-check-double"></i> Check Stages</button>
-                    ${(isSuperAdmin || isCheck3) ? '<button class="modal-detail-tab" data-tab="tc4"><i class="fas fa-users"></i> External Reviewers</button>' : ''}
+                    ${(isCurrentSuperAdmin || isCurrentCheck3) ? '<button class="modal-detail-tab" data-tab="tc4"><i class="fas fa-users"></i> External Reviewers</button>' : ''}
                 </div>
                 
                 <div id="tc1" class="kuro-tab-pane kuro-active">${contentForm1}</div>
                 <div id="tc2" class="kuro-tab-pane">${contentForm2}</div>
                 <div id="tc3" class="kuro-tab-pane">${contentCV}</div>
                 <div id="tc5" class="kuro-tab-pane">${contentChecks}</div>
-                <div id="tc4" class="kuro-tab-pane">${(isSuperAdmin || isCheck3) ? contentExternal : ''}</div>
+                <div id="tc4" class="kuro-tab-pane">${(isCurrentSuperAdmin || isCurrentCheck3) ? contentExternal : ''}</div>
             </div>
         `;
         
