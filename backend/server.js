@@ -72,62 +72,94 @@ app.post('/api/auth/google', async (req, res) => {
         
         console.log(`✅ User authenticated: ${email}`);
         
-        // Check if user exists in MongoDB
+        // FIRST: Check if this is a test email
+        const testEmail = await TestEmail.findOne({ email, isActive: true });
+        
         let user = await User.findOne({ email });
         
-        if (!user) {
-            // Check if this is a test email
-            const testEmail = await TestEmail.findOne({ email, isActive: true });
+        if (testEmail) {
+            console.log(`📧 Test account login: ${email}, role from test email: ${testEmail.role}`);
             
-            let userRole;
-            let isSuperAdmin = false;
-            let checkerRole = null;
-            
-            if (testEmail) {
-                // Test account - use the role from test email
-                userRole = testEmail.role;
-                console.log(`📧 Test account login: ${email} as ${userRole}`);
+            // If test email exists, always use its role
+            if (!user) {
+                // Create user from test email
+                user = new User({
+                    email,
+                    name: testEmail.name || name,
+                    picture,
+                    role: testEmail.role,  // Use role from TestEmail
+                    isSuperAdmin: false,
+                    checkerRole: testEmail.role === 'check1' ? 'check1' : 
+                               (testEmail.role === 'check2' ? 'check2' : 
+                               (testEmail.role === 'check3' ? 'check3' : null)),
+                    isTestAccount: true
+                });
+                await user.save();
+                console.log(`✅ Created test user: ${email} with role ${testEmail.role}`);
             } else {
-                // Regular user
-                userRole = email.endsWith('@xu.edu.ph') ? 'faculty' : 'student';
+                // Update existing user with test email role
+                user.role = testEmail.role;
+                user.isTestAccount = true;
+                if (testEmail.role === 'check1') user.checkerRole = 'check1';
+                else if (testEmail.role === 'check2') user.checkerRole = 'check2';
+                else if (testEmail.role === 'check3') user.checkerRole = 'check3';
+                await user.save();
+                console.log(`✅ Updated test user: ${email} to role ${testEmail.role}`);
             }
             
-            // Check if this email should be super admin
+            // Check if the requested role matches the test email role
+            let allowedRoles = ['student', 'faculty', 'admin', 'check1', 'check2', 'check3'];
+            let requestedRoleMatches = (role === testEmail.role) || 
+                                       (role === 'admin' && testEmail.role === 'admin');
+            
+            if (!requestedRoleMatches && allowedRoles.includes(role)) {
+                return res.status(403).json({ 
+                    error: `This test account is configured as ${testEmail.role}. Please sign in as ${testEmail.role}.` 
+                });
+            }
+            
+        } else {
+            // Regular user (not test email)
+            if (!user) {
+                let userRole = email.endsWith('@xu.edu.ph') ? 'faculty' : 'student';
+                
+                // Check if this email should be super admin
+                const superAdminsSetting = await Settings.findOne({ key: 'super_admins' });
+                const superAdmins = superAdminsSetting?.value || ['200520181@my.xu.edu.ph'];
+                const isSuperAdmin = superAdmins.includes(email);
+                
+                user = new User({
+                    email,
+                    name,
+                    picture,
+                    role: userRole,
+                    isSuperAdmin: isSuperAdmin,
+                    checkerRole: null,
+                    isTestAccount: false
+                });
+                await user.save();
+                console.log(`✅ Created new user: ${email} with role ${userRole}`);
+            }
+            
+            // Check role permission for regular users
             const superAdminsSetting = await Settings.findOne({ key: 'super_admins' });
             const superAdmins = superAdminsSetting?.value || ['200520181@my.xu.edu.ph'];
-            isSuperAdmin = superAdmins.includes(email);
+            const isSuperAdminUser = superAdmins.includes(email);
             
-            // Create new user
-            user = new User({
-                email,
-                name,
-                picture,
-                role: userRole,
-                isSuperAdmin: isSuperAdmin,
-                checkerRole: checkerRole,
-                isTestAccount: !!testEmail
-            });
+            let allowed = false;
+            if (role === 'student') allowed = (user.role === 'student' || isSuperAdminUser);
+            else if (role === 'faculty') allowed = (user.role === 'faculty' || isSuperAdminUser);
+            else if (role === 'admin') allowed = (isSuperAdminUser || user.role === 'admin');
             
-            await user.save();
-            console.log(`✅ Created new user: ${email} with role ${userRole}`);
-        } else {
-            console.log(`✅ Existing user: ${email} with role ${user.role}`);
+            if (!allowed) {
+                return res.status(403).json({ error: `You cannot sign in as ${role}` });
+            }
         }
         
-        // Check role permission
+        // Get super admin status for response
         const superAdminsSetting = await Settings.findOne({ key: 'super_admins' });
         const superAdmins = superAdminsSetting?.value || ['200520181@my.xu.edu.ph'];
         const isSuperAdminUser = superAdmins.includes(email);
-        
-        let allowed = false;
-        
-        if (role === 'student') allowed = (user.role === 'student' || isSuperAdminUser);
-        else if (role === 'faculty') allowed = (user.role === 'faculty' || isSuperAdminUser);
-        else if (role === 'admin') allowed = (isSuperAdminUser || user.role === 'admin');
-        
-        if (!allowed) {
-            return res.status(403).json({ error: `You cannot sign in as ${role}` });
-        }
         
         res.json({
             success: true,
@@ -136,7 +168,7 @@ app.post('/api/auth/google', async (req, res) => {
                 email: user.email,
                 name: user.name,
                 picture: user.picture || null,
-                role: role,
+                role: testEmail ? testEmail.role : role,  // Use test email role if exists
                 checkerRole: user.checkerRole,
                 isSuperAdmin: isSuperAdminUser
             }
