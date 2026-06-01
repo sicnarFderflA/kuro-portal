@@ -12,15 +12,27 @@
     <script src="api.js"></script>
     <style>
         :root {
-            --xavier-primary: #283871;
-            --xavier-primary-dark: #1e2b57;
-            --xavier-gold: #D4AF37;
-            --xavier-gold-dark: #b8942e;
+            --xavier-primary: #0B2B4F;
+            --xavier-primary-dark: #071E38;
+            --xavier-gold: #C9A03D;
+            --xavier-gold-light: #E1C27B;
+            --xavier-gold-dark: #A87D2A;
             --xavier-gray-text: #5A6E6B;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --info: #3B82F6;
+            --light-bg: #F8FAFE;
+            --border-light: #E9EDF2;
+            --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+            --radius-card: 20px;
         }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: #f0f2f5; }
-        
+        body { font-family: 'Inter', sans-serif; background: #F4F7FC; }
+
+        /* ========== HEADER STYLES ========== */
         .top-nav {
             background: var(--xavier-primary);
             padding: 0.8rem 2rem;
@@ -30,24 +42,24 @@
             border-bottom: 3px solid var(--xavier-gold);
             flex-wrap: wrap;
             gap: 1rem;
-        }        
-        
-        .right-controls {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
         }
-
-
+        .right-controls { display: flex; align-items: center; gap: 1.5rem; }
         .logo-area { display: flex; align-items: center; gap: 1rem; }
         .school-logo-header { height: 45px; width: auto; }
         .logo-area h2 { color: white; display: flex; align-items: center; gap: 0.5rem; font-size: 1.3rem; }
         .logo-area h2 i { color: var(--xavier-gold); }
-        .user-info { display: flex; align-items: center; gap: 1rem; }
-        .avatar { width: 42px; height: 42px; border-radius: 50%; background: var(--xavier-gold); color: var(--xavier-primary); display: flex; align-items: center; justify-content: center; font-weight: bold; }
-        .user-info div { color: white; }
-        .user-info #userEmail { color: rgba(255,255,255,0.8); }
 
+        .user-section {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            cursor: pointer;
+            padding: 0.2rem 0.5rem;
+            border-radius: 40px;
+            transition: background 0.2s;
+        }
+        .user-section:hover { background: rgba(255,255,255,0.1); }
         .user-avatar {
             width: 38px;
             height: 38px;
@@ -60,18 +72,11 @@
             overflow: hidden;
             flex-shrink: 0;
         }
-
         .user-avatar.has-initial {
             background: linear-gradient(135deg, var(--xavier-gold) 0%, var(--xavier-gold-dark) 100%);
             color: var(--xavier-primary);
         }
-
-        .user-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
+        .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
         .user-avatar .avatar-initial {
             display: flex;
             align-items: center;
@@ -79,55 +84,7 @@
             width: 100%;
             height: 100%;
         }
-
-        .switch-reviewer-btn {
-            background: rgba(255,255,255,0.15);
-            color: white;
-            border: 1px solid var(--xavier-gold);
-            padding: 0.4rem 1rem;
-            border-radius: 40px;
-            cursor: pointer;
-            font-size: 0.75rem;
-            font-weight: 500;
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .switch-reviewer-btn i {
-            font-size: 0.7rem;
-        }
-        .switch-reviewer-btn.active {
-            background: var(--xavier-gold);
-            color: var(--xavier-primary);
-        }
-
-        .switch-reviewer-btn:hover {
-            background: var(--xavier-gold);
-            color: var(--xavier-primary);
-        }
-
-        .switch-reviewer-btn.hidden {
-            display: none;
-        }
-
-        .user-section {
-            position: relative;
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            cursor: pointer;
-            padding: 0.2rem 0.5rem;
-            border-radius: 40px;
-            transition: background 0.2s;
-        }
-
-        .user-name-short {
-            font-size: 0.9rem;
-            font-weight: 500;
-            color: white;
-        }
-
+        .user-name-short { font-size: 0.9rem; font-weight: 500; color: white; }
         .user-hover-card {
             position: absolute;
             top: 100%;
@@ -145,13 +102,11 @@
             transition: all 0.2s ease;
             pointer-events: none;
         }
-
         .user-section:hover .user-hover-card {
             opacity: 1;
             visibility: visible;
             transform: translateY(0);
         }
-
         .user-hover-card::before {
             content: '';
             position: absolute;
@@ -163,52 +118,47 @@
             transform: rotate(45deg);
             box-shadow: -2px -2px 5px rgba(0,0,0,0.05);
         }
+        .user-full-name { font-weight: 600; color: var(--xavier-primary); font-size: 0.85rem; margin-bottom: 0.25rem; }
+        .user-full-email { font-size: 0.7rem; color: #666; word-break: break-all; }
+        .user-hover-card hr { margin: 0.5rem 0; border: none; border-top: 1px solid #eef2f0; }
+        .user-hover-role { font-size: 0.65rem; color: var(--xavier-gold); font-weight: 600; }
 
-        .user-full-name {
-            font-weight: 600;
+        .switch-reviewer-btn {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border: 1px solid var(--xavier-gold);
+            padding: 0.4rem 1rem;
+            border-radius: 40px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+        .switch-reviewer-btn.active {
+            background: var(--xavier-gold);
             color: var(--xavier-primary);
-            font-size: 0.85rem;
-            margin-bottom: 0.25rem;
         }
-
-        .user-full-email {
-            font-size: 0.7rem;
-            color: #666;
-            word-break: break-all;
+        .switch-reviewer-btn:hover {
+            background: var(--xavier-gold);
+            color: var(--xavier-primary);
         }
+        .switch-reviewer-btn.hidden { display: none; }
 
-        .user-hover-card hr {
-            margin: 0.5rem 0;
-            border: none;
-            border-top: 1px solid #eef2f0;
-        }
-
-        .user-hover-role {
-            font-size: 0.65rem;
-            color: var(--xavier-gold);
-            font-weight: 600;
-        }
-
-        .notification-wrapper {
-            position: relative;
-        }
-
+        .notification-wrapper { position: relative; }
         .notification-bell {
             background: none;
             border: none;
             color: white;
             font-size: 1.2rem;
             cursor: pointer;
-            position: relative;
             padding: 0.3rem;
             border-radius: 50%;
-            transition: background 0.2s;
         }
-
-        .notification-bell:hover {
-            background: rgba(255,255,255,0.1);
-        }
-
+        .notification-bell:hover { background: rgba(255,255,255,0.1); }
         .notification-badge {
             position: absolute;
             top: -5px;
@@ -222,6 +172,39 @@
             text-align: center;
             display: none;
         }
+        .notification-dropdown {
+            position: absolute;
+            top: 45px;
+            right: 0;
+            width: 380px;
+            max-height: 500px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            z-index: 1000;
+            overflow: hidden;
+            animation: slideDown 0.2s ease;
+        }
+        .notification-item {
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid #eef2f0;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .notification-item.unread { background: #fffef5; border-left: 3px solid #D4AF37; }
+        .notification-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+        .notification-content { flex: 1; }
+        .notification-title { font-weight: 600; font-size: 0.8rem; color: #1A2E3F; margin-bottom: 0.2rem; }
+        .notification-message { font-size: 0.7rem; color: #666; margin-bottom: 0.2rem; }
+        .notification-time { font-size: 0.6rem; color: #999; }
 
         .logout-nav {
             background: rgba(255,255,255,0.1);
@@ -231,70 +214,210 @@
             border-radius: 40px;
             cursor: pointer;
             font-size: 0.75rem;
-            transition: all 0.2s;
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
         }
+        .logout-nav:hover { background: rgba(231, 76, 60, 0.8); }
 
-        .logout-nav:hover {
-            background: rgba(231, 76, 60, 0.8);
-            border-color: rgba(231, 76, 60, 0.8);
+        /* ========== MODERN DASHBOARD STYLES ========== */
+        .main-content {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 1.5rem auto;
+            background: transparent;
+            border-radius: 0;
+            box-shadow: none;
         }
 
-        @media (max-width: 768px) {
-            .top-nav {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .right-controls {
-                justify-content: flex-end;
-            }
-            
-            .user-name-short {
-                display: none;
-            }
+        .welcome-header { margin-bottom: 2rem; }
+        .greeting {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--xavier-primary) 0%, var(--xavier-gold-dark) 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            letter-spacing: -0.5px;
+        }
+        .role-chip {
+            display: inline-block;
+            background: var(--xavier-gold-light);
+            color: var(--xavier-primary-dark);
+            padding: 0.25rem 1rem;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
         }
 
-        /* Application list */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card-new {
+            background: white;
+            border-radius: var(--radius-card);
+            padding: 1.25rem 1.5rem;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.25s ease;
+            border: 1px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .stat-card-new:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--xavier-gold-light);
+        }
+        .stat-left h3 {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #5B6E8C;
+            margin-bottom: 0.5rem;
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--xavier-primary);
+            line-height: 1.1;
+        }
+        .stat-trend {
+            font-size: 0.65rem;
+            margin-top: 0.3rem;
+            color: #5B6E8C;
+        }
+        .stat-icon-new {
+            width: 48px;
+            height: 48px;
+            background: rgba(201, 160, 61, 0.12);
+            border-radius: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            color: var(--xavier-gold);
+        }
+
+        .section-header-modern {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .section-header-modern h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--xavier-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-primary-modern {
+            background: var(--xavier-gold);
+            color: var(--xavier-primary);
+            border: none;
+            padding: 0.5rem 1.2rem;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-primary-modern:hover {
+            background: var(--xavier-gold-dark);
+            color: white;
+        }
+
+        .filter-bar-faculty {
+            background: white;
+            border-radius: 60px;
+            padding: 0.5rem 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-light);
+            box-shadow: var(--shadow-sm);
+        }
+        .filter-badge {
+            background: #F1F5F9;
+            padding: 0.4rem 1rem;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            border: none;
+        }
+        .filter-badge i { color: var(--xavier-gold); }
+        .filter-badge select {
+            background: transparent;
+            border: none;
+            font-size: 0.75rem;
+            cursor: pointer;
+            outline: none;
+        }
+        .search-wrapper-faculty {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            background: #F8FAFE;
+            border-radius: 40px;
+            padding: 0.3rem 1rem;
+            border: 1px solid var(--border-light);
+        }
+        .search-wrapper-faculty i { color: #94a3b8; }
+        .search-wrapper-faculty input {
+            border: none;
+            background: transparent;
+            padding: 0.5rem;
+            width: 100%;
+            outline: none;
+            font-size: 0.8rem;
+        }
+
         .applications-list {
             display: flex;
             flex-direction: column;
-            gap: 1rem;
-            margin-top: 1.5rem;
+            gap: 1.25rem;
+            margin-top: 0;
         }
-
         .application-card {
             background: white;
-            border-radius: 1rem;
-            border: 1px solid #eef2f0;
+            border-radius: var(--radius-card);
+            border: 1px solid var(--border-light);
             overflow: hidden;
-            transition: all 0.2s ease;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: all 0.25s ease;
+            box-shadow: var(--shadow-sm);
         }
-
         .application-card:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            border-color: var(--xavier-gold);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--xavier-gold-light);
         }
+        .application-card.returned { border-left: 4px solid var(--danger); background: #fff5f5; }
+        .application-card.draft { border-left: 4px solid var(--warning); background: #fefcf5; }
 
-        /* Draft cards */
-        .application-card.draft {
-            background: #fefcf5;
-            border-left: 4px solid #f39c12;
-        }
-
-        .card-header {
+        .card-header-modern {
             background: linear-gradient(135deg, var(--xavier-primary) 0%, var(--xavier-primary-dark) 100%);
-            padding: 0.75rem 1rem;
+            padding: 0.75rem 1.25rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 0.75rem;
         }
-
         .grant-badge {
             background: rgba(212, 175, 55, 0.2);
             padding: 0.25rem 0.75rem;
@@ -307,83 +430,33 @@
             gap: 0.3rem;
         }
 
-        /* Status Badges Container */
         .status-badges {
             display: flex;
             flex-wrap: wrap;
             gap: 0.5rem;
         }
-
         .status-badge {
             padding: 0.25rem 0.75rem;
             border-radius: 20px;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             font-weight: 600;
             display: inline-flex;
             align-items: center;
             gap: 0.3rem;
         }
-        
-        /* Add these CSS classes to your style section */
-        .cv-progress-wrapper {
-            margin-bottom: 1rem;
-            padding: 0.5rem;
-            background: #f8f9fa;
-            border-radius: 0.5rem;
-        }
-
-        .cv-progress-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 0.3rem;
-        }
-
-        .cv-progress-label {
-            font-size: 0.7rem;
-            font-weight: 600;
-        }
-
-        .cv-progress-count {
-            font-size: 0.7rem;
-        }
-
-        .cv-progress-bar-bg {
-            background: #e0e0e0;
-            border-radius: 10px;
-            height: 6px;
-            overflow: hidden;
-        }
-
-        .cv-progress-fill {
-            height: 100%;
-            transition: width 0.3s;
-        }
-
-        .cv-progress-fill.green {
-            background: #2ecc71;
-        }
-
-        .cv-progress-fill.gold {
-            background: #D4AF37;
-        }
-
-        .status-badge.application-approved { background: #2ecc71; color: white; }
-        .status-badge.application-awaiting { background: #f39c12; color: white; }
-        .status-badge.application-review { background: #3498db; color: white; }
+        .status-badge.application-approved { background: var(--success); color: white; }
+        .status-badge.application-awaiting { background: var(--warning); color: white; }
+        .status-badge.application-review { background: var(--info); color: white; }
         .status-badge.application-draft { background: #6c757d; color: white; }
-
-        .status-badge.cv-pending { background: #fff3cd; color: #856404; }
+        .status-badge.application-returned { background: var(--danger); color: white; }
         .status-badge.cv-eligible { background: #d4edda; color: #155724; }
+        .status-badge.cv-pending { background: #fff3cd; color: #856404; }
         .status-badge.cv-ineligible { background: #f8d7da; color: #721c24; }
         .status-badge.cv-missing { background: #e8e8e8; color: #666; }
-
-        .status-badge.signature-pending { background: #fff0db; color: #b45f1b; }
         .status-badge.signature-sent { background: #e3ecff; color: #2c5f9a; }
+        .status-badge.signature-pending { background: #fff0db; color: #b45f1b; }
 
-        .card-body {
-            padding: 1rem;
-        }
-
+        .card-body-modern { padding: 1.25rem; }
         .project-title {
             font-size: 1rem;
             font-weight: 700;
@@ -391,35 +464,30 @@
             margin-bottom: 0.75rem;
             line-height: 1.3;
         }
-
-        .info-grid {
+        .info-grid-modern {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 0.5rem;
             margin-bottom: 0.75rem;
         }
-
-        .info-item {
+        .info-item-modern {
             display: flex;
             align-items: center;
             gap: 0.5rem;
             font-size: 0.75rem;
             color: #555;
         }
-
-        .info-item i {
+        .info-item-modern i {
             width: 18px;
             color: var(--xavier-gold);
             font-size: 0.75rem;
         }
 
-        /* CV Progress Section */
         .cv-progress-section {
-            margin-top: 0.5rem;
-            padding-top: 0.5rem;
-            border-top: 1px solid #eef2f0;
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border-light);
         }
-
         .cv-progress-label {
             font-size: 0.65rem;
             font-weight: 600;
@@ -429,7 +497,6 @@
             align-items: center;
             gap: 0.3rem;
         }
-
         .cv-progress-bar {
             background: #e0e0e0;
             border-radius: 10px;
@@ -437,17 +504,10 @@
             overflow: hidden;
             margin: 0.3rem 0;
         }
-
-        .cv-progress-fill {
-            height: 100%;
-            border-radius: 10px;
-            transition: width 0.3s;
-        }
-
-        .cv-progress-fill.good { background: #2ecc71; }
-        .cv-progress-fill.warning { background: #f39c12; }
-        .cv-progress-fill.bad { background: #e74c3c; }
-
+        .cv-progress-fill { height: 100%; border-radius: 10px; transition: width 0.3s; }
+        .cv-progress-fill.good { background: var(--success); }
+        .cv-progress-fill.warning { background: var(--warning); }
+        .cv-progress-fill.bad { background: var(--danger); }
         .cv-stats {
             display: flex;
             flex-wrap: wrap;
@@ -455,30 +515,31 @@
             font-size: 0.65rem;
             margin-top: 0.3rem;
         }
-
-        .cv-stat {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.2rem;
-        }
-
-        .cv-stat.eligible { color: #2ecc71; }
-        .cv-stat.pending { color: #f39c12; }
-        .cv-stat.ineligible { color: #e74c3c; }
+        .cv-stat.eligible { color: var(--success); }
+        .cv-stat.pending { color: var(--warning); }
+        .cv-stat.ineligible { color: var(--danger); }
         .cv-stat.missing { color: #999; }
 
-        /* Card Actions - Aligned to Right */
-        .card-actions {
+        .feedback-section {
+            margin-top: 0.75rem;
+            padding: 0.75rem;
+            background: #fff3cd;
+            border-radius: 0.5rem;
+            border-left: 3px solid #e74c3c;
+        }
+        .feedback-section h4 { font-size: 0.7rem; font-weight: 700; color: #856404; margin-bottom: 0.3rem; }
+        .feedback-section p { font-size: 0.7rem; color: #856404; margin: 0; }
+
+        .card-actions-modern {
             display: flex;
             justify-content: flex-end;
             align-items: center;
             gap: 0.5rem;
-            padding: 0.75rem 1rem;
-            border-top: 1px solid #eef2f0;
+            padding: 0.75rem 1.25rem;
+            border-top: 1px solid var(--border-light);
             background: #fafbfc;
             flex-wrap: wrap;
         }
-
         .card-action-btn {
             background: #f0f2f5;
             border: none;
@@ -491,81 +552,64 @@
             align-items: center;
             gap: 0.3rem;
         }
+        .card-action-btn:hover { background: var(--xavier-primary); color: white; }
+        .card-action-btn.warning { background: var(--xavier-gold); color: var(--xavier-primary); }
+        .card-action-btn.warning:hover { background: var(--xavier-gold-dark); color: white; }
+        .card-action-btn.danger:hover { background: #e74c3c; color: white; }
 
-        .card-action-btn:hover {
-            background: var(--xavier-primary);
-            color: white;
+        .empty-state-modern {
+            text-align: center;
+            padding: 3rem;
+            background: white;
+            border-radius: var(--radius-card);
+            border: 1px solid var(--border-light);
+            color: #999;
         }
+        .empty-state-modern i { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
 
-        .card-action-btn.danger:hover {
-            background: #e74c3c;
-            color: white;
-        }
-
-        .card-action-btn.warning {
-            background: var(--xavier-gold);
+        .demo-note {
+            margin-top: 1.5rem;
+            padding: 0.8rem 1rem;
+            background: #EFF6FF;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 0.75rem;
             color: var(--xavier-primary);
+            border-left: 4px solid var(--xavier-gold);
         }
 
-        .card-action-btn.warning:hover {
-            background: var(--xavier-gold-dark);
-            color: white;
+        footer {
+            text-align: center;
+            font-size: 0.65rem;
+            color: var(--xavier-gray-text);
+            padding: 1rem;
+            margin-top: 1rem;
         }
 
-        .main-content { padding: 2rem; max-width: 1200px; margin: 1.5rem auto; background: white; border-radius: 1rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .dashboard-title { margin-bottom: 1.5rem; }
-        .dashboard-title h2 { color: var(--xavier-gold); font-size: 1.6rem; font-weight: 600; }
-        .dashboard-title p { color: var(--xavier-gray-text); margin-top: 0.3rem; font-size: 0.85rem; }
-        
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-        .stat-card { background: #f8f9fa; border-radius: 1rem; padding: 1.2rem; border-top: 4px solid var(--xavier-gold); text-align: left; }
-        .stat-card i { color: var(--xavier-gold); font-size: 1.5rem; margin-bottom: 0.5rem; }
-        .stat-card h3 { font-size: 1.8rem; color: var(--xavier-primary); font-weight: 700; }
-        .stat-card span { color: var(--xavier-gray-text); font-size: 0.8rem; }
-        
-        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem; }
-        .section-header h3 { color: var(--xavier-primary); font-size: 1.2rem; font-weight: 600; }
-        
-        .grants-table { width: 100%; background: white; border-radius: 0.8rem; border-collapse: collapse; overflow: hidden; border: 1px solid #eef2f0; }
-        .grants-table th { background: var(--xavier-primary); color: white; padding: 1rem; text-align: left; font-weight: 600; font-size: 0.85rem; }
-        .grants-table td { padding: 1rem; text-align: left; border-bottom: 1px solid #ecf3e8; font-size: 0.85rem; }
-        .grants-table tr:last-child td { border-bottom: none; }
-        
-        .status { padding: 0.2rem 0.7rem; border-radius: 40px; font-size: 0.7rem; font-weight: 600; display: inline-block; }
-        .status.pending { background: #fff0db; color: #b45f1b; }
-        .status.approved { background: #e0f5e6; color: #1e6f3f; }
-        .status.draft { background: #e8e8e8; color: #666; }
-        .status.signature { background: #e3ecff; color: #2c5f9a; }
-        
-        .btn-sm { background: #eef2fa; border: none; padding: 0.3rem 1rem; border-radius: 30px; cursor: pointer; font-size: 0.75rem; transition: 0.2s; }
-        .btn-sm:hover { background: var(--xavier-primary); color: white; }
-        .btn-primary { background: var(--xavier-gold); color: var(--xavier-primary); border: none; padding: 0.5rem 1.2rem; border-radius: 40px; cursor: pointer; font-weight: 600; transition: 0.2s; }
-        .btn-primary:hover { background: var(--xavier-gold-dark); color: white; }
-        .btn-secondary { background: transparent; border: 1px solid var(--xavier-primary); color: var(--xavier-primary); padding: 0.5rem 1.2rem; border-radius: 40px; cursor: pointer; font-weight: 600; }
-        .btn-danger { background: #e74c3c; color: white; border: none; padding: 0.3rem 1rem; border-radius: 30px; cursor: pointer; font-size: 0.75rem; transition: 0.2s; }
-        .btn-danger:hover { background: #c0392b; }
-        
-        .demo-note { font-size: 0.7rem; background: #f3f7ef; padding: 0.8rem 1rem; border-radius: 28px; margin-top: 1rem; text-align: center; border: 1px solid #e8ecd9; color: var(--xavier-gray-text); }
-        .demo-note i { color: var(--xavier-gold); margin-right: 0.3rem; }
-        footer { text-align: center; font-size: 0.65rem; color: var(--xavier-gray-text); padding: 1rem; background: transparent; }
-        footer i { color: var(--xavier-gold); margin-right: 0.3rem; }
-        
+        /* ========== MODAL/FORM STYLES (Keep from original) ========== */
         .swal2-popup { width: 1000px !important; max-width: 95vw !important; }
         .swal2-html-container { overflow-y: auto !important; max-height: 70vh !important; }
-        
+
         .form-group { margin-bottom: 0.8rem; text-align: left; }
-        .form-group label { display: block; font-weight: 600; margin-bottom: 0.2rem; color: var(--xavier-primary); font-size: 0.8rem; text-align: left; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 0.2rem; color: var(--xavier-primary); font-size: 0.8rem; }
         .form-group label .required { color: #e74c3c; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px; font-family: inherit; font-size: 0.8rem; text-align: left; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.8rem;
+        }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
-        
+
         .form-section-title {
             font-size: 1rem;
             font-weight: 700;
             color: var(--xavier-primary);
             border-bottom: 2px solid var(--xavier-gold);
             padding-bottom: 0.3rem;
-            margin: 0.8rem 0 0.8rem 0;
+            margin: 0.8rem 0;
         }
         .form-subsection-title {
             font-size: 0.85rem;
@@ -574,99 +618,27 @@
             margin: 0.6rem 0 0.3rem 0;
             padding-left: 0.3rem;
             border-left: 3px solid var(--xavier-gold);
-            text-align: left;
-        }
-        
-        .eligibility-card { background: #f8f9fa; border-radius: 0.8rem; padding: 1rem; margin-bottom: 1rem; border-left: 4px solid var(--xavier-gold); cursor: pointer; transition: 0.2s; text-align: left; }
-        .eligibility-card.selected { border-left-color: var(--xavier-primary); background: #eef2fa; }
-        .eligibility-card h3 { color: var(--xavier-primary); font-size: 1rem; margin-bottom: 0.4rem; font-weight: 700; text-align: left; }
-        .eligibility-card .amount { font-weight: bold; color: var(--xavier-gold); font-size: 0.8rem; margin-bottom: 0.3rem; text-align: left; }
-        .eligibility-card .focus { font-size: 0.75rem; color: #555; margin-bottom: 0.5rem; text-align: left; }
-        .eligibility-card .eligibility-title { font-weight: 600; font-size: 0.7rem; color: var(--xavier-primary); margin-top: 0.3rem; margin-bottom: 0.2rem; text-align: left; }
-        .eligibility-card ul { margin-left: 1.2rem; font-size: 0.7rem; color: #666; text-align: left; }
-        .eligibility-card li { margin-bottom: 0.2rem; text-align: left; }
-        
-        .activity-card { background: #f8f9fa; border-radius: 0.6rem; padding: 0.6rem; margin-bottom: 0.6rem; border-left: 3px solid var(--xavier-gold); text-align: left; }
-        .activity-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; }
-        .activity-title { font-weight: 700; color: var(--xavier-primary); font-size: 0.8rem; }
-        .activity-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.4rem; }
-        .activity-grid .field { display: flex; flex-direction: column; text-align: left; }
-        .activity-grid .field label { font-size: 0.65rem; font-weight: 600; color: var(--xavier-primary); margin-bottom: 0.1rem; text-align: left; }
-        .activity-grid .field input, .activity-grid .field textarea { padding: 0.3rem; font-size: 0.75rem; border-radius: 4px; border: 1px solid #ddd; width: 100%; text-align: left; }
-        .date-range-row { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.3rem; flex-wrap: wrap; text-align: left; }
-        .date-range-row label { font-size: 0.65rem; font-weight: 600; color: var(--xavier-primary); }
-        .date-range-row select { padding: 0.3rem; border-radius: 4px; border: 1px solid #ddd; font-size: 0.7rem; }
-        
-        .budget-item-row { background: #f8f9fa; border-radius: 0.6rem; padding: 0.5rem; margin-bottom: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
-        .budget-item-row select, .budget-item-row input { padding: 0.4rem; border-radius: 4px; border: 1px solid #ddd; font-size: 0.75rem; text-align: left; }
-        .budget-category { width: 170px; }
-        .budget-subcategory { width: 150px; }
-        .budget-item-select { width: 180px; }
-        .budget-specs { flex: 2; min-width: 120px; }
-        .budget-unit-cost { width: 90px; }
-        .budget-qty { width: 60px; }
-        .budget-total { width: 80px; font-weight: bold; text-align: right; font-size: 0.75rem; }
-        .budget-remove-item { background: #e74c3c; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 0.7rem; flex-shrink: 0; }
-        .budget-summary { background: var(--xavier-primary); color: white; padding: 0.6rem; border-radius: 0.6rem; margin-top: 0.6rem; text-align: right; font-size: 0.9rem; }
-        
-        .add-btn { background: var(--xavier-gold); color: var(--xavier-primary); border: none; padding: 0.2rem 0.6rem; border-radius: 20px; cursor: pointer; font-size: 0.7rem; margin-top: 0.3rem; }
-        .remove-btn { background: #e74c3c; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 0.7rem; }
-        
-        .tabs { display: flex; gap: 0.3rem; margin-bottom: 1rem; border-bottom: 1px solid #ddd; flex-wrap: wrap; }
-        .tab-btn { background: none; border: none; padding: 0.4rem 0.8rem; font-size: 0.75rem; font-weight: 600; color: var(--xavier-gray-text); cursor: pointer; transition: 0.2s; border-radius: 6px 6px 0 0; }
-        .tab-btn.active { color: var(--xavier-primary); border-bottom: 2px solid var(--xavier-gold); background: #f8f9fa; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-
-        .member-row, .reference-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; align-items: center; text-align: left; }
-        .member-row input, .reference-row input { flex: 1; padding: 0.4rem; border-radius: 4px; border: 1px solid #ddd; font-size: 0.75rem; }
-
-        .form-group.missing input,
-        .form-group.missing textarea,
-        .form-group.missing select {
-            border-color: #e74c3c !important;
-            background-color: #fff5f5 !important;
         }
 
-        .form-group.missing label {
-            color: #e74c3c !important;
+        .eligibility-card {
+            background: #f8f9fa;
+            border-radius: 0.8rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--xavier-gold);
+            cursor: pointer;
+            transition: 0.2s;
         }
-        
-        .cv-upload-item {
-            transition: all 0.2s ease;
+        .eligibility-card.selected {
+            border-left-color: var(--xavier-primary);
+            background: #eef2fa;
         }
-        .cv-upload-item:hover {
-            transform: translateX(2px);
-        }
-        .upload-feedback-card {
-            transition: all 0.2s ease;
-        }
-        .cv-upload-item h4,
-        .cv-upload-item div,
-        .upload-feedback-card,
-        .upload-feedback-card * {
-            text-align: left !important;
-        }
+        .eligibility-card h3 { color: var(--xavier-primary); font-size: 1rem; margin-bottom: 0.4rem; font-weight: 700; }
+        .eligibility-card .amount { font-weight: bold; color: var(--xavier-gold); font-size: 0.8rem; margin-bottom: 0.3rem; }
+        .eligibility-card .focus { font-size: 0.75rem; color: #555; margin-bottom: 0.5rem; }
+        .eligibility-card .eligibility-title { font-weight: 600; font-size: 0.7rem; color: var(--xavier-primary); margin-top: 0.3rem; margin-bottom: 0.2rem; }
+        .eligibility-card ul { margin-left: 1.2rem; font-size: 0.7rem; color: #666; }
 
-        .cv-section-title {
-            font-size: 1rem;
-            font-weight: 700;
-            color: var(--xavier-primary);
-            border-bottom: 2px solid var(--xavier-gold);
-            padding-bottom: 0.3rem;
-            margin: 0.8rem 0 0.8rem 0;
-        }
-        .cv-subsection-title {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--xavier-primary);
-            margin: 0.6rem 0 0.3rem 0;
-            padding-left: 0.3rem;
-            border-left: 3px solid var(--xavier-gold);
-            text-align: left;
-        }
-
-        /* Vertical Activity Layout */
         .activity-card {
             background: #f8f9fa;
             border-radius: 0.8rem;
@@ -674,7 +646,6 @@
             margin-bottom: 1rem;
             border-left: 4px solid var(--xavier-gold);
         }
-
         .activity-header {
             display: flex;
             justify-content: space-between;
@@ -683,36 +654,22 @@
             padding-bottom: 0.5rem;
             border-bottom: 1px solid #e0e0e0;
         }
-
-        .activity-title {
-            font-weight: 700;
-            color: var(--xavier-primary);
-            font-size: 0.9rem;
-        }
-
-        .activity-field {
-            margin-bottom: 0.8rem;
-        }
-
+        .activity-title { font-weight: 700; color: var(--xavier-primary); font-size: 0.9rem; }
+        .activity-field { margin-bottom: 0.8rem; }
         .activity-field label {
             display: block;
             font-size: 0.7rem;
             font-weight: 600;
             color: var(--xavier-primary);
             margin-bottom: 0.2rem;
-            text-align: left;
         }
-
-        .activity-field input,
-        .activity-field textarea {
+        .activity-field input, .activity-field textarea {
             width: 100%;
             padding: 0.5rem;
             font-size: 0.8rem;
             border: 1px solid #ddd;
             border-radius: 6px;
-            font-family: inherit;
         }
-
         .date-range-row {
             display: flex;
             gap: 1rem;
@@ -720,33 +677,23 @@
             margin-top: 0.5rem;
             flex-wrap: wrap;
         }
-
-        .date-range-row label {
-            font-size: 0.7rem;
-            font-weight: 600;
-            color: var(--xavier-primary);
-        }
-
+        .date-range-row label { font-size: 0.7rem; font-weight: 600; color: var(--xavier-primary); }
         .date-range-row input[type="date"] {
             padding: 0.4rem;
             border-radius: 6px;
             border: 1px solid #ddd;
             font-size: 0.75rem;
-            font-family: inherit;
             cursor: pointer;
         }
-
         .date-range-row input[type="date"]:disabled {
             background-color: #f0f0f0;
             cursor: not-allowed;
         }
-
         .activity-hint {
             display: block;
             font-size: 0.65rem;
             color: #666;
             margin-top: 0.4rem;
-            text-align: left;
         }
 
         .budget-card {
@@ -755,9 +702,7 @@
             padding: 1rem;
             margin-bottom: 1rem;
             border: 1px solid #e0e0e0;
-            position: relative;
         }
-
         .budget-card-header {
             display: flex;
             justify-content: space-between;
@@ -766,13 +711,7 @@
             padding-bottom: 0.5rem;
             border-bottom: 1px solid #e0e0e0;
         }
-
-        .budget-card-title {
-            font-weight: 700;
-            color: var(--xavier-primary);
-            font-size: 0.85rem;
-        }
-
+        .budget-card-title { font-weight: 700; color: var(--xavier-primary); font-size: 0.85rem; }
         .budget-card-remove {
             background: #e74c3c;
             color: white;
@@ -781,19 +720,8 @@
             padding: 0.2rem 0.6rem;
             cursor: pointer;
             font-size: 0.7rem;
-            display: flex;
-            align-items: center;
-            gap: 0.3rem;
         }
-
-        .budget-card-remove:hover {
-            background: #c0392b;
-        }
-
-        .budget-field {
-            margin-bottom: 0.8rem;
-        }
-
+        .budget-field { margin-bottom: 0.8rem; }
         .budget-field label {
             display: block;
             font-size: 0.7rem;
@@ -801,29 +729,23 @@
             color: var(--xavier-primary);
             margin-bottom: 0.2rem;
         }
-
-        .budget-field select,
-        .budget-field input {
+        .budget-field select, .budget-field input {
             width: 100%;
             padding: 0.5rem;
             font-size: 0.8rem;
             border: 1px solid #ddd;
             border-radius: 6px;
-            font-family: inherit;
         }
-
         .budget-row {
             display: flex;
             gap: 1rem;
             flex-wrap: wrap;
             margin-top: 0.5rem;
         }
-
         .budget-row-item {
             flex: 1;
             min-width: 120px;
         }
-
         .budget-row-item label {
             display: block;
             font-size: 0.7rem;
@@ -831,7 +753,6 @@
             color: var(--xavier-primary);
             margin-bottom: 0.2rem;
         }
-
         .budget-row-item input {
             width: 100%;
             padding: 0.5rem;
@@ -839,7 +760,6 @@
             border: 1px solid #ddd;
             border-radius: 6px;
         }
-
         .budget-total-display {
             background: #e8f5e9;
             padding: 0.5rem;
@@ -849,7 +769,6 @@
             color: #2ecc71;
             font-size: 0.9rem;
         }
-
         .budget-summary-card {
             background: linear-gradient(135deg, var(--xavier-primary) 0%, var(--xavier-primary-dark) 100%);
             color: white;
@@ -857,19 +776,6 @@
             border-radius: 0.8rem;
             margin-top: 1rem;
         }
-
-        .budget-summary-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 0.5rem;
-            font-size: 0.85rem;
-        }
-
-        .budget-summary-divider {
-            border-top: 1px solid rgba(255,255,255,0.3);
-            margin: 0.5rem 0;
-        }
-
         .budget-summary-grand {
             display: flex;
             justify-content: space-between;
@@ -877,7 +783,6 @@
             font-weight: 700;
             margin-top: 0.5rem;
         }
-
         .add-budget-btn {
             background: var(--xavier-gold);
             color: var(--xavier-primary);
@@ -892,25 +797,76 @@
             align-items: center;
             gap: 0.5rem;
         }
+        .add-budget-btn:hover { background: var(--xavier-gold-dark); color: white; }
 
-        .add-budget-btn:hover {
-            background: var(--xavier-gold-dark);
+        .tabs {
+            display: flex;
+            gap: 0.3rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #ddd;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--xavier-gray-text);
+            cursor: pointer;
+            transition: 0.2s;
+            border-radius: 6px 6px 0 0;
+        }
+        .tab-btn.active {
+            color: var(--xavier-primary);
+            border-bottom: 2px solid var(--xavier-gold);
+            background: #f8f9fa;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .member-row, .reference-row {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            align-items: center;
+        }
+        .member-row input, .reference-row input {
+            flex: 1;
+            padding: 0.4rem;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            font-size: 0.75rem;
+        }
+        .add-btn {
+            background: var(--xavier-gold);
+            color: var(--xavier-primary);
+            border: none;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            margin-top: 0.3rem;
+        }
+        .remove-btn {
+            background: #e74c3c;
             color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-size: 0.7rem;
         }
 
-        /* Style for invalid budget cards */
-        .budget-card.invalid {
-            border: 2px solid #e74c3c !important;
+        .form-group.missing input,
+        .form-group.missing textarea,
+        .form-group.missing select {
+            border-color: #e74c3c !important;
             background-color: #fff5f5 !important;
         }
+        .form-group.missing label { color: #e74c3c !important; }
 
-        /* Style for valid budget cards */
-        .budget-card.valid {
-            border: 1px solid #2ecc71 !important;
-            background-color: #f0fff4 !important;
-        }
-
-        /* Error message styling */
         .field-error-message {
             color: #e74c3c;
             font-size: 0.7rem;
@@ -918,135 +874,18 @@
             margin-top: 0.25rem;
         }
 
-        .status.eligible {
-            background: #d4edda;
-            color: #155724;
-        }
-        .status.ineligible {
-            background: #f8d7da;
-            color: #721c24;
-        }
-        .status.missing {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-
-        /* FIXED: Added missing slideOutRight animation */
-        @keyframes slideOutRight {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(100%); opacity: 0; }
-        }
-
-        @media (max-width: 900px) { .budget-item-row { flex-direction: column; align-items: stretch; } .budget-category, .budget-subcategory, .budget-item-select, .budget-specs, .budget-unit-cost, .budget-qty { width: 100%; } }
-        @media (max-width: 700px) { .form-row { grid-template-columns: 1fr; } .activity-grid { grid-template-columns: 1fr; } }
-        
-        html {
-            scroll-behavior: smooth;
-        }
-
-        .notification-bell:hover {
-            opacity: 0.8;
-        }
-
-        .notification-dropdown {
-            position: absolute;
-            top: 45px;
-            right: 0;
-            width: 380px;
-            max-height: 500px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            z-index: 1000;
-            overflow: hidden;
-            animation: slideDown 0.2s ease;
-        }
-
-        .notification-dropdown::before {
-            content: '';
-            position: absolute;
-            top: -8px;
-            right: 15px;
-            width: 16px;
-            height: 16px;
-            background: white;
-            transform: rotate(45deg);
-            box-shadow: -2px -2px 5px rgba(0,0,0,0.05);
-        }
-        .notification-item {
-            padding: 0.8rem 1rem;
-            border-bottom: 1px solid #eef2f0;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .notification-item:hover {
+        .cv-upload-card {
             background: #f8f9fa;
+            border-radius: 0.8rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid #e0e0e0;
         }
-
-        .notification-item.unread {
-            background: #fffef5;
-            border-left: 3px solid #D4AF37;
-        }
-
-        .notification-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
-        }
-
-        .notification-content {
-            flex: 1;
-        }
-
-        .notification-title {
-            font-weight: 600;
-            font-size: 0.8rem;
-            color: #1A2E3F;
-            margin-bottom: 0.2rem;
-        }
-
-        .notification-message {
-            font-size: 0.7rem;
-            color: #666;
-            margin-bottom: 0.2rem;
-        }
-
-        .notification-time {
-            font-size: 0.6rem;
-            color: #999;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes slideInRight {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
+        .cv-pending-status {
+            background: #fff3e0;
+            padding: 0.5rem 0.8rem;
+            border-radius: 8px;
+            text-align: center;
         }
 
         .toast-notification {
@@ -1063,67 +902,61 @@
             border-left: 4px solid;
             overflow: hidden;
         }
-
         .toast-notification.success { border-left-color: #2ecc71; }
-        .toast-notification.warning { border-left-color: #f39c12; }
-        .toast-notification.info { border-left-color: #3498db; }
         .toast-notification.error { border-left-color: #e74c3c; }
-
         .toast-content {
             display: flex;
             align-items: flex-start;
             gap: 0.8rem;
             padding: 1rem;
         }
-
-        .toast-icon {
-            font-size: 1.2rem;
-        }
-
-        .toast-message {
-            flex: 1;
-            font-size: 0.8rem;
-            color: #333;
-        }
-
         .toast-close {
             background: none;
             border: none;
             font-size: 1.2rem;
             cursor: pointer;
             color: #999;
-            line-height: 1;
         }
 
-        .application-card.returned {
-            border-left: 4px solid #e74c3c;
-            background: #fff5f5;
+        /* ========== ANIMATIONS ========== */
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
         }
 
-        .status-badge.application-returned {
-            background: #e74c3c;
-            color: white;
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 900px) {
+            .budget-item-row { flex-direction: column; align-items: stretch; }
+            .budget-category, .budget-subcategory, .budget-item-select,
+            .budget-specs, .budget-unit-cost, .budget-qty { width: 100%; }
         }
-
-        .feedback-section {
-            margin-top: 0.75rem;
-            padding: 0.75rem;
-            background: #fff3cd;
-            border-radius: 0.5rem;
-            border-left: 3px solid #e74c3c;
+        @media (max-width: 800px) {
+            .main-content { padding: 1rem; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .filter-bar-faculty { border-radius: 20px; flex-direction: column; align-items: stretch; }
+            .card-header-modern { flex-direction: column; align-items: flex-start; }
         }
-
-        .feedback-section h4 {
-            font-size: 0.7rem;
-            font-weight: 700;
-            color: #856404;
-            margin-bottom: 0.3rem;
+        @media (max-width: 768px) {
+            .top-nav { flex-direction: column; align-items: stretch; }
+            .right-controls { justify-content: flex-end; }
+            .user-name-short { display: none; }
         }
-
-        .feedback-section p {
-            font-size: 0.7rem;
-            color: #856404;
-            margin: 0;
+        @media (max-width: 700px) {
+            .form-row { grid-template-columns: 1fr; }
+            .activity-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -1745,33 +1578,15 @@ function initNotificationSystem() {
 
 async function renderApplicant() {
     try {
-        // Load data from API
         const mySubs = await KURO_API.getFacultyApplications();
         const drafts = await KURO_API.getFacultyDrafts();
         const reviewerTasksData = await KURO_API.getReviewerTasks();
         
-        // ========== DEBUGGING ==========
-        console.log('=== DEBUG INFO ===');
-        console.log('1. Current user email:', currentUser.email);
-        console.log('2. Raw mySubs from API:', mySubs);
-        console.log('3. Length:', mySubs?.length);
-        
-        // Filter applications for current user
-        const filteredSubs = mySubs.filter(sub => 
-            sub.userEmail === currentUser.email
-        );
-        console.log('Filtered applications:', filteredSubs);
-        console.log('Filtered count:', filteredSubs.length);
-        // ========== END DEBUG ==========
-        
+        const filteredSubs = mySubs.filter(sub => sub.userEmail === currentUser.email);
         const hasReviewerTasks = reviewerTasksData.assignedTasks && reviewerTasksData.assignedTasks.length > 0;
-        
         const switchBtn = document.getElementById('switchReviewerBtn');
-        if (switchBtn) {
-            hasReviewerTasks ? switchBtn.classList.remove('hidden') : switchBtn.classList.add('hidden');
-        }
+        if (switchBtn) hasReviewerTasks ? switchBtn.classList.remove('hidden') : switchBtn.classList.add('hidden');
         
-        // USE filteredSubs for stats, NOT mySubs
         const stats = { 
             pending: filteredSubs.filter(s => s.status !== "Approved" && s.status !== "Returned" && s.status !== "Awaiting Signatures").length,
             approved: filteredSubs.filter(s => s.status === "Approved").length,
@@ -1780,247 +1595,197 @@ async function renderApplicant() {
             drafts: drafts.length 
         };
         
-        let html = '<div class="dashboard-title"><h2>My Research Applications</h2><p>Faculty Research Grants: IR Award, MBHR Award, MR Award, MRR Award</p></div>';
-        html += '<div class="stats-grid">';
-        html += '<div class="stat-card"><i class="fas fa-hourglass-half"></i> <h3>' + stats.pending + '</h3> <span>Under Review</span></div>';
-        html += '<div class="stat-card"><i class="fas fa-check-circle"></i> <h3>' + stats.approved + '</h3> <span>Approved</span></div>';
-        html += '<div class="stat-card"><i class="fas fa-envelope"></i> <h3>' + stats.awaiting + '</h3> <span>Awaiting Signatures</span></div>';
-        html += '<div class="stat-card"><i class="fas fa-undo-alt"></i> <h3>' + stats.returned + '</h3> <span>Returned for Revision</span></div>';
-        html += '<div class="stat-card"><i class="fas fa-pen-fancy"></i> <h3>' + stats.drafts + '</h3> <span>Drafts</span></div></div>';
+        let html = `
+            <div class="welcome-header">
+                <div class="greeting">Welcome back, ${currentUser.name?.split(' ')[0] || 'Faculty'}</div>
+                <div class="role-chip"><i class="fas fa-graduation-cap"></i> Faculty Researcher · Xavier Ateneo</div>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card-new"><div class="stat-left"><h3>Under Review</h3><div class="stat-number">${stats.pending}</div><div class="stat-trend">Pending eligibility & secondary checks</div></div><div class="stat-icon-new"><i class="fas fa-hourglass-half"></i></div></div>
+                <div class="stat-card-new"><div class="stat-left"><h3>Approved</h3><div class="stat-number">${stats.approved}</div><div class="stat-trend">Successfully funded</div></div><div class="stat-icon-new"><i class="fas fa-check-circle"></i></div></div>
+                <div class="stat-card-new"><div class="stat-left"><h3>Awaiting Signatures</h3><div class="stat-number">${stats.awaiting}</div><div class="stat-trend">Waiting for chair/dean approval</div></div><div class="stat-icon-new"><i class="fas fa-envelope"></i></div></div>
+                <div class="stat-card-new"><div class="stat-left"><h3>Returned</h3><div class="stat-number">${stats.returned}</div><div class="stat-trend">Needs revision</div></div><div class="stat-icon-new"><i class="fas fa-undo-alt"></i></div></div>
+                <div class="stat-card-new"><div class="stat-left"><h3>Drafts</h3><div class="stat-number">${stats.drafts}</div><div class="stat-trend">In progress</div></div><div class="stat-icon-new"><i class="fas fa-pen-fancy"></i></div></div>
+            </div>
+            <div class="section-header-modern">
+                <h3><i class="fas fa-list-ul" style="color: var(--xavier-gold);"></i> My Research Applications</h3>
+                <button class="btn-primary-modern" id="newApplyBtn"><i class="fas fa-plus"></i> New Application</button>
+            </div>
+            <div class="filter-bar-faculty">
+                <div class="filter-badge"><i class="fas fa-tag"></i><select id="grantFilter"><option value="all">All Grants</option>${Object.keys(FACULTY_GRANTS_DATA).map(g => `<option value="${g}">${g.substring(0, 25)}</option>`).join('')}</select></div>
+                <div class="filter-badge"><i class="fas fa-flag-checkered"></i><select id="statusFilter"><option value="all">All Status</option><option value="Awaiting Signatures">⏳ Awaiting Signatures</option><option value="Pending Eligibility Check">🔍 Eligibility Review</option><option value="Pending Secondary Check">📋 Secondary Review</option><option value="Pending Final Check">✅ Final Review</option><option value="Approved">🎉 Approved</option><option value="Returned">↩️ Returned</option></select></div>
+                <div class="filter-badge"><i class="fas fa-file-pdf"></i><select id="cvFilter"><option value="all">CV Status</option><option value="eligible">✅ Eligible</option><option value="pending">⏳ Pending</option><option value="missing">📄 Missing</option><option value="ineligible">❌ Ineligible</option></select></div>
+                <div class="search-wrapper-faculty"><i class="fas fa-search"></i><input type="text" id="searchFilter" placeholder="Search by title or grant..."></div>
+            </div>`;
         
-        html += '<div class="section-header"><h3>My Submissions</h3><button class="btn-primary" id="newApplyBtn"><i class="fas fa-plus"></i> New Application</button></div>';
-        
-        // USE filteredSubs for displaying submissions, NOT mySubs
         if (filteredSubs.length === 0 && drafts.length === 0) {
-            html += '<div class="demo-note" style="text-align:center;padding:2rem;"><i class="fas fa-info-circle"></i> No applications yet. Click "New Application" to start.</div>';
+            html += '<div class="empty-state-modern"><i class="fas fa-info-circle"></i><p>No applications yet. Click "New Application" to start.</p></div>';
         } else {
-            html += '<div class="applications-list">';
-            
-            // Loop through filteredSubs, NOT mySubs
-            for (const sub of filteredSubs) {
-                const cvStatus = getCVStatusSummary(sub);
-                let cvStatusText = '', cvStatusClass = '';
-                if (cvStatus.eligible === cvStatus.total) {
-                    cvStatusText = '✅ CV Eligible';
-                    cvStatusClass = 'cv-eligible';
-                } else if (cvStatus.ineligible > 0) {
-                    cvStatusText = `❌ ${cvStatus.ineligible} CV Ineligible`;
-                    cvStatusClass = 'cv-ineligible';
-                } else if (cvStatus.pending > 0) {
-                    cvStatusText = `⏳ ${cvStatus.pending} CV Pending`;
-                    cvStatusClass = 'cv-pending';
-                } else {
-                    cvStatusText = `📄 ${cvStatus.missing} CV Missing`;
-                    cvStatusClass = 'cv-missing';
-                }
-                
-                const cvProgressPercent = ((cvStatus.eligible + cvStatus.pending) / cvStatus.total) * 100;
-                let cvProgressClass = cvStatus.ineligible > 0 ? 'bad' : (cvStatus.pending > 0 ? 'warning' : 'good');
-                
-                const chairSigned = sub.signatures?.chair?.signed || false;
-                const deanSigned = sub.signatures?.dean?.signed || false;
-                const bothSigned = chairSigned && deanSigned;
-                const requestsSent = sub.signatureRequests?.sentAt;
-                
-                let signatureStatusText = '', signatureStatusClass = '';
-                if (bothSigned) {
-                    signatureStatusText = '✅ Both Signed';
-                    signatureStatusClass = 'cv-eligible';
-                } else if (requestsSent) {
-                    signatureStatusText = '📧 Requests Sent';
-                    signatureStatusClass = 'signature-sent';
-                } else {
-                    signatureStatusText = '⏳ Pending';
-                    signatureStatusClass = 'signature-pending';
-                }
-                
-                const statusIcon = getStatusIcon(sub.status);
-                const statusClass = getStatusClass(sub.status);
-                const statusDisplay = getStatusDisplayName(sub.status);
-                
-                const returnClass = sub.status === 'Returned' ? 'returned' : '';
-                
-                html += `<div class="application-card ${returnClass}">
-                    <div class="card-header">
-                        <span class="grant-badge"><i class="fas fa-trophy"></i> ${escapeHtml(sub.grantTitle)}</span>
-                        <div class="status-badges">
-                            <span class="status-badge ${statusClass}">${statusIcon} ${statusDisplay}</span>
-                            <span class="status-badge ${signatureStatusClass}"><i class="fas fa-signature"></i> ${signatureStatusText}</span>
-                            <span class="status-badge ${cvStatusClass}"><i class="fas fa-file-pdf"></i> ${cvStatusText}</span>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="project-title">${escapeHtml(sub.proposalTitle || 'Untitled')}</div>
-                        <div class="info-grid">
-                            <div class="info-item"><i class="fas fa-calendar-alt"></i> Submitted: ${sub.submittedDate || 'N/A'}</div>
-                            <div class="info-item"><i class="fas fa-user"></i> PI: ${escapeHtml(sub.piName || 'N/A')}</div>
-                            <div class="info-item"><i class="fas fa-envelope"></i> ${escapeHtml(sub.piEmail || 'N/A')}</div>
-                        </div>`;
-                
-                // Show feedback section for returned applications
-                if (sub.returnedFeedback) {
-                    html += `<div class="feedback-section">
-                        <h4><i class="fas fa-feedback"></i> Revision Required</h4>
-                        <p>${escapeHtml(sub.returnedFeedback)}</p>
-                    </div>`;
-                }
-                
-                html += `<div class="cv-progress-section">
-                            <div class="cv-progress-label"><i class="fas fa-chart-line"></i> CV Completion Progress</div>
-                            <div class="cv-progress-bar"><div class="cv-progress-fill ${cvProgressClass}" style="width: ${cvProgressPercent}%"></div></div>
-                            <div class="cv-stats">
-                                <span class="cv-stat eligible"><i class="fas fa-check-circle"></i> ${cvStatus.eligible} Eligible</span>
-                                <span class="cv-stat pending"><i class="fas fa-clock"></i> ${cvStatus.pending} Pending</span>
-                                <span class="cv-stat ineligible"><i class="fas fa-times-circle"></i> ${cvStatus.ineligible} Ineligible</span>
-                                <span class="cv-stat missing"><i class="fas fa-file"></i> ${cvStatus.missing} Missing</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card-actions">
-                        <button class="card-action-btn view-sub" data-id="${sub.id}"><i class="fas fa-eye"></i> View</button>`;
-                
-                // Show Resubmit button only for Returned status
-                if (sub.status === 'Returned') {
-                    html += `<button class="card-action-btn edit-sub" data-id="${sub.id}"><i class="fas fa-edit"></i> Edit</button>`;
-                    html += `<button class="card-action-btn warning resubmit-sub" data-id="${sub.id}"><i class="fas fa-paper-plane"></i> Resubmit</button>`;
-                } else if (sub.status !== 'Approved') {
-                    html += `<button class="card-action-btn edit-sub" data-id="${sub.id}"><i class="fas fa-edit"></i> Edit</button>`;
-                }
-                
-                // Show Resend Signature button only when awaiting signatures
-                if (sub.status === 'Awaiting Signatures' && !bothSigned) {
-                    html += `<button class="card-action-btn warning resend-signature-btn" data-id="${sub.id}"><i class="fas fa-paper-plane"></i> Resend Signature</button>`;
-                }
-                
-                html += `<button class="card-action-btn danger delete-sub" data-id="${sub.id}"><i class="fas fa-trash"></i> Delete</button>
-                        </div>
-                    </div>`;
-            }
-            
-            // Drafts loop (no changes needed here)
-            for (let idx = 0; idx < drafts.length; idx++) {
-                const draft = drafts[idx];
-                html += `<div class="application-card draft">
-                    <div class="card-header" style="background:#6c757d;">
-                        <span class="grant-badge"><i class="fas fa-pen-fancy"></i> ${escapeHtml(draft.grantTitle)}</span>
-                        <div class="status-badges"><span class="status-badge application-draft"><i class="fas fa-pen"></i> Draft</span><span class="status-badge cv-missing"><i class="fas fa-file-pdf"></i> Not Submitted</span></div>
-                    </div>
-                    <div class="card-body">
-                        <div class="project-title">${escapeHtml(draft.proposalTitle || 'Untitled Draft')}</div>
-                        <div class="info-grid">
-                            <div class="info-item"><i class="fas fa-save"></i> Last saved: ${draft.lastSaved || 'N/A'}</div>
-                            <div class="info-item"><i class="fas fa-user"></i> PI: ${escapeHtml(draft.piName || 'Not set')}</div>
-                        </div>
-                    </div>
-                    <div class="card-actions">
-                        <button class="card-action-btn edit-draft" data-idx="${idx}"><i class="fas fa-edit"></i> Edit Draft</button>
-                        <button class="card-action-btn danger delete-draft" data-idx="${idx}"><i class="fas fa-trash"></i> Delete Draft</button>
-                    </div>
-                </div>`;
-            }
-            
-            html += '</div>';
+            html += '<div class="applications-list" id="applicationsList"></div><div id="paginationControls" class="pagination-controls" style="margin-top:1rem;"></div>';
         }
         
         html += '<div class="demo-note"><i class="fas fa-info-circle"></i> Faculty Research Grants: IR Award, MBHR Award, MR Award, MRR Award. For Publication Award and Madigan Award, please contact KURO directly.</div>';
         
         document.getElementById('mainContent').innerHTML = html;
         
-        // Event listeners remain the same, but use filteredSubs for lookups
-        document.getElementById('newApplyBtn')?.addEventListener('click', () => { 
-            editDraftId = null; 
-            currentDraftData = null; 
-            isEditMode = false; 
-            editAppId = null; 
-            openGrantSelection(); 
-        });
+        document.getElementById('newApplyBtn')?.addEventListener('click', () => { editDraftId = null; currentDraftData = null; isEditMode = false; editAppId = null; openGrantSelection(); });
         
-        document.querySelectorAll('.view-sub').forEach(btn => btn.addEventListener('click', async (e) => { 
-            const id = btn.getAttribute('data-id'); 
-            const sub = filteredSubs.find(s => s.id === id); 
-            if(sub) await showDetails(sub); 
-        }));
+        // Filter event listeners
+        document.getElementById('grantFilter')?.addEventListener('change', () => filterAndRenderApps(filteredSubs, drafts));
+        document.getElementById('statusFilter')?.addEventListener('change', () => filterAndRenderApps(filteredSubs, drafts));
+        document.getElementById('cvFilter')?.addEventListener('change', () => filterAndRenderApps(filteredSubs, drafts));
+        document.getElementById('searchFilter')?.addEventListener('input', () => filterAndRenderApps(filteredSubs, drafts));
         
-        document.querySelectorAll('.edit-sub').forEach(btn => btn.addEventListener('click', async (e) => { 
-            const id = btn.getAttribute('data-id'); 
-            const sub = filteredSubs.find(s => s.id === id); 
-            if(sub && sub.status !== 'Approved') { 
-                isEditMode = true; 
-                editAppId = id; 
-                editDraftId = null; 
-                selectedGrant = sub.grantTitle; 
-                currentDraftData = JSON.parse(JSON.stringify(sub)); 
-                openApplicationForm(true);  // Pass true for isEdit
-            } else if(sub && sub.status === 'Approved') { 
-                showInlineNotification(null, 'Approved applications cannot be edited.', false); 
-            }
-        }));
-        
-        // Resubmit button handler
-        document.querySelectorAll('.resubmit-sub').forEach(btn => btn.addEventListener('click', async (e) => { 
-            const id = btn.getAttribute('data-id'); 
-            const sub = filteredSubs.find(s => s.id === id); 
-            if(sub) await resubmitApplication(sub); 
-        }));
-        
-        // Delete submission
-        document.querySelectorAll('.delete-sub').forEach(btn => btn.addEventListener('click', async (e) => { 
-            const id = btn.getAttribute('data-id');
-            const result = await confirmDelete('this application');
-            if (result.isConfirmed) {
-                await KURO_API.deleteApplication(id);
-                await renderApplicant();
-                await showSuccess('Application deleted!', 'Deleted');
-            }
-        }));
-        
-        // Edit draft (no changes needed)
-        document.querySelectorAll('.edit-draft').forEach(btn => btn.addEventListener('click', async (e) => { 
-            const idx = parseInt(btn.getAttribute('data-idx'));
-            const draft = drafts[idx];
-            editDraftId = idx; 
-            isEditMode = false; 
-            editAppId = null; 
-            selectedGrant = draft.grantTitle;
-            currentDraftData = JSON.parse(JSON.stringify(draft));
-            if (draft.draftId) sessionStorage.setItem('current_draft_id', draft.draftId);
-            openApplicationForm(false);
-        }));
-        
-        // Delete draft
-        document.querySelectorAll('.delete-draft').forEach(btn => btn.addEventListener('click', async (e) => { 
-            const idx = parseInt(btn.getAttribute('data-idx'));
-            const draft = drafts[idx];
-            const result = await confirmDelete(draft?.proposalTitle || 'this draft');
-            if (result.isConfirmed) {
-                await KURO_API.deleteFacultyDraft(draft.draftId || draft.id);
-                await renderApplicant();
-                await showSuccess('Draft deleted!', 'Deleted');
-            }
-        }));
-        
-        // Resend signature
-        document.querySelectorAll('.resend-signature-btn').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const id = btn.getAttribute('data-id');
-                console.log('Resend signature clicked for appId:', id);
-                
-                // Find the application in filteredSubs
-                const sub = filteredSubs.find(s => s.id === id);
-                if (sub) {
-                    await resendSignatureRequests(sub); 
-                } else {
-                    console.error('Application not found for id:', id);
-                    showInlineNotification(null, 'Application not found', false);
-                }
-            });
-        });
-
+        filterAndRenderApps(filteredSubs, drafts);
         
     } catch (error) {
         console.error('Failed to load dashboard:', error);
         document.getElementById('mainContent').innerHTML = '<div class="demo-note" style="text-align:center;padding:2rem;color:#e74c3c;"><i class="fas fa-exclamation-triangle"></i> Failed to load applications. Please refresh the page.</div>';
     }
+}
+
+function filterAndRenderApps(filteredSubs, drafts) {
+    const grantFilter = document.getElementById('grantFilter')?.value || 'all';
+    const statusFilter = document.getElementById('statusFilter')?.value || 'all';
+    const cvFilter = document.getElementById('cvFilter')?.value || 'all';
+    const searchFilter = document.getElementById('searchFilter')?.value || '';
+    
+    let filteredApps = filteredSubs.filter(app => {
+        if (grantFilter !== 'all' && app.grantTitle !== grantFilter) return false;
+        if (statusFilter !== 'all' && app.status !== statusFilter) return false;
+        if (cvFilter !== 'all') {
+            const cvStat = getCVStatusSummary(app);
+            if (cvFilter === 'eligible' && cvStat.eligible === 0) return false;
+            if (cvFilter === 'pending' && cvStat.pending === 0) return false;
+            if (cvFilter === 'missing' && cvStat.missing === 0) return false;
+            if (cvFilter === 'ineligible' && cvStat.ineligible === 0) return false;
+        }
+        if (searchFilter) {
+            const s = searchFilter.toLowerCase();
+            if (!(app.proposalTitle || '').toLowerCase().includes(s) && !(app.piName || '').toLowerCase().includes(s)) return false;
+        }
+        return true;
+    });
+    
+    renderApplicationsList(filteredApps, drafts);
+}
+
+function renderApplicationsList(filteredSubs, drafts) {
+    const container = document.getElementById('applicationsList');
+    if (!container) return;
+    
+    let html = '';
+    
+    for (const sub of filteredSubs) {
+        const cvStatus = getCVStatusSummary(sub);
+        let cvStatusText = '', cvStatusClass = '';
+        if (cvStatus.eligible === cvStatus.total) { cvStatusText = '✅ CV Eligible'; cvStatusClass = 'cv-eligible'; }
+        else if (cvStatus.ineligible > 0) { cvStatusText = `❌ ${cvStatus.ineligible} CV Ineligible`; cvStatusClass = 'cv-ineligible'; }
+        else if (cvStatus.pending > 0) { cvStatusText = `⏳ ${cvStatus.pending} CV Pending`; cvStatusClass = 'cv-pending'; }
+        else { cvStatusText = `📄 ${cvStatus.missing} CV Missing`; cvStatusClass = 'cv-missing'; }
+        
+        const cvProgressPercent = ((cvStatus.eligible + cvStatus.pending) / cvStatus.total) * 100;
+        let cvProgressClass = cvStatus.ineligible > 0 ? 'bad' : (cvStatus.pending > 0 ? 'warning' : 'good');
+        
+        const chairSigned = sub.signatures?.chair?.signed || false;
+        const deanSigned = sub.signatures?.dean?.signed || false;
+        const bothSigned = chairSigned && deanSigned;
+        const requestsSent = sub.signatureRequests?.sentAt;
+        
+        let signatureStatusText = '', signatureStatusClass = '';
+        if (bothSigned) { signatureStatusText = '✅ Both Signed'; signatureStatusClass = 'cv-eligible'; }
+        else if (requestsSent) { signatureStatusText = '📧 Requests Sent'; signatureStatusClass = 'signature-sent'; }
+        else { signatureStatusText = '⏳ Pending'; signatureStatusClass = 'signature-pending'; }
+        
+        const statusIcon = getStatusIcon(sub.status);
+        const statusClass = getStatusClass(sub.status);
+        const statusDisplay = getStatusDisplayName(sub.status);
+        const returnClass = sub.status === 'Returned' ? 'returned' : '';
+        
+        html += `<div class="application-card ${returnClass}" data-id="${sub.id}">
+            <div class="card-header-modern">
+                <span class="grant-badge"><i class="fas fa-trophy"></i> ${escapeHtml(sub.grantTitle)}</span>
+                <div class="status-badges">
+                    <span class="status-badge ${statusClass}">${statusIcon} ${statusDisplay}</span>
+                    <span class="status-badge ${signatureStatusClass}"><i class="fas fa-signature"></i> ${signatureStatusText}</span>
+                    <span class="status-badge ${cvStatusClass}"><i class="fas fa-file-pdf"></i> ${cvStatusText}</span>
+                </div>
+            </div>
+            <div class="card-body-modern">
+                <div class="project-title">${escapeHtml(sub.proposalTitle || 'Untitled')}</div>
+                <div class="info-grid-modern">
+                    <div class="info-item-modern"><i class="fas fa-calendar-alt"></i> Submitted: ${sub.submittedDate || 'N/A'}</div>
+                    <div class="info-item-modern"><i class="fas fa-user"></i> PI: ${escapeHtml(sub.piName || 'N/A')}</div>
+                    <div class="info-item-modern"><i class="fas fa-envelope"></i> ${escapeHtml(sub.piEmail || 'N/A')}</div>
+                </div>`;
+        
+        if (sub.returnedFeedback) {
+            html += `<div class="feedback-section"><h4><i class="fas fa-feedback"></i> Revision Required</h4><p>${escapeHtml(sub.returnedFeedback)}</p></div>`;
+        }
+        
+        html += `<div class="cv-progress-section">
+                    <div class="cv-progress-label"><i class="fas fa-chart-line"></i> CV Completion Progress</div>
+                    <div class="cv-progress-bar"><div class="cv-progress-fill ${cvProgressClass}" style="width: ${cvProgressPercent}%"></div></div>
+                    <div class="cv-stats">
+                        <span class="cv-stat eligible"><i class="fas fa-check-circle"></i> ${cvStatus.eligible} Eligible</span>
+                        <span class="cv-stat pending"><i class="fas fa-clock"></i> ${cvStatus.pending} Pending</span>
+                        <span class="cv-stat ineligible"><i class="fas fa-times-circle"></i> ${cvStatus.ineligible} Ineligible</span>
+                        <span class="cv-stat missing"><i class="fas fa-file"></i> ${cvStatus.missing} Missing</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-actions-modern">
+                <button class="card-action-btn view-sub" data-id="${sub.id}"><i class="fas fa-eye"></i> View Details</button>`;
+        
+        if (sub.status === 'Returned') {
+            html += `<button class="card-action-btn edit-sub" data-id="${sub.id}"><i class="fas fa-edit"></i> Edit</button>`;
+            html += `<button class="card-action-btn warning resubmit-sub" data-id="${sub.id}"><i class="fas fa-paper-plane"></i> Resubmit</button>`;
+        } else if (sub.status !== 'Approved') {
+            html += `<button class="card-action-btn edit-sub" data-id="${sub.id}"><i class="fas fa-edit"></i> Edit</button>`;
+        }
+        if (sub.status === 'Awaiting Signatures' && !bothSigned) {
+            html += `<button class="card-action-btn warning resend-signature-btn" data-id="${sub.id}"><i class="fas fa-paper-plane"></i> Resend Signature</button>`;
+        }
+        html += `<button class="card-action-btn danger delete-sub" data-id="${sub.id}"><i class="fas fa-trash"></i> Delete</button>
+            </div>
+        </div>`;
+    }
+    
+    // Render Drafts
+    for (let idx = 0; idx < drafts.length; idx++) {
+        const draft = drafts[idx];
+        html += `<div class="application-card draft">
+            <div class="card-header-modern" style="background: #6c757d;">
+                <span class="grant-badge"><i class="fas fa-pen-fancy"></i> ${escapeHtml(draft.grantTitle)}</span>
+                <div class="status-badges">
+                    <span class="status-badge application-draft"><i class="fas fa-pen"></i> Draft</span>
+                    <span class="status-badge cv-missing"><i class="fas fa-file-pdf"></i> Not Submitted</span>
+                </div>
+            </div>
+            <div class="card-body-modern">
+                <div class="project-title">${escapeHtml(draft.proposalTitle || 'Untitled Draft')}</div>
+                <div class="info-grid-modern">
+                    <div class="info-item-modern"><i class="fas fa-save"></i> Last saved: ${draft.lastSaved || 'N/A'}</div>
+                    <div class="info-item-modern"><i class="fas fa-user"></i> PI: ${escapeHtml(draft.piName || 'Not set')}</div>
+                </div>
+            </div>
+            <div class="card-actions-modern">
+                <button class="card-action-btn edit-draft" data-idx="${idx}"><i class="fas fa-edit"></i> Edit Draft</button>
+                <button class="card-action-btn danger delete-draft" data-idx="${idx}"><i class="fas fa-trash"></i> Delete Draft</button>
+            </div>
+        </div>`;
+    }
+    
+    container.innerHTML = html;
+    
+    // Attach event listeners
+    document.querySelectorAll('.view-sub').forEach(btn => btn.addEventListener('click', async (e) => { const id = btn.getAttribute('data-id'); const sub = filteredSubs.find(s => s.id === id); if(sub) await showDetails(sub); }));
+    document.querySelectorAll('.edit-sub').forEach(btn => btn.addEventListener('click', async (e) => { const id = btn.getAttribute('data-id'); const sub = filteredSubs.find(s => s.id === id); if(sub && sub.status !== 'Approved') { isEditMode = true; editAppId = id; editDraftId = null; selectedGrant = sub.grantTitle; currentDraftData = JSON.parse(JSON.stringify(sub)); openApplicationForm(true); } else if(sub && sub.status === 'Approved') { showInlineNotification(null, 'Approved applications cannot be edited.', false); } }));
+    document.querySelectorAll('.resubmit-sub').forEach(btn => btn.addEventListener('click', async (e) => { const id = btn.getAttribute('data-id'); const sub = filteredSubs.find(s => s.id === id); if(sub) await resubmitApplication(sub); }));
+    document.querySelectorAll('.delete-sub').forEach(btn => btn.addEventListener('click', async (e) => { const id = btn.getAttribute('data-id'); const result = await confirmDelete('this application'); if (result.isConfirmed) { await KURO_API.deleteApplication(id); await renderApplicant(); await showSuccess('Application deleted!', 'Deleted'); } }));
+    document.querySelectorAll('.edit-draft').forEach(btn => btn.addEventListener('click', async (e) => { const idx = parseInt(btn.getAttribute('data-idx')); const draft = drafts[idx]; editDraftId = idx; isEditMode = false; editAppId = null; selectedGrant = draft.grantTitle; currentDraftData = JSON.parse(JSON.stringify(draft)); if (draft.draftId) sessionStorage.setItem('current_draft_id', draft.draftId); openApplicationForm(false); }));
+    document.querySelectorAll('.delete-draft').forEach(btn => btn.addEventListener('click', async (e) => { const idx = parseInt(btn.getAttribute('data-idx')); const draft = drafts[idx]; const result = await confirmDelete(draft?.proposalTitle || 'this draft'); if (result.isConfirmed) { await KURO_API.deleteFacultyDraft(draft.draftId || draft.id); await renderApplicant(); await showSuccess('Draft deleted!', 'Deleted'); } }));
+    document.querySelectorAll('.resend-signature-btn').forEach(btn => { btn.addEventListener('click', async () => { const id = btn.getAttribute('data-id'); const sub = filteredSubs.find(s => s.id === id); if (sub) await resendSignatureRequests(sub); else showInlineNotification(null, 'Application not found', false); }); });
 }
 
 function getStatusDisplayName(status) {
