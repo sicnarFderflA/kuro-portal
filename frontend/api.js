@@ -16,25 +16,31 @@ async function apiRequest(endpoint, options = {}) {
     }
     
     let url = `${API_BASE_URL}${endpoint}`;
+    let body = options.body;
     
-    // Only add userEmail to GET requests that don't already have an ID in the path
-    const isSingleAppEndpoint = endpoint.match(/\/applications\/[^\/]+$/) && !endpoint.includes('signature-status');
-    const needsUserEmail = options.method !== 'POST' && 
-                          options.method !== 'PUT' && 
-                          options.method !== 'DELETE' &&
-                          !isSingleAppEndpoint &&
-                          !url.includes('userEmail');
+    // For GET requests, add userEmail to URL
+    const isGetRequest = !options.method || options.method === 'GET';
     
-    if (user.email && needsUserEmail) {
+    if (isGetRequest && user.email && !url.includes('userEmail')) {
         const separator = url.includes('?') ? '&' : '?';
         url += `${separator}userEmail=${encodeURIComponent(user.email)}`;
+    }
+    
+    // For POST/PUT/DELETE requests, add userEmail to body if not already present
+    if (!isGetRequest && user.email && body) {
+        const bodyObj = JSON.parse(body);
+        if (!bodyObj.userEmail && !bodyObj.addedBy && !bodyObj.removedBy) {
+            bodyObj.userEmail = user.email;
+            body = JSON.stringify(bodyObj);
+        }
     }
     
     console.log('API Request:', url);
     
     const response = await fetch(url, {
         ...options,
-        headers
+        headers,
+        body: body
     });
     
     if (!response.ok) {
