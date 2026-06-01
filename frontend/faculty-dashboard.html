@@ -3367,8 +3367,10 @@ function validateAndHighlightFields(formData, modalElement) {
             errorSpan.innerHTML = '⚠️ ' + errorMessage;
             formGroup.appendChild(errorSpan);
         }
-        field.style.animation = 'shake 0.3s ease-in-out';
-        setTimeout(() => { if (field) field.style.animation = ''; }, 300);
+        if (field) {
+            field.style.animation = 'shake 0.3s ease-in-out';
+            setTimeout(() => { if (field) field.style.animation = ''; }, 300);
+        }
         errors.push({ field, message: errorMessage });
     }
     
@@ -3404,67 +3406,121 @@ function validateAndHighlightFields(formData, modalElement) {
         }
     }
     
-    // Form 1 validation
+    // Helper to safely get element value
+    function getFieldValue(id) {
+        const el = modalElement?.querySelector(`#${id}`) || document.getElementById(id);
+        return el?.value || '';
+    }
+    
+    // ========== FORM 1 VALIDATION ==========
+    
+    // Project Profile Section
     if (!formData.proposalTitle || formData.proposalTitle.trim() === '') {
-        markField(modalElement.querySelector('#projTitle'), 'Project Title is required');
+        const field = modalElement?.querySelector('#projTitle');
+        markField(field, 'Project Title is required');
         highlightSubsectionByText('📌 Project Profile');
     }
+    
     if (!formData.piName || formData.piName.trim() === '') {
-        markField(modalElement.querySelector('#piName'), 'Principal Investigator name is required');
+        const field = modalElement?.querySelector('#piName');
+        markField(field, 'Principal Investigator name is required');
         highlightSubsectionByText('📌 Project Profile');
     }
+    
     if (!formData.piEmail || formData.piEmail.trim() === '') {
-        markField(modalElement.querySelector('#piEmail'), 'Email Address is required');
+        const field = modalElement?.querySelector('#piEmail');
+        markField(field, 'Email Address is required');
+        highlightSubsectionByText('📌 Project Profile');
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.piEmail)) {
+        const field = modalElement?.querySelector('#piEmail');
+        markField(field, 'Valid email address is required');
         highlightSubsectionByText('📌 Project Profile');
     }
+    
     if (!formData.dept || formData.dept.trim() === '') {
-        markField(modalElement.querySelector('#dept'), 'Department is required');
+        const field = modalElement?.querySelector('#dept');
+        markField(field, 'Department is required');
         highlightSubsectionByText('📌 Project Profile');
     }
+    
     if (!formData.school || formData.school.trim() === '') {
-        markField(modalElement.querySelector('#school'), 'School/College is required');
+        const field = modalElement?.querySelector('#school');
+        markField(field, 'School/College is required');
         highlightSubsectionByText('📌 Project Profile');
     }
+    
     if (!formData.extension || formData.extension.trim() === '') {
-        markField(modalElement.querySelector('#extension'), 'Local Extension is required');
-        highlightSubsectionByText('📌 Project Profile');
+        const field = modalElement?.querySelector('#extension');
+        if (field) {
+            markField(field, 'Local Extension is required');
+            highlightSubsectionByText('📌 Project Profile');
+        } else {
+            console.warn('Extension field not found in DOM');
+            errors.push({ field: 'extension', message: 'Local Extension is required' });
+        }
     }
+    
     if (!formData.duration || formData.duration.trim() === '') {
-        markField(modalElement.querySelector('#duration'), 'Project Duration is required');
-        highlightSubsectionByText('📌 Project Profile');
+        const field = modalElement?.querySelector('#duration');
+        if (field) {
+            markField(field, 'Project Duration is required');
+            highlightSubsectionByText('📌 Project Profile');
+        } else {
+            console.warn('Duration field not found in DOM');
+            errors.push({ field: 'duration', message: 'Project Duration is required' });
+        }
     }
+    
+    // Rationale
     if (!formData.rationale || formData.rationale.trim() === '') {
-        markField(modalElement.querySelector('#rationale'), 'Rationale is required');
+        const field = modalElement?.querySelector('#rationale');
+        markField(field, 'Rationale is required');
         highlightSubsectionByText('📖 Rationale');
     }
+    
+    // Literature Review
     if (!formData.litReview || formData.litReview.trim() === '') {
-        markField(modalElement.querySelector('#litReview'), 'Review of Literature is required');
-        highlightSubsectionByText('📚 Review of Literature');
+        const field = modalElement?.querySelector('#litReview');
+        if (field) {
+            markField(field, 'Review of Literature is required');
+            highlightSubsectionByText('📚 Review of Literature');
+        } else {
+            console.warn('litReview field not found in DOM');
+            errors.push({ field: 'litReview', message: 'Review of Literature is required' });
+        }
     }
+    
+    // Objectives
     if (!formData.objectives || formData.objectives.trim() === '') {
-        markField(modalElement.querySelector('#objectives'), 'Objectives are required');
+        const field = modalElement?.querySelector('#objectives');
+        markField(field, 'Objectives are required');
         highlightSubsectionByText('🎯 Objectives');
     }
+    
+    // Methodology
     if (!formData.methodology || formData.methodology.trim() === '') {
-        markField(modalElement.querySelector('#methodology'), 'Methodology is required');
+        const field = modalElement?.querySelector('#methodology');
+        markField(field, 'Methodology is required');
         highlightSubsectionByText('🔬 Methodology');
     }
+    
+    // Expected Outputs
     if (!formData.outputs || formData.outputs.trim() === '') {
-        markField(modalElement.querySelector('#outputs'), 'Expected Outputs are required');
+        const field = modalElement?.querySelector('#outputs');
+        markField(field, 'Expected Outputs are required');
         highlightSubsectionByText('📊 Target Accomplishments');
     }
     
-    // Literature Cited validation
+    // Literature Cited
     const hasValidReference = formData.references && formData.references.length > 0 && 
                             formData.references.some(r => r && r.trim() !== '');
-
+    
     if (!hasValidReference) {
-        const refContainer = modalElement.querySelector('#referencesContainer');
+        const refContainer = modalElement?.querySelector('#referencesContainer');
         if (refContainer) {
             refContainer.style.border = '2px solid #e74c3c';
             refContainer.style.borderRadius = '0.6rem';
             refContainer.style.padding = '0.5rem';
-            
             highlightSubsectionByText('📑 Literature Cited');
             
             const existingError = refContainer.parentElement?.querySelector('.container-error-message');
@@ -3482,15 +3538,15 @@ function validateAndHighlightFields(formData, modalElement) {
         }
         errors.push({ field: 'references', message: 'Please add at least one Literature Cited' });
     } else {
-        const refContainer = modalElement.querySelector('#referencesContainer');
+        const refContainer = modalElement?.querySelector('#referencesContainer');
         if (refContainer) {
             refContainer.style.border = '';
             refContainer.style.borderRadius = '';
             refContainer.style.padding = '';
         }
-        const errorMsg = modalElement.querySelector('.container-error-message');
+        const errorMsg = modalElement?.querySelector('.container-error-message');
         if (errorMsg) errorMsg.remove();
-        const subsections = modalElement.querySelectorAll('.form-subsection-title');
+        const subsections = modalElement?.querySelectorAll('.form-subsection-title') || [];
         for (const subsection of subsections) {
             if (subsection.textContent.includes('📑 Literature Cited')) {
                 subsection.style.color = '';
@@ -3500,9 +3556,11 @@ function validateAndHighlightFields(formData, modalElement) {
         }
     }
     
-    const hasValidTeamMember = formData.teamMembers && formData.teamMembers.length > 0 && formData.teamMembers.some(m => m.name && m.name.trim() !== '');
+    // Research Team Members
+    const hasValidTeamMember = formData.teamMembers && formData.teamMembers.length > 0 && 
+                              formData.teamMembers.some(m => m.name && m.name.trim() !== '');
     if (!hasValidTeamMember) {
-        const teamContainer = modalElement.querySelector('#teamMembersContainer');
+        const teamContainer = modalElement?.querySelector('#teamMembersContainer');
         if (teamContainer) {
             teamContainer.style.border = '2px solid #e74c3c';
             teamContainer.style.borderRadius = '0.6rem';
@@ -3512,116 +3570,141 @@ function validateAndHighlightFields(formData, modalElement) {
         errors.push({ field: 'teamMembers', message: 'Please add at least one Research Team Member' });
     }
     
-    // Budget validation
-    const budgetCards = modalElement.querySelectorAll('.budget-card');
-    let hasValidBudget = false;
-    
-    budgetCards.forEach((card, idx) => {
-        const category = card.querySelector('.budget-category')?.value;
-        const item = card.querySelector('.budget-item-select')?.value;
-        const unitCost = parseFloat(card.querySelector('.budget-unit-cost')?.value);
-        const isCardValid = category && item && unitCost > 0;
-        
-        card.style.border = '';
-        card.style.backgroundColor = '';
-        const existingError = card.querySelector('.card-error-message');
-        if (existingError) existingError.remove();
-        
-        if (!isCardValid) {
-            let missingField = '';
-            if (!category) missingField = 'Category';
-            else if (!item) missingField = 'Item';
-            else if (!unitCost || unitCost <= 0) missingField = 'Unit Cost';
-            markCard(card, `Budget Item ${idx + 1}: ${missingField} is required`);
-        } else {
-            hasValidBudget = true;
-        }
-    });
-    
-    if (!hasValidBudget && budgetCards.length > 0) {
-        highlightSubsectionByText('💰 Budgetary Requirements');
-    }
-    
-    // Activities validation
-    const activityCards = modalElement.querySelectorAll('.activity-card');
+    // Activities Validation
+    const activityCards = modalElement?.querySelectorAll('.activity-card') || [];
     let hasValidActivity = false;
     
-    activityCards.forEach((card, idx) => {
-        const activityName = card.querySelector('.act-name')?.value;
-        const startDate = card.querySelector('.act-start-date')?.value;
-        const endDate = card.querySelector('.act-end-date')?.value;
-        const isCardValid = activityName && activityName.trim() !== '' && startDate && endDate;
-        
-        card.style.border = '';
-        card.style.backgroundColor = '';
-        const existingError = card.querySelector('.card-error-message');
-        if (existingError) existingError.remove();
-        
-        if (!isCardValid) {
-            let missingField = '';
-            if (!activityName || activityName.trim() === '') missingField = 'Activity Name';
-            else if (!startDate) missingField = 'Start Date';
-            else if (!endDate) missingField = 'End Date';
-            markCard(card, `Activity ${idx + 1}: ${missingField} is required`);
-            
-            if (!activityName) {
-                const nameField = card.querySelector('.act-name');
-                if (nameField) markField(nameField, 'Activity Name is required');
-            }
-            if (!startDate) {
-                const startField = card.querySelector('.act-start-date');
-                if (startField) markField(startField, 'Start Date is required');
-            }
-            if (!endDate) {
-                const endField = card.querySelector('.act-end-date');
-                if (endField) markField(endField, 'End Date is required');
-            }
-        } else {
-            hasValidActivity = true;
-        }
-    });
-    
-    if (!hasValidActivity && activityCards.length > 0) {
+    if (activityCards.length === 0) {
         highlightSubsectionByText('📅 Major Activities');
+        errors.push({ field: 'activities', message: 'Please add at least one activity' });
+    } else {
+        activityCards.forEach((card, idx) => {
+            const activityName = card.querySelector('.act-name')?.value;
+            const startDate = card.querySelector('.act-start-date')?.value;
+            const endDate = card.querySelector('.act-end-date')?.value;
+            const isCardValid = activityName && activityName.trim() !== '' && startDate && endDate;
+            
+            if (!isCardValid) {
+                let missingField = '';
+                if (!activityName || activityName.trim() === '') missingField = 'Activity Name';
+                else if (!startDate) missingField = 'Start Date';
+                else if (!endDate) missingField = 'End Date';
+                markCard(card, `Activity ${idx + 1}: ${missingField} is required`);
+                
+                if (!activityName || activityName.trim() === '') {
+                    const nameField = card.querySelector('.act-name');
+                    if (nameField) markField(nameField, 'Activity Name is required');
+                }
+                if (!startDate) {
+                    const startField = card.querySelector('.act-start-date');
+                    if (startField) markField(startField, 'Start Date is required');
+                }
+                if (!endDate) {
+                    const endField = card.querySelector('.act-end-date');
+                    if (endField) markField(endField, 'End Date is required');
+                }
+            } else {
+                hasValidActivity = true;
+            }
+        });
+        
+        if (!hasValidActivity && activityCards.length > 0) {
+            highlightSubsectionByText('📅 Major Activities');
+        }
     }
     
-    // Form 2 validation
+    // Budget Validation
+    const budgetCards = modalElement?.querySelectorAll('.budget-card') || [];
+    let hasValidBudget = false;
+    
+    if (budgetCards.length === 0) {
+        highlightSubsectionByText('💰 Budgetary Requirements');
+        errors.push({ field: 'budget', message: 'Please add at least one budget item' });
+    } else {
+        budgetCards.forEach((card, idx) => {
+            const category = card.querySelector('.budget-category')?.value;
+            const item = card.querySelector('.budget-item-select')?.value;
+            const unitCost = parseFloat(card.querySelector('.budget-unit-cost')?.value);
+            const isCardValid = category && item && unitCost > 0;
+            
+            if (!isCardValid) {
+                let missingField = '';
+                if (!category) missingField = 'Category';
+                else if (!item) missingField = 'Item';
+                else if (!unitCost || unitCost <= 0) missingField = 'Unit Cost';
+                markCard(card, `Budget Item ${idx + 1}: ${missingField} is required`);
+            } else {
+                hasValidBudget = true;
+            }
+        });
+        
+        if (!hasValidBudget && budgetCards.length > 0) {
+            highlightSubsectionByText('💰 Budgetary Requirements');
+        }
+    }
+    
+    // ========== FORM 2 VALIDATION ==========
+    
+    // Endorsement Information
     if (!formData.endorsementDate || formData.endorsementDate.trim() === '') {
-        markField(modalElement.querySelector('#endorsementDate'), 'Date is required');
-        highlightSubsectionByText('📌 Endorsement Information');
-    }
-    if (!formData.fromChair || formData.fromChair.trim() === '') {
-        markField(modalElement.querySelector('#fromChair'), 'Department Chair name is required');
-        highlightSubsectionByText('✍️ Digital Signatures');
-    }
-    if (!formData.chairEmail || formData.chairEmail.trim() === '') {
-        markField(modalElement.querySelector('#chairEmail'), 'Department Chair email is required');
-        highlightSubsectionByText('✍️ Digital Signatures');
-    }
-    if (!formData.deanName || formData.deanName.trim() === '') {
-        markField(modalElement.querySelector('#deanName'), 'Dean name is required');
-        highlightSubsectionByText('✍️ Digital Signatures');
-    }
-    if (!formData.deanEmail || formData.deanEmail.trim() === '') {
-        markField(modalElement.querySelector('#deanEmail'), 'Dean email is required');
-        highlightSubsectionByText('✍️ Digital Signatures');
-    }
-    if (!formData.endorseDept || formData.endorseDept.trim() === '') {
-        markField(modalElement.querySelector('#endorseDept'), 'Department is required');
-        highlightSubsectionByText('📌 Endorsement Information');
-    }
-    if (!formData.endorseSchool || formData.endorseSchool.trim() === '') {
-        markField(modalElement.querySelector('#endorseSchool'), 'School/College is required');
-        highlightSubsectionByText('📌 Endorsement Information');
-    }
-    if (!formData.schoolYear || formData.schoolYear.trim() === '') {
-        markField(modalElement.querySelector('#schoolYear'), 'School Year is required');
+        const field = modalElement?.querySelector('#endorsementDate');
+        markField(field, 'Date is required');
         highlightSubsectionByText('📌 Endorsement Information');
     }
     
-    // CV uploads validation
+    if (!formData.fromChair || formData.fromChair.trim() === '') {
+        const field = modalElement?.querySelector('#fromChair');
+        markField(field, 'Department Chair name is required');
+        highlightSubsectionByText('✍️ Digital Signatures');
+    }
+    
+    if (!formData.chairEmail || formData.chairEmail.trim() === '') {
+        const field = modalElement?.querySelector('#chairEmail');
+        markField(field, 'Department Chair email is required');
+        highlightSubsectionByText('✍️ Digital Signatures');
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.chairEmail)) {
+        const field = modalElement?.querySelector('#chairEmail');
+        markField(field, 'Valid chair email is required');
+        highlightSubsectionByText('✍️ Digital Signatures');
+    }
+    
+    if (!formData.deanName || formData.deanName.trim() === '') {
+        const field = modalElement?.querySelector('#deanName');
+        markField(field, 'Dean name is required');
+        highlightSubsectionByText('✍️ Digital Signatures');
+    }
+    
+    if (!formData.deanEmail || formData.deanEmail.trim() === '') {
+        const field = modalElement?.querySelector('#deanEmail');
+        markField(field, 'Dean email is required');
+        highlightSubsectionByText('✍️ Digital Signatures');
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.deanEmail)) {
+        const field = modalElement?.querySelector('#deanEmail');
+        markField(field, 'Valid dean email is required');
+        highlightSubsectionByText('✍️ Digital Signatures');
+    }
+    
+    if (!formData.endorseDept || formData.endorseDept.trim() === '') {
+        const field = modalElement?.querySelector('#endorseDept');
+        markField(field, 'Department is required');
+        highlightSubsectionByText('📌 Endorsement Information');
+    }
+    
+    if (!formData.endorseSchool || formData.endorseSchool.trim() === '') {
+        const field = modalElement?.querySelector('#endorseSchool');
+        markField(field, 'School/College is required');
+        highlightSubsectionByText('📌 Endorsement Information');
+    }
+    
+    if (!formData.schoolYear || formData.schoolYear.trim() === '') {
+        const field = modalElement?.querySelector('#schoolYear');
+        markField(field, 'School Year is required');
+        highlightSubsectionByText('📌 Endorsement Information');
+    }
+    
+    // ========== CV UPLOADS VALIDATION ==========
     const hasPiCV = formData.piCVName && formData.piCVName.trim() !== '';
-    const piCVSection = modalElement.querySelector('#piCVSection');
+    const piCVSection = modalElement?.querySelector('#piCVSection');
 
     if (!hasPiCV) {
         if (piCVSection) {
@@ -3641,7 +3724,7 @@ function validateAndHighlightFields(formData, modalElement) {
                 errorSpan.style.fontSize = '0.65rem';
                 errorSpan.style.display = 'block';
                 errorSpan.style.marginTop = '0.25rem';
-                errorSpan.innerHTML = '⚠️ CV is required';
+                errorSpan.innerHTML = '⚠️ PI CV is required';
                 pendingStatus.appendChild(errorSpan);
             }
         }
@@ -3658,11 +3741,12 @@ function validateAndHighlightFields(formData, modalElement) {
             }
         }
     }
-
+    
+    // Team Member CVs validation
     if (formData.teamMembers && formData.teamMembers.length > 0) {
         formData.teamMembers.forEach((member, idx) => {
             const hasMemberCV = formData.teamCVs && formData.teamCVs[idx] && formData.teamCVs[idx].name && formData.teamCVs[idx].name.trim() !== '';
-            const teamCVSection = modalElement.querySelector(`.cv-upload-card[data-member-index="${idx}"]`);
+            const teamCVSection = modalElement?.querySelector(`.cv-upload-card[data-member-index="${idx}"]`);
             
             if (!hasMemberCV) {
                 if (teamCVSection) {
@@ -3701,7 +3785,7 @@ function validateAndHighlightFields(formData, modalElement) {
             }
         });
     }
-
+    
     return errors;
 }
 
