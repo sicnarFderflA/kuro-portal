@@ -6,6 +6,7 @@ const Settings = require('../models/Settings');
 const AuditLog = require('../models/AuditLog');
 const ExternalReviewer = require('../models/ExternalReviewer');
 const TestEmail = require('../models/TestEmail');
+const mongoose = require('mongoose');
 const router = express.Router();
 
 // ============ MIDDLEWARE ============
@@ -878,6 +879,67 @@ router.delete('/test-emails/:id', isSuperAdmin, async (req, res) => {
         res.json({ success: true });
     } catch (error) {
         console.error('Error deleting test email:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
+// ========== RESET CHECK STAGE ==========
+router.post('/applications/:id/reset-stage', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status, check1CompletedAt, check1Feedback, check2CompletedAt, check2Feedback, check3CompletedAt, check3Feedback, assignedReviewers, updatedBy } = req.body;
+        
+        console.log(`🔄 Resetting stage for application: ${id} to status: ${status}`);
+        
+        // Find the application using the Application model (more consistent)
+        let application = await Application.findOne({ id: id });
+        
+        if (!application) {
+            return res.status(404).json({ error: 'Application not found' });
+        }
+        
+        // Build update object
+        const updateData = {
+            status: status,
+            updatedAt: new Date(),
+            lastModifiedBy: updatedBy || 'admin'
+        };
+        
+        // Add reset fields if provided
+        if (check1CompletedAt !== undefined) updateData.check1CompletedAt = check1CompletedAt;
+        if (check1Feedback !== undefined) updateData.check1Feedback = check1Feedback;
+        if (check2CompletedAt !== undefined) updateData.check2CompletedAt = check2CompletedAt;
+        if (check2Feedback !== undefined) updateData.check2Feedback = check2Feedback;
+        if (check3CompletedAt !== undefined) updateData.check3CompletedAt = check3CompletedAt;
+        if (check3Feedback !== undefined) updateData.check3Feedback = check3Feedback;
+        if (assignedReviewers !== undefined) updateData.assignedReviewers = assignedReviewers;
+        
+        // Update using the model
+        const updatedApp = await Application.findOneAndUpdate(
+            { id: id },
+            { $set: updateData },
+            { new: true }
+        );
+        
+        // Add notification for faculty
+        await Notification.create({
+            userEmail: application.userEmail,
+            type: 'stage_reset',
+            title: '🔄 Review Stage Reset',
+            message: `Your application "${application.proposalTitle?.substring(0, 50)}" has been sent back for ${status === 'Pending Eligibility Check' ? 'Eligibility Review' : (status === 'Pending Secondary Check' ? 'Secondary Review' : 'Final Review')}.`,
+            appId: id,
+            icon: '🔄',
+            color: '#f39c12',
+            isRead: false,
+            createdAt: new Date()
+        });
+        
+        console.log(`✅ Stage reset for application ${id}`);
+        res.json({ success: true, application: updatedApp });
+        
+    } catch (error) {
+        console.error('Reset stage failed:', error);
         res.status(500).json({ error: error.message });
     }
 });

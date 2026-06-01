@@ -192,6 +192,16 @@ async function returnCheck3(appId, feedback) {
     });
 }
 
+// ==================== RESET CHECK STAGE (SUPER ADMIN) ====================
+
+async function resetCheckStage(appId, resetData) {
+    return apiRequest(`/admin/applications/${appId}/reset-stage`, {
+        method: 'POST',
+        body: JSON.stringify({ ...resetData, updatedBy: getCurrentUserEmail() })
+    });
+}
+
+
 // ==================== CV REVIEW API (ADMIN) ====================
 
 async function updatePICVStatus(appId, status) {
@@ -455,6 +465,7 @@ window.KURO_API = {
     returnCheck2,
     approveCheck3,
     returnCheck3,
+     resetCheckStage,
     
     // CV Review (Admin)
     updatePICVStatus,
