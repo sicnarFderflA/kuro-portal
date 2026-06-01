@@ -2165,13 +2165,14 @@ function renderForm1Content(app) {
 }
 
 // Render Form 2 Content
+// Render Form 2 Content
 function renderForm2Content(app) {
     const chairSigned = app.signatures?.chair?.signed;
     const deanSigned = app.signatures?.dean?.signed;
     
     return `
         <div class="proposal-container">
-            <div class="proposal-header" style="background: linear-gradient(135deg, #1e2b57 0%, #0f1a36 100%);">
+            <div class="proposal-header">
                 <div class="proposal-badge"><i class="fas fa-clipboard-list"></i> Endorsement Letter</div>
                 <h2>Department & College Endorsement</h2>
                 <div class="proposal-meta">
@@ -2280,7 +2281,7 @@ function renderCVReviewContent(app) {
     
     let html = `
         <div class="proposal-container">
-            <div class="proposal-header" style="background: linear-gradient(135deg, #1e2b57 0%, #0f1a36 100%);">
+            <div class="proposal-header">
                 <div class="proposal-badge"><i class="fas fa-file-pdf"></i> CV Review & Eligibility</div>
                 <h2>Curriculum Vitae Verification</h2>
                 <div class="proposal-meta">
@@ -2389,6 +2390,7 @@ function renderCVReviewContent(app) {
     html += `</div>`;
     return html;
 }
+
 // Render External Reviewers Content
 function renderExternalReviewersContent(app) {
     const assignedReviewers = app.assignedReviewers || [];
@@ -2396,7 +2398,7 @@ function renderExternalReviewersContent(app) {
     
     let html = `
         <div class="proposal-container">
-            <div class="proposal-header" style="background: linear-gradient(135deg, #1e2b57 0%, #0f1a36 100%);">
+            <div class="proposal-header">
                 <div class="proposal-badge"><i class="fas fa-users"></i> External Peer Review</div>
                 <h2>External Reviewers Management</h2>
                 <div class="proposal-meta">
@@ -2524,7 +2526,7 @@ function renderCheckStagesContent(app) {
     
     let html = `
         <div class="proposal-container">
-            <div class="proposal-header" style="background: linear-gradient(135deg, #1e2b57 0%, #0f1a36 100%);">
+            <div class="proposal-header">
                 <div class="proposal-badge"><i class="fas fa-check-double"></i> Multi-Stage Review Process</div>
                 <h2>Application Review Workflow</h2>
                 <div class="proposal-meta">
