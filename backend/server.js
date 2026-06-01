@@ -476,21 +476,43 @@ app.get('/api/reviewer/tasks', async (req, res) => {
         
         const db = mongoose.connection.db;
         
-        // Find all submissions where this user is in assignedReviewers
-        const submissions = await db.collection('submissions').find({
+        // Try to find in submissions collection first
+        let submissions = await db.collection('submissions').find({
             'assignedReviewers.email': userEmail
         }).toArray();
+        
+        // If not found in submissions, try applications collection
+        if (submissions.length === 0) {
+            console.log('No results in submissions, checking applications collection...');
+            submissions = await db.collection('applications').find({
+                'assignedReviewers.email': userEmail
+            }).toArray();
+        }
+        
+        // If still not found, try with different field names
+        if (submissions.length === 0) {
+            console.log('Still no results, checking with externalReview.reviewers...');
+            submissions = await db.collection('submissions').find({
+                'externalReview.reviewers.email': userEmail
+            }).toArray();
+        }
         
         console.log(`✅ Found ${submissions.length} assigned applications for ${userEmail}`);
         
         const assignedTasks = submissions.map(sub => {
-            const myReview = sub.assignedReviewers?.find(r => r.email === userEmail);
+            // Find the specific reviewer entry
+            let myReview = sub.assignedReviewers?.find(r => r.email === userEmail);
+            if (!myReview && sub.externalReview?.reviewers) {
+                myReview = sub.externalReview.reviewers.find(r => r.email === userEmail);
+            }
+            
             return {
                 id: sub.id,
                 grantTitle: sub.grantTitle,
                 proposalTitle: sub.proposalTitle,
                 userEmail: sub.userEmail,
-                status: myReview?.status || 'pending'
+                status: myReview?.status || 'pending',
+                assignedAt: myReview?.assignedAt || sub.assignedAt
             };
         });
         
