@@ -2007,7 +2007,6 @@ function renderCompactApplicationsList(filtered) {
             <td><span class="status-pill ${statusClass}">${statusText}</span></td>
             <td class="action-icons">
                 <button class="action-icon view-btn" data-id="${app.id}"><i class="fas fa-eye"></i></button>
-                <button class="action-icon edit-status-btn" data-id="${app.id}"><i class="fas fa-edit"></i></button>
                 <button class="action-icon delete-btn" data-id="${app.id}"><i class="fas fa-trash"></i></button>
             </td>
         </tr>`;
@@ -2017,7 +2016,6 @@ function renderCompactApplicationsList(filtered) {
     document.getElementById('applicationsList').innerHTML = html;
     
     document.querySelectorAll('.view-btn').forEach(btn => btn.addEventListener('click', () => viewApplicationDetails(btn.getAttribute('data-id'))));
-    document.querySelectorAll('.edit-status-btn').forEach(btn => btn.addEventListener('click', () => editApplicationStatus(btn.getAttribute('data-id'))));
     document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', () => deleteApplicationHandler(btn.getAttribute('data-id'))));
 }
 
@@ -2787,15 +2785,32 @@ function renderCheckStagesContent(app) {
     const canCheck3 = isSuperAdmin || currentUserRole === 'check3';
     
     let completedCount = 0;
-    if (currentStatus === 'Pending Secondary Check') completedCount = 1;
-    else if (currentStatus === 'Pending Final Check') completedCount = 2;
-    else if (currentStatus === 'Approved') completedCount = 3;
+    let check1Completed = false;
+    let check2Completed = false;
+    let check3Completed = false;
+    
+    if (currentStatus === 'Pending Secondary Check') {
+        completedCount = 1;
+        check1Completed = true;
+    } else if (currentStatus === 'Pending Final Check') {
+        completedCount = 2;
+        check1Completed = true;
+        check2Completed = true;
+    } else if (currentStatus === 'Approved') {
+        completedCount = 3;
+        check1Completed = true;
+        check2Completed = true;
+        check3Completed = true;
+    } else if (currentStatus === 'Pending Eligibility Check') {
+        completedCount = 0;
+    }
+    
     const progressPercent = (completedCount / 3) * 100;
     
     const stages = [
         { num: 1, name: 'Eligibility Review', status: 'Pending Eligibility Check', checker: 'Check 1', icon: '🔍', description: 'CV verification & eligibility check' },
         { num: 2, name: 'Secondary Review', status: 'Pending Secondary Check', checker: 'Check 2', icon: '📋', description: 'Technical & methodology review' },
-        { num: 3, name: 'Final Review', status: 'Pending Final Check', checker: 'Check 3', icon: '⭐', description: 'Final approval & recommendation' }
+        { num: 3, name: 'Final Review', status: 'Pending Final Check', checker: 'Check 3', icon: '⭐', description: 'Final approval & external reviewers' }
     ];
     
     let html = `
@@ -2845,8 +2860,8 @@ function renderCheckStagesContent(app) {
             </div>
     `;
     
-    // Check 1 Details
-    const isCheck1Completed = completedCount >= 1;
+    // ========== CHECK 1: ELIGIBILITY REVIEW ==========
+    const isCheck1Completed = check1Completed;
     const isCheck1Current = currentStatus === 'Pending Eligibility Check';
     const canActOnCheck1 = canCheck1 && isCheck1Current;
     
@@ -2881,12 +2896,20 @@ function renderCheckStagesContent(app) {
                         `}
                     </div>
                 ` : ''}
+                ${isCheck1Completed && !isCheck1Current ? `
+                    <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e0e0e0;">
+                        <button class="btn-sm reset-check1" data-app-id="${app.id}" style="background: #e74c3c; color: white;">
+                            <i class="fas fa-undo-alt"></i> Reset Check 1 (Reopen Eligibility Review)
+                        </button>
+                        <small style="display: block; margin-top: 0.3rem; color: #999;">⚠️ This will reset Check 1, Check 2, Check 3, and remove external reviewers</small>
+                    </div>
+                ` : ''}
             </div>
         </div>
     `;
     
-    // Check 2 Details
-    const isCheck2Completed = completedCount >= 2;
+    // ========== CHECK 2: SECONDARY REVIEW ==========
+    const isCheck2Completed = check2Completed;
     const isCheck2Current = currentStatus === 'Pending Secondary Check';
     const canActOnCheck2 = canCheck2 && isCheck2Current;
     
@@ -2921,12 +2944,20 @@ function renderCheckStagesContent(app) {
                         `}
                     </div>
                 ` : ''}
+                ${isCheck2Completed && !isCheck2Current ? `
+                    <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e0e0e0;">
+                        <button class="btn-sm reset-check2" data-app-id="${app.id}" style="background: #e74c3c; color: white;">
+                            <i class="fas fa-undo-alt"></i> Reset Check 2 (Reopen Secondary Review)
+                        </button>
+                        <small style="display: block; margin-top: 0.3rem; color: #999;">⚠️ This will reset Check 2 and Check 3</small>
+                    </div>
+                ` : ''}
             </div>
         </div>
     `;
     
-    // Check 3 Details
-    const isCheck3Completed = completedCount >= 3;
+    // ========== CHECK 3: FINAL REVIEW ==========
+    const isCheck3Completed = check3Completed;
     const isCheck3Current = currentStatus === 'Pending Final Check';
     const canActOnCheck3 = canCheck3 && isCheck3Current;
     
@@ -2940,7 +2971,7 @@ function renderCheckStagesContent(app) {
                 </span>
             </div>
             <div class="improved-section-content">
-                <p><strong>Review Criteria:</strong> Overall assessment, compliance, funding recommendation</p>
+                <p><strong>Review Criteria:</strong> Overall assessment, compliance, external reviewer input, funding recommendation</p>
                 ${app.check3CompletedAt ? `<p><i class="fas fa-clock"></i> Completed: ${new Date(app.check3CompletedAt).toLocaleString()}</p>` : ''}
                 ${app.check3Feedback ? `<div style="background: #fff3cd; padding: 0.75rem; border-radius: 8px; margin-top: 0.5rem;"><strong>Feedback:</strong><br>${escapeHtml(app.check3Feedback)}</div>` : ''}
                 ${isCheck3Current ? `
@@ -2961,10 +2992,19 @@ function renderCheckStagesContent(app) {
                         `}
                     </div>
                 ` : ''}
+                ${isCheck3Completed && !isCheck3Current ? `
+                    <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e0e0e0;">
+                        <button class="btn-sm reset-check3" data-app-id="${app.id}" style="background: #e74c3c; color: white;">
+                            <i class="fas fa-undo-alt"></i> Reset Final Approval
+                        </button>
+                        <small style="display: block; margin-top: 0.3rem; color: #999;">⚠️ This will reopen Final Review</small>
+                    </div>
+                ` : ''}
             </div>
         </div>
     `;
     
+    // ========== RETURNED APPLICATION SECTION ==========
     if (app.status === 'Returned') {
         html += `
             <div class="improved-section" style="border-left: 4px solid #e74c3c;">
@@ -2974,13 +3014,17 @@ function renderCheckStagesContent(app) {
                 </div>
                 <div class="improved-section-content">
                     <p><strong>Reason:</strong> ${escapeHtml(app.returnedFeedback || 'No specific feedback provided.')}</p>
-                    <p><small>Please address the feedback and resubmit for continued review.</small></p>
+                    <p><small>Please wait for the faculty to resubmit the revised application.</small></p>
                 </div>
             </div>
         `;
     }
     
-    html += `<div class="demo-note" style="margin-top: 1rem; text-align: center;"><i class="fas fa-info-circle"></i> Review Process Flow: Check 1 (Eligibility) → Check 2 (Secondary) → Check 3 (Final) → Approval</div></div>`;
+    html += `<div class="demo-note" style="margin-top: 1rem; text-align: center;">
+        <i class="fas fa-info-circle"></i> Review Process Flow: Check 1 (Eligibility) → Check 2 (Secondary) → Check 3 (Final) → Approval
+        <br><small><i class="fas fa-undo-alt"></i> Use the "Reset" buttons to reopen review stages if needed</small>
+    </div></div>`;
+    
     return html;
 }
 
@@ -3173,6 +3217,7 @@ function attachCheckStageHandlers(modal, email, appId, currentStatus) {
                 }
             }
         };
+
     }
     
     // Check 3 Approve
@@ -3231,6 +3276,36 @@ function attachCheckStageHandlers(modal, email, appId, currentStatus) {
                     showToast('Failed to return: ' + error.message, 'error'); 
                 }
             }
+        };
+    }
+
+    // Reset Check 1
+    const resetCheck1 = modal.querySelector('.reset-check1');
+    if (resetCheck1) {
+        resetCheck1.onclick = async () => {
+            const appIdFromBtn = resetCheck1.getAttribute('data-app-id') || appId;
+            await resetCheckStage(appIdFromBtn, 'check1');
+            Swal.close();
+        };
+    }
+
+    // Reset Check 2
+    const resetCheck2 = modal.querySelector('.reset-check2');
+    if (resetCheck2) {
+        resetCheck2.onclick = async () => {
+            const appIdFromBtn = resetCheck2.getAttribute('data-app-id') || appId;
+            await resetCheckStage(appIdFromBtn, 'check2');
+            Swal.close();
+        };
+    }
+
+    // Reset Check 3
+    const resetCheck3 = modal.querySelector('.reset-check3');
+    if (resetCheck3) {
+        resetCheck3.onclick = async () => {
+            const appIdFromBtn = resetCheck3.getAttribute('data-app-id') || appId;
+            await resetCheckStage(appIdFromBtn, 'check3');
+            Swal.close();
         };
     }
 }
@@ -3326,49 +3401,101 @@ function attachExternalReviewerHandlers(modal, email, appId) {
     });
 }
 
-async function editApplicationStatus(appId) {
+async function resetCheckStage(appId, stage) {
+    // stage can be 'check1', 'check2', or 'check3'
+    
+    let titleText = '';
+    let confirmText = '';
+    let resetData = {};
+    
+    switch(stage) {
+        case 'check1':
+            titleText = 'Reset Check 1 (Eligibility Review)?';
+            confirmText = 'Yes, reset Check 1 and all subsequent checks';
+            resetData = {
+                status: 'Pending Eligibility Check',
+                check1CompletedAt: null,
+                check1Feedback: null,
+                check2CompletedAt: null,
+                check2Feedback: null,
+                check3CompletedAt: null,
+                check3Feedback: null,
+                assignedReviewers: null  // Also clear external reviewers
+            };
+            break;
+        case 'check2':
+            titleText = 'Reset Check 2 (Secondary Review)?';
+            confirmText = 'Yes, reset Check 2 and subsequent checks';
+            resetData = {
+                status: 'Pending Secondary Check',
+                check2CompletedAt: null,
+                check2Feedback: null,
+                check3CompletedAt: null,
+                check3Feedback: null
+            };
+            break;
+        case 'check3':
+            titleText = 'Reset Final Approval (Check 3)?';
+            confirmText = 'Yes, reset final approval';
+            resetData = {
+                status: 'Pending Final Check',
+                check3CompletedAt: null,
+                check3Feedback: null
+            };
+            break;
+        default:
+            return;
+    }
+    
+    const result = await Swal.fire({
+        title: titleText,
+        html: `<div style="text-align: left;">
+            <p>This will:</p>
+            <ul>
+                <li>Reset the ${stage.toUpperCase()} approval status</li>
+                <li>Move the application back to ${stage === 'check1' ? 'Eligibility Review (Check 1)' : (stage === 'check2' ? 'Secondary Review (Check 2)' : 'Final Review (Check 3)')}</li>
+                ${stage === 'check1' ? '<li>Reset all subsequent checks (Check 2 and Check 3)</li>' : ''}
+                ${stage === 'check2' ? '<li>Reset Check 3 (Final Review)</li>' : ''}
+                ${stage === 'check1' ? '<li>Remove all assigned external reviewers</li>' : ''}
+            </ul>
+            <p class="demo-note" style="margin-top: 1rem; background: #fff3cd;">
+                <i class="fas fa-exclamation-triangle"></i> This action cannot be undone. The faculty will be notified.
+            </p>
+        </div>`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#e74c3c',
+        confirmButtonText: confirmText,
+        cancelButtonText: 'Cancel'
+    });
+    
+    if (!result.isConfirmed) return;
+    
     try {
+        // First, get the current application to get faculty email
         const response = await fetch(`${API_URL}/api/applications/${appId}`);
         const app = await response.json();
-        const statuses = ['Awaiting Signatures', 'Pending Eligibility Check', 'Pending Secondary Check', 'Pending Final Check', 'Approved', 'Returned'];
-        const result = await Swal.fire({
-            title: 'Update Application Status',
-            html: `<select id="newStatus" style="width:100%; padding:0.5rem; border-radius:0.5rem;">${statuses.map(s => `<option value="${s}" ${app.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select>
-                   <div id="feedbackDiv" style="margin-top: 1rem; display: none;"><textarea id="feedbackText" rows="3" style="width:100%; padding:0.5rem;" placeholder="Feedback for faculty..."></textarea></div>`,
-            showCancelButton: true, confirmButtonColor: '#D4AF37', confirmButtonText: 'Update',
-            didOpen: () => {
-                const statusSelect = document.getElementById('newStatus');
-                const feedbackDiv = document.getElementById('feedbackDiv');
-                statusSelect.addEventListener('change', () => { feedbackDiv.style.display = statusSelect.value === 'Returned' ? 'block' : 'none'; });
-            },
-            preConfirm: async () => {
-                const newStatus = document.getElementById('newStatus').value;
-                const feedback = document.getElementById('feedbackText')?.value;
-                if (newStatus === 'Returned' && !feedback) { Swal.showValidationMessage('Please provide feedback'); return false; }
-                if (newStatus === 'Pending Secondary Check') await KURO_API.approveCheck1(appId, feedback);
-                else if (newStatus === 'Pending Final Check') await KURO_API.approveCheck2(appId, feedback);
-                else if (newStatus === 'Approved') await KURO_API.approveCheck3(appId, feedback);
-                else if (newStatus === 'Returned') {
-                    if (app.status === 'Pending Eligibility Check') await KURO_API.returnCheck1(appId, feedback);
-                    else if (app.status === 'Pending Secondary Check') await KURO_API.returnCheck2(appId, feedback);
-                    else await KURO_API.returnCheck3(appId, feedback);
-                }
-                showToast(`Status updated to ${newStatus}`, 'success');
-                renderDashboard();
-                return true;
-            }
+        
+        // Call API to reset the stage
+        await KURO_API.resetCheckStage(appId, resetData);
+        
+        // Add notification to faculty
+        await KURO_API.createNotification({
+            userEmail: app.userEmail,
+            type: 'stage_reset',
+            title: '🔄 Review Stage Reset',
+            message: `Your application "${app.proposalTitle?.substring(0, 50)}" has been sent back for ${stage === 'check1' ? 'Eligibility Review' : (stage === 'check2' ? 'Secondary Review' : 'Final Review')}. Please address any feedback.`,
+            appId: appId,
+            icon: '🔄',
+            color: '#f39c12'
         });
-    } catch (error) { showToast('Failed to update status', 'error'); }
-}
-
-async function deleteApplicationHandler(appId) {
-    const result = await Swal.fire({ title: 'Delete Application?', text: 'This cannot be undone!', icon: 'warning', showCancelButton: true, confirmButtonColor: '#e74c3c', confirmButtonText: 'Yes, delete' });
-    if (result.isConfirmed) {
-        try {
-            await KURO_API.deleteApplication(appId);
-            showToast('Application deleted', 'success');
-            renderDashboard();
-        } catch (error) { showToast('Failed to delete', 'error'); }
+        
+        showToast(`${stage.toUpperCase()} reset successfully`, 'success');
+        renderDashboard();
+        
+    } catch (error) {
+        console.error('Reset failed:', error);
+        showToast('Failed to reset stage: ' + (error.message || 'Unknown error'), 'error');
     }
 }
 
