@@ -4646,19 +4646,50 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                             // Save changes - trigger the submit button
                             console.log('Saving changes...');
                             
-                            // DON'T close the modal yet - find the submit button inside the current modal
-                            const submitBtn = modal.querySelector('#customSubmitBtn');
-                            if (submitBtn) {
-                                console.log('Found submit button, clicking it...');
-                                // Click the submit button - it will handle saving and then close the modal
-                                submitBtn.click();
-                            } else {
-                                console.error('Submit button not found');
-                                showInlineNotification(modal, 'Could not save changes', false);
-                                Swal.close();
-                                renderApplicant();
-                            }
-                            return; // Don't close here - let the submit handler close it
+                            // Store the current data before closing (in case we need to restore)
+                            const unsavedFormData = currentFormData;
+                            const currentGrant = selectedGrant;
+                            const currentEditMode = isEditMode;
+                            const currentEditAppId = editAppId;
+                            const currentEditDraftId = editDraftId;
+                            
+                            // Close the confirmation modal first
+                            Swal.close();
+                            
+                            // Small delay to ensure modal is closed
+                            setTimeout(async () => {
+                                // Make sure we're still in edit mode with the correct data
+                                isEditMode = currentEditMode;
+                                editAppId = currentEditAppId;
+                                selectedGrant = currentGrant;
+                                currentDraftData = unsavedFormData;
+                                
+                                // Find and click the submit button in the original modal
+                                const submitBtn = document.querySelector('#customSubmitBtn');
+                                if (submitBtn) {
+                                    console.log('Found submit button, clicking it...');
+                                    submitBtn.click();
+                                } else {
+                                    console.error('Submit button not found, trying to update directly');
+                                    // Fallback: direct update
+                                    try {
+                                        const formData = await collectFormData();
+                                        const result = await KURO_API.updateApplication(editAppId, {
+                                            ...formData,
+                                            id: editAppId,
+                                            grantTitle: selectedGrant,
+                                            userEmail: currentUser.email
+                                        });
+                                        console.log('Direct update successful:', result);
+                                        await renderApplicant();
+                                        showInlineNotification(null, 'Application updated successfully!', true);
+                                    } catch (error) {
+                                        console.error('Direct update failed:', error);
+                                        showInlineNotification(null, 'Failed to update application', false);
+                                    }
+                                }
+                            }, 100);
+                            return;
                         } else if (result.isDenied) {
                             // Discard changes - just close
                             console.log('Discarding changes');
