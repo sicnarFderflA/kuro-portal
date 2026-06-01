@@ -4861,6 +4861,16 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                                 if (existingPiCVStatus) updatedSubmission.piCVStatus = existingPiCVStatus;
                                 if (existingTeamCVs) updatedSubmission.teamCVs = existingTeamCVs;
                                 
+                                // Preserve critical fields if they're missing from form data
+                                if (!updatedSubmission.proposalTitle && existingApp.proposalTitle) {
+                                    updatedSubmission.proposalTitle = existingApp.proposalTitle;
+                                    console.log('ℹ️ Preserved existing proposalTitle:', existingApp.proposalTitle);
+                                }
+                                if (!updatedSubmission.grantTitle && existingApp.grantTitle) {
+                                    updatedSubmission.grantTitle = existingApp.grantTitle;
+                                    console.log('ℹ️ Preserved existing grantTitle:', existingApp.grantTitle);
+                                }
+                                
                                 console.log('Updating application:', updatedSubmission);
                                 
                                 // UPDATE via API

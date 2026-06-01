@@ -50,9 +50,12 @@ router.put('/:id', async (req, res) => {
     try {
         const app = await Application.findOneAndUpdate(
             { id: req.params.id },
-            { ...req.body, updatedAt: new Date() },
+            { $set: { ...req.body, updatedAt: new Date() } },
             { returnDocument: 'after' }
         );
+        if (!app) {
+            return res.status(404).json({ error: 'Application not found' });
+        }
         res.json(app);
     } catch (error) {
         res.status(500).json({ error: error.message });
