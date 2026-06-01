@@ -570,8 +570,6 @@ function parseJwt(token) {
 async function validateAndRedirect(email, name, picture) {
     const domain = getDomain(email);
     const isTest = isTestEmail(email);
-    
-    // ========== STEP 1: ALWAYS CHECK EXEMPTED/SUPER ADMIN FIRST ==========
     const isSuperAdminUser = await isSuperAdmin(email);
     const isAdminUser = await isAdmin(email);
     
@@ -586,8 +584,35 @@ async function validateAndRedirect(email, name, picture) {
         exemptionDiv.style.display = isSuperAdminUser ? 'block' : 'none';
     }
     
-    // ========== STEP 2: SUPER ADMIN BYPASSES ALL DOMAIN CHECKS ==========
-    // Super admins can log in as ANY role regardless of domain
+    // ========== PRIORITY CHECK ORDER ==========
+    // 1. TEST EMAIL - Highest priority (test emails always pass through)
+    // 2. SUPER ADMIN - Second priority (super admin bypasses all restrictions)
+    // 3. ALLOWED DOMAIN - Third priority (check domain for regular users)
+    // 4. ROLE-SPECIFIC VALIDATION - Final step
+    
+    // ========== CHECK 1: TEST EMAIL VALIDATION ==========
+    if (isTest) {
+        console.log("Test email detected - allowing login regardless of domain");
+        
+        // Test emails can log in with selected role
+        if (selectedRole === 'student') {
+            redirectToStudent(email, name, picture, false);
+            return true;
+        }
+        if (selectedRole === 'faculty') {
+            redirectToFaculty(email, name, picture, false);
+            return true;
+        }
+        if (selectedRole === 'admin') {
+            redirectToAdmin(email, name, picture, false);
+            return true;
+        }
+        showError("Please select a valid role.");
+        return false;
+    }
+    
+    // ========== CHECK 2: SUPER ADMIN VALIDATION ==========
+    // Super admins bypass domain restrictions and can select any role
     if (isSuperAdminUser) {
         console.log("Super admin detected - bypassing domain restrictions");
         
@@ -607,19 +632,17 @@ async function validateAndRedirect(email, name, picture) {
         return false;
     }
     
-    // ========== STEP 3: DOMAIN CHECK FOR NORMAL USERS ==========
-    // Only check domain for non-super-admin users
-    if (!isTest && !ALLOWED_DOMAINS.includes(domain)) {
+    // ========== CHECK 3: DOMAIN VALIDATION FOR REGULAR USERS ==========
+    if (!ALLOWED_DOMAINS.includes(domain)) {
         showError(`Access Denied: ${email} is not a Xavier University email (@xu.edu.ph or @my.xu.edu.ph).`);
         return false;
     }
     
-    // ========== STEP 4: ROLE-SPECIFIC VALIDATION ==========
+    // ========== CHECK 4: ROLE-SPECIFIC VALIDATION ==========
     
     // Student Role
     if (selectedRole === 'student') {
-        // Allow test emails to bypass domain restriction
-        if (!isTest && domain !== 'my.xu.edu.ph') {
+        if (domain !== 'my.xu.edu.ph') {
             showError(`You selected "Student" but ${email} is not a @my.xu.edu.ph account.`);
             return false;
         }
@@ -629,7 +652,7 @@ async function validateAndRedirect(email, name, picture) {
     
     // Faculty Role
     if (selectedRole === 'faculty') {
-        if (!isTest && domain !== 'xu.edu.ph') {
+        if (domain !== 'xu.edu.ph') {
             showError(`You selected "Faculty" but ${email} is not a @xu.edu.ph account.`);
             return false;
         }
@@ -639,8 +662,8 @@ async function validateAndRedirect(email, name, picture) {
     
     // Admin Role
     if (selectedRole === 'admin') {
-        // Allow admin users OR test admin emails
-        if (!isAdminUser && !isTest) {
+        // Only allow authorized admins (test emails already passed in CHECK 1)
+        if (!isAdminUser) {
             showError(`You selected "Admin" but ${email} is not an authorized admin account.`);
             return false;
         }
