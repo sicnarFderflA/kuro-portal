@@ -4790,16 +4790,25 @@ async function openApplicationForm(isEdit, restoreTab = null) {
             // ========== SUBMIT BUTTON HANDLER ==========
             const submitBtn = modal.querySelector('#customSubmitBtn');
             if (submitBtn) {
-                submitBtn.addEventListener('click', async (e) => {
+                // Remove existing listeners to avoid duplicates
+                const newSubmitBtn = submitBtn.cloneNode(true);
+                submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
+                
+                newSubmitBtn.addEventListener('click', async (e) => {
                     e.stopPropagation();
                     e.preventDefault();
 
                     // Show loading state
-                    submitBtn.disabled = true;
-                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+                    newSubmitBtn.disabled = true;
+                    newSubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
                     
                     try {
-                        let formData = collectFormData();
+                        let formData = await collectFormData();
+                        
+                        console.log('=== SUBMIT DEBUG ===');
+                        console.log('isEditMode:', isEditMode);
+                        console.log('editAppId:', editAppId);
+                        console.log('Form data collected:', formData);
                         
                         const today = new Date();
                         const year = today.getFullYear();
@@ -4816,8 +4825,8 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                         clearAllHighlights(modal);
                         const activities = collectActivities();
                         if (!validateActivityDates(activities)) {
-                            submitBtn.disabled = false;
-                            submitBtn.innerHTML = isEditMode ? 'Update Application' : 'Submit Application';
+                            newSubmitBtn.disabled = false;
+                            newSubmitBtn.innerHTML = isEditMode ? 'Update Application' : 'Submit Application';
                             return;
                         }
                         
@@ -4825,8 +4834,8 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                         if (errors.length > 0) {
                             scrollToFirstError(modal);
                             showFormNotification('Please complete all required fields (highlighted in red).', true, modal);
-                            submitBtn.disabled = false;
-                            submitBtn.innerHTML = isEditMode ? 'Update Application' : 'Submit Application';
+                            newSubmitBtn.disabled = false;
+                            newSubmitBtn.innerHTML = isEditMode ? 'Update Application' : 'Submit Application';
                             return;
                         }
                         
@@ -4838,43 +4847,56 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                                 const existingApp = await response.json();
                                 if (!response.ok) throw new Error(existingApp.error || 'Application not found');
                                 
-                                // Preserve existing signatures, CV statuses, and signature requests
-                                const existingSignatures = existingApp.signatures || { chair: { signed: false }, dean: { signed: false } };
-                                const existingPiCVStatus = existingApp.piCVStatus;
-                                const existingTeamCVs = existingApp.teamCVs ? [...existingApp.teamCVs] : null;
-                                const existingSubmittedDate = existingApp.submittedDate;
-                                const existingSignatureRequests = existingApp.signatureRequests;
+                                console.log('Existing app data:', existingApp);
                                 
-                                // Create updated submission - KEEP signatures and CV statuses
-                                const updatedSubmission = { 
+                                // CRITICAL: Preserve ALL existing data, only override what's in formData
+                                const updatedSubmission = {
                                     id: editAppId,
-                                    grantTitle: selectedGrant,
+                                    userEmail: currentUser.email,
+                                    // Keep existing values if formData doesn't have them
+                                    proposalTitle: formData.proposalTitle || existingApp.proposalTitle,
+                                    piName: formData.piName || existingApp.piName,
+                                    piEmail: formData.piEmail || existingApp.piEmail,
+                                    dept: formData.dept || existingApp.dept,
+                                    school: formData.school || existingApp.school,
+                                    extension: formData.extension || existingApp.extension,
+                                    duration: formData.duration || existingApp.duration,
+                                    rationale: formData.rationale || existingApp.rationale,
+                                    litReview: formData.litReview || existingApp.litReview,
+                                    objectives: formData.objectives || existingApp.objectives,
+                                    methodology: formData.methodology || existingApp.methodology,
+                                    outputs: formData.outputs || existingApp.outputs,
+                                    references: (formData.references && formData.references.length > 0) ? formData.references : existingApp.references,
+                                    teamMembers: (formData.teamMembers && formData.teamMembers.length > 0) ? formData.teamMembers : existingApp.teamMembers,
+                                    activities: (formData.activities && formData.activities.length > 0) ? formData.activities : existingApp.activities,
+                                    budgetItems: (formData.budgetItems && formData.budgetItems.length > 0) ? formData.budgetItems : existingApp.budgetItems,
+                                    fromChair: formData.fromChair || existingApp.fromChair,
+                                    chairEmail: formData.chairEmail || existingApp.chairEmail,
+                                    deanName: formData.deanName || existingApp.deanName,
+                                    deanEmail: formData.deanEmail || existingApp.deanEmail,
+                                    endorseDept: formData.endorseDept || existingApp.endorseDept,
+                                    endorseSchool: formData.endorseSchool || existingApp.endorseSchool,
+                                    schoolYear: formData.schoolYear || existingApp.schoolYear,
+                                    endorsementDate: formData.endorsementDate || existingApp.endorsementDate,
+                                    grantTitle: selectedGrant || existingApp.grantTitle,
                                     grantType: "Faculty Research Grant",
-                                    status: existingApp.status, // Keep existing status
-                                    submittedDate: existingSubmittedDate,
-                                    signatures: existingSignatures, // Preserve signatures
-                                    signatureRequests: existingSignatureRequests, // Preserve signature requests
-                                    ...formData
+                                    status: existingApp.status,
+                                    submittedDate: existingApp.submittedDate,
+                                    signatures: existingApp.signatures || { chair: { signed: false }, dean: { signed: false } },
+                                    signatureRequests: existingApp.signatureRequests,
+                                    // CV data - preserve existing if no new files
+                                    piCVName: formData.piCVName || existingApp.piCVName,
+                                    piCVData: formData.piCVData || existingApp.piCVData,
+                                    piCVStatus: existingApp.piCVStatus || 'pending',
+                                    teamCVs: (formData.teamCVs && formData.teamCVs.length > 0) ? formData.teamCVs : existingApp.teamCVs,
+                                    teamCVData: (formData.teamCVData && formData.teamCVData.length > 0) ? formData.teamCVData : existingApp.teamCVData,
                                 };
                                 
-                                // Preserve CV statuses
-                                if (existingPiCVStatus) updatedSubmission.piCVStatus = existingPiCVStatus;
-                                if (existingTeamCVs) updatedSubmission.teamCVs = existingTeamCVs;
-                                
-                                // Preserve critical fields if they're missing from form data
-                                if (!updatedSubmission.proposalTitle && existingApp.proposalTitle) {
-                                    updatedSubmission.proposalTitle = existingApp.proposalTitle;
-                                    console.log('ℹ️ Preserved existing proposalTitle:', existingApp.proposalTitle);
-                                }
-                                if (!updatedSubmission.grantTitle && existingApp.grantTitle) {
-                                    updatedSubmission.grantTitle = existingApp.grantTitle;
-                                    console.log('ℹ️ Preserved existing grantTitle:', existingApp.grantTitle);
-                                }
-                                
-                                console.log('Updating application:', updatedSubmission);
+                                console.log('Final updated submission:', updatedSubmission);
                                 
                                 // UPDATE via API
-                                await KURO_API.updateApplication(editAppId, updatedSubmission);
+                                const updateResult = await KURO_API.updateApplication(editAppId, updatedSubmission);
+                                console.log('Update API response:', updateResult);
                                 
                                 // Delete draft if it exists
                                 if (editDraftId !== null) {
@@ -4903,8 +4925,8 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                             } catch (error) {
                                 console.error('Update failed:', error);
                                 showFormNotification('Failed to update application: ' + error.message, true, modal);
-                                submitBtn.disabled = false;
-                                submitBtn.innerHTML = 'Update Application';
+                                newSubmitBtn.disabled = false;
+                                newSubmitBtn.innerHTML = 'Update Application';
                                 return;
                             }
                         }
@@ -4926,28 +4948,23 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                             
                             console.log('Creating new application:', newSubmission);
                             
-                            // CREATE via API
                             const created = await KURO_API.createApplication(newSubmission);
                             console.log('Application created:', created);
                             
-                            // Check if chair and dean emails exist
                             if (!formData.chairEmail || !formData.deanEmail) {
                                 showFormNotification('⚠️ Please fill in Department Chair and Dean email addresses in Form 2.', true, modal);
-                                submitBtn.disabled = false;
-                                submitBtn.innerHTML = 'Submit Application';
+                                newSubmitBtn.disabled = false;
+                                newSubmitBtn.innerHTML = 'Submit Application';
                                 return;
                             }
                             
-                            // Generate signature links (try-catch separately so app isn't deleted)
                             try {
                                 await autoGenerateSignatureLinks(created, created.id);
-                                console.log('Signature links generated successfully');
                             } catch (sigError) {
-                                console.error('Signature generation failed but application was saved:', sigError);
+                                console.error('Signature generation failed:', sigError);
                                 showFormNotification('⚠️ Application saved but signature emails failed. You can resend signatures later.', false, modal);
                             }
                             
-                            // Delete draft if exists
                             if (editDraftId !== null) {
                                 try {
                                     const drafts = await KURO_API.getFacultyDrafts();
@@ -4979,8 +4996,8 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                         console.error('Submission failed:', error);
                         showFormNotification('Failed to submit: ' + error.message, true, modal);
                     } finally {
-                        submitBtn.disabled = false;
-                        submitBtn.innerHTML = isEditMode ? 'Update Application' : 'Submit Application';
+                        newSubmitBtn.disabled = false;
+                        newSubmitBtn.innerHTML = isEditMode ? 'Update Application' : 'Submit Application';
                     }
                 });
             }
