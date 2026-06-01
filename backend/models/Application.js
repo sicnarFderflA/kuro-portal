@@ -100,7 +100,16 @@ const applicationSchema = new mongoose.Schema({
     
     // Timestamps
     createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now }
+    updatedAt: { type: Date, default: Date.now },
+
+    assignedReviewers: [{
+        email: String,
+        name: String,
+        assignedAt: String,
+        assignedBy: String,
+        status: { type: String, default: 'pending' }
+    }]
+    
 }, { strict: false });
 
 module.exports = mongoose.model('Application', applicationSchema);

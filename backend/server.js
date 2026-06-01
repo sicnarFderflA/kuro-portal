@@ -7,6 +7,8 @@ const TestEmail = require('./models/TestEmail');
 const User = require('./models/User');
 require('dotenv').config();
 
+const Submission = mongoose.model('Submission', new mongoose.Schema({}, { strict: false }), 'submissions');
+
 emailjs.init({
     publicKey: process.env.EMAILJS_PUBLIC_KEY,
     privateKey: process.env.EMAILJS_PRIVATE_KEY

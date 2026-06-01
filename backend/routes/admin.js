@@ -394,40 +394,59 @@ router.get('/applications/:id/reviewers', async (req, res) => {
 router.post('/applications/:id/reviewers', async (req, res) => {
     try {
         const { reviewerEmail, reviewerName, assignedBy } = req.body;
+        console.log('📝 POST /applications/:id/reviewers');
+        console.log('   App ID:', req.params.id);
+        console.log('   Reviewer:', reviewerEmail);
+        
+        // Find by id (string field) NOT _id (MongoDB ObjectId)
         const app = await Application.findOne({ id: req.params.id });
-        if (!app) return res.status(404).json({ error: 'Not found' });
         
-        if (!app.assignedReviewers) app.assignedReviewers = [];
+        if (!app) {
+            console.log('❌ Application not found with id:', req.params.id);
+            return res.status(404).json({ error: 'Application not found' });
+        }
         
+        console.log('✅ Found application:', app.id);
+        console.log('Current assignedReviewers:', app.assignedReviewers);
+        
+        if (!app.assignedReviewers) {
+            app.assignedReviewers = [];
+        }
+        
+        // Check if already assigned
         if (app.assignedReviewers.some(r => r.email === reviewerEmail)) {
+            console.log('⚠️ Reviewer already assigned');
             return res.status(400).json({ error: 'Reviewer already assigned' });
         }
         
-        app.assignedReviewers.push({
+        // Add new reviewer
+        const newReviewer = {
             email: reviewerEmail,
             name: reviewerName || reviewerEmail.split('@')[0],
             assignedAt: new Date().toISOString(),
             assignedBy: assignedBy,
-            status: 'pending'  // ← IMPORTANT: Set initial status
+            status: 'pending'
+        };
+        
+        app.assignedReviewers.push(newReviewer);
+        
+        // Save and verify
+        const savedApp = await app.save();
+        console.log('💾 Saved application. assignedReviewers now:', savedApp.assignedReviewers);
+        
+        // Double-check with a fresh find
+        const freshApp = await Application.findOne({ id: req.params.id });
+        console.log('🔍 Fresh fetch assignedReviewers:', freshApp.assignedReviewers);
+        
+        res.json({ 
+            success: true, 
+            reviewer: newReviewer,
+            reviewers: savedApp.assignedReviewers 
         });
         
-        await app.save();
-        
-        // Also create a notification for the reviewer
-        await Notification.create({
-            userEmail: reviewerEmail,
-            type: 'reviewer_assigned',
-            title: '📋 New Review Assignment',
-            message: `You have been assigned to review "${app.proposalTitle}". Please log in to submit your evaluation.`,
-            appId: app.id,
-            icon: '📋',
-            color: '#3498db',
-            tab: 'reviews'
-        });
-        
-        res.json({ success: true, reviewers: app.assignedReviewers });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('❌ Error assigning reviewer:', error);
+        res.status(500).json({ error: error.message, stack: error.stack });
     }
 });
 
