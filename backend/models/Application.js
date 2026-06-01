@@ -108,8 +108,20 @@ const applicationSchema = new mongoose.Schema({
         assignedAt: String,
         assignedBy: String,
         status: { type: String, default: 'pending' }
-    }]
+    }],
+
+    // CV Uploads - ADD DATA FIELDS
+    piCVName: { type: String },
+    piCVData: { type: String },  // ← ADD THIS - Base64 encoded CV
+    piCVStatus: { type: String, default: 'pending' },
     
+    teamCVs: [{
+        name: { type: String },
+        data: { type: String },   // ← ADD THIS - Base64 encoded CV
+        status: { type: String, default: 'pending' }
+    }],
+    uploadFeedback: { type: String },
+
 }, { strict: false });
 
 module.exports = mongoose.model('Application', applicationSchema);

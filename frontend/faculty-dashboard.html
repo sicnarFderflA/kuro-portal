@@ -1193,6 +1193,69 @@ function escapeHtml(str) {
     });
 }
 
+// Convert file to Base64 
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+    });
+}
+
+// PDF Viewer for Faculty
+function openPDFViewer(fileName, base64Data) {
+    if (!base64Data) {
+        showInlineNotification(null, 'No PDF data available', false);
+        return;
+    }
+    
+    // Clean up the base64 data
+    let cleanBase64 = base64Data;
+    
+    // Remove any existing data URL prefix if present
+    if (cleanBase64.includes('base64,')) {
+        cleanBase64 = cleanBase64.split('base64,')[1];
+    }
+    
+    // Remove whitespace and newlines
+    cleanBase64 = cleanBase64.replace(/\s/g, '');
+    
+    // Validate it looks like base64
+    if (!/^[A-Za-z0-9+/=]+$/.test(cleanBase64)) {
+        showInlineNotification(null, 'Invalid PDF data format', false);
+        return;
+    }
+    
+    // Construct proper data URL
+    const pdfSrc = `data:application/pdf;base64,${cleanBase64}`;
+    
+    Swal.fire({
+        title: '📄 CV Viewer',
+        html: `
+            <div style="text-align: center; padding: 0.5rem;">
+                <p><strong>${escapeHtml(fileName)}</strong></p>
+                <iframe src="${pdfSrc}" style="width: 100%; height: 500px; border: 1px solid #eef2f0; border-radius: 8px;"></iframe>
+                <div class="demo-note" style="margin-top: 0.75rem;">
+                    <a href="${pdfSrc}" download="${escapeHtml(fileName)}" style="color: var(--xavier-gold);">📥 Download PDF</a>
+                </div>
+            </div>
+        `,
+        width: '800px',
+        confirmButtonColor: '#D4AF37',
+        confirmButtonText: 'Close',
+        didOpen: () => {
+            // Optional: Add error handling for iframe load failure
+            const iframe = document.querySelector('.swal2-html-container iframe');
+            if (iframe) {
+                iframe.onerror = () => {
+                    showInlineNotification(null, 'Failed to load PDF', false);
+                };
+            }
+        }
+    });
+}
+
 // FIXED: Added missing refreshCVTab function
 function refreshCVTab(modalElement) {
     if (!modalElement) return;
@@ -1527,7 +1590,7 @@ async function renderNotificationDropdown(userEmail) {
                 if (dropdown) dropdown.style.display = 'none';
                 
                 if (appId) {
-                    viewApplicationDetails(appId);
+                    showDetails(appId);
                 }
             });
         });
@@ -3097,19 +3160,19 @@ function collectBudgetItems() {
     return items;
 }
 
-function collectFormData() {
+async function collectFormData() {
     let piCVName = '';
+    let piCVData = '';
     const piCVInput = document.getElementById('piCV');
-    if (piCVInput && piCVInput.files && piCVInput.files[0]) {
+        if (piCVInput && piCVInput.files && piCVInput.files[0]) {
         const file = piCVInput.files[0];
         if (file.size > 10 * 1024 * 1024) {
             showFormNotification('CV file exceeds 10MB limit', true);
             piCVInput.value = '';
         } else {
             piCVName = file.name;
+            piCVData = await fileToBase64(file);
         }
-    } else if (currentDraftData && currentDraftData.piCVName) {
-        piCVName = currentDraftData.piCVName;
     }
     
     // Get team members from DOM
@@ -3232,6 +3295,7 @@ function collectFormData() {
         
         // CV Uploads
         piCVName: piCVName,
+        piCVData: piCVData, 
         teamCVs: teamCVs
     };
 }
@@ -3728,9 +3792,11 @@ function attachCVFileHandlers(modalElement) {
                 const oldFile = currentDraftData && currentDraftData.piCVName ? currentDraftData.piCVName : null;
                 
                 if (currentDraftData) {
+                    const base64Data = await fileToBase64(file);
                     currentDraftData.piCVName = file.name;
+                    currentDraftData.piCVData = base64Data;
                     currentDraftData.piCVStatus = 'pending';
-                    await saveDrafts(); // Use API save
+                    await saveDrafts();
                     refreshCVTabContentAfterUpload(modalElement);
                     
                     if (oldFile) {
@@ -3763,16 +3829,21 @@ function attachCVFileHandlers(modalElement) {
                     return;
                 }
                 
+                const base64Data = await fileToBase64(file);
+                
                 const oldFile = (currentDraftData && currentDraftData.teamCVs && currentDraftData.teamCVs[memberIdx] && currentDraftData.teamCVs[memberIdx].name) 
                     ? currentDraftData.teamCVs[memberIdx].name 
                     : null;
                 
                 if (currentDraftData) {
+                    const base64Data = await fileToBase64(file);
                     if (!currentDraftData.teamCVs) currentDraftData.teamCVs = [];
+                    if (!currentDraftData.teamCVData) currentDraftData.teamCVData = [];
                     currentDraftData.teamCVs[memberIdx] = { 
                         name: file.name,
                         status: 'pending'
                     };
+                    currentDraftData.teamCVData[memberIdx] = base64Data;
                     
                     await saveDrafts(); // Use API save
                     refreshCVTabContentAfterUpload(modalElement);
@@ -3903,7 +3974,51 @@ function attachCVFileHandlers(modalElement) {
             }
         }
     };
-    modalElement.addEventListener('click', modalElement._teamCVRemoveHandler);
+
+    // View PI CV button handler
+    const viewPiBtn = modalElement.querySelector('.view-pi-cv-btn');
+    if (viewPiBtn) {
+        if (viewPiBtn._viewHandler) {
+            viewPiBtn.removeEventListener('click', viewPiBtn._viewHandler);
+        }
+        
+        viewPiBtn._viewHandler = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (currentDraftData && currentDraftData.piCVName && currentDraftData.piCVData) {
+                openPDFViewer(currentDraftData.piCVName, currentDraftData.piCVData);
+            } else if (currentDraftData && currentDraftData.piCVName) {
+                showInlineNotification(modalElement, 'CV data not available. Please re-upload the file.', false);
+            } else {
+                showInlineNotification(modalElement, 'No CV uploaded yet.', false);
+            }
+        };
+        viewPiBtn.addEventListener('click', viewPiBtn._viewHandler);
+    }
+
+    // View Team CV button handler
+    modalElement._teamCVViewHandler = async function(e) {
+        const btn = e.target.closest('.view-team-cv-btn');
+        if (btn) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const memberIdx = parseInt(btn.getAttribute('data-member-idx'));
+            
+            if (currentDraftData && currentDraftData.teamCVs && currentDraftData.teamCVs[memberIdx]) {
+                const cv = currentDraftData.teamCVs[memberIdx];
+                if (cv.name && currentDraftData.teamCVData && currentDraftData.teamCVData[memberIdx]) {
+                    openPDFViewer(cv.name, currentDraftData.teamCVData[memberIdx]);
+                } else if (cv.name) {
+                    showInlineNotification(modalElement, 'CV data not available. Please re-upload the file.', false);
+                }
+            } else {
+                showInlineNotification(modalElement, 'No CV uploaded for this member.', false);
+            }
+        }
+    };
+    modalElement.addEventListener('click', modalElement._teamCVViewHandler);
 }
 
 function refreshCVTabContentAfterUpload(modalElement) {
@@ -4153,16 +4268,13 @@ function renderCVUploadContent(draftData, teamMembersFromForm = []) {
     if (piCVName && piCVName.trim() !== '') {
         html += '<div style="background: #e8f5e9; padding: 0.5rem 0.8rem; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap;">';
         html += '<span style="font-size: 0.8rem;"><i class="fas fa-file-pdf" style="color: #e74c3c;"></i> ' + escapeHtml(piCVName) + '</span>';
+        html += '<div style="display: flex; gap: 0.5rem;">';
+        html += '<button type="button" class="view-pi-cv-btn" style="background: var(--xavier-gold); border: none; color: var(--xavier-primary); padding: 0.2rem 0.6rem; border-radius: 20px; cursor: pointer; font-size: 0.7rem;"><i class="fas fa-eye"></i> View</button>';
         html += '<button type="button" class="remove-pi-cv-btn" style="background: #e74c3c; border: none; color: white; padding: 0.2rem 0.6rem; border-radius: 20px; cursor: pointer; font-size: 0.7rem;"><i class="fas fa-trash"></i> Remove</button>';
-        html += '</div>';
+        html += '</div></div>';
         html += '<small style="display: block; font-size: 0.65rem; color: #666; margin-top: 0.3rem;">Upload a new file to replace</small>';
-    } else {
-        html += '<div class="cv-pending-status" style="background: #fff3e0; padding: 0.5rem 0.8rem; border-radius: 8px; text-align: center;">';
-        html += '<i class="fas fa-clock" style="color: #f39c12;"></i> <span style="font-size: 0.8rem;">No file uploaded yet</span>';
-        html += '</div>';
     }
-    html += '</div></div></div>';
-    
+
     if (teamMembers.length > 0) {
         html += '<div class="form-subsection-title" style="margin-bottom: 0.8rem;">👥 Research Team Members</div>';
         
@@ -4183,15 +4295,12 @@ function renderCVUploadContent(draftData, teamMembersFromForm = []) {
             if (hasCV) {
                 html += '<div style="background: #e8f5e9; padding: 0.5rem 0.8rem; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap;">';
                 html += '<span style="font-size: 0.8rem;"><i class="fas fa-file-pdf" style="color: #e74c3c;"></i> ' + escapeHtml(teamCVs[i].name) + '</span>';
+                html += '<div style="display: flex; gap: 0.5rem;">';
+                html += '<button type="button" class="view-team-cv-btn" data-member-idx="' + i + '" style="background: var(--xavier-gold); border: none; color: var(--xavier-primary); padding: 0.2rem 0.6rem; border-radius: 20px; cursor: pointer; font-size: 0.7rem;"><i class="fas fa-eye"></i> View</button>';
                 html += '<button type="button" class="remove-team-cv-btn" data-member-idx="' + i + '" style="background: #e74c3c; border: none; color: white; padding: 0.2rem 0.6rem; border-radius: 20px; cursor: pointer; font-size: 0.7rem;"><i class="fas fa-trash"></i> Remove</button>';
-                html += '</div>';
+                html += '</div></div>';
                 html += '<small style="display: block; font-size: 0.65rem; color: #666; margin-top: 0.3rem;">Upload a new file to replace</small>';
-            } else {
-                html += '<div class="cv-pending-status" style="background: #fff3e0; padding: 0.5rem 0.8rem; border-radius: 8px; text-align: center;">';
-                html += '<i class="fas fa-clock" style="color: #f39c12;"></i> <span style="font-size: 0.8rem;">No file uploaded yet</span>';
-                html += '</div>';
             }
-            html += '</div></div></div>';
         }
     } else {
         html += '<div class="demo-note" style="margin-top: 1rem; text-align: center;">';
