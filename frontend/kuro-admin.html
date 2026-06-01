@@ -1208,15 +1208,15 @@ async function viewApplicationDetails(appId) {
                     <button class="modal-detail-tab active" data-tab="tc1"><i class="fas fa-file-alt"></i> Research Proposal</button>
                     <button class="modal-detail-tab" data-tab="tc2"><i class="fas fa-clipboard-list"></i> Endorsement</button>
                     <button class="modal-detail-tab" data-tab="tc3"><i class="fas fa-file-pdf"></i> CV Review</button>
-                    <button class="modal-detail-tab" data-tab="tc4"><i class="fas fa-users"></i> External Reviewers</button>
                     <button class="modal-detail-tab" data-tab="tc5"><i class="fas fa-check-double"></i> Check Stages</button>
+                    ${(isSuperAdmin || isCheck3) ? '<button class="modal-detail-tab" data-tab="tc4"><i class="fas fa-users"></i> External Reviewers</button>' : ''}
                 </div>
                 
                 <div id="tc1" class="kuro-tab-pane kuro-active">${contentForm1}</div>
                 <div id="tc2" class="kuro-tab-pane">${contentForm2}</div>
                 <div id="tc3" class="kuro-tab-pane">${contentCV}</div>
-                <div id="tc4" class="kuro-tab-pane">${contentExternal}</div>
                 <div id="tc5" class="kuro-tab-pane">${contentChecks}</div>
+                <div id="tc4" class="kuro-tab-pane">${(isSuperAdmin || isCheck3) ? contentExternal : ''}</div>
             </div>
         `;
         
@@ -1448,7 +1448,7 @@ function renderExternalReviewersContent(app) {
     
     html += `<div style="margin-top: 1rem; background: #f8f9fa; border-radius: 12px; padding: 1rem;">
         <h4 style="color: var(--primary); margin-bottom: 0.8rem;"><i class="fas fa-user-plus"></i> Assign New Reviewer</h4>
-        <input type="email" id="newReviewerEmail" placeholder="reviewer@xu.edu.ph" style="width: 100%; padding: 0.5rem; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 0.5rem;">
+        <input type="email" id="newReviewerEmail" placeholder="reviewer@xu.edu.ph" autocomplete="off" autofill="off" style="width: 100%; padding: 0.5rem; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 0.5rem;">
         <button id="addManualReviewerBtn" class="btn-primary"><i class="fas fa-user-plus"></i> Assign Reviewer</button>
     </div>`;
     
