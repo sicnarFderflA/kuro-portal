@@ -1203,7 +1203,7 @@ function fileToBase64(file) {
     });
 }
 
-// PDF Viewer for Faculty
+// PDF Viewer for Faculty - Opens in new tab
 function openPDFViewer(fileName, base64Data) {
     if (!base64Data) {
         showInlineNotification(null, 'No PDF data available', false);
@@ -1227,33 +1227,27 @@ function openPDFViewer(fileName, base64Data) {
         return;
     }
     
-    // Construct proper data URL
-    const pdfSrc = `data:application/pdf;base64,${cleanBase64}`;
-    
-    Swal.fire({
-        title: '📄 CV Viewer',
-        html: `
-            <div style="text-align: center; padding: 0.5rem;">
-                <p><strong>${escapeHtml(fileName)}</strong></p>
-                <iframe src="${pdfSrc}" style="width: 100%; height: 500px; border: 1px solid #eef2f0; border-radius: 8px;"></iframe>
-                <div class="demo-note" style="margin-top: 0.75rem;">
-                    <a href="${pdfSrc}" download="${escapeHtml(fileName)}" style="color: var(--xavier-gold);">📥 Download PDF</a>
-                </div>
-            </div>
-        `,
-        width: '800px',
-        confirmButtonColor: '#D4AF37',
-        confirmButtonText: 'Close',
-        didOpen: () => {
-            // Optional: Add error handling for iframe load failure
-            const iframe = document.querySelector('.swal2-html-container iframe');
-            if (iframe) {
-                iframe.onerror = () => {
-                    showInlineNotification(null, 'Failed to load PDF', false);
-                };
-            }
+    try {
+        // Decode base64 to binary
+        const byteCharacters = atob(cleanBase64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
         }
-    });
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/pdf' });
+        
+        // Create object URL and open in new tab
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        
+        // Clean up the object URL after a delay
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+        
+    } catch (error) {
+        console.error('PDF opening failed:', error);
+        showInlineNotification(null, 'Failed to open PDF. The file may be corrupted.', false);
+    }
 }
 
 // FIXED: Added missing refreshCVTab function
