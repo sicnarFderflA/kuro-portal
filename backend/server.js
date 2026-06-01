@@ -1,4 +1,5 @@
 const express = require('express');
+const app = express();
 const cors = require('cors');
 const mongoose = require('mongoose');
 const { OAuth2Client } = require('google-auth-library');
@@ -29,9 +30,16 @@ emailjs.init({
     privateKey: EMAILJS_PRIVATE_KEY
 });
 
-console.log('📧 EmailJS initialized with new keys');
+// Increase payload limit - add these BEFORE your routes
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-const app = express();
+// If using body-parser directly
+const bodyParser = require('body-parser');
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+
+console.log('📧 EmailJS initialized with new keys');
 
 // CORS configuration
 app.use(cors({
