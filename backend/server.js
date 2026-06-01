@@ -472,20 +472,27 @@ app.get('/api/reviewer/tasks', async (req, res) => {
             return res.status(400).json({ error: 'userEmail required' });
         }
         
+        console.log('🔍 Fetching reviewer tasks for:', userEmail);
+        
         const db = mongoose.connection.db;
         
-        // Find all applications where this user is in assignedReviewers
+        // Find all submissions where this user is in assignedReviewers
         const submissions = await db.collection('submissions').find({
             'assignedReviewers.email': userEmail
         }).toArray();
         
-        const assignedTasks = submissions.map(sub => ({
-            id: sub.id,
-            grantTitle: sub.grantTitle,
-            proposalTitle: sub.proposalTitle,
-            userEmail: sub.userEmail,
-            status: sub.assignedReviewers?.find(r => r.email === userEmail)?.status || 'pending'
-        }));
+        console.log(`✅ Found ${submissions.length} assigned applications for ${userEmail}`);
+        
+        const assignedTasks = submissions.map(sub => {
+            const myReview = sub.assignedReviewers?.find(r => r.email === userEmail);
+            return {
+                id: sub.id,
+                grantTitle: sub.grantTitle,
+                proposalTitle: sub.proposalTitle,
+                userEmail: sub.userEmail,
+                status: myReview?.status || 'pending'
+            };
+        });
         
         res.json({ 
             assignedTasks: assignedTasks,

@@ -327,7 +327,8 @@ async function deleteFacultyDraft(draftId) {
 
 // ==================== REVIEWER API ====================
 async function getReviewerTasks() {
-    return apiRequest('/reviewer/tasks');
+    const user = JSON.parse(sessionStorage.getItem('kuro_user') || '{}');
+    return apiRequest(`/reviewer/tasks?userEmail=${encodeURIComponent(user.email)}`);
 }
 
 async function updateReviewerName(email, name) {
