@@ -5,6 +5,7 @@ const { OAuth2Client } = require('google-auth-library');
 const emailjs = require('@emailjs/nodejs');
 const TestEmail = require('./models/TestEmail');
 const User = require('./models/User');
+const Settings = require('./models/Settings'); 
 require('dotenv').config();
 
 const Submission = mongoose.model('Submission', new mongoose.Schema({}, { strict: false }), 'submissions');
@@ -721,6 +722,14 @@ app.post('/api/applications/:appId/resend-signatures', async (req, res) => {
         
         const db = mongoose.connection.db;
         
+        // Get application data FIRST (to use in email params)
+        const appData = await db.collection('applications').findOne({ id: appId });
+        
+        if (!appData) {
+            console.error(`❌ Application not found: ${appId}`);
+            return res.status(404).json({ error: 'Application not found' });
+        }
+        
         // Generate new unique tokens
         const chairToken = 'sig_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8) + '_chair';
         const deanToken = 'sig_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8) + '_dean';
@@ -763,24 +772,24 @@ app.post('/api/applications/:appId/resend-signatures', async (req, res) => {
         const baseUrl = 'https://kuro-portal.vercel.app';
         const chairLink = `${baseUrl}/signature-confirm.html?token=${chairToken}&role=chair&id=${appId}`;
         const deanLink = `${baseUrl}/signature-confirm.html?token=${deanToken}&role=dean&id=${appId}`;
-        const SERVICE_ID = process.env.EMAILJS_SERVICE_ID || 'service_ocv82fn';
-        const CHAIR_TEMPLATE = process.env.EMAILJS_CHAIR_TEMPLATE || 'template_0ll7awk';
-        const DEAN_TEMPLATE = process.env.EMAILJS_DEAN_TEMPLATE || 'template_3lsq7ug';
+        const SERVICE_ID = EMAILJS_SERVICE_ID;
+        const CHAIR_TEMPLATE = EMAILJS_CHAIR_TEMPLATE;
+        const DEAN_TEMPLATE = EMAILJS_DEAN_TEMPLATE;
         
         let chairSent = false;
         let deanSent = false;
         
-        // Send to Chair
+        // Send to Chair - using appData (not undefined application)
         try {
             const chairParams = {
                 to_email: chairEmail,
                 to_name: chairName,
                 chair_name: chairName,
                 pi_name: piName || 'N/A',
-                department: application.dept || 'N/A',
+                department: appData.dept || 'N/A',
                 proposal_title: proposalTitle || 'N/A',
-                grant_title: application.grantTitle || 'N/A',
-                duration: application.duration || 'N/A',
+                grant_title: appData.grantTitle || 'N/A',
+                duration: appData.duration || 'N/A',
                 signature_link: chairLink,
                 expiry_days: 7
             };
@@ -795,17 +804,17 @@ app.post('/api/applications/:appId/resend-signatures', async (req, res) => {
             console.error('Chair resend failed:', error);
         }
         
-        // Send to Dean
+        // Send to Dean - using appData (not undefined application)
         try {
             const deanParams = {
                 to_email: deanEmail,
                 to_name: deanName,
                 dean_name: deanName,
                 pi_name: piName || 'N/A',
-                department: application.dept || 'N/A',
+                department: appData.dept || 'N/A',
                 proposal_title: proposalTitle || 'N/A',
-                grant_title: application.grantTitle || 'N/A',
-                duration: application.duration || 'N/A',
+                grant_title: appData.grantTitle || 'N/A',
+                duration: appData.duration || 'N/A',
                 signature_link: deanLink,
                 expiry_days: 7
             };
