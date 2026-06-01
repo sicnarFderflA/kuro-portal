@@ -4303,6 +4303,37 @@ async function openApplicationForm(isEdit, restoreTab = null) {
         sessionStorage.removeItem(pendingKey);
         sessionStorage.removeItem('pending_discard_key');
     }
+
+    const tempKey = 'temp_unsaved_data_' + (editAppId || (isEdit ? editAppId : 'new'));
+    const unsavedData = sessionStorage.getItem(tempKey);
+    if (unsavedData && !isEdit) { // Only restore for new apps or if explicitly restoring
+        const parsed = JSON.parse(unsavedData);
+        const timeSince = Date.now() - parsed.timestamp;
+        if (timeSince < 30 * 60 * 1000) { // Less than 30 minutes old
+            const restore = await Swal.fire({
+                title: 'Unsaved Changes Found',
+                text: 'We found unsaved changes from your last session. Would you like to restore them?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#D4AF37',
+                confirmButtonText: 'Yes, Restore',
+                cancelButtonText: 'No, Start Fresh'
+            });
+            
+            if (restore.isConfirmed) {
+                currentDraftData = parsed.formData;
+                selectedGrant = parsed.grantTitle;
+                isEditMode = parsed.isEditMode;
+                editAppId = parsed.editAppId;
+                editDraftId = parsed.editDraftId;
+                console.log('✅ Restored unsaved data');
+                // Clear the temp data after restoring
+                sessionStorage.removeItem(tempKey);
+            }
+        }
+        sessionStorage.removeItem(tempKey);
+    }
+    
     console.log('openApplicationForm called - isEdit:', isEdit, 'restoreTab:', restoreTab);
     console.log('currentDraftData:', currentDraftData);
     console.log('selectedGrant:', selectedGrant);
@@ -4559,110 +4590,84 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                     const isEditingExistingApp = isEditMode && editAppId;
                     
                     // Check if editing an existing DRAFT that has a title
-                    const isEditingExistingDraftWithTitle = (editDraftId !== null && currentDraftData?.proposalTitle);
+                    const isEditingExistingDraft = editDraftId !== null && currentDraftData?.proposalTitle;
                     
-                    // For EDITING existing applications (submitted ones)
+                    // Helper function to compare values
+                    function isDifferent(val1, val2) {
+                        const v1 = (val1 || '').trim();
+                        const v2 = (val2 || '').trim();
+                        return v1 !== v2;
+                    }
+                    
+                    function areArraysDifferent(arr1, arr2) {
+                        if (!arr1 && !arr2) return false;
+                        if (!arr1 && arr2 && arr2.length === 0) return false;
+                        if (!arr2 && arr1 && arr1.length === 0) return false;
+                        if ((!arr1 && arr2) || (arr1 && !arr2)) return true;
+                        if (arr1.length !== arr2.length) return true;
+                        for (let i = 0; i < arr1.length; i++) {
+                            if (JSON.stringify(arr1[i]) !== JSON.stringify(arr2[i])) return true;
+                        }
+                        return false;
+                    }
+                    
+                    // Save current data to sessionStorage for recovery
+                    function saveTempData() {
+                        const tempKey = 'temp_unsaved_data_' + (editAppId || 'new');
+                        const tempData = {
+                            formData: currentFormData,
+                            grantTitle: selectedGrant,
+                            timestamp: Date.now(),
+                            isEditMode: isEditMode,
+                            editAppId: editAppId,
+                            editDraftId: editDraftId
+                        };
+                        sessionStorage.setItem(tempKey, JSON.stringify(tempData));
+                        console.log('💾 Unsaved data saved to temp storage');
+                    }
+                    
+                    // Clear temp data
+                    function clearTempData() {
+                        const tempKey = 'temp_unsaved_data_' + (editAppId || 'new');
+                        sessionStorage.removeItem(tempKey);
+                        console.log('🗑️ Temp data cleared');
+                    }
+                    
+                    // ========== FOR EXISTING APPLICATIONS (Pending/Submitted) ==========
                     if (isEditingExistingApp) {
-                        // Check if there are any actual changes by comparing with original data
                         let hasChanges = false;
                         
                         if (currentDraftData) {
                             const originalData = currentDraftData;
                             
-                            // Helper function to compare values ignoring whitespace and empty strings
-                            function isDifferent(val1, val2) {
-                                const v1 = (val1 || '').trim();
-                                const v2 = (val2 || '').trim();
-                                return v1 !== v2;
-                            }
-                            
-                            // Helper function to compare arrays by content
-                            function areArraysDifferent(arr1, arr2) {
-                                if (!arr1 && !arr2) return false;
-                                if (!arr1 && arr2 && arr2.length === 0) return false;
-                                if (!arr2 && arr1 && arr1.length === 0) return false;
-                                if ((!arr1 && arr2) || (arr1 && !arr2)) return true;
-                                
-                                // Compare lengths
-                                if (arr1.length !== arr2.length) return true;
-                                
-                                // Deep compare each item
-                                for (let i = 0; i < arr1.length; i++) {
-                                    if (JSON.stringify(arr1[i]) !== JSON.stringify(arr2[i])) {
-                                        return true;
-                                    }
-                                }
-                                return false;
-                            }
-                            
                             // Compare text fields
                             const textFields = ['proposalTitle', 'piName', 'piEmail', 'dept', 'school', 'rationale', 'objectives', 'methodology', 'outputs', 'duration', 'extension', 'litReview', 'fromChair', 'chairEmail', 'deanName', 'deanEmail', 'endorseDept', 'endorseSchool', 'schoolYear'];
                             for (const field of textFields) {
                                 if (isDifferent(currentFormData[field], originalData[field])) {
-                                    console.log(`Change detected in ${field}: "${originalData[field]}" → "${currentFormData[field]}"`);
+                                    console.log(`Change detected in ${field}`);
                                     hasChanges = true;
                                     break;
                                 }
                             }
                             
-                            // Only check arrays if no change found yet
-                            if (!hasChanges) {
-                                // Check references
-                                if (areArraysDifferent(currentFormData.references, originalData.references)) {
-                                    console.log('Change detected in references');
-                                    hasChanges = true;
-                                }
+                            if (!hasChanges && areArraysDifferent(currentFormData.references, originalData.references)) {
+                                console.log('Change detected in references');
+                                hasChanges = true;
                             }
                             
-                            // Only check team members if no change found yet
-                            if (!hasChanges) {
-                                // Check team members - ignore empty role fields
-                                const currentTeamSimplified = (currentFormData.teamMembers || []).map(m => ({ name: (m.name || '').trim() }));
-                                const originalTeamSimplified = (originalData.teamMembers || []).map(m => ({ name: (m.name || '').trim() }));
-                                if (areArraysDifferent(currentTeamSimplified, originalTeamSimplified)) {
-                                    console.log('Change detected in team members');
-                                    hasChanges = true;
-                                }
+                            if (!hasChanges && areArraysDifferent(currentFormData.teamMembers, originalData.teamMembers)) {
+                                console.log('Change detected in team members');
+                                hasChanges = true;
                             }
                             
-                            // Only check activities if no change found yet
-                            if (!hasChanges) {
-                                // Check activities - compare simplified version (ignoring _id)
-                                const currentActivitiesSimplified = (currentFormData.activities || []).map(a => ({
-                                    name: (a.name || '').trim(),
-                                    startDate: a.startDate || '',
-                                    endDate: a.endDate || ''
-                                }));
-                                const originalActivitiesSimplified = (originalData.activities || []).map(a => ({
-                                    name: (a.name || '').trim(),
-                                    startDate: a.startDate || '',
-                                    endDate: a.endDate || ''
-                                }));
-                                if (areArraysDifferent(currentActivitiesSimplified, originalActivitiesSimplified)) {
-                                    console.log('Change detected in activities');
-                                    hasChanges = true;
-                                }
+                            if (!hasChanges && areArraysDifferent(currentFormData.activities, originalData.activities)) {
+                                console.log('Change detected in activities');
+                                hasChanges = true;
                             }
                             
-                            // Only check budget items if no change found yet
-                            if (!hasChanges) {
-                                // Check budget items - compare simplified version
-                                const currentBudgetSimplified = (currentFormData.budgetItems || []).map(b => ({
-                                    category: (b.category || '').trim(),
-                                    itemName: (b.itemName || '').trim(),
-                                    unitCost: b.unitCost || 0,
-                                    qty: b.qty || 1
-                                }));
-                                const originalBudgetSimplified = (originalData.budgetItems || []).map(b => ({
-                                    category: (b.category || '').trim(),
-                                    itemName: (b.itemName || '').trim(),
-                                    unitCost: b.unitCost || 0,
-                                    qty: b.qty || 1
-                                }));
-                                if (areArraysDifferent(currentBudgetSimplified, originalBudgetSimplified)) {
-                                    console.log('Change detected in budget items');
-                                    hasChanges = true;
-                                }
+                            if (!hasChanges && areArraysDifferent(currentFormData.budgetItems, originalData.budgetItems)) {
+                                console.log('Change detected in budget items');
+                                hasChanges = true;
                             }
                         }
                         
@@ -4670,13 +4675,14 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                         
                         if (!hasChanges) {
                             // No changes - just close
-                            console.log('No actual changes detected, closing without save');
+                            console.log('No changes, closing');
+                            clearTempData();
                             Swal.close();
                             renderApplicant();
                             return;
                         }
                         
-                        // Has changes - ask what to do
+                        // Has changes - show options
                         const result = await Swal.fire({
                             title: 'Unsaved Changes',
                             text: 'You have made changes to this application. What would you like to do?',
@@ -4692,11 +4698,18 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                         });
                         
                         if (result.isConfirmed) {
-                            // User wants to save - click the submit button
-                            console.log('User chose to save changes');
+                            // Save changes - trigger the update
+                            console.log('Saving changes...');
+                            clearTempData();
+                            // Close modal first, then trigger update? No, let the submit button handle it
                             const submitBtn = modal.querySelector('#customSubmitBtn');
                             if (submitBtn) {
-                                submitBtn.click();
+                                // Close the Swal modal first
+                                Swal.close();
+                                // Small delay to allow modal to close, then click submit
+                                setTimeout(() => {
+                                    submitBtn.click();
+                                }, 100);
                             } else {
                                 showInlineNotification(modal, 'Could not save changes', false);
                                 Swal.close();
@@ -4704,28 +4717,30 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                             }
                             return;
                         } else if (result.isDenied) {
-                            // User wants to discard changes - just close
-                            console.log('User chose to discard changes');
+                            // Discard changes - just close
+                            console.log('Discarding changes');
+                            clearTempData();
                             Swal.close();
                             renderApplicant();
                             return;
                         } else {
-                            // User cancelled - stay in the modal
-                            console.log('User cancelled, staying in modal');
+                            // Cancel - stay in modal, but save data to temp storage
+                            console.log('Staying in modal, saving unsaved data to temp');
+                            saveTempData();
+                            // Don't close - just return
                             return;
                         }
                     }
                     
-                    // For EDITING existing DRAFTS with title
-                    if (isEditingExistingDraftWithTitle) {
-                        // Check for changes
+                    // ========== FOR EXISTING DRAFTS ==========
+                    if (isEditingExistingDraft) {
                         let hasChanges = false;
                         
                         if (currentDraftData) {
                             const originalData = currentDraftData;
                             const textFields = ['proposalTitle', 'piName', 'piEmail', 'dept', 'school', 'rationale', 'objectives', 'methodology', 'outputs'];
                             for (const field of textFields) {
-                                if ((currentFormData[field] || '').trim() !== (originalData[field] || '').trim()) {
+                                if (isDifferent(currentFormData[field], originalData[field])) {
                                     hasChanges = true;
                                     break;
                                 }
@@ -4733,6 +4748,7 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                         }
                         
                         if (!hasChanges) {
+                            clearTempData();
                             Swal.close();
                             renderApplicant();
                             return;
@@ -4740,29 +4756,42 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                         
                         const result = await Swal.fire({
                             title: 'Save Changes?',
-                            text: 'You have unsaved changes. Would you like to save them before closing?',
+                            text: 'You have unsaved changes to this draft. What would you like to do?',
                             icon: 'question',
+                            showDenyButton: true,
                             showCancelButton: true,
                             confirmButtonColor: '#D4AF37',
-                            cancelButtonColor: '#6c757d',
-                            confirmButtonText: 'Yes, Save',
-                            cancelButtonText: 'No, Discard'
+                            denyButtonColor: '#6c757d',
+                            cancelButtonColor: '#e74c3c',
+                            confirmButtonText: 'Save Draft',
+                            denyButtonText: 'Discard Changes',
+                            cancelButtonText: 'Stay Here'
                         });
                         
                         if (result.isConfirmed) {
+                            // Save draft
                             if (currentDraftData) {
                                 Object.assign(currentDraftData, currentFormData);
                                 await saveDrafts();
-                                showInlineNotification(modal, '📝 Changes saved!', true);
+                                showInlineNotification(modal, '📝 Draft saved!', true);
                             }
+                            clearTempData();
+                            Swal.close();
+                            renderApplicant();
+                            return;
+                        } else if (result.isDenied) {
+                            clearTempData();
+                            Swal.close();
+                            renderApplicant();
+                            return;
+                        } else {
+                            // Stay - save temp data
+                            saveTempData();
+                            return;
                         }
-                        
-                        Swal.close();
-                        renderApplicant();
-                        return;
                     }
                     
-                    // For NEW applications
+                    // ========== FOR NEW APPLICATIONS ==========
                     if (isNewApplication) {
                         const hasAnyContent = currentFormData.piName || 
                                             currentFormData.piEmail ||
@@ -4820,6 +4849,7 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                                     showInlineNotification(modal, '📝 Draft saved!', true);
                                 }
                                 
+                                clearTempData();
                                 Swal.close();
                                 renderApplicant();
                                 return;
@@ -4829,11 +4859,14 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                                     title: 'Save as Draft?',
                                     text: 'Would you like to save your progress as a draft before closing?',
                                     icon: 'question',
+                                    showDenyButton: true,
                                     showCancelButton: true,
                                     confirmButtonColor: '#D4AF37',
-                                    cancelButtonColor: '#6c757d',
-                                    confirmButtonText: 'Yes, Save Draft',
-                                    cancelButtonText: 'No, Discard'
+                                    denyButtonColor: '#6c757d',
+                                    cancelButtonColor: '#e74c3c',
+                                    confirmButtonText: 'Save Draft',
+                                    denyButtonText: 'Discard',
+                                    cancelButtonText: 'Stay Here'
                                 });
                                 
                                 if (result.isConfirmed) {
@@ -4848,21 +4881,32 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                                     
                                     await saveDrafts();
                                     showInlineNotification(modal, '📝 Draft saved!', true);
+                                    clearTempData();
+                                    Swal.close();
+                                    renderApplicant();
+                                    return;
+                                } else if (result.isDenied) {
+                                    clearTempData();
+                                    Swal.close();
+                                    renderApplicant();
+                                    return;
+                                } else {
+                                    // Stay - save temp data
+                                    saveTempData();
+                                    return;
                                 }
-                                
-                                Swal.close();
-                                renderApplicant();
-                                return;
                             }
                         } else {
                             // No content - just close
+                            clearTempData();
                             Swal.close();
                             renderApplicant();
                             return;
                         }
                     }
                     
-                    // Fallback - just close
+                    // Fallback
+                    clearTempData();
                     Swal.close();
                     renderApplicant();
                 });
