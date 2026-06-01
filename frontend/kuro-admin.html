@@ -1181,17 +1181,268 @@ async function viewApplicationDetails(appId) {
             }
         }
         
-        // Render all tab contents
-        const contentForm1 = renderForm1Content(app);
-        const contentForm2 = renderForm2Content(app);
-        const contentCV = renderCVReviewContent(app);
-        const contentExternal = renderExternalReviewersContent(app);
-        const contentChecks = renderCheckStagesContent(app);
+        // Render all tab contents with improved designs
+        const contentForm1 = renderImprovedForm1Content(app);
+        const contentForm2 = renderImprovedForm2Content(app);
+        const contentCV = renderImprovedCVReviewContent(app);
+        const contentExternal = renderImprovedExternalReviewersContent(app);
+        const contentChecks = renderImprovedCheckStagesContent(app);
         
         const modalHtml = `
             <style>
                 .kuro-tab-pane { display: none !important; }
                 .kuro-tab-pane.kuro-active { display: block !important; }
+                
+                /* Additional styles for improved tabs */
+                .improved-section {
+                    background: white;
+                    border-radius: 16px;
+                    margin-bottom: 1.25rem;
+                    overflow: hidden;
+                    border: 1px solid #eef2f0;
+                    transition: all 0.2s;
+                }
+                .improved-section:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+                .improved-section-header {
+                    background: #fafbfc;
+                    padding: 1rem 1.25rem;
+                    border-bottom: 2px solid var(--gold);
+                    display: flex;
+                    align-items: center;
+                    gap: 0.75rem;
+                }
+                .improved-section-header i { font-size: 1.2rem; color: var(--gold); }
+                .improved-section-header h3 {
+                    font-size: 1rem;
+                    font-weight: 700;
+                    color: var(--primary);
+                    margin: 0;
+                    flex: 1;
+                }
+                .improved-section-content { padding: 1.25rem; font-size: 0.85rem; line-height: 1.6; color: #34495e; }
+                .info-grid-improved {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                    gap: 1rem;
+                    margin-bottom: 1.5rem;
+                }
+                .info-card-improved {
+                    background: white;
+                    border: 1px solid #eef2f0;
+                    border-radius: 14px;
+                    padding: 1rem;
+                    transition: all 0.2s;
+                }
+                .info-card-improved:hover {
+                    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+                    transform: translateY(-3px);
+                    border-color: var(--gold);
+                }
+                .info-card-icon-improved {
+                    width: 44px;
+                    height: 44px;
+                    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+                    border-radius: 12px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin-bottom: 0.8rem;
+                }
+                .info-card-icon-improved i { color: var(--primary); font-size: 1.3rem; }
+                .info-card-improved h4 { color: var(--primary); font-size: 0.85rem; font-weight: 700; margin-bottom: 0.5rem; }
+                .info-card-improved p { font-size: 0.9rem; font-weight: 500; color: #2c3e50; margin-bottom: 0.25rem; }
+                .info-card-improved small { font-size: 0.7rem; color: #7f8c8d; }
+                
+                /* CV Status Badges */
+                .cv-status-badge {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.3rem;
+                    padding: 0.2rem 0.6rem;
+                    border-radius: 20px;
+                    font-size: 0.7rem;
+                    font-weight: 600;
+                }
+                .cv-status-badge.eligible { background: #d4edda; color: #155724; }
+                .cv-status-badge.ineligible { background: #f8d7da; color: #721c24; }
+                .cv-status-badge.pending { background: #fff3cd; color: #856404; }
+                .cv-status-badge.missing { background: #e9ecef; color: #6c757d; }
+                
+                /* Review Modal Styles */
+                .review-score { font-size: 2rem; font-weight: 700; color: var(--gold); }
+                .criteria-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    font-size: 0.8rem;
+                }
+                .criteria-table th, .criteria-table td {
+                    padding: 0.5rem;
+                    border-bottom: 1px solid #eef2f0;
+                    text-align: left;
+                }
+                .criteria-table th { background: #f8f9fa; font-weight: 600; color: var(--primary); }
+                
+                .team-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+                    gap: 0.8rem;
+                }
+                .team-member-card {
+                    background: #f8f9fa;
+                    border-radius: 12px;
+                    padding: 0.8rem;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.8rem;
+                    transition: all 0.2s;
+                    border: 1px solid #eef2f0;
+                }
+                .team-member-card:hover {
+                    background: #eef2f0;
+                    transform: translateX(4px);
+                    border-color: var(--gold);
+                }
+                .team-avatar {
+                    width: 48px;
+                    height: 48px;
+                    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: white;
+                    font-weight: bold;
+                    font-size: 1.1rem;
+                }
+                .team-info { flex: 1; }
+                .team-info strong { display: block; font-size: 0.85rem; color: var(--primary); margin-bottom: 0.2rem; }
+                .team-info span { font-size: 0.7rem; color: #7f8c8d; }
+                
+                .activities-timeline {
+                    position: relative;
+                    padding-left: 2rem;
+                }
+                .activities-timeline::before {
+                    content: '';
+                    position: absolute;
+                    left: 0.5rem;
+                    top: 0;
+                    bottom: 0;
+                    width: 2px;
+                    background: linear-gradient(to bottom, var(--gold), var(--primary));
+                }
+                .activity-item {
+                    position: relative;
+                    margin-bottom: 1.25rem;
+                    padding-left: 1.5rem;
+                }
+                .activity-item::before {
+                    content: '';
+                    position: absolute;
+                    left: -1.75rem;
+                    top: 0.3rem;
+                    width: 12px;
+                    height: 12px;
+                    background: var(--gold);
+                    border-radius: 50%;
+                    border: 2px solid white;
+                    box-shadow: 0 0 0 2px var(--gold);
+                }
+                .activity-title { font-weight: 700; color: var(--primary); margin-bottom: 0.5rem; font-size: 0.9rem; }
+                .activity-desc { font-size: 0.8rem; color: #555; margin-bottom: 0.25rem; line-height: 1.5; }
+                .activity-meta { font-size: 0.7rem; color: #999; display: flex; gap: 1rem; margin-top: 0.5rem; flex-wrap: wrap; }
+                .activity-meta span { display: inline-flex; align-items: center; gap: 0.3rem; }
+                
+                .budget-wrapper { overflow-x: auto; }
+                .budget-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    font-size: 0.8rem;
+                }
+                .budget-table thead tr {
+                    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+                    color: white;
+                }
+                .budget-table th { padding: 0.8rem; text-align: left; font-weight: 600; }
+                .budget-table td { padding: 0.8rem; border-bottom: 1px solid #eef2f0; }
+                .budget-table tbody tr:hover { background: #f8f9fa; }
+                .budget-table th:last-child, .budget-table td:last-child { text-align: right; }
+                .budget-total { background: #f8f9fa; font-weight: 700; color: var(--primary); }
+                .budget-total td { border-top: 2px solid var(--gold); border-bottom: none; }
+                
+                .references-list {
+                    list-style: none;
+                    padding: 0;
+                    margin: 0;
+                }
+                .references-list li {
+                    padding: 0.6rem 0;
+                    border-bottom: 1px solid #eef2f0;
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 0.8rem;
+                }
+                .references-list li:last-child { border-bottom: none; }
+                .references-list li i { color: var(--gold); margin-top: 0.15rem; font-size: 0.8rem; }
+                .references-list li span { flex: 1; font-size: 0.8rem; line-height: 1.5; }
+                
+                .signature-card {
+                    background: white;
+                    border-radius: 12px;
+                    padding: 1rem;
+                    border-left: 4px solid var(--gold);
+                    transition: all 0.2s;
+                }
+                .signature-card:hover { transform: translateX(4px); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+                .signature-status {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.3rem;
+                    padding: 0.2rem 0.6rem;
+                    border-radius: 20px;
+                    font-size: 0.7rem;
+                    font-weight: 600;
+                }
+                .signature-status.signed { background: #e0f5e6; color: #155724; }
+                .signature-status.pending { background: #fff3cd; color: #856404; }
+                
+                .stage-item { flex: 1; text-align: center; min-width: 100px; }
+                .stage-icon {
+                    width: 50px;
+                    height: 50px;
+                    background: #e0e0e0;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin: 0 auto 0.5rem;
+                    font-size: 1.3rem;
+                    font-weight: bold;
+                }
+                .stage-icon.completed { background: #2ecc71; color: white; }
+                .stage-icon.current { background: #3498db; color: white; animation: pulse 2s infinite; }
+                .stage-icon.pending { background: #e0e0e0; color: #999; }
+                @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+                
+                .reviewer-card {
+                    background: white;
+                    border-radius: 12px;
+                    padding: 1rem;
+                    margin-bottom: 0.8rem;
+                    border: 1px solid #eef2f0;
+                }
+                .reviewer-card:hover { border-color: var(--gold); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+                .reviewer-status.completed { background: #e0f5e6; color: #155724; }
+                .reviewer-status.pending { background: #fff3cd; color: #856404; }
+                .btn-view-review {
+                    background: var(--info);
+                    color: white;
+                    border: none;
+                    padding: 0.3rem 0.8rem;
+                    border-radius: 20px;
+                    font-size: 0.7rem;
+                    cursor: pointer;
+                }
             </style>
             <div style="padding-right: 5px;">
                 <div class="detail-section">
@@ -1223,13 +1474,12 @@ async function viewApplicationDetails(appId) {
         await Swal.fire({
             title: 'Application Details',
             html: modalHtml,
-            width: '950px',
+            width: '1000px',
             showConfirmButton: true,
             confirmButtonText: 'Close',
             confirmButtonColor: '#D4AF37',
             didOpen: (modal) => {
                 const tabBtns = modal.querySelectorAll('.modal-detail-tab');
-
                 const switchTab = (targetId) => {
                     modal.querySelectorAll('.kuro-tab-pane').forEach(pane => {
                         pane.classList.toggle('kuro-active', pane.id === targetId);
@@ -1238,20 +1488,18 @@ async function viewApplicationDetails(appId) {
                         btn.classList.toggle('active', btn.getAttribute('data-tab') === targetId);
                     });
                 };
-
                 tabBtns.forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         e.preventDefault();
                         switchTab(btn.getAttribute('data-tab'));
                     });
                 });
-
                 switchTab('tc1');
                 
                 // Attach handlers
-                attachCVHandlersInModal(modal, app.userEmail, app.id);
-                attachCheckStageHandlers(modal, app.userEmail, app.id, app.status);
-                attachExternalReviewerHandlers(modal, app.userEmail, app.id);
+                attachImprovedCVHandlers(modal, app.userEmail, app.id);
+                attachImprovedCheckStageHandlers(modal, app.userEmail, app.id, app.status);
+                attachImprovedExternalReviewerHandlers(modal, app.userEmail, app.id);
             }
         });
         
@@ -1263,376 +1511,863 @@ async function viewApplicationDetails(appId) {
 
 // Render Form 1 Content
 function renderForm1Content(app) {
-    let html = '<div class="detail-section"><h4>📌 Project Profile</h4>';
-    html += `<div class="detail-field"><strong>Project Title:</strong> ${escapeHtml(app.proposalTitle || 'N/A')}</div>`;
-    html += `<div class="detail-field"><strong>Principal Investigator:</strong> ${escapeHtml(app.piName || 'N/A')}</div>`;
-    html += `<div class="detail-field"><strong>Email:</strong> ${escapeHtml(app.piEmail || 'N/A')}</div>`;
-    html += `<div class="detail-field"><strong>Department:</strong> ${escapeHtml(app.dept || 'N/A')}</div>`;
-    html += `<div class="detail-field"><strong>School/College:</strong> ${escapeHtml(app.school || 'N/A')}</div>`;
-    html += `<div class="detail-field"><strong>Local Extension:</strong> ${escapeHtml(app.extension || 'N/A')}</div>`;
-    html += `<div class="detail-field"><strong>Project Duration:</strong> ${escapeHtml(app.duration || 'N/A')}</div></div>`;
+    let totalBudget = 0;
+    if (app.budgetItems) {
+        app.budgetItems.forEach(item => { totalBudget += (item.unitCost || 0) * (item.qty || 1); });
+    }
     
-    if (app.rationale) html += `<div class="detail-section"><h4>📖 Rationale</h4><div style="white-space: pre-wrap;">${escapeHtml(app.rationale)}</div></div>`;
-    if (app.litReview) html += `<div class="detail-section"><h4>📚 Review of Literature</h4><div style="white-space: pre-wrap;">${escapeHtml(app.litReview)}</div></div>`;
-    if (app.objectives) html += `<div class="detail-section"><h4>🎯 Objectives</h4><div style="white-space: pre-wrap;">${escapeHtml(app.objectives)}</div></div>`;
-    if (app.methodology) html += `<div class="detail-section"><h4>🔬 Methodology</h4><div style="white-space: pre-wrap;">${escapeHtml(app.methodology)}</div></div>`;
-    if (app.outputs) html += `<div class="detail-section"><h4>📊 Expected Outputs</h4><div style="white-space: pre-wrap;">${escapeHtml(app.outputs)}</div></div>`;
+    let html = `
+        <div class="proposal-container">
+            <div class="proposal-header">
+                <div class="proposal-badge"><i class="fas fa-file-alt"></i> Research Proposal</div>
+                <h2>${escapeHtml(app.proposalTitle || 'Untitled')}</h2>
+                <div class="proposal-meta">
+                    <span><i class="fas fa-tag"></i> ${escapeHtml(app.grantTitle || 'N/A')}</span>
+                    <span><i class="fas fa-calendar-alt"></i> Submitted: ${app.submittedDate || 'N/A'}</span>
+                    <span><i class="fas fa-clock"></i> Duration: ${escapeHtml(app.duration || 'N/A')}</span>
+                </div>
+            </div>
+            
+            <div class="info-grid">
+                <div class="info-card">
+                    <div class="info-card-icon"><i class="fas fa-user-tie"></i></div>
+                    <h4>Principal Investigator</h4>
+                    <p>${escapeHtml(app.piName || 'N/A')}</p>
+                    <small><i class="fas fa-envelope"></i> ${escapeHtml(app.piEmail || 'N/A')}</small>
+                </div>
+                <div class="info-card">
+                    <div class="info-card-icon"><i class="fas fa-building"></i></div>
+                    <h4>Department</h4>
+                    <p>${escapeHtml(app.dept || 'N/A')}</p>
+                    <small><i class="fas fa-university"></i> ${escapeHtml(app.school || 'N/A')}</small>
+                </div>
+                <div class="info-card">
+                    <div class="info-card-icon"><i class="fas fa-phone"></i></div>
+                    <h4>Contact Information</h4>
+                    <p>Extension: ${escapeHtml(app.extension || 'N/A')}</p>
+                    <small><i class="fas fa-map-marker-alt"></i> ${escapeHtml(app.school || 'N/A')}</small>
+                </div>
+            </div>
+    `;
     
-    // References
-    if (app.references && app.references.length > 0) {
-        html += '<div class="detail-section"><h4>📑 Literature Cited</h4><ul>';
-        app.references.forEach(ref => html += `<li>${escapeHtml(ref)}</li>`);
-        html += '</ul></div>';
-    } else {
-        html += '<div class="detail-section"><h4>📑 Literature Cited</h4><div style="color: #999; text-align: center; padding: 0.5rem;">No references added</div></div>';
+    // Rationale
+    if (app.rationale) {
+        html += `
+            <div class="content-section">
+                <div class="section-header" onclick="toggleSection('rationale')">
+                    <i class="fas fa-quote-left"></i>
+                    <h3>Rationale</h3>
+                    <i class="fas fa-chevron-down toggle-icon" id="icon_rationale"></i>
+                </div>
+                <div class="section-content" id="section_rationale" style="display: block;">
+                    <p style="white-space: pre-wrap; line-height: 1.7;">${escapeHtml(app.rationale)}</p>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Literature Review
+    if (app.litReview) {
+        html += `
+            <div class="content-section">
+                <div class="section-header" onclick="toggleSection('litreview')">
+                    <i class="fas fa-book"></i>
+                    <h3>Review of Related Literature</h3>
+                    <i class="fas fa-chevron-down toggle-icon" id="icon_litreview"></i>
+                </div>
+                <div class="section-content" id="section_litreview" style="display: block;">
+                    <p style="white-space: pre-wrap; line-height: 1.7;">${escapeHtml(app.litReview)}</p>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Objectives
+    if (app.objectives) {
+        html += `
+            <div class="content-section">
+                <div class="section-header" onclick="toggleSection('objectives')">
+                    <i class="fas fa-bullseye"></i>
+                    <h3>Objectives</h3>
+                    <i class="fas fa-chevron-down toggle-icon" id="icon_objectives"></i>
+                </div>
+                <div class="section-content" id="section_objectives" style="display: block;">
+                    <p style="white-space: pre-wrap; line-height: 1.7;">${escapeHtml(app.objectives)}</p>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Methodology
+    if (app.methodology) {
+        html += `
+            <div class="content-section">
+                <div class="section-header" onclick="toggleSection('methodology')">
+                    <i class="fas fa-microscope"></i>
+                    <h3>Methodology</h3>
+                    <i class="fas fa-chevron-down toggle-icon" id="icon_methodology"></i>
+                </div>
+                <div class="section-content" id="section_methodology" style="display: block;">
+                    <p style="white-space: pre-wrap; line-height: 1.7;">${escapeHtml(app.methodology)}</p>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Expected Outputs
+    if (app.outputs) {
+        html += `
+            <div class="content-section">
+                <div class="section-header" onclick="toggleSection('outputs')">
+                    <i class="fas fa-chart-line"></i>
+                    <h3>Expected Outputs</h3>
+                    <i class="fas fa-chevron-down toggle-icon" id="icon_outputs"></i>
+                </div>
+                <div class="section-content" id="section_outputs" style="display: block;">
+                    <p style="white-space: pre-wrap; line-height: 1.7;">${escapeHtml(app.outputs)}</p>
+                </div>
+            </div>
+        `;
     }
     
     // Team Members
     if (app.teamMembers && app.teamMembers.length > 0) {
-        html += '<div class="detail-section"><h4>👥 Research Team Members</h4><ul>';
-        app.teamMembers.forEach(m => html += `<li><strong>${escapeHtml(m.name)}</strong> - ${escapeHtml(m.role)}</li>`);
-        html += '</ul></div>';
+        html += `
+            <div class="content-section">
+                <div class="section-header" onclick="toggleSection('team')">
+                    <i class="fas fa-users"></i>
+                    <h3>Research Team Members (${app.teamMembers.length})</h3>
+                    <i class="fas fa-chevron-down toggle-icon" id="icon_team"></i>
+                </div>
+                <div class="section-content" id="section_team" style="display: block;">
+                    <div class="team-grid">
+        `;
+        app.teamMembers.forEach((member, idx) => {
+            const initial = member.name ? member.name.charAt(0).toUpperCase() : '?';
+            html += `
+                        <div class="team-member-card">
+                            <div class="team-avatar">${initial}</div>
+                            <div class="team-info">
+                                <strong>${escapeHtml(member.name)}</strong>
+                                <span>${escapeHtml(member.role || 'Team Member')}</span>
+                            </div>
+                        </div>
+            `;
+        });
+        html += `</div></div></div>`;
     } else {
-        html += '<div class="detail-section"><h4>👥 Research Team Members</h4><div style="color: #999; text-align: center; padding: 0.5rem;">No team members added</div></div>';
+        html += `
+            <div class="content-section">
+                <div class="section-header" onclick="toggleSection('team')">
+                    <i class="fas fa-users"></i>
+                    <h3>Research Team Members</h3>
+                    <i class="fas fa-chevron-down toggle-icon" id="icon_team"></i>
+                </div>
+                <div class="section-content" id="section_team" style="display: block;">
+                    <div class="empty-state-modern"><i class="fas fa-user-friends"></i><p>No team members added</p></div>
+                </div>
+            </div>
+        `;
     }
     
-    // ========== ACTIVITIES SECTION - FIXED! ==========
+    // Activities
     if (app.activities && app.activities.length > 0) {
-        html += '<div class="detail-section"><h4>📅 Major Activities & Workplan</h4>';
-        app.activities.forEach((act, idx) => {
-            html += `<div style="margin-bottom: 1rem; padding: 0.8rem; background: white; border-radius: 0.5rem; border-left: 3px solid var(--gold);">
-                <div style="font-weight: 700; color: var(--primary); margin-bottom: 0.5rem;">Activity ${idx + 1}: ${escapeHtml(act.name || 'N/A')}</div>
-                ${act.description ? `<div><strong>Description:</strong> ${escapeHtml(act.description)}</div>` : ''}
-                ${act.objective ? `<div><strong>Objective:</strong> ${escapeHtml(act.objective)}</div>` : ''}
-                ${act.output ? `<div><strong>Expected Output:</strong> ${escapeHtml(act.output)}</div>` : ''}
-                ${act.startDate || act.endDate ? `<div><strong>Timeline:</strong> ${act.startDate || '?'} → ${act.endDate || '?'}</div>` : ''}
-            </div>`;
+        html += `
+            <div class="content-section">
+                <div class="section-header" onclick="toggleSection('activities')">
+                    <i class="fas fa-calendar-alt"></i>
+                    <h3>Major Activities & Work Plan (${app.activities.length} activities)</h3>
+                    <i class="fas fa-chevron-down toggle-icon" id="icon_activities"></i>
+                </div>
+                <div class="section-content" id="section_activities" style="display: block;">
+                    <div class="activities-timeline">
+        `;
+        app.activities.forEach((activity, idx) => {
+            html += `
+                        <div class="activity-item">
+                            <div class="activity-title">Activity ${idx + 1}: ${escapeHtml(activity.name || 'Unnamed')}</div>
+                            <div class="activity-desc">${escapeHtml(activity.description || '')}</div>
+                            <div class="activity-meta">
+                                ${activity.objective ? `<span><i class="fas fa-bullseye"></i> ${escapeHtml(activity.objective)}</span>` : ''}
+                                ${activity.output ? `<span><i class="fas fa-box"></i> ${escapeHtml(activity.output)}</span>` : ''}
+                                ${activity.startDate || activity.endDate ? `<span><i class="fas fa-calendar-week"></i> ${activity.startDate || '?'} → ${activity.endDate || '?'}</span>` : ''}
+                            </div>
+                        </div>
+            `;
         });
-        html += '</div>';
+        html += `</div></div></div>`;
     } else {
-        html += '<div class="detail-section"><h4>📅 Major Activities & Workplan</h4><div style="color: #999; text-align: center; padding: 1rem;">No activities added</div></div>';
+        html += `
+            <div class="content-section">
+                <div class="section-header" onclick="toggleSection('activities')">
+                    <i class="fas fa-calendar-alt"></i>
+                    <h3>Major Activities & Work Plan</h3>
+                    <i class="fas fa-chevron-down toggle-icon" id="icon_activities"></i>
+                </div>
+                <div class="section-content" id="section_activities" style="display: block;">
+                    <div class="empty-state-modern"><i class="fas fa-tasks"></i><p>No activities added</p></div>
+                </div>
+            </div>
+        `;
     }
     
     // Budget Items
     if (app.budgetItems && app.budgetItems.length > 0) {
-        let total = 0;
-        html += '<div class="detail-section"><h4>💰 Budgetary Requirements</h4><table class="budget-table"><thead><tr><th>Category</th><th>Item</th><th>Specifications</th><th>Unit Cost</th><th>Qty</th><th>Total</th></tr></thead><tbody>';
+        html += `
+            <div class="content-section">
+                <div class="section-header" onclick="toggleSection('budget')">
+                    <i class="fas fa-coins"></i>
+                    <h3>Budgetary Requirements</h3>
+                    <i class="fas fa-chevron-down toggle-icon" id="icon_budget"></i>
+                </div>
+                <div class="section-content" id="section_budget" style="display: block;">
+                    <div class="budget-wrapper">
+                        <table class="budget-table">
+                            <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Item Description</th>
+                                    <th>Specifications</th>
+                                    <th>Unit Cost</th>
+                                    <th>Qty</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+        `;
         app.budgetItems.forEach(item => {
-            let it = (item.unitCost || 0) * (item.qty || 1);
-            total += it;
-            html += `<tr><td>${escapeHtml(item.category || 'N/A')}</td><td>${escapeHtml(item.itemName || 'N/A')}</td><td>${escapeHtml(item.specs || '')}</td>
-                    <td style="text-align:right;">₱${(item.unitCost || 0).toLocaleString()}</td>
-                    <td style="text-align:center;">${item.qty || 1}</td>
-                    <td style="text-align:right;">₱${it.toLocaleString()}</td>
-                </tr>`;
+            const total = (item.unitCost || 0) * (item.qty || 1);
+            html += `
+                                <tr>
+                                    <td>${escapeHtml(item.category || 'N/A')}</td>
+                                    <td><strong>${escapeHtml(item.itemName || 'N/A')}</strong></td>
+                                    <td>${escapeHtml(item.specs || '-')}</td>
+                                    <td style="text-align:right;">₱${(item.unitCost || 0).toLocaleString()}</td>
+                                    <td style="text-align:center;">${item.qty || 1}</td>
+                                    <td style="text-align:right;">₱${total.toLocaleString()}</td>
+                                </tr>
+            `;
         });
-        html += `<tr style="background:#f0f0f0; font-weight:bold;"><td colspan="5" style="text-align:right;">GRAND TOTAL</td><td style="text-align:right;">₱${total.toLocaleString()}</td></tr>`;
-        html += '</tbody></table></div>';
+        html += `
+                            </tbody>
+                            <tfoot>
+                                <tr class="budget-total">
+                                    <td colspan="5" style="text-align:right;"><strong>GRAND TOTAL</strong></td>
+                                    <td style="text-align:right;"><strong>₱${totalBudget.toLocaleString()}</strong></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
     } else {
-        html += '<div class="detail-section"><h4>💰 Budgetary Requirements</h4><div style="color: #999; text-align: center; padding: 1rem;">No budget items added</div></div>';
+        html += `
+            <div class="content-section">
+                <div class="section-header" onclick="toggleSection('budget')">
+                    <i class="fas fa-coins"></i>
+                    <h3>Budgetary Requirements</h3>
+                    <i class="fas fa-chevron-down toggle-icon" id="icon_budget"></i>
+                </div>
+                <div class="section-content" id="section_budget" style="display: block;">
+                    <div class="empty-state-modern"><i class="fas fa-receipt"></i><p>No budget items added</p></div>
+                </div>
+            </div>
+        `;
     }
     
-    return '<div>' + html + '</div>';
+    // References
+    if (app.references && app.references.length > 0) {
+        html += `
+            <div class="content-section">
+                <div class="section-header" onclick="toggleSection('references')">
+                    <i class="fas fa-bookmark"></i>
+                    <h3>Literature Cited (${app.references.length} references)</h3>
+                    <i class="fas fa-chevron-down toggle-icon" id="icon_references"></i>
+                </div>
+                <div class="section-content" id="section_references" style="display: block;">
+                    <ul class="references-list">
+        `;
+        app.references.forEach(ref => {
+            html += `<li><i class="fas fa-quote-right"></i><span>${escapeHtml(ref)}</span></li>`;
+        });
+        html += `</ul></div></div>`;
+    } else {
+        html += `
+            <div class="content-section">
+                <div class="section-header" onclick="toggleSection('references')">
+                    <i class="fas fa-bookmark"></i>
+                    <h3>Literature Cited</h3>
+                    <i class="fas fa-chevron-down toggle-icon" id="icon_references"></i>
+                </div>
+                <div class="section-content" id="section_references" style="display: block;">
+                    <div class="empty-state-modern"><i class="fas fa-book-open"></i><p>No references added</p></div>
+                </div>
+            </div>
+        `;
+    }
+    
+    html += `</div>`;
+    return html;
 }
 
 // Render Form 2 Content
 function renderForm2Content(app) {
-    let chairSigned = app.signatures?.chair ? '✅ Signed' : '⏳ Pending';
-    let deanSigned = app.signatures?.dean ? '✅ Signed' : '⏳ Pending';
-    let chairDate = app.signatures?.chair?.signedDate ? new Date(app.signatures.chair.signedDate).toLocaleDateString() : '';
-    let deanDate = app.signatures?.dean?.signedDate ? new Date(app.signatures.dean.signedDate).toLocaleDateString() : '';
+    const chairSigned = app.signatures?.chair?.signed;
+    const deanSigned = app.signatures?.dean?.signed;
     
-    // Return a SINGLE wrapper div
-    return `<div>
-        <div class="detail-section">
-            <h4>📌 Endorsement Information</h4>
-            <div class="detail-field"><strong>Date:</strong> ${escapeHtml(app.endorsementDate || 'N/A')}</div>
-            <div class="detail-field"><strong>School Year:</strong> ${escapeHtml(app.schoolYear || 'N/A')}</div>
-            <div class="detail-field"><strong>Department:</strong> ${escapeHtml(app.endorseDept || 'N/A')}</div>
-            <div class="detail-field"><strong>School/College:</strong> ${escapeHtml(app.endorseSchool || 'N/A')}</div>
-        </div>
-        <div class="detail-section">
-            <h4>✍️ Digital Signatures</h4>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                <div style="background: white; border-radius: 0.8rem; padding: 1rem; border-left: 4px solid var(--gold);">
-                    <div><i class="fas fa-user-tie"></i> <strong>Department Chair</strong></div>
-                    <div><strong>Name:</strong> ${escapeHtml(app.fromChair || 'N/A')}</div>
-                    <div><strong>Email:</strong> ${escapeHtml(app.chairEmail || 'N/A')}</div>
-                    <div><strong>Status:</strong> ${chairSigned} ${chairDate ? `📅 ${chairDate}` : ''}</div>
+    return `
+        <div class="proposal-container">
+            <div class="proposal-header" style="background: linear-gradient(135deg, #1e2b57 0%, #0f1a36 100%);">
+                <div class="proposal-badge"><i class="fas fa-clipboard-list"></i> Endorsement Letter</div>
+                <h2>Department & College Endorsement</h2>
+                <div class="proposal-meta">
+                    <span><i class="fas fa-calendar"></i> Date: ${app.endorsementDate || 'N/A'}</span>
+                    <span><i class="fas fa-graduation-cap"></i> School Year: ${escapeHtml(app.schoolYear || 'N/A')}</span>
                 </div>
-                <div style="background: white; border-radius: 0.8rem; padding: 1rem; border-left: 4px solid var(--gold);">
-                    <div><i class="fas fa-university"></i> <strong>Dean</strong></div>
-                    <div><strong>Name:</strong> ${escapeHtml(app.deanName || 'N/A')}</div>
-                    <div><strong>Email:</strong> ${escapeHtml(app.deanEmail || 'N/A')}</div>
-                    <div><strong>Status:</strong> ${deanSigned} ${deanDate ? `📅 ${deanDate}` : ''}</div>
+            </div>
+            
+            <div class="info-grid">
+                <div class="info-card">
+                    <div class="info-card-icon"><i class="fas fa-building"></i></div>
+                    <h4>Department</h4>
+                    <p>${escapeHtml(app.endorseDept || app.dept || 'N/A')}</p>
+                    <small>${escapeHtml(app.endorseSchool || app.school || 'N/A')}</small>
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                <div class="signature-card">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+                        <i class="fas fa-user-tie" style="font-size: 1.5rem; color: var(--gold);"></i>
+                        <h3 style="color: var(--primary); font-size: 1rem;">Department Chair</h3>
+                    </div>
+                    <p><strong>Name:</strong> ${escapeHtml(app.fromChair || 'N/A')}</p>
+                    <p><strong>Email:</strong> ${escapeHtml(app.chairEmail || 'N/A')}</p>
+                    <div style="margin-top: 0.75rem;">
+                        <span class="signature-status ${chairSigned ? 'signed' : 'pending'}">
+                            <i class="fas ${chairSigned ? 'fa-check-circle' : 'fa-clock'}"></i>
+                            ${chairSigned ? `Signed on ${app.signatures?.chair?.signedDate ? new Date(app.signatures.chair.signedDate).toLocaleDateString() : 'N/A'}` : 'Pending Signature'}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="signature-card">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+                        <i class="fas fa-university" style="font-size: 1.5rem; color: var(--gold);"></i>
+                        <h3 style="color: var(--primary); font-size: 1rem;">Dean</h3>
+                    </div>
+                    <p><strong>Name:</strong> ${escapeHtml(app.deanName || 'N/A')}</p>
+                    <p><strong>Email:</strong> ${escapeHtml(app.deanEmail || 'N/A')}</p>
+                    <div style="margin-top: 0.75rem;">
+                        <span class="signature-status ${deanSigned ? 'signed' : 'pending'}">
+                            <i class="fas ${deanSigned ? 'fa-check-circle' : 'fa-clock'}"></i>
+                            ${deanSigned ? `Signed on ${app.signatures?.dean?.signedDate ? new Date(app.signatures.dean.signedDate).toLocaleDateString() : 'N/A'}` : 'Pending Signature'}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="content-section">
+                <div class="section-header" onclick="toggleSection('endorsementLetter')">
+                    <i class="fas fa-file-alt"></i>
+                    <h3>Endorsement Letter Preview</h3>
+                    <i class="fas fa-chevron-down toggle-icon" id="icon_endorsementLetter"></i>
+                </div>
+                <div class="section-content" id="section_endorsementLetter" style="display: block; background: #faf9f0;">
+                    <div style="font-family: 'Times New Roman', serif; padding: 1rem;">
+                        <p style="text-align: center; font-weight: bold;">XAVIER UNIVERSITY - ATENEO DE CAGAYAN</p>
+                        <p style="text-align: center; margin-bottom: 1rem;">Kinaadman University Research Office (KURO)</p>
+                        <hr>
+                        <p style="margin: 1rem 0;">This certifies that the undersigned have reviewed the research proposal entitled:</p>
+                        <p style="font-weight: bold; text-align: center; margin: 0.5rem 0;">"${escapeHtml(app.proposalTitle || 'N/A')}"</p>
+                        <p>submitted by <strong>${escapeHtml(app.piName || 'N/A')}</strong> from the Department of <strong>${escapeHtml(app.dept || 'N/A')}</strong>.</p>
+                        <p>The proposal has been evaluated and is hereby <strong>ENDORSED</strong> for funding consideration by the KURO Review Committee.</p>
+                        <hr style="margin: 1rem 0;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <div style="text-align: center;">
+                                <div style="font-weight: bold;">${chairSigned ? '✓ ' + escapeHtml(app.fromChair) : '_________________'}</div>
+                                <small>Department Chair</small>
+                                ${app.signatures?.chair?.signedDate ? `<div><small>${new Date(app.signatures.chair.signedDate).toLocaleDateString()}</small></div>` : ''}
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-weight: bold;">${deanSigned ? '✓ ' + escapeHtml(app.deanName) : '_________________'}</div>
+                                <small>Dean</small>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>`;
+    `;
 }
 
 // Render CV Review Content
 function renderCVReviewContent(app) {
-    let html = '<div>';
-    html += '<div class="detail-section"><h4>📎 CV Review & Eligibility Status</h4><p style="font-size:0.75rem; margin-bottom:1rem;">Review each CV and mark as Eligible, Ineligible, or Pending.</p>';
+    let eligible = 0, pending = 0, ineligible = 0, missing = 0;
     
-    // PI CV
-    if (app.piCVName && app.piCVName.trim() !== '') {
-        let piStatus = app.piCVStatus || 'pending';
-        let bgColor = piStatus === 'eligible' ? '#d4edda' : (piStatus === 'ineligible' ? '#f8d7da' : '#fff3cd');
-        html += `<div style="background: white; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; border-left: 4px solid var(--gold);">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                <div>
-                    <i class="fas fa-user-tie"></i> <strong>Principal Investigator:</strong> ${escapeHtml(app.piName || 'PI')}
-                    <div><small><i class="fas fa-file-pdf"></i> ${escapeHtml(app.piCVName)}</small></div>
-                </div>
-                <div style="display: flex; gap: 0.5rem; align-items: center;">
-                    <select class="cv-status-change" data-type="pi" data-idx="0" style="padding: 0.4rem 0.8rem; border-radius: 20px; background: ${bgColor};">
-                        <option value="pending" ${piStatus === 'pending' ? 'selected' : ''}>⏳ Pending</option>
-                        <option value="eligible" ${piStatus === 'eligible' ? 'selected' : ''}>✅ Eligible</option>
-                        <option value="ineligible" ${piStatus === 'ineligible' ? 'selected' : ''}>❌ Ineligible</option>
-                    </select>
-                    <button class="view-cv-btn btn-sm" data-cv-name="${escapeHtml(app.piCVName)}" style="background: var(--gold);"><i class="fas fa-eye"></i> View</button>
+    if (app.piCVStatus === 'eligible') eligible++;
+    else if (app.piCVStatus === 'ineligible') ineligible++;
+    else if (app.piCVName) pending++;
+    else missing++;
+    
+    if (app.teamCVs) {
+        app.teamCVs.forEach(cv => {
+            if (!cv || !cv.name) missing++;
+            else if (cv.status === 'eligible') eligible++;
+            else if (cv.status === 'ineligible') ineligible++;
+            else pending++;
+        });
+    } else if (app.teamMembers) {
+        missing += app.teamMembers.length;
+    }
+    
+    const total = 1 + (app.teamMembers?.length || 0);
+    const progressPercent = total > 0 ? ((eligible + pending) / total) * 100 : 0;
+    
+    let html = `
+        <div class="proposal-container">
+            <div class="proposal-header" style="background: linear-gradient(135deg, #1e2b57 0%, #0f1a36 100%);">
+                <div class="proposal-badge"><i class="fas fa-file-pdf"></i> CV Review & Eligibility</div>
+                <h2>Curriculum Vitae Verification</h2>
+                <div class="proposal-meta">
+                    <span><i class="fas fa-chart-pie"></i> Progress: ${eligible}/${total} Eligible</span>
+                    <span><i class="fas fa-clock"></i> ${pending} Pending</span>
+                    <span><i class="fas fa-times-circle"></i> ${ineligible} Ineligible</span>
+                    <span><i class="fas fa-file"></i> ${missing} Missing</span>
                 </div>
             </div>
-        </div>`;
-    } else {
-        html += `<div style="background: #f8f9fa; border-radius: 12px; padding: 1rem; margin-bottom: 1rem;"><i class="fas fa-exclamation-triangle"></i> <strong>PI CV:</strong> Not uploaded</div>`;
-    }
+            
+            <div style="background: #f8f9fa; border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 0.5rem;">
+                    <span>CV Upload Progress</span>
+                    <span>${Math.round(progressPercent)}% Complete</span>
+                </div>
+                <div style="background: #e0e0e0; border-radius: 10px; height: 8px; overflow: hidden;">
+                    <div style="width: ${progressPercent}%; background: linear-gradient(90deg, var(--gold), #2ecc71); height: 100%; border-radius: 10px;"></div>
+                </div>
+            </div>
+    `;
+    
+    // PI CV
+    const piStatusClass = app.piCVStatus === 'eligible' ? 'eligible' : (app.piCVStatus === 'ineligible' ? 'ineligible' : (app.piCVName ? 'pending' : 'missing'));
+    html += `
+        <div class="improved-section">
+            <div class="improved-section-header">
+                <i class="fas fa-user-tie"></i>
+                <h3>Principal Investigator: ${escapeHtml(app.piName || 'PI')}</h3>
+                <span class="cv-status-badge ${piStatusClass}">
+                    ${app.piCVStatus === 'eligible' ? '✅ Eligible' : (app.piCVStatus === 'ineligible' ? '❌ Ineligible' : (app.piCVName ? '⏳ Pending Review' : '📄 Missing CV'))}
+                </span>
+            </div>
+            <div class="improved-section-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <small><i class="fas fa-file-pdf"></i> ${escapeHtml(app.piCVName || 'No CV uploaded')}</small>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <select class="cv-status-change" data-type="pi" data-idx="0" style="padding: 0.3rem 0.8rem; border-radius: 20px; border: 1px solid #ddd; font-size: 0.7rem;">
+                            <option value="pending" ${app.piCVStatus === 'pending' ? 'selected' : ''}>⏳ Pending</option>
+                            <option value="eligible" ${app.piCVStatus === 'eligible' ? 'selected' : ''}>✅ Eligible</option>
+                            <option value="ineligible" ${app.piCVStatus === 'ineligible' ? 'selected' : ''}>❌ Ineligible</option>
+                        </select>
+                        ${app.piCVName ? `<button class="view-cv-btn btn-sm" data-cv-name="${escapeHtml(app.piCVName)}" style="background: var(--gold);"><i class="fas fa-eye"></i> View</button>` : ''}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
     
     // Team CVs
     if (app.teamMembers && app.teamMembers.length > 0) {
-        html += `<h4 style="margin-top: 1rem;"><i class="fas fa-users"></i> Research Team (${app.teamMembers.length})</h4>`;
+        html += `<h3 style="margin: 1rem 0 0.75rem 0; color: var(--primary);"><i class="fas fa-users"></i> Research Team (${app.teamMembers.length})</h3>`;
         for (let i = 0; i < app.teamMembers.length; i++) {
             const member = app.teamMembers[i];
-            let cv = app.teamCVs && app.teamCVs[i] ? app.teamCVs[i] : null;
-            const hasCV = cv && cv.name && cv.name.trim() !== '';
-            let cvStatus = (cv && cv.status) ? cv.status : 'pending';
-            let bgColor = cvStatus === 'eligible' ? '#d4edda' : (cvStatus === 'ineligible' ? '#f8d7da' : '#fff3cd');
-            html += `<div style="background: white; border-radius: 12px; padding: 1rem; margin-bottom: 0.8rem; border-left: 4px solid ${hasCV ? 'var(--gold)' : '#e74c3c'};">
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                    <div>
-                        <i class="fas fa-user"></i> <strong>${escapeHtml(member.name)}</strong>
-                        ${member.role ? `<span style="color: #666;">(${escapeHtml(member.role)})</span>` : ''}
-                        <div>${hasCV ? `<small><i class="fas fa-file-pdf"></i> ${escapeHtml(cv.name)}</small>` : '<small style="color: #e74c3c;">No CV uploaded</small>'}</div>
+            const cv = app.teamCVs && app.teamCVs[i];
+            const hasCV = cv && cv.name;
+            const statusClass = cv?.status === 'eligible' ? 'eligible' : (cv?.status === 'ineligible' ? 'ineligible' : (hasCV ? 'pending' : 'missing'));
+            html += `
+                <div class="improved-section">
+                    <div class="improved-section-header">
+                        <i class="fas fa-user"></i>
+                        <h3>${escapeHtml(member.name || `Team Member ${i + 1}`)}</h3>
+                        <span class="cv-status-badge ${statusClass}">
+                            ${cv?.status === 'eligible' ? '✅ Eligible' : (cv?.status === 'ineligible' ? '❌ Ineligible' : (hasCV ? '⏳ Pending Review' : '📄 Missing CV'))}
+                        </span>
                     </div>
-                    <div style="display: flex; gap: 0.5rem; align-items: center;">
-                        ${hasCV ? `
-                            <select class="cv-status-change" data-type="team" data-idx="${i}" style="padding: 0.3rem 0.8rem; border-radius: 20px; background: ${bgColor};">
-                                <option value="pending" ${cvStatus === 'pending' ? 'selected' : ''}>⏳ Pending</option>
-                                <option value="eligible" ${cvStatus === 'eligible' ? 'selected' : ''}>✅ Eligible</option>
-                                <option value="ineligible" ${cvStatus === 'ineligible' ? 'selected' : ''}>❌ Ineligible</option>
-                            </select>
-                            <button class="view-cv-btn btn-sm" data-cv-name="${escapeHtml(cv.name)}" style="background: var(--gold);"><i class="fas fa-eye"></i> View</button>
-                        ` : '<span style="color: #999;">No CV to review</span>'}
+                    <div class="improved-section-content">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                            <div>
+                                ${member.role ? `<span style="color: #666;">(${escapeHtml(member.role)})</span><br>` : ''}
+                                <small><i class="fas fa-file-pdf"></i> ${hasCV ? escapeHtml(cv.name) : 'No CV uploaded'}</small>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem;">
+                                ${hasCV ? `
+                                    <select class="cv-status-change" data-type="team" data-idx="${i}" style="padding: 0.3rem 0.8rem; border-radius: 20px; border: 1px solid #ddd; font-size: 0.7rem;">
+                                        <option value="pending" ${cv.status === 'pending' ? 'selected' : ''}>⏳ Pending</option>
+                                        <option value="eligible" ${cv.status === 'eligible' ? 'selected' : ''}>✅ Eligible</option>
+                                        <option value="ineligible" ${cv.status === 'ineligible' ? 'selected' : ''}>❌ Ineligible</option>
+                                    </select>
+                                    <button class="view-cv-btn btn-sm" data-cv-name="${escapeHtml(cv.name)}" style="background: var(--gold);"><i class="fas fa-eye"></i> View</button>
+                                ` : '<span style="color: #999;">No CV to review</span>'}
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>`;
+            `;
         }
     }
     
-    html += `<div style="margin-top: 1.5rem; background: #fff9e6; border-radius: 12px; padding: 1rem;">
-        <h4><i class="fas fa-comment-dots"></i> Reviewer Feedback on CVs</h4>
-        <textarea id="cvFeedbackText" rows="3" class="feedback-textarea" placeholder="Leave feedback about CV submissions...">${escapeHtml(app.uploadFeedback || '')}</textarea>
-        <button class="save-feedback-btn btn-primary" style="margin-top: 0.5rem;"><i class="fas fa-save"></i> Save Feedback</button>
-    </div>`;
+    // Feedback Section
+    html += `
+        <div class="content-section" style="margin-top: 1rem;">
+            <div class="section-header" onclick="toggleSection('cvFeedback')">
+                <i class="fas fa-comment-dots"></i>
+                <h3>Reviewer Feedback on CVs</h3>
+                <i class="fas fa-chevron-down toggle-icon" id="icon_cvFeedback"></i>
+            </div>
+            <div class="section-content" id="section_cvFeedback" style="display: block;">
+                <textarea id="cvFeedbackText" rows="3" class="feedback-textarea" placeholder="Leave feedback about CV submissions...">${escapeHtml(app.uploadFeedback || '')}</textarea>
+                <button class="save-feedback-btn btn-primary" style="margin-top: 0.5rem;"><i class="fas fa-save"></i> Save Feedback</button>
+            </div>
+        </div>
+    `;
     
-    html += '</div></div>';
+    html += `</div>`;
     return html;
 }
-
 // Render External Reviewers Content
 function renderExternalReviewersContent(app) {
-    let assignedReviewers = app.assignedReviewers || [];
-    let html = '<div><div class="detail-section"><h4>👥 External Reviewers</h4>';
+    const assignedReviewers = app.assignedReviewers || [];
+    const completedCount = assignedReviewers.filter(r => r.status === 'completed').length;
     
-    html += `<div style="margin-top: 1rem; background: #f8f9fa; border-radius: 12px; padding: 1rem;">
-        <h4 style="color: var(--primary); margin-bottom: 0.8rem;"><i class="fas fa-user-plus"></i> Assign New Reviewer</h4>
-        <input type="email" id="newReviewerEmail" placeholder="reviewer@xu.edu.ph" autocomplete="off" autofill="off" style="width: 100%; padding: 0.5rem; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 0.5rem;">
-        <button id="addManualReviewerBtn" class="btn-primary"><i class="fas fa-user-plus"></i> Assign Reviewer</button>
-    </div>`;
+    let html = `
+        <div class="proposal-container">
+            <div class="proposal-header" style="background: linear-gradient(135deg, #1e2b57 0%, #0f1a36 100%);">
+                <div class="proposal-badge"><i class="fas fa-users"></i> External Peer Review</div>
+                <h2>External Reviewers Management</h2>
+                <div class="proposal-meta">
+                    <span><i class="fas fa-user-check"></i> ${completedCount}/${assignedReviewers.length} Reviews Completed</span>
+                    <span><i class="fas fa-clock"></i> ${assignedReviewers.length - completedCount} Pending</span>
+                </div>
+            </div>
+            
+            <!-- Management Area -->
+            <div class="management-area" style="background: #f8f9fa; border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; border: 1px solid #eef2f0;">
+                <h3 style="color: var(--primary); font-size: 0.9rem; margin-bottom: 1rem;">
+                    <i class="fas fa-user-plus" style="color: var(--gold);"></i> Assign New External Reviewer
+                </h3>
+                <div style="display: flex; gap: 0.8rem; flex-wrap: wrap; align-items: flex-end;">
+                    <div style="flex: 1; min-width: 200px;">
+                        <label style="display: block; font-size: 0.7rem; font-weight: 600; color: var(--primary); margin-bottom: 0.25rem;">
+                            <i class="fas fa-envelope"></i> Email Address *
+                        </label>
+                        <input type="email" id="newReviewerEmail" placeholder="reviewer@xu.edu.ph" autocomplete="off" autofill="off" style="width: 100%; padding: 0.6rem 0.8rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.8rem;">
+                    </div>
+                    <div style="flex: 1; min-width: 200px;">
+                        <label style="display: block; font-size: 0.7rem; font-weight: 600; color: var(--primary); margin-bottom: 0.25rem;">
+                            <i class="fas fa-user"></i> Full Name (optional)
+                        </label>
+                        <input type="text" id="newReviewerName" placeholder="e.g., Dr. John Smith" autocomplete="off" style="width: 100%; padding: 0.6rem 0.8rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.8rem;">
+                    </div>
+                    <button id="addManualReviewerBtn" class="btn-primary" style="padding: 0.6rem 1.2rem;">
+                        <i class="fas fa-plus"></i> Assign Reviewer
+                    </button>
+                </div>
+                <div class="demo-note" style="margin-top: 1rem; font-size: 0.65rem;">
+                    <i class="fas fa-info-circle"></i> The reviewer will receive an email notification with access to review this application.
+                </div>
+            </div>
+    `;
     
-    if (assignedReviewers.length > 0) {
-        html += '<div style="margin-top: 1rem;"><h4>Assigned Reviewers</h4>';
+    if (assignedReviewers.length === 0) {
+        html += `
+            <div style="text-align: center; padding: 2rem; background: #f8f9fa; border-radius: 12px;">
+                <i class="fas fa-users-slash" style="font-size: 2rem; color: #999; margin-bottom: 0.5rem;"></i>
+                <p>No external reviewers assigned yet.</p>
+                <small>Use the form above to assign reviewers.</small>
+            </div>
+        `;
+    } else {
+        html += `<h3 style="color: var(--primary); font-size: 0.9rem; margin: 1rem 0 0.75rem 0;"><i class="fas fa-list"></i> Assigned Reviewers (${assignedReviewers.length})</h3>`;
         for (let i = 0; i < assignedReviewers.length; i++) {
             const reviewer = assignedReviewers[i];
-            html += `<div style="background: white; border-radius: 8px; padding: 0.8rem; margin-bottom: 0.5rem; border: 1px solid #ddd;">
-                <strong>${escapeHtml(reviewer.name || reviewer.email)}</strong><br>
-                <small>${escapeHtml(reviewer.email)}</small>
-                <button class="remove-reviewer-btn btn-sm" data-reviewer-email="${escapeHtml(reviewer.email)}" style="margin-left: 1rem;">Remove</button>
-            </div>`;
+            const hasReview = reviewer.status === 'completed';
+            html += `
+                <div class="reviewer-card" style="background: white; border-radius: 12px; padding: 1rem; margin-bottom: 0.8rem; border: 1px solid #eef2f0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div style="width: 48px; height: 48px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-user" style="color: white; font-size: 1.2rem;"></i>
+                            </div>
+                            <div>
+                                <strong>${escapeHtml(reviewer.name || reviewer.email.split('@')[0])}</strong><br>
+                                <small><i class="fas fa-envelope"></i> ${escapeHtml(reviewer.email)}</small>
+                                ${reviewer.assignedAt ? `<div style="font-size: 0.65rem; color: #999; margin-top: 0.2rem;"><i class="fas fa-calendar"></i> Assigned: ${new Date(reviewer.assignedAt).toLocaleDateString()}</div>` : ''}
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                            <span class="reviewer-status ${hasReview ? 'completed' : 'pending'}" style="display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.7rem; font-weight: 600; ${hasReview ? 'background: #e0f5e6; color: #155724;' : 'background: #fff3cd; color: #856404;'}">
+                                <i class="fas ${hasReview ? 'fa-check-circle' : 'fa-clock'}"></i>
+                                ${hasReview ? 'Review Submitted' : 'Awaiting Review'}
+                            </span>
+                            ${hasReview ? `
+                                <button class="btn-sm view-review-btn" data-reviewer='${JSON.stringify(reviewer).replace(/'/g, "\\'")}' style="background: var(--info); color: white;">
+                                    <i class="fas fa-eye"></i> View Review
+                                </button>
+                            ` : ''}
+                            <button class="btn-danger remove-reviewer-btn" data-reviewer-email="${escapeHtml(reviewer.email)}" style="padding: 0.3rem 0.8rem; border-radius: 20px;">
+                                <i class="fas fa-trash"></i> Remove
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
-        html += '</div>';
-    } else {
-        html += '<div style="margin-top: 1rem; padding: 1rem; background: #fff3cd; border-radius: 8px; text-align: center;">No external reviewers assigned yet. Use the form above to assign one.</div>';
     }
     
-    html += '</div></div>';
+    html += `
+            <div class="content-section" style="margin-top: 1rem;">
+                <div class="section-header">
+                    <i class="fas fa-info-circle"></i>
+                    <h3>About External Review Process</h3>
+                </div>
+                <div class="section-content">
+                    <ul style="margin-left: 1.5rem;">
+                        <li>External reviewers are subject matter experts who evaluate the proposal's technical merit</li>
+                        <li>Each reviewer receives a confidential evaluation form</li>
+                        <li>Reviews are considered during the final approval stage (Check 3)</li>
+                        <li>Reviewers can be reassigned or removed before they submit their review</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    `;
+    
     return html;
 }
 
 
 // Render Check Stages Content
-// Render Check Stages Content - WITH APPROVE/REJECT BUTTONS
 function renderCheckStagesContent(app) {
     const currentStatus = app.status;
     
-    // Re-evaluate roles at render time so async-loaded checkerRoles is used
     const currentUserRole = getUserCheckerRole(currentUser.email);
     const canCheck1 = isSuperAdmin || currentUserRole === 'check1';
     const canCheck2 = isSuperAdmin || currentUserRole === 'check2';
     const canCheck3 = isSuperAdmin || currentUserRole === 'check3';
     
-    // Calculate progress
     let completedCount = 0;
     if (currentStatus === 'Pending Secondary Check') completedCount = 1;
     else if (currentStatus === 'Pending Final Check') completedCount = 2;
     else if (currentStatus === 'Approved') completedCount = 3;
     const progressPercent = (completedCount / 3) * 100;
     
-    let html = '<div><div class="detail-section"><h4>📊 Multi-Stage Review Process</h4>';
+    const stages = [
+        { num: 1, name: 'Eligibility Review', status: 'Pending Eligibility Check', checker: 'Check 1', icon: '🔍', description: 'CV verification & eligibility check' },
+        { num: 2, name: 'Secondary Review', status: 'Pending Secondary Check', checker: 'Check 2', icon: '📋', description: 'Technical & methodology review' },
+        { num: 3, name: 'Final Review', status: 'Pending Final Check', checker: 'Check 3', icon: '⭐', description: 'Final approval & recommendation' }
+    ];
     
-    // Progress tracker
+    let html = `
+        <div class="proposal-container">
+            <div class="proposal-header" style="background: linear-gradient(135deg, #1e2b57 0%, #0f1a36 100%);">
+                <div class="proposal-badge"><i class="fas fa-check-double"></i> Multi-Stage Review Process</div>
+                <h2>Application Review Workflow</h2>
+                <div class="proposal-meta">
+                    <span><i class="fas fa-chart-line"></i> Overall Progress: ${Math.round(progressPercent)}%</span>
+                    <span><i class="fas fa-check-circle"></i> ${completedCount}/3 Stages Completed</span>
+                </div>
+            </div>
+            
+            <div style="background: #eef2f0; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+    `;
+    
+    for (let i = 0; i < stages.length; i++) {
+        const stage = stages[i];
+        const isCompleted = i < completedCount;
+        const isCurrent = currentStatus === stage.status;
+        let stageClass = 'pending';
+        let iconDisplay = stage.icon;
+        if (isCompleted) { stageClass = 'completed'; iconDisplay = '✓'; }
+        else if (isCurrent) { stageClass = 'current'; }
+        
+        html += `
+            <div class="stage-item">
+                <div class="stage-icon ${stageClass}">${iconDisplay}</div>
+                <div class="stage-label">${stage.checker}</div>
+                <div class="stage-label" style="font-size: 0.7rem;">${stage.name}</div>
+                <div class="stage-status">
+                    ${isCompleted ? '✅ Completed' : (isCurrent ? '🔄 In Progress' : '⏳ Pending')}
+                </div>
+            </div>
+        `;
+        if (i < 2) html += `<div style="width: 40px; text-align: center; color: ${isCompleted ? '#2ecc71' : '#ccc'};">→</div>`;
+    }
+    
     html += `
-        <div style="margin-bottom: 1.5rem;">
-            <div style="display: flex; justify-content: space-between; gap: 0.5rem; margin-bottom: 1rem;">
-                <div style="flex: 1; text-align: center;">
-                    <div style="width: 40px; height: 40px; background: ${completedCount >= 1 ? '#2ecc71' : (currentStatus === 'Pending Eligibility Check' ? '#3498db' : '#e0e0e0')}; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem; color: white; font-weight: bold;">${completedCount >= 1 ? '✓' : (currentStatus === 'Pending Eligibility Check' ? '◉' : '○')}</div>
-                    <div style="font-weight: 700; font-size: 0.8rem;">Check 1</div>
-                    <div style="font-size: 0.7rem; color: #666;">Eligibility Review</div>
-                    <div style="font-size: 0.65rem; margin-top: 0.2rem;">${completedCount >= 1 ? '✅ Completed' : (currentStatus === 'Pending Eligibility Check' ? '🔄 In Progress' : '⏳ Pending')}</div>
                 </div>
-                <div style="flex: 1; text-align: center;">
-                    <div style="width: 40px; height: 40px; background: ${completedCount >= 2 ? '#2ecc71' : (currentStatus === 'Pending Secondary Check' ? '#3498db' : '#e0e0e0')}; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem; color: white; font-weight: bold;">${completedCount >= 2 ? '✓' : (currentStatus === 'Pending Secondary Check' ? '◉' : '○')}</div>
-                    <div style="font-weight: 700; font-size: 0.8rem;">Check 2</div>
-                    <div style="font-size: 0.7rem; color: #666;">Secondary Review</div>
-                    <div style="font-size: 0.65rem; margin-top: 0.2rem;">${completedCount >= 2 ? '✅ Completed' : (currentStatus === 'Pending Secondary Check' ? '🔄 In Progress' : '⏳ Pending')}</div>
-                </div>
-                <div style="flex: 1; text-align: center;">
-                    <div style="width: 40px; height: 40px; background: ${completedCount >= 3 ? '#2ecc71' : (currentStatus === 'Pending Final Check' ? '#3498db' : '#e0e0e0')}; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem; color: white; font-weight: bold;">${completedCount >= 3 ? '✓' : (currentStatus === 'Pending Final Check' ? '◉' : '○')}</div>
-                    <div style="font-weight: 700; font-size: 0.8rem;">Check 3</div>
-                    <div style="font-size: 0.7rem; color: #666;">Final Review</div>
-                    <div style="font-size: 0.65rem; margin-top: 0.2rem;">${completedCount >= 3 ? '✅ Completed' : (currentStatus === 'Pending Final Check' ? '🔄 In Progress' : '⏳ Pending')}</div>
+                <div style="margin-top: 1.5rem;">
+                    <div style="background: #e0e0e0; border-radius: 10px; height: 8px; overflow: hidden;">
+                        <div style="width: ${progressPercent}%; background: linear-gradient(90deg, #3498db, #2ecc71); height: 100%;"></div>
+                    </div>
                 </div>
             </div>
-            <div style="margin-top: 1rem;">
-                <div style="display: flex; justify-content: space-between; font-size: 0.7rem; margin-bottom: 0.3rem;">
-                    <span>Overall Progress</span>
-                    <span>${Math.round(progressPercent)}% Complete</span>
-                </div>
-                <div style="background: #eef2f0; border-radius: 10px; height: 8px; overflow: hidden;">
-                    <div style="width: ${progressPercent}%; background: linear-gradient(90deg, #3498db, #2ecc71); height: 100%; border-radius: 10px;"></div>
-                </div>
-            </div>
-        </div>`;
+    `;
     
     // Check 1 Details
     const isCheck1Completed = completedCount >= 1;
     const isCheck1Current = currentStatus === 'Pending Eligibility Check';
     const canActOnCheck1 = canCheck1 && isCheck1Current;
     
-    html += `<div style="margin-bottom: 1rem; background: ${isCheck1Completed ? '#f0fff4' : (isCheck1Current ? '#e8f0fe' : '#f8f9fa')}; border-radius: 0.8rem; padding: 1rem; border-left: 4px solid ${isCheck1Completed ? '#2ecc71' : (isCheck1Current ? '#3498db' : '#ddd')};">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
-            <div>
-                <i class="fas fa-search" style="color: ${isCheck1Completed ? '#2ecc71' : (isCheck1Current ? '#3498db' : '#999')};"></i>
-                <strong>Check 1: Eligibility Review</strong>
-                <div><small>Eligibility Officer</small></div>
+    html += `
+        <div class="improved-section">
+            <div class="improved-section-header">
+                <i class="fas fa-search"></i>
+                <h3>Check 1: Eligibility Review</h3>
+                <span class="signature-status ${isCheck1Completed ? 'signed' : (isCheck1Current ? 'current' : 'pending')}" style="${isCheck1Current ? 'background:#cce5ff;color:#004085;' : ''}">
+                    ${isCheck1Completed ? '✅ Completed' : (isCheck1Current ? '🔄 In Progress' : '⏳ Pending')}
+                </span>
             </div>
-            <span style="background: ${isCheck1Completed ? '#d4edda' : (isCheck1Current ? '#cce5ff' : '#e9ecef')}; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.7rem;">
-                ${isCheck1Completed ? '✅ Completed' : (isCheck1Current ? '🔄 In Progress' : '⏳ Pending')}
-            </span>
-        </div>
-        ${app.check1Feedback ? `<div style="margin-top: 0.5rem; padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem;"><strong>Feedback:</strong> ${escapeHtml(app.check1Feedback)}</div>` : ''}
-        ${isCheck1Current ? `
-            <div class="check-stage-actions" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e0e0e0;">
-                ${canActOnCheck1 ? `
-                    <label style="font-weight: 600; font-size: 0.75rem; margin-bottom: 0.3rem;">Decision:</label>
-                    <div style="display: flex; gap: 0.5rem; margin-top: 0.3rem; flex-wrap: wrap;">
-                        <button class="btn-sm approve-check1" data-app-id="${app.id}" style="background: #2ecc71; color: white;"><i class="fas fa-check"></i> Approve & Send to Check 2</button>
-                        <button class="btn-sm return-check1" data-app-id="${app.id}" style="background: #e74c3c; color: white;"><i class="fas fa-undo-alt"></i> Return to Faculty</button>
+            <div class="improved-section-content">
+                <p><strong>Review Criteria:</strong> Proposal completeness, eligibility requirements, CV verification</p>
+                ${app.check1CompletedAt ? `<p><i class="fas fa-clock"></i> Completed: ${new Date(app.check1CompletedAt).toLocaleString()}</p>` : ''}
+                ${app.check1Feedback ? `<div style="background: #fff3cd; padding: 0.75rem; border-radius: 8px; margin-top: 0.5rem;"><strong>Feedback:</strong><br>${escapeHtml(app.check1Feedback)}</div>` : ''}
+                ${isCheck1Current ? `
+                    <div class="check-stage-actions" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e0e0e0;">
+                        ${canActOnCheck1 ? `
+                            <label style="display: block; font-size: 0.75rem; font-weight: 600; margin-bottom: 0.3rem;">Decision:</label>
+                            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                <button class="btn-sm approve-check1" data-app-id="${app.id}" style="background: #2ecc71; color: white;"><i class="fas fa-check"></i> Approve & Send to Check 2</button>
+                                <button class="btn-sm return-check1" data-app-id="${app.id}" style="background: #e74c3c; color: white;"><i class="fas fa-undo-alt"></i> Return to Faculty</button>
+                            </div>
+                            <div style="margin-top: 0.5rem;">
+                                <textarea id="check1Feedback" rows="2" style="width: 100%; padding: 0.4rem; border-radius: 0.5rem; border: 1px solid #ddd; font-size: 0.75rem;" placeholder="Feedback for faculty (required if returning)..."></textarea>
+                            </div>
+                        ` : `
+                            <div style="padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem; text-align: center;">
+                                <i class="fas fa-lock"></i> Only Check 1 can review this stage.
+                            </div>
+                        `}
                     </div>
-                    <textarea id="check1Feedback" rows="2" style="width: 100%; margin-top: 0.5rem; padding: 0.4rem; border-radius: 0.5rem; font-size: 0.75rem;" placeholder="Feedback for faculty (required if returning)..."></textarea>
-                ` : `<div style="padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem; text-align: center;"><i class="fas fa-lock"></i> Only Check 1 can review this stage.</div>`
-                }
+                ` : ''}
             </div>
-        ` : ''}
-    </div>`;
+        </div>
+    `;
     
     // Check 2 Details
     const isCheck2Completed = completedCount >= 2;
     const isCheck2Current = currentStatus === 'Pending Secondary Check';
     const canActOnCheck2 = canCheck2 && isCheck2Current;
     
-    html += `<div style="margin-bottom: 1rem; background: ${isCheck2Completed ? '#f0fff4' : (isCheck2Current ? '#e8f0fe' : '#f8f9fa')}; border-radius: 0.8rem; padding: 1rem; border-left: 4px solid ${isCheck2Completed ? '#2ecc71' : (isCheck2Current ? '#3498db' : '#ddd')};">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
-            <div>
-                <i class="fas fa-clipboard-list" style="color: ${isCheck2Completed ? '#2ecc71' : (isCheck2Current ? '#3498db' : '#999')};"></i>
-                <strong>Check 2: Secondary Review</strong>
-                <div><small>Secondary Checker</small></div>
+    html += `
+        <div class="improved-section">
+            <div class="improved-section-header">
+                <i class="fas fa-clipboard-list"></i>
+                <h3>Check 2: Secondary Review</h3>
+                <span class="signature-status ${isCheck2Completed ? 'signed' : (isCheck2Current ? 'current' : 'pending')}" style="${isCheck2Current ? 'background:#cce5ff;color:#004085;' : ''}">
+                    ${isCheck2Completed ? '✅ Completed' : (isCheck2Current ? '🔄 In Progress' : '⏳ Pending')}
+                </span>
             </div>
-            <span style="background: ${isCheck2Completed ? '#d4edda' : (isCheck2Current ? '#cce5ff' : '#e9ecef')}; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.7rem;">
-                ${isCheck2Completed ? '✅ Completed' : (isCheck2Current ? '🔄 In Progress' : '⏳ Pending')}
-            </span>
-        </div>
-        ${app.check2Feedback ? `<div style="margin-top: 0.5rem; padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem;"><strong>Feedback:</strong> ${escapeHtml(app.check2Feedback)}</div>` : ''}
-        ${isCheck2Current ? `
-            <div class="check-stage-actions" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e0e0e0;">
-                ${canActOnCheck2 ? `
-                    <label style="font-weight: 600; font-size: 0.75rem; margin-bottom: 0.3rem;">Decision:</label>
-                    <div style="display: flex; gap: 0.5rem; margin-top: 0.3rem; flex-wrap: wrap;">
-                        <button class="btn-sm approve-check2" data-app-id="${app.id}" style="background: #2ecc71; color: white;"><i class="fas fa-check"></i> Approve & Send to Check 3</button>
-                        <button class="btn-sm return-check2" data-app-id="${app.id}" style="background: #e74c3c; color: white;"><i class="fas fa-undo-alt"></i> Return to Faculty</button>
+            <div class="improved-section-content">
+                <p><strong>Review Criteria:</strong> Technical soundness, methodology, budget feasibility</p>
+                ${app.check2CompletedAt ? `<p><i class="fas fa-clock"></i> Completed: ${new Date(app.check2CompletedAt).toLocaleString()}</p>` : ''}
+                ${app.check2Feedback ? `<div style="background: #fff3cd; padding: 0.75rem; border-radius: 8px; margin-top: 0.5rem;"><strong>Feedback:</strong><br>${escapeHtml(app.check2Feedback)}</div>` : ''}
+                ${isCheck2Current ? `
+                    <div class="check-stage-actions" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e0e0e0;">
+                        ${canActOnCheck2 ? `
+                            <label style="display: block; font-size: 0.75rem; font-weight: 600; margin-bottom: 0.3rem;">Decision:</label>
+                            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                <button class="btn-sm approve-check2" data-app-id="${app.id}" style="background: #2ecc71; color: white;"><i class="fas fa-check"></i> Approve & Send to Check 3</button>
+                                <button class="btn-sm return-check2" data-app-id="${app.id}" style="background: #e74c3c; color: white;"><i class="fas fa-undo-alt"></i> Return to Faculty</button>
+                            </div>
+                            <div style="margin-top: 0.5rem;">
+                                <textarea id="check2Feedback" rows="2" style="width: 100%; padding: 0.4rem; border-radius: 0.5rem; border: 1px solid #ddd; font-size: 0.75rem;" placeholder="Feedback for faculty (required if returning)..."></textarea>
+                            </div>
+                        ` : `
+                            <div style="padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem; text-align: center;">
+                                <i class="fas fa-lock"></i> Only Check 2 can review this stage.
+                            </div>
+                        `}
                     </div>
-                    <textarea id="check2Feedback" rows="2" style="width: 100%; margin-top: 0.5rem; padding: 0.4rem; border-radius: 0.5rem; font-size: 0.75rem;" placeholder="Feedback for faculty (required if returning)..."></textarea>
-                ` : `<div style="padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem; text-align: center;"><i class="fas fa-lock"></i> Only Check 2 can review this stage.</div>`
-                }
+                ` : ''}
             </div>
-        ` : ''}
-    </div>`;
+        </div>
+    `;
     
     // Check 3 Details
     const isCheck3Completed = completedCount >= 3;
     const isCheck3Current = currentStatus === 'Pending Final Check';
     const canActOnCheck3 = canCheck3 && isCheck3Current;
     
-    html += `<div style="margin-bottom: 1rem; background: ${isCheck3Completed ? '#f0fff4' : (isCheck3Current ? '#e8f0fe' : '#f8f9fa')}; border-radius: 0.8rem; padding: 1rem; border-left: 4px solid ${isCheck3Completed ? '#2ecc71' : (isCheck3Current ? '#3498db' : '#ddd')};">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
-            <div>
-                <i class="fas fa-check-double" style="color: ${isCheck3Completed ? '#2ecc71' : (isCheck3Current ? '#3498db' : '#999')};"></i>
-                <strong>Check 3: Final Review</strong>
-                <div><small>Final Approver</small></div>
+    html += `
+        <div class="improved-section">
+            <div class="improved-section-header">
+                <i class="fas fa-check-double"></i>
+                <h3>Check 3: Final Review</h3>
+                <span class="signature-status ${isCheck3Completed ? 'signed' : (isCheck3Current ? 'current' : 'pending')}" style="${isCheck3Current ? 'background:#cce5ff;color:#004085;' : ''}">
+                    ${isCheck3Completed ? '✅ Completed' : (isCheck3Current ? '🔄 In Progress' : '⏳ Pending')}
+                </span>
             </div>
-            <span style="background: ${isCheck3Completed ? '#d4edda' : (isCheck3Current ? '#cce5ff' : '#e9ecef')}; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.7rem;">
-                ${isCheck3Completed ? '✅ Completed' : (isCheck3Current ? '🔄 In Progress' : '⏳ Pending')}
-            </span>
-        </div>
-        ${app.check3Feedback ? `<div style="margin-top: 0.5rem; padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem;"><strong>Feedback:</strong> ${escapeHtml(app.check3Feedback)}</div>` : ''}
-        ${isCheck3Current ? `
-            <div class="check-stage-actions" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e0e0e0;">
-                ${canActOnCheck3 ? `
-                    <label style="font-weight: 600; font-size: 0.75rem; margin-bottom: 0.3rem;">Decision:</label>
-                    <div style="display: flex; gap: 0.5rem; margin-top: 0.3rem; flex-wrap: wrap;">
-                        <button class="btn-sm approve-check3" data-app-id="${app.id}" style="background: #2ecc71; color: white;"><i class="fas fa-check"></i> Approve Application</button>
-                        <button class="btn-sm return-check3" data-app-id="${app.id}" style="background: #e74c3c; color: white;"><i class="fas fa-undo-alt"></i> Return to Faculty</button>
+            <div class="improved-section-content">
+                <p><strong>Review Criteria:</strong> Overall assessment, compliance, funding recommendation</p>
+                ${app.check3CompletedAt ? `<p><i class="fas fa-clock"></i> Completed: ${new Date(app.check3CompletedAt).toLocaleString()}</p>` : ''}
+                ${app.check3Feedback ? `<div style="background: #fff3cd; padding: 0.75rem; border-radius: 8px; margin-top: 0.5rem;"><strong>Feedback:</strong><br>${escapeHtml(app.check3Feedback)}</div>` : ''}
+                ${isCheck3Current ? `
+                    <div class="check-stage-actions" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e0e0e0;">
+                        ${canActOnCheck3 ? `
+                            <label style="display: block; font-size: 0.75rem; font-weight: 600; margin-bottom: 0.3rem;">Decision:</label>
+                            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                <button class="btn-sm approve-check3" data-app-id="${app.id}" style="background: #2ecc71; color: white;"><i class="fas fa-check"></i> Approve Application</button>
+                                <button class="btn-sm return-check3" data-app-id="${app.id}" style="background: #e74c3c; color: white;"><i class="fas fa-undo-alt"></i> Return to Faculty</button>
+                            </div>
+                            <div style="margin-top: 0.5rem;">
+                                <textarea id="check3Feedback" rows="2" style="width: 100%; padding: 0.4rem; border-radius: 0.5rem; border: 1px solid #ddd; font-size: 0.75rem;" placeholder="Feedback for faculty (required if returning)..."></textarea>
+                            </div>
+                        ` : `
+                            <div style="padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem; text-align: center;">
+                                <i class="fas fa-lock"></i> Only Check 3 can review this stage.
+                            </div>
+                        `}
                     </div>
-                    <textarea id="check3Feedback" rows="2" style="width: 100%; margin-top: 0.5rem; padding: 0.4rem; border-radius: 0.5rem; font-size: 0.75rem;" placeholder="Feedback for faculty (required if returning)..."></textarea>
-                ` : `<div style="padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem; text-align: center;"><i class="fas fa-lock"></i> Only Check 3 can review this stage.</div>`
-                }
+                ` : ''}
             </div>
-        ` : ''}
-    </div>`;
+        </div>
+    `;
     
     if (app.status === 'Returned') {
-        html += `<div style="background: #fff3cd; margin-top: 1rem; padding: 1rem; border-radius: 0.8rem; border-left: 4px solid #e74c3c;">
-            <i class="fas fa-undo-alt"></i> <strong>Application Returned</strong><br>
-            <strong>Reason:</strong> ${escapeHtml(app.returnedFeedback || 'No specific feedback provided.')}<br>
-            <small>Please address the feedback and resubmit.</small>
-        </div>`;
+        html += `
+            <div class="improved-section" style="border-left: 4px solid #e74c3c;">
+                <div class="improved-section-header" style="border-bottom-color: #e74c3c;">
+                    <i class="fas fa-undo-alt" style="color: #e74c3c;"></i>
+                    <h3>Application Returned for Revision</h3>
+                </div>
+                <div class="improved-section-content">
+                    <p><strong>Reason:</strong> ${escapeHtml(app.returnedFeedback || 'No specific feedback provided.')}</p>
+                    <p><small>Please address the feedback and resubmit for continued review.</small></p>
+                </div>
+            </div>
+        `;
     }
     
-    html += '</div></div>';
+    html += `<div class="demo-note" style="margin-top: 1rem; text-align: center;"><i class="fas fa-info-circle"></i> Review Process Flow: Check 1 (Eligibility) → Check 2 (Secondary) → Check 3 (Final) → Approval</div></div>`;
     return html;
 }
+
+window.toggleSection = function(sectionId) {
+    const section = document.getElementById(`section_${sectionId}`);
+    const icon = document.getElementById(`icon_${sectionId}`);
+    if (section && icon) {
+        if (section.style.display === 'none' || section.style.display === '') {
+            section.style.display = 'block';
+            icon.style.transform = 'rotate(0deg)';
+        } else {
+            section.style.display = 'none';
+            icon.style.transform = 'rotate(-90deg)';
+        }
+    }
+};
 
 // PDF Viewer
 function openPDFViewer(fileName) {
@@ -1656,7 +2391,6 @@ function openPDFViewer(fileName) {
 
 // Event Handlers for modals
 function attachCVHandlersInModal(modal, email, appId) {
-    // CV status change handlers
     const cvSelects = modal.querySelectorAll('.cv-status-change');
     cvSelects.forEach(select => {
         select.onchange = async function() {
@@ -1672,7 +2406,6 @@ function attachCVHandlersInModal(modal, email, appId) {
         };
     });
     
-    // PDF View buttons
     const viewButtons = modal.querySelectorAll('.view-cv-btn');
     viewButtons.forEach(btn => {
         btn.onclick = function() {
@@ -1681,7 +2414,6 @@ function attachCVHandlersInModal(modal, email, appId) {
         };
     });
     
-    // Save feedback button
     const saveFeedbackBtn = modal.querySelector('.save-feedback-btn');
     if (saveFeedbackBtn) {
         saveFeedbackBtn.onclick = async function() {
