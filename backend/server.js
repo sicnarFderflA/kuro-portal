@@ -268,7 +268,7 @@ app.put('/api/applications/:id', async (req, res) => {
         const result = await Submission.findOneAndUpdate(
             { id: id },
             { $set: updates },
-            { new: true }
+            { returnDocument: 'after' }
         );
         
         if (!result) {
@@ -394,7 +394,7 @@ app.post('/api/faculty/drafts', async (req, res) => {
         const result = await Draft.findOneAndUpdate(
             { draftId: draftData.draftId, userEmail: draftData.userEmail },
             { $set: draftData },
-            { upsert: true, new: true }
+            { upsert: true, returnDocument: 'after' }
         );
         
         console.log('✅ Saved draft:', result.draftId);

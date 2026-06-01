@@ -51,7 +51,7 @@ router.put('/:id', async (req, res) => {
         const app = await Application.findOneAndUpdate(
             { id: req.params.id },
             { ...req.body, updatedAt: new Date() },
-            { new: true }
+            { returnDocument: 'after' }
         );
         res.json(app);
     } catch (error) {
