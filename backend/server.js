@@ -961,6 +961,104 @@ app.get('/api/debug/emailjs-detailed', async (req, res) => {
     }
 });
 
+// ============ TEST EMAILS MANAGEMENT ============
+
+// Get all test emails (Super Admin only)
+app.get('/api/admin/test-emails', async (req, res) => {
+    try {
+        const { userEmail } = req.query;
+        
+        // Verify super admin
+        const user = await User.findOne({ email: userEmail });
+        if (!user || user.role !== 'superadmin') {
+            return res.status(403).json({ error: 'Access denied. Super admin only.' });
+        }
+        
+        const testEmails = await TestEmail.find({}).sort({ createdAt: -1 });
+        res.json(testEmails);
+    } catch (error) {
+        console.error('Error fetching test emails:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Add test email
+app.post('/api/admin/test-emails', async (req, res) => {
+    try {
+        const { userEmail, email, role, name, password } = req.body;
+        
+        // Verify super admin
+        const admin = await User.findOne({ email: userEmail });
+        if (!admin || admin.role !== 'superadmin') {
+            return res.status(403).json({ error: 'Access denied. Super admin only.' });
+        }
+        
+        // Check if test email already exists
+        const existing = await TestEmail.findOne({ email });
+        if (existing) {
+            return res.status(400).json({ error: 'Test email already exists' });
+        }
+        
+        // Create test email
+        const testEmail = new TestEmail({
+            email,
+            role,
+            name: name || email.split('@')[0],
+            password: password || 'test123',
+            createdBy: userEmail
+        });
+        
+        await testEmail.save();
+        
+        // Also create/update user in the main users collection
+        await User.findOneAndUpdate(
+            { email },
+            { 
+                email,
+                name: name || email.split('@')[0],
+                role: role,
+                password: password || 'test123',
+                isTestAccount: true
+            },
+            { upsert: true, new: true }
+        );
+        
+        res.status(201).json(testEmail);
+    } catch (error) {
+        console.error('Error adding test email:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Delete test email
+app.delete('/api/admin/test-emails/:id', async (req, res) => {
+    try {
+        const { userEmail } = req.body;
+        const { id } = req.params;
+        
+        // Verify super admin
+        const admin = await User.findOne({ email: userEmail });
+        if (!admin || admin.role !== 'superadmin') {
+            return res.status(403).json({ error: 'Access denied. Super admin only.' });
+        }
+        
+        const testEmail = await TestEmail.findById(id);
+        if (!testEmail) {
+            return res.status(404).json({ error: 'Test email not found' });
+        }
+        
+        // Delete from test emails collection
+        await TestEmail.findByIdAndDelete(id);
+        
+        // Optionally delete or mark user
+        await User.findOneAndDelete({ email: testEmail.email });
+        
+        res.json({ message: 'Test email deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting test email:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
 
 // ========== 404 HANDLER ==========
 app.use((req, res) => {
