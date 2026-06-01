@@ -3163,8 +3163,16 @@ function collectBudgetItems() {
 async function collectFormData() {
     let piCVName = '';
     let piCVData = '';
+    
+    // FIRST, check if we're editing an existing application and preserve its CV data
+    if (isEditMode && currentDraftData && currentDraftData.piCVName) {
+        piCVName = currentDraftData.piCVName;
+        piCVData = currentDraftData.piCVData || '';
+        console.log('Preserved PI CV from existing data:', piCVName);
+    }
+    
     const piCVInput = document.getElementById('piCV');
-        if (piCVInput && piCVInput.files && piCVInput.files[0]) {
+    if (piCVInput && piCVInput.files && piCVInput.files[0]) {
         const file = piCVInput.files[0];
         if (file.size > 10 * 1024 * 1024) {
             showFormNotification('CV file exceeds 10MB limit', true);
@@ -3172,6 +3180,7 @@ async function collectFormData() {
         } else {
             piCVName = file.name;
             piCVData = await fileToBase64(file);
+            console.log('New PI CV uploaded:', piCVName);
         }
     }
     
@@ -3183,21 +3192,41 @@ async function collectFormData() {
         }))
         .filter(member => member.name !== '');
     
-    // Preserve existing teamCVs
+    // Preserve existing teamCVs AND teamCVData
     let teamCVs = [];
-    if (currentDraftData && currentDraftData.teamCVs) {
+    let teamCVData = [];
+    
+    // FIRST, check if we're editing and preserve existing team CV data
+    if (isEditMode && currentDraftData && currentDraftData.teamCVs) {
+        console.log('Preserving existing team CVs from edit mode');
         for (let i = 0; i < teamMembers.length; i++) {
             if (currentDraftData.teamCVs[i] && currentDraftData.teamCVs[i].name) {
                 teamCVs[i] = { ...currentDraftData.teamCVs[i] };
+                if (currentDraftData.teamCVData && currentDraftData.teamCVData[i]) {
+                    teamCVData[i] = currentDraftData.teamCVData[i];
+                }
+            } else {
+                teamCVs[i] = null;
+            }
+        }
+    } else if (currentDraftData && currentDraftData.teamCVs) {
+        // Also check currentDraftData (for drafts)
+        for (let i = 0; i < teamMembers.length; i++) {
+            if (currentDraftData.teamCVs[i] && currentDraftData.teamCVs[i].name) {
+                teamCVs[i] = { ...currentDraftData.teamCVs[i] };
+                if (currentDraftData.teamCVData && currentDraftData.teamCVData[i]) {
+                    teamCVData[i] = currentDraftData.teamCVData[i];
+                }
             } else {
                 teamCVs[i] = null;
             }
         }
     } else {
         teamCVs = new Array(teamMembers.length).fill(null);
+        teamCVData = new Array(teamMembers.length).fill(null);
     }
     
-    // Handle new CV file uploads for team members
+    // Handle new CV file uploads for team members (these override existing)
     for (let i = 0; i < teamMembers.length; i++) {
         const teamCVInput = document.getElementById('teamCV_' + i);
         if (teamCVInput && teamCVInput.files && teamCVInput.files[0]) {
@@ -3206,9 +3235,12 @@ async function collectFormData() {
                 showFormNotification('CV file for team member exceeds 10MB limit', true);
                 teamCVInput.value = '';
             } else {
+                const base64Data = await fileToBase64(file);
                 if (!teamCVs[i]) teamCVs[i] = {};
                 teamCVs[i].name = file.name;
                 if (!teamCVs[i].status) teamCVs[i].status = 'pending';
+                teamCVData[i] = base64Data;
+                console.log(`New CV uploaded for team member ${i}:`, file.name);
             }
         }
     }
@@ -3262,12 +3294,12 @@ async function collectFormData() {
         piEmail: document.getElementById('piEmail')?.value || '',
         dept: document.getElementById('dept')?.value || '',
         school: document.getElementById('school')?.value || '',
-        extension: document.getElementById('extension')?.value || '',  // ← Make sure this exists!
-        duration: document.getElementById('duration')?.value || '',    // ← Make sure this exists!
+        extension: document.getElementById('extension')?.value || '',
+        duration: document.getElementById('duration')?.value || '',
         
         // Form 1 - Proposal Content
         rationale: document.getElementById('rationale')?.value || '',
-        litReview: document.getElementById('litReview')?.value || '',   // ← Make sure this exists!
+        litReview: document.getElementById('litReview')?.value || '',
         objectives: document.getElementById('objectives')?.value || '',
         methodology: document.getElementById('methodology')?.value || '',
         outputs: document.getElementById('outputs')?.value || '',
@@ -3275,14 +3307,14 @@ async function collectFormData() {
         
         // Form 1 - Team & Activities
         teamMembers: teamMembers,
-        activities: activities,  // ← Now properly collected
-        budgetItems: budgetItems, // ← Now properly collected
+        activities: activities,
+        budgetItems: budgetItems,
         
         // Form 2 - Endorsement Information
         endorsementDate: document.getElementById('endorsementDate')?.value || '',
-        endorseDept: document.getElementById('endorseDept')?.value || '',     // ← Make sure this exists!
-        endorseSchool: document.getElementById('endorseSchool')?.value || '', // ← Make sure this exists!
-        schoolYear: document.getElementById('schoolYear')?.value || '',       // ← Make sure this exists!
+        endorseDept: document.getElementById('endorseDept')?.value || '',
+        endorseSchool: document.getElementById('endorseSchool')?.value || '',
+        schoolYear: document.getElementById('schoolYear')?.value || '',
         
         // Form 2 - Signatures
         fromChair: document.getElementById('fromChair')?.value || '',
@@ -3293,10 +3325,11 @@ async function collectFormData() {
         // Signatures status
         signatures: { chair: false, dean: false },
         
-        // CV Uploads
+        // CV Uploads - NOW WITH PRESERVED DATA
         piCVName: piCVName,
-        piCVData: piCVData, 
-        teamCVs: teamCVs
+        piCVData: piCVData,
+        teamCVs: teamCVs,
+        teamCVData: teamCVData  // ← Make sure this is included!
     };
 }
 
