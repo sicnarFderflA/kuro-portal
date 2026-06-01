@@ -4563,34 +4563,45 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                     
                     // For EDITING existing applications (submitted ones)
                     if (isEditingExistingApp) {
-                        // Get the original title from the database via currentDraftData
-                        const originalTitle = currentDraftData?.proposalTitle || currentDraftData?.proposalTitle;
-                        
-                        // For existing applications, we don't require a title to close
-                        // Just check if there are changes
+                        // Check if there are any actual changes by comparing with original data
                         let hasChanges = false;
                         
                         if (currentDraftData) {
                             const originalData = currentDraftData;
                             
                             // Compare text fields
-                            const textFields = ['proposalTitle', 'piName', 'piEmail', 'dept', 'school', 'rationale', 'objectives', 'methodology', 'outputs'];
+                            const textFields = ['proposalTitle', 'piName', 'piEmail', 'dept', 'school', 'rationale', 'objectives', 'methodology', 'outputs', 'duration', 'extension', 'litReview'];
                             for (const field of textFields) {
-                                const currentVal = currentFormData[field] || '';
-                                const originalVal = originalData[field] || '';
+                                const currentVal = (currentFormData[field] || '').trim();
+                                const originalVal = (originalData[field] || '').trim();
                                 if (currentVal !== originalVal) {
+                                    console.log(`Change detected in ${field}: "${originalVal}" → "${currentVal}"`);
                                     hasChanges = true;
                                     break;
                                 }
                             }
                             
                             // Check references
-                            if (JSON.stringify(currentFormData.references) !== JSON.stringify(originalData.references || [])) {
+                            if (JSON.stringify(currentFormData.references || []) !== JSON.stringify(originalData.references || [])) {
+                                console.log('Change detected in references');
                                 hasChanges = true;
                             }
                             
                             // Check team members
-                            if (JSON.stringify(currentFormData.teamMembers) !== JSON.stringify(originalData.teamMembers || [])) {
+                            if (JSON.stringify(currentFormData.teamMembers || []) !== JSON.stringify(originalData.teamMembers || [])) {
+                                console.log('Change detected in team members');
+                                hasChanges = true;
+                            }
+                            
+                            // Check activities
+                            if (JSON.stringify(currentFormData.activities || []) !== JSON.stringify(originalData.activities || [])) {
+                                console.log('Change detected in activities');
+                                hasChanges = true;
+                            }
+                            
+                            // Check budget items
+                            if (JSON.stringify(currentFormData.budgetItems || []) !== JSON.stringify(originalData.budgetItems || [])) {
+                                console.log('Change detected in budget items');
                                 hasChanges = true;
                             }
                         }
@@ -4603,36 +4614,45 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                             return;
                         }
                         
-                        // Has changes - ask to save
+                        // Has changes - ask what to do
                         const result = await Swal.fire({
-                            title: 'Save Changes?',
-                            text: 'You have unsaved changes. Would you like to save them before closing?',
-                            icon: 'question',
+                            title: 'Unsaved Changes',
+                            text: 'You have made changes to this application. What would you like to do?',
+                            icon: 'warning',
+                            showDenyButton: true,
                             showCancelButton: true,
                             confirmButtonColor: '#D4AF37',
-                            cancelButtonColor: '#6c757d',
-                            confirmButtonText: 'Yes, Save',
-                            cancelButtonText: 'No, Discard'
+                            denyButtonColor: '#6c757d',
+                            cancelButtonColor: '#e74c3c',
+                            confirmButtonText: 'Save Changes',
+                            denyButtonText: 'Discard Changes',
+                            cancelButtonText: 'Cancel, Stay Here'
                         });
                         
                         if (result.isConfirmed) {
-                            // Trigger the submit/update button instead
+                            // User wants to save - click the submit button
+                            console.log('User chose to save changes');
                             const submitBtn = modal.querySelector('#customSubmitBtn');
                             if (submitBtn) {
                                 submitBtn.click();
                             } else {
-                                // Fallback save
-                                if (currentDraftData) {
-                                    Object.assign(currentDraftData, currentFormData);
-                                    await saveDrafts();
-                                    showInlineNotification(modal, '📝 Changes saved!', true);
-                                }
+                                showInlineNotification(modal, 'Could not save changes', false);
+                                Swal.close();
+                                renderApplicant();
                             }
+                            // Don't close the modal here - let the submit handler handle it
+                            return;
+                        } else if (result.isDenied) {
+                            // User wants to discard changes - just close
+                            console.log('User chose to discard changes');
+                            Swal.close();
+                            renderApplicant();
+                            return;
+                        } else {
+                            // User cancelled - stay in the modal
+                            console.log('User cancelled, staying in modal');
+                            return;
                         }
-                        
-                        Swal.close();
-                        renderApplicant();
-                        return;
                     }
                     
                     // For EDITING existing DRAFTS with title
@@ -4644,7 +4664,7 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                             const originalData = currentDraftData;
                             const textFields = ['proposalTitle', 'piName', 'piEmail', 'dept', 'school', 'rationale', 'objectives', 'methodology', 'outputs'];
                             for (const field of textFields) {
-                                if ((currentFormData[field] || '') !== (originalData[field] || '')) {
+                                if ((currentFormData[field] || '').trim() !== (originalData[field] || '').trim()) {
                                     hasChanges = true;
                                     break;
                                 }
@@ -4681,7 +4701,7 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                         return;
                     }
                     
-                    // For NEW applications (original logic)
+                    // For NEW applications
                     if (isNewApplication) {
                         const hasAnyContent = currentFormData.piName || 
                                             currentFormData.piEmail ||
