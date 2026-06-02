@@ -56,18 +56,64 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// MongoDB Connection
+// MongoDB Connection settings (will be handled by connectWithRetry)
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://200520181_db_user:200520181_db_password@kuro-database.neg1meg.mongodb.net/kuro_portal?retryWrites=true&w=majority&appName=KURO-Database';
 
-mongoose.connect(MONGODB_URI, {
-    maxPoolSize: 10,
-    minPoolSize: 2,
-    maxIdleTimeMS: 30000,
-    socketTimeoutMS: 45000,
-    connectTimeoutMS: 10000
-})
-.then(() => console.log('✅ MongoDB Connected with optimized pool'))
-.catch(err => console.error('❌ MongoDB Connection error:', err));
+// Add connection event handlers BEFORE connectWithRetry
+mongoose.connection.on('error', err => {
+    console.error('MongoDB connection error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+    console.warn('⚠️ MongoDB disconnected! Attempting to reconnect...');
+});
+
+mongoose.connection.on('reconnected', () => {
+    console.log('✅ MongoDB reconnected');
+});
+
+// Keep database connection alive
+setInterval(async () => {
+    if (mongoose.connection.readyState === 1) {
+        try {
+            await mongoose.connection.db.admin().ping();
+            console.log('💓 Database ping successful');
+        } catch (err) {
+            console.error('Database ping failed:', err.message);
+        }
+    }
+}, 30000);
+
+// Connection retry logic (this does the actual connection)
+const connectWithRetry = async (retries = 5, delay = 5000) => {
+    for (let i = 0; i < retries; i++) {
+        try {
+            await mongoose.connect(MONGODB_URI, {
+                maxPoolSize: 10,
+                minPoolSize: 2,
+                socketTimeoutMS: 30000,
+                connectTimeoutMS: 15000,
+                serverSelectionTimeoutMS: 15000,
+                heartbeatFrequencyMS: 10000,
+            });
+            console.log('✅ MongoDB Connected successfully');
+            return;
+        } catch (err) {
+            console.error(`Connection attempt ${i + 1} failed:`, err.message);
+            if (i < retries - 1) {
+                console.log(`Retrying in ${delay/1000} seconds...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+            } else {
+                console.error('All connection attempts failed');
+                // Don't exit - let the server try to recover
+                // process.exit(1);
+            }
+        }
+    }
+};
+
+// Call this to start the connection
+connectWithRetry();
 
 // Google OAuth client
 const googleClient = new OAuth2Client(
@@ -951,6 +997,20 @@ app.get('/api/debug/emailjs-detailed', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+// Keep database connection alive
+setInterval(async () => {
+    if (mongoose.connection.readyState === 1) {
+        try {
+            await mongoose.connection.db.admin().ping();
+            console.log('💓 Database ping successful');
+        } catch (err) {
+            console.error('Database ping failed:', err.message);
+        }
+    } else {
+        console.log(`Database state: ${mongoose.connection.readyState} - not connected`);
+    }
+}, 30000); // Every 30 seconds
 
 // ========== 404 HANDLER ==========
 app.use((req, res) => {

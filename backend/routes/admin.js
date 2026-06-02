@@ -35,23 +35,73 @@ const isSuperAdmin = async (req, res, next) => {
 
 // Get all applications (admin view)
 router.get('/applications', async (req, res) => {
-    try {
-        const { status, grant, search } = req.query;
-        let query = {};
-        if (status && status !== 'all') query.status = status;
-        if (grant && grant !== 'all') query.grantTitle = grant;
-        if (search) {
-            query.$or = [
-                { proposalTitle: { $regex: search, $options: 'i' } },
-                { userEmail: { $regex: search, $options: 'i' } },
-                { piName: { $regex: search, $options: 'i' } }
-            ];
+    // Use a flag to prevent multiple responses
+    let isResponded = false;
+    
+    const safeRespond = (statusCode, data) => {
+        if (!isResponded && !res.headersSent) {
+            isResponded = true;
+            return res.status(statusCode).json(data);
         }
-        const apps = await Application.find(query).sort({ submittedDate: -1 });
-        res.json(apps);
+        return null;
+    };
+    
+    try {
+        console.log('📊 GET /admin/applications - START');
+        
+        // Set a timeout for the entire request
+        const timeoutId = setTimeout(() => {
+            if (!isResponded && !res.headersSent) {
+                console.error('Request timeout - sending empty array');
+                isResponded = true;
+                res.status(200).json([]);
+            }
+        }, 15000);
+        
+        const Application = require('../models/Application');
+        
+        // Check if database is connected
+        if (mongoose.connection.readyState !== 1) {
+            console.error('Database not connected');
+            clearTimeout(timeoutId);
+            return safeRespond(200, []);
+        }
+        
+        // Try to get count first
+        let count = 0;
+        try {
+            count = await Application.countDocuments({});
+            console.log(`Total applications in DB: ${count}`);
+        } catch (countErr) {
+            console.error('Count failed:', countErr.message);
+            clearTimeout(timeoutId);
+            return safeRespond(200, []);
+        }
+        
+        // Get applications with limit
+        let apps = [];
+        try {
+            apps = await Application.find({})
+                .sort({ submittedDate: -1 })
+                .limit(100)
+                .lean()
+                .maxTimeMS(10000); // Add query timeout
+                
+            console.log(`✅ Returning ${apps.length} applications`);
+        } catch (queryErr) {
+            console.error('Query failed:', queryErr.message);
+            clearTimeout(timeoutId);
+            return safeRespond(200, []);
+        }
+        
+        clearTimeout(timeoutId);
+        return safeRespond(200, apps);
+        
     } catch (error) {
-        res.status(500).json({ error: error.message });
-        res.status(200).json([]);
+        console.error('❌ Error in /admin/applications:', error);
+        if (!isResponded && !res.headersSent) {
+            return res.status(200).json([]);
+        }
     }
 });
 
