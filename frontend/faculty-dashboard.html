@@ -4958,6 +4958,221 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                     renderApplicant();
                 });
             }
+
+            // ========== SUBMIT BUTTON HANDLER ==========
+            const submitBtn = modal.querySelector('#customSubmitBtn');
+            if (submitBtn) {
+                // Remove existing listeners to avoid duplicates
+                const newSubmitBtn = submitBtn.cloneNode(true);
+                submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
+                
+                newSubmitBtn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    
+                    console.log('🔘🔘🔘 SUBMIT BUTTON CLICKED 🔘🔘🔘');
+                    console.log('isEditMode:', isEditMode);
+                    console.log('editAppId:', editAppId);
+                    console.log('selectedGrant:', selectedGrant);
+                    
+                    // Show loading state
+                    newSubmitBtn.disabled = true;
+                    newSubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+                    
+                    try {
+                        let formData = await collectFormData();
+                        console.log('Form data collected:', formData);
+                        
+                        const today = new Date();
+                        const year = today.getFullYear();
+                        const month = String(today.getMonth() + 1).padStart(2, '0');
+                        const day = String(today.getDate()).padStart(2, '0');
+                        const submissionDate = `${year}-${month}-${day}`;
+
+                        const endorsementDateInput = modal.querySelector('#endorsementDate');
+                        if (endorsementDateInput) {
+                            endorsementDateInput.value = submissionDate;
+                        }
+                        formData.endorsementDate = submissionDate;
+                        
+                        clearAllHighlights(modal);
+                        const activities = collectActivities();
+                        if (!validateActivityDates(activities)) {
+                            newSubmitBtn.disabled = false;
+                            newSubmitBtn.innerHTML = isEditMode ? 'Update Application' : 'Submit Application';
+                            return;
+                        }
+                        
+                        const errors = validateAndHighlightFields(formData, modal);
+                        if (errors.length > 0) {
+                            scrollToFirstError(modal);
+                            showFormNotification('Please complete all required fields (highlighted in red).', true, modal);
+                            newSubmitBtn.disabled = false;
+                            newSubmitBtn.innerHTML = isEditMode ? 'Update Application' : 'Submit Application';
+                            return;
+                        }
+                        
+                        // ========== EDIT MODE (UPDATE EXISTING APPLICATION) ==========
+                        if (isEditMode && editAppId) {
+                            try {
+                                // Get the existing application first
+                                const response = await fetch(`${API_URL}/api/applications/${editAppId}`);
+                                const existingApp = await response.json();
+                                if (!response.ok) throw new Error(existingApp.error || 'Application not found');
+                                
+                                console.log('Existing app data:', existingApp);
+                                
+                                // Merge: use formData values if present, otherwise use existing
+                                const mergedData = {
+                                    id: editAppId,
+                                    userEmail: currentUser.email,
+                                    grantTitle: selectedGrant || existingApp.grantTitle,
+                                    grantType: "Faculty Research Grant",
+                                    status: existingApp.status,
+                                    submittedDate: existingApp.submittedDate,
+                                    signatures: existingApp.signatures,
+                                    signatureRequests: existingApp.signatureRequests,
+                                    // Form fields - use formData if has value, else existing
+                                    proposalTitle: formData.proposalTitle || existingApp.proposalTitle,
+                                    piName: formData.piName || existingApp.piName,
+                                    piEmail: formData.piEmail || existingApp.piEmail,
+                                    dept: formData.dept || existingApp.dept,
+                                    school: formData.school || existingApp.school,
+                                    extension: formData.extension || existingApp.extension,
+                                    duration: formData.duration || existingApp.duration,
+                                    rationale: formData.rationale || existingApp.rationale,
+                                    litReview: formData.litReview || existingApp.litReview,
+                                    objectives: formData.objectives || existingApp.objectives,
+                                    methodology: formData.methodology || existingApp.methodology,
+                                    outputs: formData.outputs || existingApp.outputs,
+                                    references: formData.references && formData.references.length > 0 ? formData.references : existingApp.references,
+                                    teamMembers: formData.teamMembers && formData.teamMembers.length > 0 ? formData.teamMembers : existingApp.teamMembers,
+                                    activities: formData.activities && formData.activities.length > 0 ? formData.activities : existingApp.activities,
+                                    budgetItems: formData.budgetItems && formData.budgetItems.length > 0 ? formData.budgetItems : existingApp.budgetItems,
+                                    fromChair: formData.fromChair || existingApp.fromChair,
+                                    chairEmail: formData.chairEmail || existingApp.chairEmail,
+                                    deanName: formData.deanName || existingApp.deanName,
+                                    deanEmail: formData.deanEmail || existingApp.deanEmail,
+                                    endorseDept: formData.endorseDept || existingApp.endorseDept,
+                                    endorseSchool: formData.endorseSchool || existingApp.endorseSchool,
+                                    schoolYear: formData.schoolYear || existingApp.schoolYear,
+                                    endorsementDate: formData.endorsementDate || existingApp.endorsementDate,
+                                    // CV data - preserve existing if no new files
+                                    piCVName: formData.piCVName || existingApp.piCVName,
+                                    piCVData: formData.piCVData || existingApp.piCVData,
+                                    piCVStatus: existingApp.piCVStatus || 'pending',
+                                    teamCVs: formData.teamCVs && formData.teamCVs.length > 0 ? formData.teamCVs : existingApp.teamCVs,
+                                    teamCVData: formData.teamCVData && formData.teamCVData.length > 0 ? formData.teamCVData : existingApp.teamCVData,
+                                };
+                                
+                                console.log('Merged data for update:', mergedData);
+                                
+                                const result = await KURO_API.updateApplication(editAppId, mergedData);
+                                console.log('Update successful:', result);
+                                
+                                // Delete draft if it exists
+                                if (editDraftId !== null) {
+                                    const drafts = await KURO_API.getFacultyDrafts();
+                                    const draftToDelete = drafts[editDraftId];
+                                    if (draftToDelete?.draftId) {
+                                        await KURO_API.deleteFacultyDraft(draftToDelete.draftId);
+                                    }
+                                    sessionStorage.removeItem('current_draft_id');
+                                    editDraftId = null;
+                                }
+                                
+                                await renderApplicant();
+                                
+                                await Swal.fire({
+                                    icon: 'success',
+                                    title: 'Updated!',
+                                    text: 'Application updated successfully.',
+                                    confirmButtonColor: '#D4AF37',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                                Swal.close();
+                                return;
+                                
+                            } catch (error) {
+                                console.error('Update failed:', error);
+                                showFormNotification('Failed to update application: ' + error.message, true, modal);
+                                newSubmitBtn.disabled = false;
+                                newSubmitBtn.innerHTML = 'Update Application';
+                                return;
+                            }
+                        }
+                        
+                        // ========== NEW SUBMISSION MODE ==========
+                        if (!isEditMode || !editAppId) {
+                            const newId = "FRG" + Date.now();
+                            const newSubmission = { 
+                                id: newId, 
+                                grantTitle: selectedGrant, 
+                                grantType: "Faculty Research Grant", 
+                                status: "Awaiting Signatures",
+                                submittedDate: new Date().toISOString().slice(0,10),
+                                signatures: { chair: { signed: false }, dean: { signed: false } },
+                                piCVStatus: 'pending',
+                                userEmail: currentUser.email,
+                                ...formData
+                            };
+                            
+                            console.log('Creating new application:', newSubmission);
+                            
+                            const created = await KURO_API.createApplication(newSubmission);
+                            console.log('Application created:', created);
+                            
+                            if (!formData.chairEmail || !formData.deanEmail) {
+                                showFormNotification('⚠️ Please fill in Department Chair and Dean email addresses in Form 2.', true, modal);
+                                newSubmitBtn.disabled = false;
+                                newSubmitBtn.innerHTML = 'Submit Application';
+                                return;
+                            }
+                            
+                            try {
+                                await autoGenerateSignatureLinks(created, created.id);
+                            } catch (sigError) {
+                                console.error('Signature generation failed:', sigError);
+                                showFormNotification('⚠️ Application saved but signature emails failed. You can resend signatures later.', false, modal);
+                            }
+                            
+                            if (editDraftId !== null) {
+                                try {
+                                    const drafts = await KURO_API.getFacultyDrafts();
+                                    const draftToDelete = drafts[editDraftId];
+                                    if (draftToDelete?.draftId) {
+                                        await KURO_API.deleteFacultyDraft(draftToDelete.draftId);
+                                    }
+                                    sessionStorage.removeItem('current_draft_id');
+                                    editDraftId = null;
+                                } catch (draftError) {
+                                    console.error('Error deleting draft:', draftError);
+                                }
+                            }
+                            
+                            await renderApplicant();
+                            
+                            await Swal.fire({
+                                icon: 'success',
+                                title: 'Submitted!',
+                                text: 'Application submitted successfully!',
+                                confirmButtonColor: '#D4AF37',
+                                timer: 3000,
+                                showConfirmButton: false
+                            });
+                            Swal.close();
+                        }
+                        
+                    } catch (error) {
+                        console.error('Submission failed:', error);
+                        showFormNotification('Failed to submit: ' + error.message, true, modal);
+                    } finally {
+                        newSubmitBtn.disabled = false;
+                        newSubmitBtn.innerHTML = isEditMode ? 'Update Application' : 'Submit Application';
+                    }
+                });
+            }
             
             // ========== DRAFT BUTTON HANDLER ==========
             const draftBtn = modal.querySelector('#customDraftBtn');
