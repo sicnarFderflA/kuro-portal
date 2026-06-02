@@ -3482,27 +3482,38 @@ function attachCVHandlersInModal(modal, email, appId) {
         };
     });
     
+    // FIXED: Thread-safe CV button handler
     const viewButtons = modal.querySelectorAll('.view-cv-btn');
     viewButtons.forEach(btn => {
-        btn.onclick = async function(e) {
+        // Capture the current button's attributes BEFORE the async operation
+        const type = btn.getAttribute('data-type');
+        const idx = btn.getAttribute('data-idx') || '0';
+        const cvName = btn.getAttribute('data-cv-name');
+        const buttonAppId = appId; // Capture the current appId
+        
+        // Remove existing listener to avoid duplicates
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+        
+        newBtn.onclick = async function(e) {
             e.preventDefault();
-            const type = this.getAttribute('data-type'); // 'pi' or 'team'
-            const idx = this.getAttribute('data-idx') || 0;
-            const cvName = this.getAttribute('data-cv-name');
+            
+            // Use the captured values, NOT reading from DOM again
+            console.log(`Opening CV: type=${type}, idx=${idx}, appId=${buttonAppId}`);
             
             // Show loading indicator
+            const originalHtml = this.innerHTML;
             this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
             this.disabled = true;
             
             try {
-                // Fetch CV data from the new endpoint
-                const response = await fetch(`${API_URL}/api/applications/${appId}/cv?type=${type}&index=${idx}`);
+                // Use captured values
+                const response = await fetch(`${API_URL}/api/applications/${buttonAppId}/cv?type=${type}&index=${idx}`);
                 if (!response.ok) throw new Error('Failed to load CV');
                 
                 const data = await response.json();
                 
                 if (data.cvData) {
-                    // Open PDF in new tab
                     openPDFViewer(data.cvName || cvName, data.cvData);
                 } else {
                     showToast('No CV data available', 'error');
@@ -3511,14 +3522,12 @@ function attachCVHandlersInModal(modal, email, appId) {
                 console.error('Failed to load CV:', error);
                 showToast('Failed to load CV', 'error');
             } finally {
-                // Reset button
-                this.innerHTML = '<i class="fas fa-eye"></i> View';
+                this.innerHTML = originalHtml;
                 this.disabled = false;
             }
         };
     });
 
-    
     const saveFeedbackBtn = modal.querySelector('.save-feedback-btn');
     if (saveFeedbackBtn) {
         saveFeedbackBtn.onclick = async function() {
