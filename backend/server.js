@@ -287,8 +287,7 @@ app.get('/api/applications/:id', async (req, res) => {
         const { id } = req.params;
         console.log('🔍 GET single application by ID:', id);
         
-        const application = await Submission.findOne({ id: id });
-        .select('-piCVData -teamCVData');
+        const application = await Submission.findOne({ id: id }).select('-piCVData -teamCVData');
         
         if (!application) {
             console.log('❌ Application not found:', id);
