@@ -4435,16 +4435,32 @@ async function openApplicationForm(isEdit, restoreTab = null) {
     console.log('currentDraftData:', currentDraftData);
     console.log('selectedGrant:', selectedGrant);
     
+    // ========== CRITICAL FIX: For edit mode, ensure selectedGrant is set from currentDraftData ==========
+    if (isEdit && currentDraftData && currentDraftData.grantTitle) {
+        if (!selectedGrant || selectedGrant !== currentDraftData.grantTitle) {
+            selectedGrant = currentDraftData.grantTitle;
+            console.log('Set selectedGrant from currentDraftData in edit mode:', selectedGrant);
+        }
+    }
+    
     // ========== CRITICAL FIX: If editing and no selectedGrant, try to recover ==========
     if (isEdit && !selectedGrant && currentDraftData && currentDraftData.grantTitle) {
         selectedGrant = currentDraftData.grantTitle;
         console.log('Recovered selectedGrant from currentDraftData:', selectedGrant);
     }
     
-    // ========== If still no selectedGrant, show grant selection ==========
-    if (!selectedGrant) {
-        console.log('No selectedGrant, showing grant selection');
+    // ========== For new applications (not edit), show grant selection if no grant ==========
+    if (!isEdit && !selectedGrant) {
+        console.log('No selectedGrant for new app, showing grant selection');
         await openGrantSelection();
+        return;
+    }
+    
+    // If still no selectedGrant but we're in edit mode, something is wrong
+    if (isEdit && !selectedGrant) {
+        console.error('Edit mode but no selectedGrant and no grantTitle in currentDraftData');
+        await showError('Application data is corrupted. Please contact support.', 'Error');
+        await renderApplicant();
         return;
     }
     
@@ -4481,6 +4497,7 @@ async function openApplicationForm(isEdit, restoreTab = null) {
     }
     
     console.log('Opening form with selectedGrant:', selectedGrant);
+    console.log('Current draft data title:', d.proposalTitle);
     
     let formHtml = '<div class="tabs">';
     formHtml += '<button type="button" class="tab-btn active" data-tab="xurg1">📝 XURG Form 1</button>';
