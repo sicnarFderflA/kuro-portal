@@ -1997,28 +1997,32 @@ async function hasFormChanges(modalRef) {
     // Compare Team members
     const normalizeTeamMembers = (members) => {
         if (!members || !Array.isArray(members)) return [];
-        // Only keep name and role, ignore other properties like _id, etc.
+        // Only compare names, ignore roles for change detection
+        // This prevents false positives when roles are empty vs filled with placeholders
         return members
-            .filter(m => m && (m.name || m.role)) // Filter out null/undefined
+            .filter(m => m && m.name) // Filter out null/undefined
             .map(m => ({
                 name: (m.name || '').trim(),
-                role: (m.role || '').trim()
+                // Don't include role in comparison - it causes false positives
+                // role: (m.role || '').trim()
             }))
-            .filter(m => m.name !== ''); // Only keep members with names
+            .filter(m => m.name !== '');
     };
 
     const currentTeamNormalized = normalizeTeamMembers(currentFormData.teamMembers);
     const originalTeamNormalized = normalizeTeamMembers(originalData.teamMembers);
 
-    // Sort arrays to ensure consistent order for comparison
+    // Sort for consistent comparison
     currentTeamNormalized.sort((a, b) => a.name.localeCompare(b.name));
     originalTeamNormalized.sort((a, b) => a.name.localeCompare(b.name));
 
     if (JSON.stringify(currentTeamNormalized) !== JSON.stringify(originalTeamNormalized)) {
-        console.log('Change detected in team members');
-        console.log('Current:', currentTeamNormalized);
-        console.log('Original:', originalTeamNormalized);
+        console.log('Change detected in team members (names changed)');
+        console.log('Current names:', currentTeamNormalized);
+        console.log('Original names:', originalTeamNormalized);
         return true;
+    } else {
+        console.log('No change in team member names, ignoring role differences');
     }
     
     // Compare Activities
