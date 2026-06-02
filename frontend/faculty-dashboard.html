@@ -3167,7 +3167,7 @@ async function collectFormData(modalRef = null) {
     let piCVData = '';
     
     // ========== PI CV - ALWAYS check file input FIRST ==========
-    const piCVInput = getEld('piCV');
+    const piCVInput = getEl('piCV');
     if (piCVInput && piCVInput.files && piCVInput.files.length > 0) {
         const file = piCVInput.files[0];
         console.log('🔍 Found NEW PI CV file in input:', file.name);
