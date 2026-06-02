@@ -4711,6 +4711,11 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                             try {
                                 // Get fresh form data
                                 const formData = await collectFormData();
+                                console.log('🔴 RAW formData from collectFormData:', {
+                                    proposalTitle: formData.proposalTitle,
+                                    piName: formData.piName,
+                                    piEmail: formData.piEmail
+                                });
                                 const appId = editAppId;
                                 
                                 // Get existing application to preserve data
@@ -4760,7 +4765,8 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                                     teamCVData: formData.teamCVData && formData.teamCVData.length > 0 ? formData.teamCVData : existingApp.teamCVData,
                                 };
                                 
-                                console.log('Direct update - merged data:', mergedData);
+                                console.log('🔴 MERGED DATA proposalTitle:', mergedData.proposalTitle);
+                                console.log('🔴 Full merged data:', mergedData);
                                 
                                 // Call the update API
                                 const result = await KURO_API.updateApplication(appId, mergedData);
