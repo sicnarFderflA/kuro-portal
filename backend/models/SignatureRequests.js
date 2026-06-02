@@ -1,4 +1,5 @@
-// models/SignatureRequest.js
+const mongoose = require('mongoose');
+
 const signatureRequestSchema = new mongoose.Schema({
     appId: { type: String, required: true, index: true },
     chairToken: { type: String, unique: true, sparse: true },
@@ -19,3 +20,5 @@ const signatureRequestSchema = new mongoose.Schema({
     expiresAt: Date,
     revoked: { type: Boolean, default: false }
 });
+
+module.exports = mongoose.model('SignatureRequest', signatureRequestSchema);
