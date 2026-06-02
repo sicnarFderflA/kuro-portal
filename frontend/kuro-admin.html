@@ -1674,12 +1674,28 @@ function initNotificationSystem() {
 
 // API Data functions
 async function getAllApplications() {
+    const userEmail = getCurrentUserEmail();
     try {
-        const response = await fetch(`${API_URL}/api/admin/applications`);
-        if (!response.ok) throw new Error('Failed to fetch');
-        return await response.json();
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        
+        const response = await fetch(`${API_URL}/api/admin/applications?userEmail=${encodeURIComponent(userEmail)}`, {
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+            console.warn(`API returned ${response.status}: ${response.statusText}`);
+            return [];
+        }
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
     } catch (error) {
-        console.error('Failed to load applications:', error);
+        if (error.name === 'AbortError') {
+            console.error('Request timeout for applications');
+        } else {
+            console.error('Failed to load applications:', error);
+        }
         return [];
     }
 }
@@ -1722,6 +1738,88 @@ function getGrantDistribution(apps) {
     return ALL_GRANTS.map(g => apps.filter(a => a.grantTitle === g).length);
 }
 
+// ADD THIS NEW HELPER FUNCTION
+function getCurrentUserEmail() {
+    const user = JSON.parse(sessionStorage.getItem('kuro_user') || '{}');
+    return user.email || '';
+}
+
+// ADD THIS NEW CACHED FUNCTION
+let cachedCheckerRoles = null;
+let cacheTime = null;
+const CACHE_DURATION = 5 * 60 * 1000;
+
+async function getCheckerRoles() {
+    if (cachedCheckerRoles && cacheTime && (Date.now() - cacheTime) < CACHE_DURATION) {
+        return cachedCheckerRoles;
+    }
+    
+    const userEmail = getCurrentUserEmail();
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        
+        const response = await fetch(`${API_URL}/api/admin/checker-roles?userEmail=${encodeURIComponent(userEmail)}`, {
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) return { check1: '', check2: '', check3: '' };
+        const data = await response.json();
+        
+        cachedCheckerRoles = data;
+        cacheTime = Date.now();
+        
+        return data;
+    } catch (error) {
+        console.error('Failed to load checker roles:', error);
+        return { check1: '', check2: '', check3: '' };
+    }
+}
+
+// ADD THIS NEW FUNCTION
+async function getNotifications() {
+    const userEmail = getCurrentUserEmail();
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        
+        const response = await fetch(`${API_URL}/api/notifications?userEmail=${encodeURIComponent(userEmail)}`, {
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) return [];
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+    } catch (error) {
+        console.error('Failed to load notifications:', error);
+        return [];
+    }
+}
+
+// ADD THIS NEW FUNCTION
+async function getStats() {
+    const userEmail = getCurrentUserEmail();
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        
+        const response = await fetch(`${API_URL}/api/admin/stats?userEmail=${encodeURIComponent(userEmail)}`, {
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+            return { total: 0, pending: 0, approved: 0, returned: 0 };
+        }
+        return await response.json();
+    } catch (error) {
+        console.warn('Stats endpoint not available, using defaults');
+        return { total: 0, pending: 0, approved: 0, returned: 0 };
+    }
+}
+
 // Role management
 let checkerRoles = { check1: '', check2: '', check3: '' };
 async function loadCheckerRoles() {
@@ -1755,50 +1853,104 @@ let currentPage = 1;
 let rowsPerPage = 10;
 let currentFilteredApps = [];
 
+// OPTIMIZED: Parallel loading with Promise.all
 async function renderDashboard() {
-    const allApps = await getAllApplications();
-    const monthlyData = getMonthlyData(allApps);
-    const statusDist = getStatusDistribution(allApps);
-    const grantData = getGrantDistribution(allApps);
-    const total = allApps.length;
-    const pending = statusDist.pending;
-    const approved = statusDist.approved;
-    const returned = statusDist.returned;
-    const completionRate = total > 0 ? Math.round((approved / total) * 100) : 0;
-    
-    const roleLabel = isSuperAdmin ? 'Super Admin · Full access' : (userRole ? `${userRole.toUpperCase()} Reviewer` : 'View Only');
-    
-    let html = `<div class="dashboard-container">
-        <div class="welcome-header">
-            <div class="greeting">Welcome back, ${currentUser.name?.split(' ')[0] || 'Admin'}</div>
-            <div class="role-chip"><i class="fas ${isSuperAdmin ? 'fa-crown' : 'fa-user-tag'}"></i> ${roleLabel}</div>
+    // Show loading state immediately
+    const mainContent = document.getElementById('mainContent');
+    mainContent.innerHTML = `
+        <div style="display: flex; justify-content: center; align-items: center; min-height: 400px;">
+            <div style="text-align: center;">
+                <i class="fas fa-spinner fa-pulse fa-3x" style="color: var(--gold);"></i>
+                <p style="margin-top: 1rem;">Loading dashboard...</p>
+            </div>
         </div>
-        <div class="stats-grid">
-            <div class="stat-card-new"><div class="stat-left"><h3>Total applications</h3><div class="stat-number">${total}</div><div class="stat-trend"><i class="fas fa-arrow-up"></i> All time</div></div><div class="stat-icon-new"><i class="fas fa-file-alt"></i></div></div>
-            <div class="stat-card-new"><div class="stat-left"><h3>Pending review</h3><div class="stat-number">${pending}</div><div class="stat-trend">Check 1: ${allApps.filter(a => a.status === 'Pending Eligibility Check').length} | Check 2: ${allApps.filter(a => a.status === 'Pending Secondary Check').length} | Check 3: ${allApps.filter(a => a.status === 'Pending Final Check').length}</div></div><div class="stat-icon-new"><i class="fas fa-hourglass-half"></i></div></div>
-            <div class="stat-card-new"><div class="stat-left"><h3>Approved</h3><div class="stat-number">${approved}</div><div class="stat-trend">Completion ${completionRate}%</div></div><div class="stat-icon-new"><i class="fas fa-check-circle"></i></div></div>
-            <div class="stat-card-new"><div class="stat-left"><h3>Returned</h3><div class="stat-number">${returned}</div><div class="stat-trend">Needs revision</div></div><div class="stat-icon-new"><i class="fas fa-undo-alt"></i></div></div>
-        </div>
-        <div class="progress-modern"><div class="progress-header"><span><i class="fas fa-chart-simple"></i> Overall completion rate</span><span>${completionRate}% (${approved}/${total} approved)</span></div><div class="progress-track"><div class="progress-fill" style="width:${completionRate}%"></div></div></div>
-        <div class="charts-grid">
-            <div class="chart-card"><div class="chart-title"><span><i class="fas fa-chart-line"></i> Applications by Month</span><span class="chart-badge">${new Date().getFullYear()}</span></div><div class="chart-container-sm"><canvas id="trendChart"></canvas></div></div>
-            <div class="chart-card"><div class="chart-title"><span><i class="fas fa-chart-pie"></i> Status Distribution</span><span class="chart-badge">Total: ${total}</span></div><div class="chart-container-sm"><canvas id="statusChart"></canvas></div></div>
-            <div class="chart-card"><div class="chart-title"><span><i class="fas fa-chart-bar"></i> Applications by Grant</span><span class="chart-badge">${ALL_GRANTS.length} Grants</span></div><div class="chart-container-sm"><canvas id="grantChart"></canvas></div></div>
-            <div class="chart-card"><div class="chart-title"><span><i class="fas fa-chart-simple"></i> Grants Breakdown</span><span class="chart-badge">Distribution</span></div><div class="chart-container-sm"><canvas id="grantsBreakdownChart"></canvas></div></div>
-        </div>
-        <div class="filter-bar-new">
-            <div class="filter-badge"><i class="fas fa-tag"></i> <select id="grantFilter"><option value="all">All Grants</option>${ALL_GRANTS.map(g => `<option value="${g}">${g.substring(0, 25)}</option>`).join('')}</select></div>
-            <div class="filter-badge"><i class="fas fa-flag-checkered"></i> <select id="statusFilter"><option value="all">All Status</option><option value="Pending Eligibility Check">🔍 Check 1</option><option value="Pending Secondary Check">📋 Check 2</option><option value="Pending Final Check">✅ Check 3</option><option value="Approved">🎉 Approved</option><option value="Returned">↩️ Returned</option></select></div>
-            <div class="filter-badge"><i class="fas fa-file-pdf"></i> <select id="cvFilter"><option value="all">CV Status</option><option value="pending">⏳ Pending</option><option value="eligible">✅ Eligible</option><option value="ineligible">❌ Ineligible</option><option value="missing">📄 Missing</option></select></div>
-            <div class="search-wrapper"><i class="fas fa-search"></i><input type="text" id="searchFilter" placeholder="Search by title or applicant..."></div>
-            <div class="filter-badge" style="background:var(--gold); color:var(--primary);"><i class="fas fa-sliders-h"></i> Advanced filters</div>
-        </div>
-        <div class="apps-section"><h3><i class="fas fa-list-ul"></i> Research applications <span style="font-size:0.8rem; background:#EFF3F8; padding:0.2rem 0.6rem; border-radius:40px;">${total} total</span></h3><div id="applicationsList"></div><div id="paginationControls"></div></div>
-    </div>`;
+    `;
     
-    document.getElementById('mainContent').innerHTML = html;
-    
-    // Chart 1: Monthly Trends (Line Chart)
+    try {
+        // Run ALL API calls in PARALLEL (not sequential)
+        console.time('Dashboard Load Time');
+        
+        const [allApps, checkerRolesData, notifications, statsData] = await Promise.all([
+            getAllApplications(),
+            getCheckerRoles(),
+            getNotifications(),
+            getStats()
+        ]);
+        
+        console.timeEnd('Dashboard Load Time');
+        console.log(`Loaded ${allApps.length} applications, ${notifications.length} notifications`);
+        
+        // Store globally for other functions
+        window.checkerRoles = checkerRolesData;
+        window.allApplications = allApps;
+        
+        // Process data for charts
+        const monthlyData = getMonthlyData(allApps);
+        const statusDist = getStatusDistribution(allApps);
+        const grantData = getGrantDistribution(allApps);
+        const total = allApps.length;
+        const pending = statusDist.pending;
+        const approved = statusDist.approved;
+        const returned = statusDist.returned;
+        const completionRate = total > 0 ? Math.round((approved / total) * 100) : 0;
+        
+        const roleLabel = isSuperAdmin ? 'Super Admin · Full access' : (userRole ? `${userRole.toUpperCase()} Reviewer` : 'View Only');
+        
+        let html = `<div class="dashboard-container">
+            <div class="welcome-header">
+                <div class="greeting">Welcome back, ${currentUser.name?.split(' ')[0] || 'Admin'}</div>
+                <div class="role-chip"><i class="fas ${isSuperAdmin ? 'fa-crown' : 'fa-user-tag'}"></i> ${roleLabel}</div>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card-new"><div class="stat-left"><h3>Total applications</h3><div class="stat-number">${total}</div><div class="stat-trend"><i class="fas fa-arrow-up"></i> All time</div></div><div class="stat-icon-new"><i class="fas fa-file-alt"></i></div></div>
+                <div class="stat-card-new"><div class="stat-left"><h3>Pending review</h3><div class="stat-number">${pending}</div><div class="stat-trend">Check 1: ${allApps.filter(a => a.status === 'Pending Eligibility Check').length} | Check 2: ${allApps.filter(a => a.status === 'Pending Secondary Check').length} | Check 3: ${allApps.filter(a => a.status === 'Pending Final Check').length}</div></div><div class="stat-icon-new"><i class="fas fa-hourglass-half"></i></div></div>
+                <div class="stat-card-new"><div class="stat-left"><h3>Approved</h3><div class="stat-number">${approved}</div><div class="stat-trend">Completion ${completionRate}%</div></div><div class="stat-icon-new"><i class="fas fa-check-circle"></i></div></div>
+                <div class="stat-card-new"><div class="stat-left"><h3>Returned</h3><div class="stat-number">${returned}</div><div class="stat-trend">Needs revision</div></div><div class="stat-icon-new"><i class="fas fa-undo-alt"></i></div></div>
+            </div>
+            <div class="progress-modern"><div class="progress-header"><span><i class="fas fa-chart-simple"></i> Overall completion rate</span><span>${completionRate}% (${approved}/${total} approved)</span></div><div class="progress-track"><div class="progress-fill" style="width:${completionRate}%"></div></div></div>
+            <div class="charts-grid">
+                <div class="chart-card"><div class="chart-title"><span><i class="fas fa-chart-line"></i> Applications by Month</span><span class="chart-badge">${new Date().getFullYear()}</span></div><div class="chart-container-sm"><canvas id="trendChart"></canvas></div></div>
+                <div class="chart-card"><div class="chart-title"><span><i class="fas fa-chart-pie"></i> Status Distribution</span><span class="chart-badge">Total: ${total}</span></div><div class="chart-container-sm"><canvas id="statusChart"></canvas></div></div>
+                <div class="chart-card"><div class="chart-title"><span><i class="fas fa-chart-bar"></i> Applications by Grant</span><span class="chart-badge">${ALL_GRANTS.length} Grants</span></div><div class="chart-container-sm"><canvas id="grantChart"></canvas></div></div>
+                <div class="chart-card"><div class="chart-title"><span><i class="fas fa-chart-simple"></i> Grants Breakdown</span><span class="chart-badge">Distribution</span></div><div class="chart-container-sm"><canvas id="grantsBreakdownChart"></canvas></div></div>
+            </div>
+            <div class="filter-bar-new">
+                <div class="filter-badge"><i class="fas fa-tag"></i> <select id="grantFilter"><option value="all">All Grants</option>${ALL_GRANTS.map(g => `<option value="${g}">${g.substring(0, 25)}</option>`).join('')}</select></div>
+                <div class="filter-badge"><i class="fas fa-flag-checkered"></i> <select id="statusFilter"><option value="all">All Status</option><option value="Pending Eligibility Check">🔍 Check 1</option><option value="Pending Secondary Check">📋 Check 2</option><option value="Pending Final Check">✅ Check 3</option><option value="Approved">🎉 Approved</option><option value="Returned">↩️ Returned</option></select></div>
+                <div class="filter-badge"><i class="fas fa-file-pdf"></i> <select id="cvFilter"><option value="all">CV Status</option><option value="pending">⏳ Pending</option><option value="eligible">✅ Eligible</option><option value="ineligible">❌ Ineligible</option><option value="missing">📄 Missing</option></select></div>
+                <div class="search-wrapper"><i class="fas fa-search"></i><input type="text" id="searchFilter" placeholder="Search by title or applicant..."></div>
+                <div class="filter-badge" style="background:var(--gold); color:var(--primary);"><i class="fas fa-sliders-h"></i> Advanced filters</div>
+            </div>
+            <div class="apps-section"><h3><i class="fas fa-list-ul"></i> Research applications <span style="font-size:0.8rem; background:#EFF3F8; padding:0.2rem 0.6rem; border-radius:40px;">${total} total</span></h3><div id="applicationsList"></div><div id="paginationControls"></div></div>
+        </div>`;
+        
+        document.getElementById('mainContent').innerHTML = html;
+        
+        // Render charts (same as before)
+        renderCharts(monthlyData, pending, approved, returned, grantData);
+        
+        // Render applications
+        renderApplicationsListWithPagination(allApps);
+        
+        // Attach filter listeners
+        attachFilterListeners(allApps);
+        
+    } catch (error) {
+        console.error('Dashboard render failed:', error);
+        document.getElementById('mainContent').innerHTML = `
+            <div style="text-align: center; padding: 3rem;">
+                <i class="fas fa-exclamation-triangle fa-3x" style="color: #e74c3c;"></i>
+                <h3>Failed to load dashboard</h3>
+                <p>${error.message}</p>
+                <button onclick="location.reload()" class="btn-primary">Retry</button>
+            </div>
+        `;
+    }
+}
+
+// Helper functions for charts
+function renderCharts(monthlyData, pending, approved, returned, grantData) {
+    // Chart 1: Monthly Trends
     const trendCtx = document.getElementById('trendChart')?.getContext('2d');
     if (trendCtx) {
         new Chart(trendCtx, {
@@ -1816,100 +1968,51 @@ async function renderDashboard() {
                     tension: 0.3
                 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true } }
-            }
+            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
         });
     }
     
-    // Chart 2: Status Distribution (Doughnut Chart)
+    // Chart 2: Status Distribution
     const statusCtx = document.getElementById('statusChart')?.getContext('2d');
     if (statusCtx) {
         new Chart(statusCtx, {
             type: 'doughnut',
             data: {
                 labels: ['Pending Check', 'Approved', 'Returned'],
-                datasets: [{
-                    data: [pending, approved, returned],
-                    backgroundColor: ['#F59E0B', '#10B981', '#EF4444'],
-                    borderWidth: 0
-                }]
+                datasets: [{ data: [pending, approved, returned], backgroundColor: ['#F59E0B', '#10B981', '#EF4444'], borderWidth: 0 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: { position: 'bottom', labels: { font: { size: 9 } } }
-                },
-                cutout: '65%'
-            }
+            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 9 } } } }, cutout: '65%' }
         });
     }
     
-    // Chart 3: Applications by Grant (Bar Chart)
+    // Chart 3: Grant Distribution
     const grantCtx = document.getElementById('grantChart')?.getContext('2d');
     if (grantCtx) {
         new Chart(grantCtx, {
             type: 'bar',
             data: {
                 labels: ALL_GRANTS.map(g => g.substring(0, 12)),
-                datasets: [{
-                    label: 'Applications',
-                    data: grantData,
-                    backgroundColor: '#0B2B4F',
-                    borderRadius: 6,
-                    barPercentage: 0.7
-                }]
+                datasets: [{ label: 'Applications', data: grantData, backgroundColor: '#0B2B4F', borderRadius: 6, barPercentage: 0.7 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: { callbacks: { label: function(ctx) { return ctx.raw + ' applications'; } } }
-                },
-                scales: {
-                    y: { beginAtZero: true },
-                    x: { ticks: { font: { size: 9 }, rotation: -15 } }
-                }
-            }
+            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true }, x: { ticks: { font: { size: 9 }, rotation: -15 } } } }
         });
     }
     
-    // Chart 4: Grants Breakdown (Horizontal Bar Chart)
+    // Chart 4: Grants Breakdown
     const breakdownCtx = document.getElementById('grantsBreakdownChart')?.getContext('2d');
     if (breakdownCtx) {
         new Chart(breakdownCtx, {
             type: 'bar',
             data: {
                 labels: ALL_GRANTS.map(g => g.substring(0, 15)),
-                datasets: [{
-                    label: 'Applications',
-                    data: grantData,
-                    backgroundColor: ['#0B2B4F', '#C9A03D', '#2E7D64', '#8B5CF6', '#F59E0B', '#EF4444', '#10B981'],
-                    borderRadius: 6
-                }]
+                datasets: [{ label: 'Applications', data: grantData, backgroundColor: ['#0B2B4F', '#C9A03D', '#2E7D64', '#8B5CF6', '#F59E0B', '#EF4444', '#10B981'], borderRadius: 6 }]
             },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: { callbacks: { label: function(ctx) { return ctx.raw + ' applications'; } } }
-                },
-                scales: {
-                    x: { beginAtZero: true },
-                    y: { ticks: { font: { size: 9 } } }
-                }
-            }
+            options: { indexAxis: 'y', responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true }, y: { ticks: { font: { size: 9 } } } } }
         });
     }
-    
-    renderApplicationsListWithPagination(allApps);
+}
+
+function attachFilterListeners(allApps) {
     document.getElementById('grantFilter')?.addEventListener('change', () => renderApplicationsListWithPagination(filterApplications(allApps)));
     document.getElementById('statusFilter')?.addEventListener('change', () => renderApplicationsListWithPagination(filterApplications(allApps)));
     document.getElementById('cvFilter')?.addEventListener('change', () => renderApplicationsListWithPagination(filterApplications(allApps)));
