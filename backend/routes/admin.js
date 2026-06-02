@@ -82,6 +82,7 @@ router.get('/applications', async (req, res) => {
         let apps = [];
         try {
             apps = await Application.find({})
+                .select('-piCVData -teamCVData')
                 .sort({ submittedDate: -1 })
                 .limit(100)
                 .lean()

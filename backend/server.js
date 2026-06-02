@@ -12,7 +12,7 @@ const Application = require('./models/Application');
 
 require('dotenv').config();
 
-const Submission = mongoose.model('Submission', new mongoose.Schema({}, { strict: false }), 'submissions');
+const Application = mongoose.model('Application', new mongoose.Schema({}, { strict: false }), 'applications');
 
 emailjs.init({
     publicKey: process.env.EMAILJS_PUBLIC_KEY,
