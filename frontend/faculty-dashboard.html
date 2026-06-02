@@ -1938,6 +1938,124 @@ function getCVStatusSummary(app) {
     return { eligible, pending, ineligible, missing, total };
 }
 
+// ========== REUSABLE CHANGE DETECTION FUNCTION ==========
+async function hasFormChanges(modalRef) {
+    // Get current form data
+    const currentFormData = await collectFormData(modalRef);
+    
+    // If no original data exists, treat as having changes (new form)
+    if (!currentDraftData) {
+        // Check if any field has content
+        const hasTitle = currentFormData.proposalTitle && currentFormData.proposalTitle.trim() !== '';
+        const hasAnyContent = currentFormData.piName || 
+                            currentFormData.piEmail ||
+                            currentFormData.dept ||
+                            currentFormData.school ||
+                            currentFormData.rationale ||
+                            currentFormData.objectives ||
+                            (currentFormData.teamMembers && currentFormData.teamMembers.length > 0 && currentFormData.teamMembers.some(m => m.name)) ||
+                            (currentFormData.budgetItems && currentFormData.budgetItems.length > 0 && currentFormData.budgetItems.some(b => b.category || b.itemName));
+        return hasTitle || hasAnyContent;
+    }
+    
+    const originalData = currentDraftData;
+    
+    // Helper function to compare values
+    function isDifferent(val1, val2) {
+        const v1 = (val1 || '').trim();
+        const v2 = (val2 || '').trim();
+        return v1 !== v2;
+    }
+    
+    function areArraysDifferent(arr1, arr2) {
+        if (!arr1 && !arr2) return false;
+        if (!arr1 && arr2 && arr2.length === 0) return false;
+        if (!arr2 && arr1 && arr1.length === 0) return false;
+        if ((!arr1 && arr2) || (arr1 && !arr2)) return true;
+        if (arr1.length !== arr2.length) return true;
+        for (let i = 0; i < arr1.length; i++) {
+            if (JSON.stringify(arr1[i]) !== JSON.stringify(arr2[i])) return true;
+        }
+        return false;
+    }
+    
+    // Compare text fields
+    const textFields = ['proposalTitle', 'piName', 'piEmail', 'dept', 'school', 'rationale', 'objectives', 'methodology', 'outputs', 'duration', 'extension', 'litReview', 'fromChair', 'chairEmail', 'deanName', 'deanEmail', 'endorseDept', 'endorseSchool', 'schoolYear'];
+    for (const field of textFields) {
+        if (isDifferent(currentFormData[field], originalData[field])) {
+            console.log(`Change detected in ${field}`);
+            return true;
+        }
+    }
+    
+    // Compare references
+    if (areArraysDifferent(currentFormData.references, originalData.references)) {
+        console.log('Change detected in references');
+        return true;
+    }
+    
+    // Compare Team members
+    const normalizeTeamMembers = (members) => {
+        if (!members || !Array.isArray(members)) return [];
+        return members.map(m => ({
+            name: (m.name || '').trim(),
+            role: (m.role || '').trim()
+        })).filter(m => m.name !== '');
+    };
+    
+    const currentTeamNormalized = normalizeTeamMembers(currentFormData.teamMembers);
+    const originalTeamNormalized = normalizeTeamMembers(originalData.teamMembers);
+    
+    if (JSON.stringify(currentTeamNormalized) !== JSON.stringify(originalTeamNormalized)) {
+        console.log('Change detected in team members');
+        return true;
+    }
+    
+    // Compare Activities
+    const normalizeActivities = (activities) => {
+        if (!activities || !Array.isArray(activities)) return [];
+        return activities.map(act => ({
+            name: (act.name || '').trim(),
+            description: (act.description || '').trim(),
+            objective: (act.objective || '').trim(),
+            output: (act.output || '').trim(),
+            startDate: act.startDate || '',
+            endDate: act.endDate || ''
+        })).filter(act => act.name !== '');
+    };
+    
+    const currentNormalized = normalizeActivities(currentFormData.activities);
+    const originalNormalized = normalizeActivities(originalData.activities);
+    
+    if (JSON.stringify(currentNormalized) !== JSON.stringify(originalNormalized)) {
+        console.log('Change detected in activities');
+        return true;
+    }
+    
+    // Compare Budget Items
+    const normalizeBudgetItems = (items) => {
+        if (!items || !Array.isArray(items)) return [];
+        return items.map(item => ({
+            category: (item.category || '').trim(),
+            subcategory: (item.subcategory || '').trim(),
+            itemName: (item.itemName || '').trim(),
+            specs: (item.specs || '').trim(),
+            unitCost: item.unitCost || 0,
+            qty: item.qty || 1
+        })).filter(item => item.category !== '' || item.itemName !== '');
+    };
+    
+    const currentBudgetNormalized = normalizeBudgetItems(currentFormData.budgetItems);
+    const originalBudgetNormalized = normalizeBudgetItems(originalData.budgetItems);
+    
+    if (JSON.stringify(currentBudgetNormalized) !== JSON.stringify(originalBudgetNormalized)) {
+        console.log('Change detected in budget items');
+        return true;
+    }
+    
+    return false;
+}
+
 function normalizeFormDataForComparison(formData) {
     const normalized = {};
     for (let key in formData) {
@@ -4560,129 +4678,7 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                     e.stopPropagation();
                     e.preventDefault();
                     
-                    // Use the modal reference for DOM queries
-                    const getModalEl = (id) => {
-                        return modal.querySelector(`#${id}`) || document.getElementById(id);
-                    };
-                    
-                    // Collect form data using the modal reference
-                    const collectCurrentFormData = async () => {
-                        // Helper to get element from modal
-                        const getField = (id) => modal.querySelector(`#${id}`);
-                        
-                        // Get PI CV
-                        let piCVName = '';
-                        let piCVData = '';
-                        const piCVInput = getField('piCV');
-                        if (piCVInput && piCVInput.files && piCVInput.files.length > 0) {
-                            const file = piCVInput.files[0];
-                            piCVName = file.name;
-                            piCVData = await fileToBase64(file);
-                        } else if (currentDraftData && currentDraftData.piCVName) {
-                            piCVName = currentDraftData.piCVName;
-                            piCVData = currentDraftData.piCVData || '';
-                        }
-                        
-                        // Get team members
-                        const teamMembers = Array.from(modal.querySelectorAll('#teamMembersContainer .member-row'))
-                            .map(row => ({
-                                name: (row.children[0]?.value || '').trim(),
-                                role: (row.children[1]?.value || '').trim()
-                            }))
-                            .filter(member => member.name !== '');
-                        
-                        // Get team CVs
-                        let teamCVs = new Array(teamMembers.length).fill(null);
-                        let teamCVData = new Array(teamMembers.length).fill(null);
-                        
-                        for (let i = 0; i < teamMembers.length; i++) {
-                            const teamCVInput = getField('teamCV_' + i);
-                            if (teamCVInput && teamCVInput.files && teamCVInput.files.length > 0) {
-                                const file = teamCVInput.files[0];
-                                const base64Data = await fileToBase64(file);
-                                teamCVs[i] = { name: file.name, status: 'pending' };
-                                teamCVData[i] = base64Data;
-                            } else if (currentDraftData && currentDraftData.teamCVs && currentDraftData.teamCVs[i]) {
-                                teamCVs[i] = { ...currentDraftData.teamCVs[i] };
-                                if (currentDraftData.teamCVData && currentDraftData.teamCVData[i]) {
-                                    teamCVData[i] = currentDraftData.teamCVData[i];
-                                }
-                            }
-                        }
-                        
-                        // Get activities
-                        const activities = [];
-                        const activityCards = modal.querySelectorAll('#activitiesContainer .activity-card');
-                        activityCards.forEach(card => {
-                            const activity = {
-                                name: card.querySelector('.act-name')?.value || '',
-                                description: card.querySelector('.act-desc')?.value || '',
-                                objective: card.querySelector('.act-objective')?.value || '',
-                                output: card.querySelector('.act-output')?.value || '',
-                                startDate: card.querySelector('.act-start-date')?.value || '',
-                                endDate: card.querySelector('.act-end-date')?.value || ''
-                            };
-                            if (activity.name.trim() !== '') {
-                                activities.push(activity);
-                            }
-                        });
-                        
-                        // Get budget items
-                        const budgetItems = [];
-                        const budgetCards = modal.querySelectorAll('.budget-card');
-                        budgetCards.forEach(card => {
-                            const category = card.querySelector('.budget-category')?.value || '';
-                            const subcategory = card.querySelector('.budget-subcategory')?.value || '';
-                            const itemName = card.querySelector('.budget-item-select')?.value || '';
-                            const specs = card.querySelector('.budget-specs')?.value || '';
-                            const unitCost = parseFloat(card.querySelector('.budget-unit-cost')?.value) || 0;
-                            const qty = parseFloat(card.querySelector('.budget-qty')?.value) || 1;
-                            
-                            if (category !== '' || itemName !== '') {
-                                budgetItems.push({
-                                    category, subcategory, itemName, specs, unitCost, qty
-                                });
-                            }
-                        });
-                        
-                        // Get references
-                        const references = Array.from(modal.querySelectorAll('#referencesContainer .reference-row input'))
-                            .map(inp => inp.value)
-                            .filter(v => v && v.trim() !== '');
-                        
-                        return {
-                            proposalTitle: getField('projTitle')?.value || '',
-                            piName: getField('piName')?.value || '',
-                            piEmail: getField('piEmail')?.value || '',
-                            dept: getField('dept')?.value || '',
-                            school: getField('school')?.value || '',
-                            extension: getField('extension')?.value || '',
-                            duration: getField('duration')?.value || '',
-                            rationale: getField('rationale')?.value || '',
-                            litReview: getField('litReview')?.value || '',
-                            objectives: getField('objectives')?.value || '',
-                            methodology: getField('methodology')?.value || '',
-                            outputs: getField('outputs')?.value || '',
-                            references: references,
-                            teamMembers: teamMembers,
-                            activities: activities,
-                            budgetItems: budgetItems,
-                            endorsementDate: getField('endorsementDate')?.value || '',
-                            endorseDept: getField('endorseDept')?.value || '',
-                            endorseSchool: getField('endorseSchool')?.value || '',
-                            schoolYear: getField('schoolYear')?.value || '',
-                            fromChair: getField('fromChair')?.value || '',
-                            chairEmail: getField('chairEmail')?.value || '',
-                            deanName: getField('deanName')?.value || '',
-                            deanEmail: getField('deanEmail')?.value || '',
-                            piCVName: piCVName,
-                            piCVData: piCVData,
-                            teamCVs: teamCVs,
-                            teamCVData: teamCVData
-                        };
-                    };
-                    
-                    const currentFormData = await collectCurrentFormData();
+                    const currentFormData = await collectFormData(modal);
                     
                     // Check if this is a NEW application (not edit, not existing draft)
                     const isNewApplication = !isEditMode && !editAppId && !currentDraftData?.draftId;
@@ -4693,112 +4689,9 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                     // Check if editing an existing DRAFT
                     const isEditingExistingDraft = editDraftId !== null && currentDraftData?.proposalTitle;
                     
-                    // Helper function to compare values
-                    function isDifferent(val1, val2) {
-                        const v1 = (val1 || '').trim();
-                        const v2 = (val2 || '').trim();
-                        return v1 !== v2;
-                    }
-                    
-                    function areArraysDifferent(arr1, arr2) {
-                        if (!arr1 && !arr2) return false;
-                        if (!arr1 && arr2 && arr2.length === 0) return false;
-                        if (!arr2 && arr1 && arr1.length === 0) return false;
-                        if ((!arr1 && arr2) || (arr1 && !arr2)) return true;
-                        if (arr1.length !== arr2.length) return true;
-                        for (let i = 0; i < arr1.length; i++) {
-                            if (JSON.stringify(arr1[i]) !== JSON.stringify(arr2[i])) return true;
-                        }
-                        return false;
-                    }
-                    
                     // ========== FOR EXISTING APPLICATIONS (Pending/Submitted) ==========
                     if (isEditingExistingApp) {
-                        let hasChanges = false;
-                        
-                        if (currentDraftData) {
-                            const originalData = currentDraftData;
-                            
-                            // Compare text fields
-                            const textFields = ['proposalTitle', 'piName', 'piEmail', 'dept', 'school', 'rationale', 'objectives', 'methodology', 'outputs', 'duration', 'extension', 'litReview', 'fromChair', 'chairEmail', 'deanName', 'deanEmail', 'endorseDept', 'endorseSchool', 'schoolYear'];
-                            for (const field of textFields) {
-                                if (isDifferent(currentFormData[field], originalData[field])) {
-                                    console.log(`Change detected in ${field}`);
-                                    hasChanges = true;
-                                    break;
-                                }
-                            }
-                            
-                            if (!hasChanges && areArraysDifferent(currentFormData.references, originalData.references)) {
-                                console.log('Change detected in references');
-                                hasChanges = true;
-                            }
-                            
-                            // Compare Team members
-                            if (!hasChanges) {
-                                const normalizeTeamMembers = (members) => {
-                                    if (!members || !Array.isArray(members)) return [];
-                                    return members.map(m => ({
-                                        name: (m.name || '').trim(),
-                                        role: (m.role || '').trim()
-                                    })).filter(m => m.name !== '');
-                                };
-                                
-                                const currentTeamNormalized = normalizeTeamMembers(currentFormData.teamMembers);
-                                const originalTeamNormalized = normalizeTeamMembers(originalData.teamMembers);
-                                
-                                if (JSON.stringify(currentTeamNormalized) !== JSON.stringify(originalTeamNormalized)) {
-                                    console.log('Change detected in team members');
-                                    hasChanges = true;
-                                }
-                            }
-                            
-                            // Compare Activities
-                            if (!hasChanges) {
-                                const normalizeActivities = (activities) => {
-                                    if (!activities || !Array.isArray(activities)) return [];
-                                    return activities.map(act => ({
-                                        name: (act.name || '').trim(),
-                                        description: (act.description || '').trim(),
-                                        objective: (act.objective || '').trim(),
-                                        output: (act.output || '').trim(),
-                                        startDate: act.startDate || '',
-                                        endDate: act.endDate || ''
-                                    })).filter(act => act.name !== '');
-                                };
-                                
-                                const currentNormalized = normalizeActivities(currentFormData.activities);
-                                const originalNormalized = normalizeActivities(originalData.activities);
-                                
-                                if (JSON.stringify(currentNormalized) !== JSON.stringify(originalNormalized)) {
-                                    console.log('Change detected in activities');
-                                    hasChanges = true;
-                                }
-                            }
-                            
-                            // Compare Budget Items
-                            if (!hasChanges) {
-                                const normalizeBudgetItems = (items) => {
-                                    if (!items || !Array.isArray(items)) return [];
-                                    return items.map(item => ({
-                                        category: (item.category || '').trim(),
-                                        subcategory: (item.subcategory || '').trim(),
-                                        itemName: (item.itemName || '').trim(),
-                                        specs: (item.specs || '').trim(),
-                                        unitCost: item.unitCost || 0,
-                                        qty: item.qty || 1
-                                    })).filter(item => item.category !== '' || item.itemName !== '');
-                                };
-                                
-                                const currentBudgetNormalized = normalizeBudgetItems(currentFormData.budgetItems);
-                                const originalBudgetNormalized = normalizeBudgetItems(originalData.budgetItems);
-                                
-                                if (JSON.stringify(currentBudgetNormalized) !== JSON.stringify(originalBudgetNormalized)) {
-                                    console.log('Change detected in budget items');
-                                    hasChanges = true;
-                                }
-                            }
-                        }
+                        const hasChanges = await hasFormChanges(modal);
                         
                         console.log('Has changes detected:', hasChanges);
                         
@@ -4837,7 +4730,7 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                             
                             try {
                                 // Get fresh form data using the modal reference
-                                const formData = await collectCurrentFormData();
+                                const formData = await collectFormData(modal);
                                 const appId = editAppId;
                                 
                                 // Get existing application to preserve data
@@ -5108,7 +5001,6 @@ async function openApplicationForm(isEdit, restoreTab = null) {
             // ========== SUBMIT BUTTON HANDLER ==========
             const submitBtn = modal.querySelector('#customSubmitBtn');
             if (submitBtn) {
-                // Remove existing listeners to avoid duplicates
                 const newSubmitBtn = submitBtn.cloneNode(true);
                 submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
                 
@@ -5119,14 +5011,34 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                     console.log('🔘🔘🔘 SUBMIT BUTTON CLICKED 🔘🔘🔘');
                     console.log('isEditMode:', isEditMode);
                     console.log('editAppId:', editAppId);
-                    console.log('selectedGrant:', selectedGrant);
+                    
+                    // ========== CHECK FOR CHANGES IN EDIT MODE ==========
+                    if (isEditMode && editAppId) {
+                        const hasChanges = await hasFormChanges(modal);
+                        
+                        if (!hasChanges) {
+                            // No changes - just close the modal
+                            console.log('No changes detected, closing modal');
+                            await Swal.fire({
+                                icon: 'info',
+                                title: 'No Changes',
+                                text: 'No changes were made to the application.',
+                                confirmButtonColor: '#D4AF37',
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+                            Swal.close();
+                            renderApplicant();
+                            return;
+                        }
+                    }
                     
                     // Show loading state
                     newSubmitBtn.disabled = true;
                     newSubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
                     
                     try {
-                        let formData = await collectFormData();
+                        let formData = await collectFormData(modal);
                         console.log('Form data collected:', formData);
                         
                         const today = new Date();
@@ -5332,7 +5244,7 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                         return;
                     }
                     
-                    const formData = await collectFormData();
+                    const formData = await collectFormData(modal);
                     
                     // Check if project title exists
                     if (!formData.proposalTitle || formData.proposalTitle.trim() === '') {
