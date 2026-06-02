@@ -1591,6 +1591,34 @@ function showToast(message, type = 'success') {
     toast.querySelector('.toast-close')?.addEventListener('click', () => toast.remove());
 }
 
+// Cache for applicant names
+let applicantNameCache = {};
+
+async function getApplicantName(email) {
+    if (!email) return 'Unknown';
+    
+    // Check cache
+    if (applicantNameCache[email]) {
+        return applicantNameCache[email];
+    }
+    
+    try {
+        const response = await fetch(`${API_URL}/api/users/by-email?email=${encodeURIComponent(email)}`);
+        if (response.ok) {
+            const data = await response.json();
+            applicantNameCache[email] = data.name || email.split('@')[0];
+            return applicantNameCache[email];
+        }
+    } catch (error) {
+        console.error('Failed to fetch user name:', error);
+    }
+    
+    // Fallback to formatted email prefix
+    const fallback = email.split('@')[0].replace(/[._]/g, ' ');
+    applicantNameCache[email] = fallback;
+    return fallback;
+}
+
 function getTimeAgo(dateString) {
     const date = new Date(dateString);
     const diff = Math.floor((new Date() - date) / 1000);
@@ -2164,14 +2192,14 @@ async function viewApplicationDetails(appId) {
             }
         }
         
-        // Re-evaluate user role to ensure it's up to date
+        // Re-evaluate user role
         const currentUserEmail = currentUser.email;
         const currentCheckerRoles = await KURO_API.getCheckerRoles().catch(() => ({ check1: '', check2: '', check3: '' }));
         const userCheckerRole = getUserCheckerRole(currentUserEmail);
         const isCurrentSuperAdmin = currentUserEmail === '200520181@my.xu.edu.ph';
         const isCurrentCheck3 = userCheckerRole === 'check3';
         
-        // Helper function to get status badge class
+        // Helper functions
         function getStatusClass(status) {
             switch(status) {
                 case 'Pending Eligibility Check': return 'status-pending-check1';
@@ -2194,7 +2222,6 @@ async function viewApplicationDetails(appId) {
             }
         }
         
-        // Calculate relative time
         function getRelativeTime(dateString) {
             if (!dateString) return '';
             const date = new Date(dateString);
@@ -2205,14 +2232,13 @@ async function viewApplicationDetails(appId) {
             return `${Math.floor(diff / 86400)} days ago`;
         }
         
-        // Render all tab contents
+        // Render tab contents
         const contentForm1 = renderForm1Content(app);
         const contentForm2 = renderForm2Content(app);
         const contentCV = renderCVReviewContent(app);
         const contentExternal = renderExternalReviewersContent(app);
         const contentChecks = renderCheckStagesContent(app);
         
-        // Build the improved Application Information HTML
         const appInfoHtml = `
             <div class="app-info-modern">
                 <div class="app-info-header">
@@ -2238,7 +2264,7 @@ async function viewApplicationDetails(appId) {
                             <i class="fas fa-user-circle"></i>
                             <span>Applicant</span>
                         </div>
-                        <div class="info-card-value">${escapeHtml(app.piName || 'N/A')}</div>
+                        <div class="info-card-value" id="applicant-name-${app.id}">Loading...</div>
                         <div class="info-card-sub">${escapeHtml(app.userEmail || 'N/A')}</div>
                     </div>
                     <div class="info-card">
@@ -2264,7 +2290,6 @@ async function viewApplicationDetails(appId) {
         
         const modalHtml = `
             <style>
-                /* Improved Application Information Section Styles */
                 .app-info-modern {
                     background: white;
                     border-radius: 16px;
@@ -2292,9 +2317,6 @@ async function viewApplicationDetails(appId) {
                     border-radius: 40px;
                     font-size: 0.75rem;
                     font-weight: 600;
-                }
-                .status-badge-modern i {
-                    font-size: 0.7rem;
                 }
                 .status-badge-modern.status-pending-check1 {
                     background: #FEF3C7;
@@ -2328,7 +2350,6 @@ async function viewApplicationDetails(appId) {
                     color: white;
                 }
                 .id-badge i {
-                    font-size: 0.65rem;
                     color: var(--gold);
                 }
                 .app-info-grid {
@@ -2390,27 +2411,15 @@ async function viewApplicationDetails(appId) {
                 }
                 .return-feedback i {
                     color: #f59e0b;
-                    font-size: 1rem;
-                }
-                .return-feedback strong {
-                    color: #92400e;
-                    margin-right: 0.5rem;
-                }
-                .return-feedback span {
-                    color: #92400e;
                 }
                 .kuro-tab-pane { display: none !important; }
                 .kuro-tab-pane.kuro-active { display: block !important; }
                 @media (max-width: 768px) {
-                    .app-info-grid {
-                        grid-template-columns: 1fr;
-                        gap: 0.8rem;
-                    }
+                    .app-info-grid { grid-template-columns: 1fr; gap: 0.8rem; }
                 }
             </style>
             <div style="padding-right: 5px;">
                 ${appInfoHtml}
-                
                 <div class="modal-detail-tabs">
                     <button class="modal-detail-tab active" data-tab="tc1"><i class="fas fa-file-alt"></i> Research Proposal</button>
                     <button class="modal-detail-tab" data-tab="tc2"><i class="fas fa-clipboard-list"></i> Endorsement</button>
@@ -2418,7 +2427,6 @@ async function viewApplicationDetails(appId) {
                     <button class="modal-detail-tab" data-tab="tc5"><i class="fas fa-check-double"></i> Check Stages</button>
                     ${(isCurrentSuperAdmin || isCurrentCheck3) ? '<button class="modal-detail-tab" data-tab="tc4"><i class="fas fa-users"></i> External Reviewers</button>' : ''}
                 </div>
-                
                 <div id="tc1" class="kuro-tab-pane kuro-active">${contentForm1}</div>
                 <div id="tc2" class="kuro-tab-pane">${contentForm2}</div>
                 <div id="tc3" class="kuro-tab-pane">${contentCV}</div>
@@ -2434,7 +2442,8 @@ async function viewApplicationDetails(appId) {
             showConfirmButton: true,
             confirmButtonText: 'Close',
             confirmButtonColor: '#D4AF37',
-            didOpen: (modal) => {
+            didOpen: async (modal) => {
+                // Tab switching
                 const tabBtns = modal.querySelectorAll('.modal-detail-tab');
                 const switchTab = (targetId) => {
                     modal.querySelectorAll('.kuro-tab-pane').forEach(pane => {
@@ -2456,6 +2465,13 @@ async function viewApplicationDetails(appId) {
                 attachCVHandlersInModal(modal, app.userEmail, app.id);
                 attachCheckStageHandlers(modal, app.userEmail, app.id, app.status);
                 attachExternalReviewerHandlers(modal, app.userEmail, app.id);
+                
+                // Fetch and display applicant name from users collection
+                const applicantNameEl = modal.querySelector(`#applicant-name-${app.id}`);
+                if (applicantNameEl && app.userEmail) {
+                    const name = await getApplicantName(app.userEmail);
+                    applicantNameEl.textContent = name;
+                }
             }
         });
         

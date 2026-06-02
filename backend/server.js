@@ -303,6 +303,28 @@ app.get('/api/applications/:id', async (req, res) => {
     }
 });
 
+// Get user by email - for fetching applicant names
+app.get('/api/users/by-email', async (req, res) => {
+    try {
+        const { email } = req.query;
+        if (!email) {
+            return res.status(400).json({ error: 'Email required' });
+        }
+        
+        const user = await User.findOne({ email });
+        if (user && user.name) {
+            res.json({ name: user.name, email: user.email });
+        } else {
+            // Return email prefix as fallback if user not found
+            const fallbackName = email.split('@')[0].replace(/[._]/g, ' ');
+            res.json({ name: fallbackName, email: email });
+        }
+    } catch (error) {
+        console.error('Error fetching user:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Lazy load CV data endpoint
 app.get('/api/applications/:id/cv', async (req, res) => {
     try {
