@@ -5017,7 +5017,7 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                         const hasChanges = await hasFormChanges(modal);
                         
                         if (!hasChanges) {
-                            // No changes - just close the modal
+                            // No changes - just close the modal and RETURN
                             console.log('No changes detected, closing modal');
                             await Swal.fire({
                                 icon: 'info',
@@ -5029,11 +5029,11 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                             });
                             Swal.close();
                             renderApplicant();
-                            return;
+                            return;  // ✅ IMPORTANT: Exit the handler here!
                         }
                     }
                     
-                    // Show loading state
+                    // Show loading state (only reaches here if there ARE changes)
                     newSubmitBtn.disabled = true;
                     newSubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
                     
