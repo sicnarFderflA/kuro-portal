@@ -3154,12 +3154,20 @@ function collectBudgetItems() {
     return items;
 }
 
-async function collectFormData() {
+async function collectFormData(modalRef = null) {
+    // Helper function to get element from either modalRef or document
+    const getEl = (id) => {
+        if (modalRef) {
+            return modalRef.querySelector(`#${id}`) || document.getElementById(id);
+        }
+        return document.getElementById(id);
+    };
+
     let piCVName = '';
     let piCVData = '';
     
     // ========== PI CV - ALWAYS check file input FIRST ==========
-    const piCVInput = document.getElementById('piCV');
+    const piCVInput = getEld('piCV');
     if (piCVInput && piCVInput.files && piCVInput.files.length > 0) {
         const file = piCVInput.files[0];
         console.log('🔍 Found NEW PI CV file in input:', file.name);
@@ -3193,7 +3201,7 @@ async function collectFormData() {
     
     // ========== TEAM CVs - ALWAYS check file inputs FIRST ==========
     for (let i = 0; i < teamMembers.length; i++) {
-        const teamCVInput = document.getElementById('teamCV_' + i);
+        const teamCVInput = getEl('teamCV_' + i);
         
         // FIRST: Check if a NEW file was uploaded
         if (teamCVInput && teamCVInput.files && teamCVInput.files.length > 0) {
@@ -3264,20 +3272,20 @@ async function collectFormData() {
     
     return {
         // Form 1 - Project Profile
-        proposalTitle: document.getElementById('projTitle')?.value || '',
-        piName: document.getElementById('piName')?.value || '',
-        piEmail: document.getElementById('piEmail')?.value || '',
-        dept: document.getElementById('dept')?.value || '',
-        school: document.getElementById('school')?.value || '',
-        extension: document.getElementById('extension')?.value || '',
-        duration: document.getElementById('duration')?.value || '',
+        proposalTitle: getEl('projTitle')?.value || '',
+        piName: getEl('piName')?.value || '',
+        piEmail: getEl('piEmail')?.value || '',
+        dept: getEl('dept')?.value || '',
+        school: getEl('school')?.value || '',
+        extension: getEl('extension')?.value || '',
+        duration: getEl('duration')?.value || '',
         
         // Form 1 - Proposal Content
-        rationale: document.getElementById('rationale')?.value || '',
-        litReview: document.getElementById('litReview')?.value || '',
-        objectives: document.getElementById('objectives')?.value || '',
-        methodology: document.getElementById('methodology')?.value || '',
-        outputs: document.getElementById('outputs')?.value || '',
+        rationale: getEl('rationale')?.value || '',
+        litReview: getEl('litReview')?.value || '',
+        objectives: getEl('objectives')?.value || '',
+        methodology: getEl('methodology')?.value || '',
+        outputs: getEl('outputs')?.value || '',
         references: Array.from(document.querySelectorAll('#referencesContainer .reference-row input')).map(inp => inp.value).filter(v => v && v.trim() !== ''),
         
         // Form 1 - Team & Activities
@@ -3286,16 +3294,16 @@ async function collectFormData() {
         budgetItems: budgetItems,
         
         // Form 2 - Endorsement Information
-        endorsementDate: document.getElementById('endorsementDate')?.value || '',
-        endorseDept: document.getElementById('endorseDept')?.value || '',
-        endorseSchool: document.getElementById('endorseSchool')?.value || '',
-        schoolYear: document.getElementById('schoolYear')?.value || '',
+        endorsementDate: getEl('endorsementDate')?.value || '',
+        endorseDept: getEl('endorseDept')?.value || '',
+        endorseSchool: getEl('endorseSchool')?.value || '',
+        schoolYear: getEl('schoolYear')?.value || '',
         
         // Form 2 - Signatures
-        fromChair: document.getElementById('fromChair')?.value || '',
-        chairEmail: document.getElementById('chairEmail')?.value || '',
-        deanName: document.getElementById('deanName')?.value || '',
-        deanEmail: document.getElementById('deanEmail')?.value || '',
+        fromChair: getEl('fromChair')?.value || '',
+        chairEmail: getEl('chairEmail')?.value || '',
+        deanName: getEl('deanName')?.value || '',
+        deanEmail: getEl('deanEmail')?.value || '',
         
         // Signatures status
         signatures: { chair: false, dean: false },
@@ -4552,7 +4560,129 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                     e.stopPropagation();
                     e.preventDefault();
                     
-                    const currentFormData = await collectFormData();
+                    // Use the modal reference for DOM queries
+                    const getModalEl = (id) => {
+                        return modal.querySelector(`#${id}`) || document.getElementById(id);
+                    };
+                    
+                    // Collect form data using the modal reference
+                    const collectCurrentFormData = async () => {
+                        // Helper to get element from modal
+                        const getField = (id) => modal.querySelector(`#${id}`);
+                        
+                        // Get PI CV
+                        let piCVName = '';
+                        let piCVData = '';
+                        const piCVInput = getField('piCV');
+                        if (piCVInput && piCVInput.files && piCVInput.files.length > 0) {
+                            const file = piCVInput.files[0];
+                            piCVName = file.name;
+                            piCVData = await fileToBase64(file);
+                        } else if (currentDraftData && currentDraftData.piCVName) {
+                            piCVName = currentDraftData.piCVName;
+                            piCVData = currentDraftData.piCVData || '';
+                        }
+                        
+                        // Get team members
+                        const teamMembers = Array.from(modal.querySelectorAll('#teamMembersContainer .member-row'))
+                            .map(row => ({
+                                name: (row.children[0]?.value || '').trim(),
+                                role: (row.children[1]?.value || '').trim()
+                            }))
+                            .filter(member => member.name !== '');
+                        
+                        // Get team CVs
+                        let teamCVs = new Array(teamMembers.length).fill(null);
+                        let teamCVData = new Array(teamMembers.length).fill(null);
+                        
+                        for (let i = 0; i < teamMembers.length; i++) {
+                            const teamCVInput = getField('teamCV_' + i);
+                            if (teamCVInput && teamCVInput.files && teamCVInput.files.length > 0) {
+                                const file = teamCVInput.files[0];
+                                const base64Data = await fileToBase64(file);
+                                teamCVs[i] = { name: file.name, status: 'pending' };
+                                teamCVData[i] = base64Data;
+                            } else if (currentDraftData && currentDraftData.teamCVs && currentDraftData.teamCVs[i]) {
+                                teamCVs[i] = { ...currentDraftData.teamCVs[i] };
+                                if (currentDraftData.teamCVData && currentDraftData.teamCVData[i]) {
+                                    teamCVData[i] = currentDraftData.teamCVData[i];
+                                }
+                            }
+                        }
+                        
+                        // Get activities
+                        const activities = [];
+                        const activityCards = modal.querySelectorAll('#activitiesContainer .activity-card');
+                        activityCards.forEach(card => {
+                            const activity = {
+                                name: card.querySelector('.act-name')?.value || '',
+                                description: card.querySelector('.act-desc')?.value || '',
+                                objective: card.querySelector('.act-objective')?.value || '',
+                                output: card.querySelector('.act-output')?.value || '',
+                                startDate: card.querySelector('.act-start-date')?.value || '',
+                                endDate: card.querySelector('.act-end-date')?.value || ''
+                            };
+                            if (activity.name.trim() !== '') {
+                                activities.push(activity);
+                            }
+                        });
+                        
+                        // Get budget items
+                        const budgetItems = [];
+                        const budgetCards = modal.querySelectorAll('.budget-card');
+                        budgetCards.forEach(card => {
+                            const category = card.querySelector('.budget-category')?.value || '';
+                            const subcategory = card.querySelector('.budget-subcategory')?.value || '';
+                            const itemName = card.querySelector('.budget-item-select')?.value || '';
+                            const specs = card.querySelector('.budget-specs')?.value || '';
+                            const unitCost = parseFloat(card.querySelector('.budget-unit-cost')?.value) || 0;
+                            const qty = parseFloat(card.querySelector('.budget-qty')?.value) || 1;
+                            
+                            if (category !== '' || itemName !== '') {
+                                budgetItems.push({
+                                    category, subcategory, itemName, specs, unitCost, qty
+                                });
+                            }
+                        });
+                        
+                        // Get references
+                        const references = Array.from(modal.querySelectorAll('#referencesContainer .reference-row input'))
+                            .map(inp => inp.value)
+                            .filter(v => v && v.trim() !== '');
+                        
+                        return {
+                            proposalTitle: getField('projTitle')?.value || '',
+                            piName: getField('piName')?.value || '',
+                            piEmail: getField('piEmail')?.value || '',
+                            dept: getField('dept')?.value || '',
+                            school: getField('school')?.value || '',
+                            extension: getField('extension')?.value || '',
+                            duration: getField('duration')?.value || '',
+                            rationale: getField('rationale')?.value || '',
+                            litReview: getField('litReview')?.value || '',
+                            objectives: getField('objectives')?.value || '',
+                            methodology: getField('methodology')?.value || '',
+                            outputs: getField('outputs')?.value || '',
+                            references: references,
+                            teamMembers: teamMembers,
+                            activities: activities,
+                            budgetItems: budgetItems,
+                            endorsementDate: getField('endorsementDate')?.value || '',
+                            endorseDept: getField('endorseDept')?.value || '',
+                            endorseSchool: getField('endorseSchool')?.value || '',
+                            schoolYear: getField('schoolYear')?.value || '',
+                            fromChair: getField('fromChair')?.value || '',
+                            chairEmail: getField('chairEmail')?.value || '',
+                            deanName: getField('deanName')?.value || '',
+                            deanEmail: getField('deanEmail')?.value || '',
+                            piCVName: piCVName,
+                            piCVData: piCVData,
+                            teamCVs: teamCVs,
+                            teamCVData: teamCVData
+                        };
+                    };
+                    
+                    const currentFormData = await collectCurrentFormData();
                     
                     // Check if this is a NEW application (not edit, not existing draft)
                     const isNewApplication = !isEditMode && !editAppId && !currentDraftData?.draftId;
@@ -4611,7 +4741,6 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                                     return members.map(m => ({
                                         name: (m.name || '').trim(),
                                         role: (m.role || '').trim()
-                                        // Intentionally exclude _id and any other metadata
                                     })).filter(m => m.name !== '');
                                 };
                                 
@@ -4619,12 +4748,12 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                                 const originalTeamNormalized = normalizeTeamMembers(originalData.teamMembers);
                                 
                                 if (JSON.stringify(currentTeamNormalized) !== JSON.stringify(originalTeamNormalized)) {
-                                    console.log('Change detected in team members (actual content changed)');
+                                    console.log('Change detected in team members');
                                     hasChanges = true;
                                 }
                             }
                             
-                            //Compare Activities
+                            // Compare Activities
                             if (!hasChanges) {
                                 const normalizeActivities = (activities) => {
                                     if (!activities || !Array.isArray(activities)) return [];
@@ -4635,42 +4764,40 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                                         output: (act.output || '').trim(),
                                         startDate: act.startDate || '',
                                         endDate: act.endDate || ''
-                                        // Intentionally exclude _id
-                                    })).filter(act => act.name !== ''); // Filter out empty activities
+                                    })).filter(act => act.name !== '');
                                 };
                                 
                                 const currentNormalized = normalizeActivities(currentFormData.activities);
                                 const originalNormalized = normalizeActivities(originalData.activities);
                                 
                                 if (JSON.stringify(currentNormalized) !== JSON.stringify(originalNormalized)) {
-                                    console.log('Change detected in activities (actual content changed)');
+                                    console.log('Change detected in activities');
                                     hasChanges = true;
                                 }
                             }
                             
-                            //Compare Budget Items
+                            // Compare Budget Items
                             if (!hasChanges) {
-                                    const normalizeBudgetItems = (items) => {
-                                        if (!items || !Array.isArray(items)) return [];
-                                        return items.map(item => ({
-                                            category: (item.category || '').trim(),
-                                            subcategory: (item.subcategory || '').trim(),
-                                            itemName: (item.itemName || '').trim(),
-                                            specs: (item.specs || '').trim(),
-                                            unitCost: item.unitCost || 0,
-                                            qty: item.qty || 1
-                                            // Intentionally exclude _id
-                                        })).filter(item => item.category !== '' || item.itemName !== '');
-                                    };
-                                    
-                                    const currentBudgetNormalized = normalizeBudgetItems(currentFormData.budgetItems);
-                                    const originalBudgetNormalized = normalizeBudgetItems(originalData.budgetItems);
-                                    
-                                    if (JSON.stringify(currentBudgetNormalized) !== JSON.stringify(originalBudgetNormalized)) {
-                                        console.log('Change detected in budget items (actual content changed)');
-                                        hasChanges = true;
-                                    }
+                                const normalizeBudgetItems = (items) => {
+                                    if (!items || !Array.isArray(items)) return [];
+                                    return items.map(item => ({
+                                        category: (item.category || '').trim(),
+                                        subcategory: (item.subcategory || '').trim(),
+                                        itemName: (item.itemName || '').trim(),
+                                        specs: (item.specs || '').trim(),
+                                        unitCost: item.unitCost || 0,
+                                        qty: item.qty || 1
+                                    })).filter(item => item.category !== '' || item.itemName !== '');
+                                };
+                                
+                                const currentBudgetNormalized = normalizeBudgetItems(currentFormData.budgetItems);
+                                const originalBudgetNormalized = normalizeBudgetItems(originalData.budgetItems);
+                                
+                                if (JSON.stringify(currentBudgetNormalized) !== JSON.stringify(originalBudgetNormalized)) {
+                                    console.log('Change detected in budget items');
+                                    hasChanges = true;
                                 }
+                            }
                         }
                         
                         console.log('Has changes detected:', hasChanges);
@@ -4709,13 +4836,8 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                             showInlineNotification(null, 'Updating application...', true);
                             
                             try {
-                                // Get fresh form data
-                                const formData = await collectFormData();
-                                console.log('🔴 RAW formData from collectFormData:', {
-                                    proposalTitle: formData.proposalTitle,
-                                    piName: formData.piName,
-                                    piEmail: formData.piEmail
-                                });
+                                // Get fresh form data using the modal reference
+                                const formData = await collectCurrentFormData();
                                 const appId = editAppId;
                                 
                                 // Get existing application to preserve data
@@ -4732,7 +4854,6 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                                     submittedDate: existingApp.submittedDate,
                                     signatures: existingApp.signatures,
                                     signatureRequests: existingApp.signatureRequests,
-                                    // Form fields - use formData if has value, else existing
                                     proposalTitle: formData.proposalTitle || existingApp.proposalTitle,
                                     piName: formData.piName || existingApp.piName,
                                     piEmail: formData.piEmail || existingApp.piEmail,
@@ -4757,7 +4878,6 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                                     endorseSchool: formData.endorseSchool || existingApp.endorseSchool,
                                     schoolYear: formData.schoolYear || existingApp.schoolYear,
                                     endorsementDate: formData.endorsementDate || existingApp.endorsementDate,
-                                    // CV data
                                     piCVName: formData.piCVName || existingApp.piCVName,
                                     piCVData: formData.piCVData || existingApp.piCVData,
                                     piCVStatus: existingApp.piCVStatus || 'pending',
@@ -4765,10 +4885,6 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                                     teamCVData: formData.teamCVData && formData.teamCVData.length > 0 ? formData.teamCVData : existingApp.teamCVData,
                                 };
                                 
-                                console.log('🔴 MERGED DATA proposalTitle:', mergedData.proposalTitle);
-                                console.log('🔴 Full merged data:', mergedData);
-                                
-                                // Call the update API
                                 const result = await KURO_API.updateApplication(appId, mergedData);
                                 console.log('Direct update successful:', result);
                                 
@@ -4786,9 +4902,6 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                                         console.error('Error deleting draft:', draftError);
                                     }
                                 }
-                                
-                                // Close the original form modal
-                                Swal.close();
                                 
                                 // Refresh the dashboard
                                 await renderApplicant();
@@ -4815,43 +4928,8 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                             return;
                         } else {
                             // Cancel - user wants to stay and continue editing
-                            console.log('User chose to stay, reopening form with unsaved data');
-                            
-                            // Close the confirmation modal
-                            Swal.close();
-                            
-                            // Store the current unsaved data
-                            const unsavedFormData = currentFormData;
-                            const currentGrant = selectedGrant;
-                            const currentEditMode = isEditMode;
-                            const currentEditAppId = editAppId;
-                            const currentEditDraftId = editDraftId;
-                            
-                            // Store in a temporary variable that openApplicationForm can read
-                            window._pendingUnsavedData = {
-                                formData: unsavedFormData,
-                                grantTitle: currentGrant,
-                                isEditMode: currentEditMode,
-                                editAppId: currentEditAppId,
-                                editDraftId: currentEditDraftId,
-                                timestamp: Date.now()
-                            };
-                            
-                            // Reopen the form after a short delay
-                            setTimeout(async () => {
-                                // Restore the data
-                                currentDraftData = unsavedFormData;
-                                selectedGrant = currentGrant;
-                                isEditMode = currentEditMode;
-                                editAppId = currentEditAppId;
-                                editDraftId = currentEditDraftId;
-                                
-                                // Reopen the form
-                                await openApplicationForm(isEditMode, currentActiveTab);
-                                
-                                // Clear the temporary storage
-                                delete window._pendingUnsavedData;
-                            }, 100);
+                            console.log('User chose to stay, continuing editing');
+                            return; // Just return, don't close
                         }
                     }
                     
