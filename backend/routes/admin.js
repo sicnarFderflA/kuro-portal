@@ -35,7 +35,6 @@ const isSuperAdmin = async (req, res, next) => {
 
 // Get all applications (admin view)
 router.get('/applications', async (req, res) => {
-    // Use a flag to prevent multiple responses
     let isResponded = false;
     
     const safeRespond = (statusCode, data) => {
@@ -49,7 +48,6 @@ router.get('/applications', async (req, res) => {
     try {
         console.log('📊 GET /admin/applications - START');
         
-        // Set a timeout for the entire request
         const timeoutId = setTimeout(() => {
             if (!isResponded && !res.headersSent) {
                 console.error('Request timeout - sending empty array');
@@ -58,43 +56,32 @@ router.get('/applications', async (req, res) => {
             }
         }, 15000);
         
-        const Application = require('../models/Application');
-        
-        // Check if database is connected
         if (mongoose.connection.readyState !== 1) {
             console.error('Database not connected');
             clearTimeout(timeoutId);
             return safeRespond(200, []);
         }
         
-        // Try to get count first
-        let count = 0;
-        try {
-            count = await Application.countDocuments({});
-            console.log(`Total applications in DB: ${count}`);
-        } catch (countErr) {
-            console.error('Count failed:', countErr.message);
-            clearTimeout(timeoutId);
-            return safeRespond(200, []);
-        }
+        // ONLY GET APPLICATIONS THAT ARE FULLY SUBMITTED
+        // Status should be one of these (not 'Awaiting Signatures')
+        const validStatuses = [
+            'Pending Eligibility Check',
+            'Pending Secondary Check', 
+            'Pending Final Check',
+            'Approved',
+            'Returned'
+        ];
         
-        // Get applications with limit
-        let apps = [];
-        try {
-            apps = await Application.find({})
-                .select('-piCVData -teamCVData')
-                .sort({ submittedDate: -1 })
-                .limit(100)
-                .lean()
-                .maxTimeMS(10000); // Add query timeout
-                
-            console.log(`✅ Returning ${apps.length} applications`);
-        } catch (queryErr) {
-            console.error('Query failed:', queryErr.message);
-            clearTimeout(timeoutId);
-            return safeRespond(200, []);
-        }
-        
+        const apps = await Application.find({ 
+            status: { $in: validStatuses }  // ← Only show submitted applications
+        })
+            .select('-piCVData -teamCVData')
+            .sort({ submittedDate: -1 })
+            .limit(100)
+            .lean()
+            .maxTimeMS(10000);
+            
+        console.log(`✅ Returning ${apps.length} submitted applications`);
         clearTimeout(timeoutId);
         return safeRespond(200, apps);
         

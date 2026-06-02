@@ -908,10 +908,17 @@ app.put('/api/signatures/:token/complete', async (req, res) => {
         });
         
         if (signatureRequest && signatureRequest.chairCompleted && signatureRequest.deanCompleted) {
+            // Update status to move to Check 1
             await Submission.updateOne(
                 { id: signatureRequest.appId },
-                { $set: { status: 'Pending Eligibility Check' } }
+                { 
+                    $set: { 
+                        status: 'Pending Eligibility Check',
+                        submittedDate: new Date().toISOString().slice(0, 10)
+                    } 
+                }
             );
+            console.log('✅ Application submitted for review');
         }
         
         res.json({ success: true, message: 'Signature completed' });
