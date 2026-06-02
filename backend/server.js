@@ -8,11 +8,12 @@ const TestEmail = require('./models/TestEmail');
 const User = require('./models/User');
 const Settings = require('./models/Settings'); 
 const SignatureRequest = require('./models/SignatureRequest');
-const Application = require('./models/Application');
+const Application = require('./models/Application');  // ← Keep this ONE
 
 require('dotenv').config();
 
-const Application = mongoose.model('Application', new mongoose.Schema({}, { strict: false }), 'applications');
+// Define Submission model pointing to correct collection
+const Submission = mongoose.model('Submission', new mongoose.Schema({}, { strict: false }), 'applications');
 
 emailjs.init({
     publicKey: process.env.EMAILJS_PUBLIC_KEY,
@@ -33,11 +34,10 @@ emailjs.init({
     privateKey: EMAILJS_PRIVATE_KEY
 });
 
-// Increase payload limit - add these BEFORE your routes
+// Increase payload limit
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// If using body-parser directly
 const bodyParser = require('body-parser');
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
@@ -56,10 +56,10 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// MongoDB Connection settings (will be handled by connectWithRetry)
+// MongoDB Connection settings
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://200520181_db_user:200520181_db_password@kuro-database.neg1meg.mongodb.net/kuro_portal?retryWrites=true&w=majority&appName=KURO-Database';
 
-// Add connection event handlers BEFORE connectWithRetry
+// Add connection event handlers
 mongoose.connection.on('error', err => {
     console.error('MongoDB connection error:', err);
 });
@@ -84,7 +84,7 @@ setInterval(async () => {
     }
 }, 30000);
 
-// Connection retry logic (this does the actual connection)
+// Connection retry logic
 const connectWithRetry = async (retries = 5, delay = 5000) => {
     for (let i = 0; i < retries; i++) {
         try {
@@ -105,14 +105,12 @@ const connectWithRetry = async (retries = 5, delay = 5000) => {
                 await new Promise(resolve => setTimeout(resolve, delay));
             } else {
                 console.error('All connection attempts failed');
-                // Don't exit - let the server try to recover
-                // process.exit(1);
             }
         }
     }
 };
 
-// Call this to start the connection
+// Start connection
 connectWithRetry();
 
 // Google OAuth client
@@ -997,20 +995,6 @@ app.get('/api/debug/emailjs-detailed', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
-
-// Keep database connection alive
-setInterval(async () => {
-    if (mongoose.connection.readyState === 1) {
-        try {
-            await mongoose.connection.db.admin().ping();
-            console.log('💓 Database ping successful');
-        } catch (err) {
-            console.error('Database ping failed:', err.message);
-        }
-    } else {
-        console.log(`Database state: ${mongoose.connection.readyState} - not connected`);
-    }
-}, 30000); // Every 30 seconds
 
 // ========== 404 HANDLER ==========
 app.use((req, res) => {
