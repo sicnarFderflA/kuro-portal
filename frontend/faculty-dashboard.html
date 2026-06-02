@@ -1997,59 +1997,88 @@ async function hasFormChanges(modalRef) {
     // Compare Team members
     const normalizeTeamMembers = (members) => {
         if (!members || !Array.isArray(members)) return [];
-        return members.map(m => ({
-            name: (m.name || '').trim(),
-            role: (m.role || '').trim()
-        })).filter(m => m.name !== '');
+        // Only keep name and role, ignore other properties like _id, etc.
+        return members
+            .filter(m => m && (m.name || m.role)) // Filter out null/undefined
+            .map(m => ({
+                name: (m.name || '').trim(),
+                role: (m.role || '').trim()
+            }))
+            .filter(m => m.name !== ''); // Only keep members with names
     };
-    
+
     const currentTeamNormalized = normalizeTeamMembers(currentFormData.teamMembers);
     const originalTeamNormalized = normalizeTeamMembers(originalData.teamMembers);
-    
+
+    // Sort arrays to ensure consistent order for comparison
+    currentTeamNormalized.sort((a, b) => a.name.localeCompare(b.name));
+    originalTeamNormalized.sort((a, b) => a.name.localeCompare(b.name));
+
     if (JSON.stringify(currentTeamNormalized) !== JSON.stringify(originalTeamNormalized)) {
         console.log('Change detected in team members');
+        console.log('Current:', currentTeamNormalized);
+        console.log('Original:', originalTeamNormalized);
         return true;
     }
     
     // Compare Activities
     const normalizeActivities = (activities) => {
         if (!activities || !Array.isArray(activities)) return [];
-        return activities.map(act => ({
-            name: (act.name || '').trim(),
-            description: (act.description || '').trim(),
-            objective: (act.objective || '').trim(),
-            output: (act.output || '').trim(),
-            startDate: act.startDate || '',
-            endDate: act.endDate || ''
-        })).filter(act => act.name !== '');
+        return activities
+            .filter(act => act && act.name) // Filter out null/undefined and ensure name exists
+            .map(act => ({
+                name: (act.name || '').trim(),
+                description: (act.description || '').trim(),
+                objective: (act.objective || '').trim(),
+                output: (act.output || '').trim(),
+                startDate: act.startDate || '',
+                endDate: act.endDate || ''
+            }))
+            .filter(act => act.name !== '');
     };
-    
+
     const currentNormalized = normalizeActivities(currentFormData.activities);
     const originalNormalized = normalizeActivities(originalData.activities);
-    
+
+    // Sort by name for consistent comparison
+    currentNormalized.sort((a, b) => a.name.localeCompare(b.name));
+    originalNormalized.sort((a, b) => a.name.localeCompare(b.name));
+
     if (JSON.stringify(currentNormalized) !== JSON.stringify(originalNormalized)) {
         console.log('Change detected in activities');
+        console.log('Current activities:', currentNormalized);
+        console.log('Original activities:', originalNormalized);
         return true;
     }
     
     // Compare Budget Items
     const normalizeBudgetItems = (items) => {
         if (!items || !Array.isArray(items)) return [];
-        return items.map(item => ({
-            category: (item.category || '').trim(),
-            subcategory: (item.subcategory || '').trim(),
-            itemName: (item.itemName || '').trim(),
-            specs: (item.specs || '').trim(),
-            unitCost: item.unitCost || 0,
-            qty: item.qty || 1
-        })).filter(item => item.category !== '' || item.itemName !== '');
+        return items
+            .filter(item => item && (item.category || item.itemName)) // Filter out null/undefined
+            .map(item => ({
+                category: (item.category || '').trim(),
+                subcategory: (item.subcategory || '').trim(),
+                itemName: (item.itemName || '').trim(),
+                specs: (item.specs || '').trim(),
+                unitCost: Number(item.unitCost) || 0,
+                qty: Number(item.qty) || 1
+            }))
+            .filter(item => item.category !== '' || item.itemName !== '');
     };
-    
+
     const currentBudgetNormalized = normalizeBudgetItems(currentFormData.budgetItems);
     const originalBudgetNormalized = normalizeBudgetItems(originalData.budgetItems);
-    
+
+    // Sort for consistent comparison
+    const sortBudgetKey = (item) => `${item.category}|${item.subcategory}|${item.itemName}|${item.specs}|${item.unitCost}|${item.qty}`;
+    currentBudgetNormalized.sort((a, b) => sortBudgetKey(a).localeCompare(sortBudgetKey(b)));
+    originalBudgetNormalized.sort((a, b) => sortBudgetKey(a).localeCompare(sortBudgetKey(b)));
+
     if (JSON.stringify(currentBudgetNormalized) !== JSON.stringify(originalBudgetNormalized)) {
         console.log('Change detected in budget items');
+        console.log('Current budget:', currentBudgetNormalized);
+        console.log('Original budget:', originalBudgetNormalized);
         return true;
     }
     
