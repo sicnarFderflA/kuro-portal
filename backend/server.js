@@ -303,6 +303,39 @@ app.get('/api/applications/:id', async (req, res) => {
     }
 });
 
+// Lazy load CV data endpoint
+app.get('/api/applications/:id/cv', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { type, index } = req.query;  // type: 'pi' or 'team', index: team member index
+        
+        const application = await Submission.findOne({ id: id });
+        if (!application) {
+            return res.status(404).json({ error: 'Application not found' });
+        }
+        
+        let cvData = null;
+        let cvName = null;
+        
+        if (type === 'pi') {
+            cvData = application.piCVData;
+            cvName = application.piCVName;
+        } else if (type === 'team' && index !== undefined) {
+            const idx = parseInt(index);
+            cvData = application.teamCVData?.[idx];
+            cvName = application.teamCVs?.[idx]?.name;
+        }
+        
+        if (!cvData) {
+            return res.status(404).json({ error: 'CV not found' });
+        }
+        
+        res.json({ cvData, cvName });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.put('/api/applications/:id', async (req, res) => {
     try {
         const { id } = req.params;

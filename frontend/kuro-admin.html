@@ -3259,17 +3259,40 @@ function attachCVHandlersInModal(modal, email, appId) {
     
     const viewButtons = modal.querySelectorAll('.view-cv-btn');
     viewButtons.forEach(btn => {
-        btn.onclick = function(e) {
+        btn.onclick = async function(e) {
             e.preventDefault();
+            const type = this.getAttribute('data-type'); // 'pi' or 'team'
+            const idx = this.getAttribute('data-idx') || 0;
             const cvName = this.getAttribute('data-cv-name');
-            const cvData = this.getAttribute('data-cv-data');
-            if (cvData && cvData !== '') {
-                openPDFViewer(cvName, cvData);
-            } else {
-                showToast('CV data not available. Please re-upload the file.', 'error');
+            
+            // Show loading indicator
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+            this.disabled = true;
+            
+            try {
+                // Fetch CV data from the new endpoint
+                const response = await fetch(`${API_URL}/api/applications/${appId}/cv?type=${type}&index=${idx}`);
+                if (!response.ok) throw new Error('Failed to load CV');
+                
+                const data = await response.json();
+                
+                if (data.cvData) {
+                    // Open PDF in new tab
+                    openPDFViewer(data.cvName || cvName, data.cvData);
+                } else {
+                    showToast('No CV data available', 'error');
+                }
+            } catch (error) {
+                console.error('Failed to load CV:', error);
+                showToast('Failed to load CV', 'error');
+            } finally {
+                // Reset button
+                this.innerHTML = '<i class="fas fa-eye"></i> View';
+                this.disabled = false;
             }
         };
     });
+
     
     const saveFeedbackBtn = modal.querySelector('.save-feedback-btn');
     if (saveFeedbackBtn) {
