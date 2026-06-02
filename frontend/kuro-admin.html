@@ -2970,7 +2970,7 @@ function renderCVReviewContent(app) {
                             <option value="eligible" ${app.piCVStatus === 'eligible' ? 'selected' : ''}>✅ Eligible</option>
                             <option value="ineligible" ${app.piCVStatus === 'ineligible' ? 'selected' : ''}>❌ Ineligible</option>
                         </select>
-                        ${app.piCVName ? `<button class="view-cv-btn btn-sm" data-cv-name="${escapeHtml(app.piCVName)}" data-cv-data="${escapeHtml(piCVData)}" style="background: var(--gold);"><i class="fas fa-eye"></i> View</button>` : ''}
+                        ${app.piCVName ? `<button class="view-cv-btn btn-sm" data-type="pi" data-idx="0" data-cv-name="${escapeHtml(app.piCVName)}" style="background: var(--gold);"><i class="fas fa-eye"></i> View CV</button>` : ''}
                     </div>
                 </div>
             </div>
@@ -3009,7 +3009,7 @@ function renderCVReviewContent(app) {
                                         <option value="eligible" ${cv.status === 'eligible' ? 'selected' : ''}>✅ Eligible</option>
                                         <option value="ineligible" ${cv.status === 'ineligible' ? 'selected' : ''}>❌ Ineligible</option>
                                     </select>
-                                    <button class="view-cv-btn btn-sm" data-cv-name="${escapeHtml(cv.name)}" data-cv-data="${escapeHtml(teamCVData)}" style="background: var(--gold);"><i class="fas fa-eye"></i> View</button>
+                                    <button class="view-cv-btn btn-sm" data-type="team" data-idx="${i}" data-cv-name="${escapeHtml(cv.name)}" style="background: var(--gold);"><i class="fas fa-eye"></i> View CV</button>
                                 ` : '<span style="color: #999;">No CV to review</span>'}
                             </div>
                         </div>
