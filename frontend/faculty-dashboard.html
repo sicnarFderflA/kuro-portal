@@ -27,6 +27,9 @@
             --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.05);
             --shadow-md: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
             --radius-card: 20px;
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --radius-sm: 10px;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -46,7 +49,7 @@
         .right-controls { display: flex; align-items: center; gap: 1.5rem; }
         .logo-area { display: flex; align-items: center; gap: 1rem; }
         .school-logo-header { height: 45px; width: auto; }
-        .logo-area h2 { color: white; display: flex; align-items: center; gap: 0.5rem; font-size: 1.3rem; }
+        .logo-area h2 { color: white; display: flex; align-items: center; gap: 0.5rem; font-size: 1.3rem; font-weight: 600; }
         .logo-area h2 i { color: var(--xavier-gold); }
 
         .user-section {
@@ -83,6 +86,7 @@
             justify-content: center;
             width: 100%;
             height: 100%;
+            font-weight: 700;
         }
         .user-name-short { font-size: 0.9rem; font-weight: 500; color: white; }
         .user-hover-card {
@@ -91,10 +95,10 @@
             right: 0;
             margin-top: 0.75rem;
             background: white;
-            border-radius: 12px;
+            border-radius: var(--radius-md);
             box-shadow: 0 10px 40px rgba(0,0,0,0.15);
             padding: 0.75rem 1rem;
-            min-width: 200px;
+            min-width: 220px;
             z-index: 1000;
             opacity: 0;
             visibility: hidden;
@@ -106,6 +110,7 @@
             opacity: 1;
             visibility: visible;
             transform: translateY(0);
+            pointer-events: auto;
         }
         .user-hover-card::before {
             content: '';
@@ -118,7 +123,7 @@
             transform: rotate(45deg);
             box-shadow: -2px -2px 5px rgba(0,0,0,0.05);
         }
-        .user-full-name { font-weight: 600; color: var(--xavier-primary); font-size: 0.85rem; margin-bottom: 0.25rem; }
+        .user-full-name { font-weight: 700; color: var(--xavier-primary); font-size: 0.85rem; margin-bottom: 0.25rem; }
         .user-full-email { font-size: 0.7rem; color: #666; word-break: break-all; }
         .user-hover-card hr { margin: 0.5rem 0; border: none; border-top: 1px solid #eef2f0; }
         .user-hover-role { font-size: 0.65rem; color: var(--xavier-gold); font-weight: 600; }
@@ -157,13 +162,14 @@
             cursor: pointer;
             padding: 0.3rem;
             border-radius: 50%;
+            transition: background 0.2s;
         }
         .notification-bell:hover { background: rgba(255,255,255,0.1); }
         .notification-badge {
             position: absolute;
             top: -5px;
             right: -8px;
-            background: #e74c3c;
+            background: var(--danger);
             color: white;
             font-size: 0.6rem;
             border-radius: 50%;
@@ -179,7 +185,7 @@
             width: 380px;
             max-height: 500px;
             background: white;
-            border-radius: 12px;
+            border-radius: var(--radius-md);
             box-shadow: 0 10px 40px rgba(0,0,0,0.2);
             z-index: 1000;
             overflow: hidden;
@@ -187,11 +193,12 @@
         }
         .notification-item {
             padding: 0.8rem 1rem;
-            border-bottom: 1px solid #eef2f0;
+            border-bottom: 1px solid var(--border-light);
             cursor: pointer;
             transition: background 0.2s;
         }
-        .notification-item.unread { background: #fffef5; border-left: 3px solid #D4AF37; }
+        .notification-item:hover { background: var(--light-bg); }
+        .notification-item.unread { background: #fffef5; border-left: 3px solid var(--xavier-gold); }
         .notification-icon {
             width: 36px;
             height: 36px;
@@ -202,7 +209,7 @@
             font-size: 1rem;
         }
         .notification-content { flex: 1; }
-        .notification-title { font-weight: 600; font-size: 0.8rem; color: #1A2E3F; margin-bottom: 0.2rem; }
+        .notification-title { font-weight: 700; font-size: 0.8rem; color: #1A2E3F; margin-bottom: 0.2rem; }
         .notification-message { font-size: 0.7rem; color: #666; margin-bottom: 0.2rem; }
         .notification-time { font-size: 0.6rem; color: #999; }
 
@@ -217,17 +224,16 @@
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
+            transition: all 0.2s;
         }
-        .logout-nav:hover { background: rgba(231, 76, 60, 0.8); }
+        .logout-nav:hover { background: rgba(231, 76, 60, 0.8); border-color: rgba(231, 76, 60, 0.8); }
 
-        /* ========== MODERN DASHBOARD STYLES ========== */
+        /* ========== DASHBOARD STYLES ========== */
         .main-content {
             padding: 2rem;
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 1.5rem auto;
             background: transparent;
-            border-radius: 0;
-            box-shadow: none;
         }
 
         .welcome-header { margin-bottom: 2rem; }
@@ -241,19 +247,22 @@
             letter-spacing: -0.5px;
         }
         .role-chip {
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
             background: var(--xavier-gold-light);
             color: var(--xavier-primary-dark);
-            padding: 0.25rem 1rem;
+            padding: 0.3rem 1rem;
             border-radius: 40px;
             font-size: 0.7rem;
             font-weight: 600;
             margin-top: 0.5rem;
         }
 
+        /* Stats Cards */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 1.5rem;
             margin-bottom: 2rem;
         }
@@ -262,22 +271,36 @@
             border-radius: var(--radius-card);
             padding: 1.25rem 1.5rem;
             box-shadow: var(--shadow-sm);
-            transition: all 0.25s ease;
+            transition: all 0.3s ease;
             border: 1px solid var(--border-light);
             display: flex;
             align-items: center;
             justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card-new::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--xavier-gold);
+            opacity: 0;
+            transition: opacity 0.3s;
         }
         .stat-card-new:hover {
-            transform: translateY(-3px);
+            transform: translateY(-4px);
             box-shadow: var(--shadow-md);
             border-color: var(--xavier-gold-light);
         }
+        .stat-card-new:hover::before { opacity: 1; }
         .stat-left h3 {
-            font-size: 0.75rem;
-            font-weight: 600;
+            font-size: 0.7rem;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
             color: #5B6E8C;
             margin-bottom: 0.5rem;
         }
@@ -293,17 +316,18 @@
             color: #5B6E8C;
         }
         .stat-icon-new {
-            width: 48px;
-            height: 48px;
-            background: rgba(201, 160, 61, 0.12);
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, rgba(201, 160, 61, 0.12) 0%, rgba(201, 160, 61, 0.05) 100%);
             border-radius: 28px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.4rem;
+            font-size: 1.5rem;
             color: var(--xavier-gold);
         }
 
+        /* Section Header */
         .section-header-modern {
             display: flex;
             justify-content: space-between;
@@ -314,30 +338,32 @@
         }
         .section-header-modern h3 {
             font-size: 1.2rem;
-            font-weight: 600;
+            font-weight: 700;
             color: var(--xavier-primary);
             display: flex;
             align-items: center;
             gap: 0.5rem;
         }
         .btn-primary-modern {
-            background: var(--xavier-gold);
+            background: linear-gradient(135deg, var(--xavier-gold) 0%, var(--xavier-gold-dark) 100%);
             color: var(--xavier-primary);
             border: none;
-            padding: 0.5rem 1.2rem;
+            padding: 0.6rem 1.5rem;
             border-radius: 40px;
             cursor: pointer;
-            font-weight: 600;
-            transition: 0.2s;
+            font-weight: 700;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
         }
         .btn-primary-modern:hover {
-            background: var(--xavier-gold-dark);
-            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(201, 160, 61, 0.3);
         }
 
+        /* Filter Bar */
         .filter-bar-faculty {
             background: white;
             border-radius: 60px;
@@ -351,14 +377,14 @@
             box-shadow: var(--shadow-sm);
         }
         .filter-badge {
-            background: #F1F5F9;
-            padding: 0.4rem 1rem;
+            background: var(--light-bg);
+            padding: 0.45rem 1rem;
             border-radius: 40px;
             font-size: 0.75rem;
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            border: none;
+            border: 1px solid var(--border-light);
         }
         .filter-badge i { color: var(--xavier-gold); }
         .filter-badge select {
@@ -367,12 +393,13 @@
             font-size: 0.75rem;
             cursor: pointer;
             outline: none;
+            font-weight: 500;
         }
         .search-wrapper-faculty {
             flex: 1;
             display: flex;
             align-items: center;
-            background: #F8FAFE;
+            background: var(--light-bg);
             border-radius: 40px;
             padding: 0.3rem 1rem;
             border: 1px solid var(--border-light);
@@ -387,22 +414,22 @@
             font-size: 0.8rem;
         }
 
+        /* Application Cards */
         .applications-list {
             display: flex;
             flex-direction: column;
             gap: 1.25rem;
-            margin-top: 0;
         }
         .application-card {
             background: white;
             border-radius: var(--radius-card);
             border: 1px solid var(--border-light);
             overflow: hidden;
-            transition: all 0.25s ease;
+            transition: all 0.3s ease;
             box-shadow: var(--shadow-sm);
         }
         .application-card:hover {
-            transform: translateY(-2px);
+            transform: translateY(-3px);
             box-shadow: var(--shadow-md);
             border-color: var(--xavier-gold-light);
         }
@@ -411,7 +438,7 @@
 
         .card-header-modern {
             background: linear-gradient(135deg, var(--xavier-primary) 0%, var(--xavier-primary-dark) 100%);
-            padding: 0.75rem 1.25rem;
+            padding: 0.85rem 1.5rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -420,14 +447,14 @@
         }
         .grant-badge {
             background: rgba(212, 175, 55, 0.2);
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
+            padding: 0.3rem 1rem;
+            border-radius: 30px;
             font-size: 0.7rem;
-            font-weight: 600;
+            font-weight: 700;
             color: var(--xavier-gold);
             display: inline-flex;
             align-items: center;
-            gap: 0.3rem;
+            gap: 0.4rem;
         }
 
         .status-badges {
@@ -436,13 +463,13 @@
             gap: 0.5rem;
         }
         .status-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
+            padding: 0.3rem 0.9rem;
+            border-radius: 30px;
             font-size: 0.65rem;
-            font-weight: 600;
+            font-weight: 700;
             display: inline-flex;
             align-items: center;
-            gap: 0.3rem;
+            gap: 0.4rem;
         }
         .status-badge.application-approved { background: var(--success); color: white; }
         .status-badge.application-awaiting { background: var(--warning); color: white; }
@@ -456,13 +483,13 @@
         .status-badge.signature-sent { background: #e3ecff; color: #2c5f9a; }
         .status-badge.signature-pending { background: #fff0db; color: #b45f1b; }
 
-        .card-body-modern { padding: 1.25rem; }
+        .card-body-modern { padding: 1.25rem 1.5rem; }
         .project-title {
             font-size: 1rem;
             font-weight: 700;
             color: var(--xavier-primary);
             margin-bottom: 0.75rem;
-            line-height: 1.3;
+            line-height: 1.4;
         }
         .info-grid-modern {
             display: grid;
@@ -483,6 +510,7 @@
             font-size: 0.75rem;
         }
 
+        /* CV Progress Section */
         .cv-progress-section {
             margin-top: 0.75rem;
             padding-top: 0.75rem;
@@ -490,7 +518,7 @@
         }
         .cv-progress-label {
             font-size: 0.65rem;
-            font-weight: 600;
+            font-weight: 700;
             color: var(--xavier-primary);
             margin-bottom: 0.3rem;
             display: flex;
@@ -500,7 +528,7 @@
         .cv-progress-bar {
             background: #e0e0e0;
             border-radius: 10px;
-            height: 4px;
+            height: 5px;
             overflow: hidden;
             margin: 0.3rem 0;
         }
@@ -520,86 +548,101 @@
         .cv-stat.ineligible { color: var(--danger); }
         .cv-stat.missing { color: #999; }
 
+        /* Feedback Section */
         .feedback-section {
             margin-top: 0.75rem;
             padding: 0.75rem;
             background: #fff3cd;
-            border-radius: 0.5rem;
-            border-left: 3px solid #e74c3c;
+            border-radius: var(--radius-sm);
+            border-left: 3px solid var(--danger);
         }
         .feedback-section h4 { font-size: 0.7rem; font-weight: 700; color: #856404; margin-bottom: 0.3rem; }
         .feedback-section p { font-size: 0.7rem; color: #856404; margin: 0; }
 
+        /* Card Actions */
         .card-actions-modern {
             display: flex;
             justify-content: flex-end;
             align-items: center;
             gap: 0.5rem;
-            padding: 0.75rem 1.25rem;
+            padding: 0.75rem 1.5rem;
             border-top: 1px solid var(--border-light);
-            background: #fafbfc;
+            background: var(--light-bg);
             flex-wrap: wrap;
         }
         .card-action-btn {
-            background: #f0f2f5;
-            border: none;
-            padding: 0.35rem 0.9rem;
+            background: white;
+            border: 1px solid var(--border-light);
+            padding: 0.4rem 1rem;
             border-radius: 30px;
             font-size: 0.7rem;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
             display: inline-flex;
             align-items: center;
-            gap: 0.3rem;
+            gap: 0.4rem;
         }
-        .card-action-btn:hover { background: var(--xavier-primary); color: white; }
-        .card-action-btn.warning { background: var(--xavier-gold); color: var(--xavier-primary); }
+        .card-action-btn:hover { background: var(--xavier-primary); color: white; border-color: var(--xavier-primary); }
+        .card-action-btn.warning { background: var(--xavier-gold); color: var(--xavier-primary); border-color: var(--xavier-gold); }
         .card-action-btn.warning:hover { background: var(--xavier-gold-dark); color: white; }
-        .card-action-btn.danger:hover { background: #e74c3c; color: white; }
+        .card-action-btn.danger:hover { background: var(--danger); border-color: var(--danger); color: white; }
 
+        /* Empty State */
         .empty-state-modern {
             text-align: center;
             padding: 3rem;
             background: white;
             border-radius: var(--radius-card);
             border: 1px solid var(--border-light);
-            color: #999;
         }
-        .empty-state-modern i { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
+        .empty-state-modern i { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; color: var(--xavier-gold); }
+        .empty-state-modern p { color: var(--xavier-gray-text); font-size: 0.85rem; }
 
+        /* Demo Note */
         .demo-note {
             margin-top: 1.5rem;
             padding: 0.8rem 1rem;
             background: #EFF6FF;
-            border-radius: 12px;
+            border-radius: var(--radius-md);
             text-align: center;
             font-size: 0.75rem;
             color: var(--xavier-primary);
             border-left: 4px solid var(--xavier-gold);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         footer {
             text-align: center;
             font-size: 0.65rem;
             color: var(--xavier-gray-text);
-            padding: 1rem;
+            padding: 1.5rem;
             margin-top: 1rem;
+            border-top: 1px solid var(--border-light);
         }
 
-        /* ========== MODAL/FORM STYLES (Keep from original) ========== */
+        /* ========== MODAL/FORM STYLES ========== */
         .swal2-popup { width: 1000px !important; max-width: 95vw !important; }
         .swal2-html-container { overflow-y: auto !important; max-height: 70vh !important; }
 
         .form-group { margin-bottom: 0.8rem; text-align: left; }
         .form-group label { display: block; font-weight: 600; margin-bottom: 0.2rem; color: var(--xavier-primary); font-size: 0.8rem; }
-        .form-group label .required { color: #e74c3c; }
+        .form-group label .required { color: var(--danger); }
         .form-group input, .form-group select, .form-group textarea {
             width: 100%;
-            padding: 0.5rem;
-            border: 1px solid #ddd;
-            border-radius: 6px;
+            padding: 0.6rem;
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
             font-family: inherit;
             font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: var(--xavier-gold);
+            box-shadow: 0 0 0 3px rgba(201, 160, 61, 0.1);
         }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
 
@@ -620,15 +663,17 @@
             border-left: 3px solid var(--xavier-gold);
         }
 
+        /* Grant Selection */
         .eligibility-card {
-            background: #f8f9fa;
-            border-radius: 0.8rem;
+            background: var(--light-bg);
+            border-radius: var(--radius-lg);
             padding: 1rem;
             margin-bottom: 1rem;
             border-left: 4px solid var(--xavier-gold);
             cursor: pointer;
-            transition: 0.2s;
+            transition: all 0.2s;
         }
+        .eligibility-card:hover { transform: translateX(4px); }
         .eligibility-card.selected {
             border-left-color: var(--xavier-primary);
             background: #eef2fa;
@@ -639,9 +684,10 @@
         .eligibility-card .eligibility-title { font-weight: 600; font-size: 0.7rem; color: var(--xavier-primary); margin-top: 0.3rem; margin-bottom: 0.2rem; }
         .eligibility-card ul { margin-left: 1.2rem; font-size: 0.7rem; color: #666; }
 
+        /* Activity Card (Form Modal) */
         .activity-card {
-            background: #f8f9fa;
-            border-radius: 0.8rem;
+            background: var(--light-bg);
+            border-radius: var(--radius-lg);
             padding: 1rem;
             margin-bottom: 1rem;
             border-left: 4px solid var(--xavier-gold);
@@ -650,11 +696,11 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
+            margin-bottom: 0.8rem;
             padding-bottom: 0.5rem;
-            border-bottom: 1px solid #e0e0e0;
+            border-bottom: 1px solid var(--border-light);
         }
-        .activity-title { font-weight: 700; color: var(--xavier-primary); font-size: 0.9rem; }
+        .activity-title { font-weight: 700; color: var(--xavier-primary); font-size: 0.85rem; }
         .activity-field { margin-bottom: 0.8rem; }
         .activity-field label {
             display: block;
@@ -665,10 +711,11 @@
         }
         .activity-field input, .activity-field textarea {
             width: 100%;
-            padding: 0.5rem;
-            font-size: 0.8rem;
-            border: 1px solid #ddd;
-            border-radius: 6px;
+            padding: 0.6rem;
+            font-size: 0.75rem;
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            font-family: inherit;
         }
         .date-range-row {
             display: flex;
@@ -677,12 +724,12 @@
             margin-top: 0.5rem;
             flex-wrap: wrap;
         }
-        .date-range-row label { font-size: 0.7rem; font-weight: 600; color: var(--xavier-primary); }
+        .date-range-row label { font-size: 0.7rem; font-weight: 500; color: var(--xavier-gray-text); }
         .date-range-row input[type="date"] {
             padding: 0.4rem;
-            border-radius: 6px;
-            border: 1px solid #ddd;
-            font-size: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+            font-size: 0.7rem;
             cursor: pointer;
         }
         .date-range-row input[type="date"]:disabled {
@@ -692,16 +739,18 @@
         .activity-hint {
             display: block;
             font-size: 0.65rem;
-            color: #666;
+            color: var(--xavier-gray-text);
             margin-top: 0.4rem;
         }
 
+        /* Budget Card (Form Modal) */
         .budget-card {
-            background: #f8f9fa;
-            border-radius: 0.8rem;
+            background: var(--light-bg);
+            border-radius: var(--radius-lg);
             padding: 1rem;
             margin-bottom: 1rem;
-            border: 1px solid #e0e0e0;
+            border: 1px solid var(--border-light);
+            border-left: 4px solid var(--xavier-gold);
         }
         .budget-card-header {
             display: flex;
@@ -709,17 +758,21 @@
             align-items: center;
             margin-bottom: 1rem;
             padding-bottom: 0.5rem;
-            border-bottom: 1px solid #e0e0e0;
+            border-bottom: 1px solid var(--border-light);
         }
         .budget-card-title { font-weight: 700; color: var(--xavier-primary); font-size: 0.85rem; }
         .budget-card-remove {
-            background: #e74c3c;
+            background: var(--danger);
             color: white;
             border: none;
-            border-radius: 20px;
-            padding: 0.2rem 0.6rem;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
             cursor: pointer;
             font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .budget-field { margin-bottom: 0.8rem; }
         .budget-field label {
@@ -731,10 +784,10 @@
         }
         .budget-field select, .budget-field input {
             width: 100%;
-            padding: 0.5rem;
-            font-size: 0.8rem;
-            border: 1px solid #ddd;
-            border-radius: 6px;
+            padding: 0.6rem;
+            font-size: 0.75rem;
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
         }
         .budget-row {
             display: flex;
@@ -748,7 +801,7 @@
         }
         .budget-row-item label {
             display: block;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             font-weight: 600;
             color: var(--xavier-primary);
             margin-bottom: 0.2rem;
@@ -756,38 +809,37 @@
         .budget-row-item input {
             width: 100%;
             padding: 0.5rem;
-            font-size: 0.8rem;
-            border: 1px solid #ddd;
-            border-radius: 6px;
+            font-size: 0.75rem;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
         }
         .budget-total-display {
             background: #e8f5e9;
             padding: 0.5rem;
-            border-radius: 6px;
+            border-radius: 8px;
             text-align: center;
             font-weight: bold;
-            color: #2ecc71;
-            font-size: 0.9rem;
+            color: var(--success);
+            font-size: 0.8rem;
         }
         .budget-summary-card {
             background: linear-gradient(135deg, var(--xavier-primary) 0%, var(--xavier-primary-dark) 100%);
             color: white;
             padding: 1rem;
-            border-radius: 0.8rem;
+            border-radius: var(--radius-lg);
             margin-top: 1rem;
         }
         .budget-summary-grand {
             display: flex;
             justify-content: space-between;
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 700;
-            margin-top: 0.5rem;
         }
         .add-budget-btn {
             background: var(--xavier-gold);
             color: var(--xavier-primary);
             border: none;
-            padding: 0.5rem 1rem;
+            padding: 0.5rem 1.2rem;
             border-radius: 40px;
             cursor: pointer;
             font-weight: 600;
@@ -799,32 +851,36 @@
         }
         .add-budget-btn:hover { background: var(--xavier-gold-dark); color: white; }
 
+        /* Tabs */
         .tabs {
             display: flex;
             gap: 0.3rem;
             margin-bottom: 1rem;
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid var(--border-light);
             flex-wrap: wrap;
         }
         .tab-btn {
             background: none;
             border: none;
-            padding: 0.4rem 0.8rem;
-            font-size: 0.75rem;
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
             font-weight: 600;
             color: var(--xavier-gray-text);
             cursor: pointer;
             transition: 0.2s;
-            border-radius: 6px 6px 0 0;
+            border-radius: 10px 10px 0 0;
         }
+        .tab-btn i { margin-right: 0.4rem; }
+        .tab-btn:hover { color: var(--xavier-primary); background: rgba(201, 160, 61, 0.1); }
         .tab-btn.active {
             color: var(--xavier-primary);
             border-bottom: 2px solid var(--xavier-gold);
-            background: #f8f9fa;
+            background: var(--light-bg);
         }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
+        /* Dynamic Lists */
         .member-row, .reference-row {
             display: flex;
             gap: 0.5rem;
@@ -833,53 +889,66 @@
         }
         .member-row input, .reference-row input {
             flex: 1;
-            padding: 0.4rem;
-            border-radius: 4px;
-            border: 1px solid #ddd;
+            padding: 0.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
             font-size: 0.75rem;
         }
+        .member-row input:first-child { flex: 1; }
+        .member-row input:last-child { flex: 2; }
         .add-btn {
             background: var(--xavier-gold);
             color: var(--xavier-primary);
             border: none;
-            padding: 0.2rem 0.6rem;
-            border-radius: 20px;
+            padding: 0.3rem 1rem;
+            border-radius: 30px;
             cursor: pointer;
             font-size: 0.7rem;
+            font-weight: 600;
             margin-top: 0.3rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
         }
+        .add-btn:hover { background: var(--xavier-gold-dark); color: white; }
         .remove-btn {
-            background: #e74c3c;
+            background: var(--danger);
             color: white;
             border: none;
             border-radius: 50%;
-            width: 24px;
-            height: 24px;
+            width: 28px;
+            height: 28px;
             cursor: pointer;
             font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
         }
+        .remove-btn:hover { background: #c0392b; }
 
+        /* Form Validation */
         .form-group.missing input,
         .form-group.missing textarea,
         .form-group.missing select {
-            border-color: #e74c3c !important;
+            border-color: var(--danger) !important;
             background-color: #fff5f5 !important;
         }
-        .form-group.missing label { color: #e74c3c !important; }
-
+        .form-group.missing label { color: var(--danger) !important; }
         .field-error-message {
-            color: #e74c3c;
+            color: var(--danger);
             font-size: 0.7rem;
             display: block;
             margin-top: 0.25rem;
         }
 
+        /* CV Upload Card */
         .cv-upload-card {
-            background: #f8f9fa;
-            border-radius: 0.8rem;
+            background: var(--light-bg);
+            border-radius: var(--radius-lg);
             padding: 1rem;
             margin-bottom: 1rem;
-            border: 1px solid #e0e0e0;
+            border: 1px solid var(--border-light);
         }
         .cv-pending-status {
             background: #fff3e0;
@@ -887,7 +956,38 @@
             border-radius: 8px;
             text-align: center;
         }
+        .cv-progress-wrapper { margin-bottom: 1.5rem; }
+        .cv-progress-bar-bg {
+            background: #e0e0e0;
+            border-radius: 10px;
+            height: 6px;
+            overflow: hidden;
+        }
 
+        /* Signatures Grid (Form 2) */
+        .signatures-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .signature-card {
+            background: var(--light-bg);
+            border-radius: var(--radius-lg);
+            padding: 1rem;
+            border-left: 4px solid var(--xavier-gold);
+        }
+        .signature-card h4 {
+            color: var(--xavier-primary);
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .signature-card h4 i { color: var(--xavier-gold); }
+
+        /* Toast Notifications */
         .toast-notification {
             position: fixed;
             top: 80px;
@@ -895,15 +995,15 @@
             min-width: 320px;
             max-width: 400px;
             background: white;
-            border-radius: 12px;
+            border-radius: var(--radius-md);
             box-shadow: 0 10px 40px rgba(0,0,0,0.15);
             z-index: 10000;
             animation: slideInRight 0.3s ease;
             border-left: 4px solid;
             overflow: hidden;
         }
-        .toast-notification.success { border-left-color: #2ecc71; }
-        .toast-notification.error { border-left-color: #e74c3c; }
+        .toast-notification.success { border-left-color: var(--success); }
+        .toast-notification.error { border-left-color: var(--danger); }
         .toast-content {
             display: flex;
             align-items: flex-start;
@@ -918,7 +1018,7 @@
             color: #999;
         }
 
-        /* ========== ANIMATIONS ========== */
+        /* Animations */
         @keyframes slideDown {
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -937,26 +1037,108 @@
             75% { transform: translateX(5px); }
         }
 
+        /* Pagination */
+        .pagination-controls {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
         /* ========== RESPONSIVE ========== */
         @media (max-width: 900px) {
-            .budget-item-row { flex-direction: column; align-items: stretch; }
-            .budget-category, .budget-subcategory, .budget-item-select,
-            .budget-specs, .budget-unit-cost, .budget-qty { width: 100%; }
-        }
-        @media (max-width: 800px) {
             .main-content { padding: 1rem; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
             .filter-bar-faculty { border-radius: 20px; flex-direction: column; align-items: stretch; }
             .card-header-modern { flex-direction: column; align-items: flex-start; }
+            .signatures-grid { grid-template-columns: 1fr; gap: 1rem; }
         }
         @media (max-width: 768px) {
             .top-nav { flex-direction: column; align-items: stretch; }
             .right-controls { justify-content: flex-end; }
             .user-name-short { display: none; }
-        }
-        @media (max-width: 700px) {
+            .stats-grid { grid-template-columns: 1fr; }
             .form-row { grid-template-columns: 1fr; }
-            .activity-grid { grid-template-columns: 1fr; }
+            .budget-row { flex-direction: column; }
+        }
+
+                /* Improved Grant Selection Cards */
+        .grant-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 1.2rem;
+            margin-bottom: 1rem;
+            border: 2px solid var(--border-light);
+            cursor: pointer;
+            transition: all 0.25s ease;
+            position: relative;
+        }
+        .grant-card:hover {
+            transform: translateX(6px);
+            border-color: var(--xavier-gold);
+            box-shadow: var(--shadow-sm);
+        }
+        .grant-card.selected {
+            border-color: var(--xavier-gold);
+            background: linear-gradient(135deg, #FFFDF5 0%, #FFF9E6 100%);
+        }
+        .grant-card.selected::after {
+            content: "✓";
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            background: var(--xavier-gold);
+            color: var(--xavier-primary);
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        .grant-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--xavier-primary);
+            margin-bottom: 0.5rem;
+            padding-right: 30px;
+        }
+        .grant-amount {
+            display: inline-block;
+            background: rgba(201, 160, 61, 0.12);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--xavier-gold-dark);
+            margin: 0.5rem 0;
+        }
+        .grant-focus {
+            font-size: 0.75rem;
+            color: var(--xavier-gray-text);
+            margin: 0.5rem 0;
+            line-height: 1.4;
+        }
+        .grant-eligibility {
+            background: var(--light-bg);
+            padding: 0.75rem;
+            border-radius: var(--radius-md);
+            margin-top: 0.5rem;
+            font-size: 0.7rem;
+        }
+        .grant-eligibility strong {
+            color: var(--xavier-primary);
+            display: block;
+            margin-bottom: 0.3rem;
+        }
+        .grant-eligibility ul {
+            margin-left: 1.2rem;
+            color: var(--xavier-gray-text);
+        }
+        .grant-eligibility li {
+            margin-bottom: 0.2rem;
         }
     </style>
 </head>
@@ -2492,19 +2674,23 @@ async function openGrantSelection() {
     
     let optionsHtml = '';
     for (const [grant, data] of Object.entries(FACULTY_GRANTS_DATA)) {
-        optionsHtml += '<div class="eligibility-card" data-grant="' + grant + '">';
-        optionsHtml += '<h3>' + grant + '</h3>';
-        optionsHtml += '<div class="amount">💰 Grant Amount: ' + data.amount + '</div>';
-        optionsHtml += '<div class="focus"><strong>Focus:</strong> ' + data.focus + '</div>';
-        optionsHtml += '<div class="eligibility-title">Eligibility:</div>';
-        optionsHtml += '<ul>' + data.eligibility.split('<br>').map(item => '<li>' + item + '</li>').join('') + '</ul>';
-        optionsHtml += '</div>';
+        optionsHtml += `
+            <div class="grant-card" data-grant="${grant}">
+                <div class="grant-title">${grant}</div>
+                <div class="grant-amount"><i class="fas fa-coins"></i> ${data.amount}</div>
+                <div class="grant-focus"><i class="fas fa-bullseye"></i> ${data.focus}</div>
+                <div class="grant-eligibility">
+                    <strong><i class="fas fa-clipboard-list"></i> Eligibility</strong>
+                    <ul>${data.eligibility.split('<br>').map(item => `<li>${item.trim()}</li>`).join('')}</ul>
+                </div>
+            </div>
+        `;
     }
     
     const result = await Swal.fire({
-        title: '<div style="display: flex; justify-content: space-between; align-items: center;"><span>Select Research Grant</span><button id="customCloseBtn" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999; line-height: 1; padding: 0 8px;">&times;</button></div>',
-        html: '<div id="grantOptions" style="text-align:left; max-height: 60vh; overflow-y: auto;">' + optionsHtml + '</div>',
-        confirmButtonText: 'Next →',
+        title: '<div style="display: flex; justify-content: space-between; align-items: center;"><span><i class="fas fa-trophy" style="color: var(--xavier-gold); margin-right: 0.5rem;"></i>Select Research Grant</span><button id="customCloseBtn" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999; line-height: 1; padding: 0 8px;">&times;</button></div>',
+        html: '<div id="grantOptions" style="text-align:left; max-height: 60vh; overflow-y: auto; padding: 0.5rem;">' + optionsHtml + '</div>',
+        confirmButtonText: 'Continue to Application <i class="fas fa-arrow-right"></i>',
         confirmButtonColor: '#D4AF37',
         showCancelButton: true,
         cancelButtonText: 'Cancel',
@@ -2520,17 +2706,31 @@ async function openGrantSelection() {
                 });
             }
             
-            document.querySelectorAll('#grantOptions .eligibility-card').forEach(card => {
+            // Style the confirm button
+            const confirmBtn = modal.querySelector('.swal2-confirm');
+            if (confirmBtn) {
+                confirmBtn.style.fontWeight = '600';
+                confirmBtn.style.padding = '0.6rem 1.5rem';
+            }
+            
+            // Style cancel button
+            const cancelBtn = modal.querySelector('.swal2-cancel');
+            if (cancelBtn) {
+                cancelBtn.style.fontWeight = '600';
+                cancelBtn.style.padding = '0.6rem 1.2rem';
+            }
+            
+            document.querySelectorAll('#grantOptions .grant-card').forEach(card => {
                 card.addEventListener('click', () => {
-                    document.querySelectorAll('#grantOptions .eligibility-card').forEach(c => c.classList.remove('selected'));
+                    document.querySelectorAll('#grantOptions .grant-card').forEach(c => c.classList.remove('selected'));
                     card.classList.add('selected');
                 });
             });
         },
         preConfirm: () => {
-            const selected = document.querySelector('#grantOptions .eligibility-card.selected');
+            const selected = document.querySelector('#grantOptions .grant-card.selected');
             if (!selected) {
-                Swal.showValidationMessage('Please select a grant');
+                Swal.showValidationMessage('Please select a grant to continue');
                 return false;
             }
             return selected.getAttribute('data-grant');
@@ -3162,6 +3362,7 @@ function renderFullXURGForm1Content(draftData) {
     
     let html = '<div class="form-section-title">📝 Research Proposal</div>';
     
+    // Project Profile Section
     html += '<div class="form-subsection-title">📌 Project Profile</div>';
     html += '<div class="form-group"><label>Project Title <span class="required">*</span></label><input type="text" id="projTitle" name="projTitle_' + uniqueId + '" autocomplete="off" value="' + escapeHtml(d.proposalTitle || '') + '" placeholder="Enter project title"></div>';
     html += '<div class="form-row"><div class="form-group"><label>Principal Investigator/Project Leader <span class="required">*</span></label><input type="text" id="piName" name="piName_' + uniqueId + '" autocomplete="off" value="' + escapeHtml(d.piName || '') + '" placeholder="Full name"></div>';
@@ -3171,6 +3372,7 @@ function renderFullXURGForm1Content(draftData) {
     html += '<div class="form-row"><div class="form-group"><label>Local Extension <span class="required">*</span></label><input type="text" id="extension" name="extension_' + uniqueId + '" autocomplete="off" value="' + escapeHtml(d.extension || '') + '" placeholder="Local extension"></div>';
     html += '<div class="form-group"><label>Project Duration <span class="required">*</span></label><input type="text" id="duration" name="duration_' + uniqueId + '" autocomplete="off" value="' + escapeHtml(d.duration || '') + '" placeholder="e.g., 12 months"></div></div>';
     
+    // Proposal Content Section
     html += '<div class="form-subsection-title">📖 Rationale</div>';
     html += '<div class="form-group"><textarea id="rationale" name="rationale_' + uniqueId + '" rows="3" autocomplete="off" placeholder="Introduce the basis/motivation for the project.">' + escapeHtml(d.rationale || '') + '</textarea></div>';
     
@@ -3186,21 +3388,190 @@ function renderFullXURGForm1Content(draftData) {
     html += '<div class="form-subsection-title">📊 Target Accomplishments and Expected Outputs</div>';
     html += '<div class="form-group"><textarea id="outputs" name="outputs_' + uniqueId + '" rows="2" autocomplete="off" placeholder="Measurable results and deliverables.">' + escapeHtml(d.outputs || '') + '</textarea></div>';
     
+    // Literature Cited
     html += '<div class="form-subsection-title">📑 Literature Cited</div>';
     html += '<div id="referencesContainer">' + renderReferences(d.references) + '</div>';
     html += '<button type="button" class="add-btn" onclick="addReference()">+ Add Reference</button>';
     
+    // Research Team Members
     html += '<div class="form-subsection-title">👥 Research Team Members</div>';
     html += '<div id="teamMembersContainer">' + renderResearchTeamMembers(d.teamMembers) + '</div>';
     html += '<button type="button" class="add-btn" onclick="addTeamMember()">+ Add Team Member</button>';
     
+    // Activities - IMPROVED VERSION with proper date handling
     html += '<div class="form-subsection-title">📅 Major Activities & Workplan</div>';
-    html += '<div id="activitiesContainer">' + renderActivities(d.activities) + '</div>';
+    html += '<div id="activitiesContainer">' + renderImprovedActivities(d.activities) + '</div>';
     html += '<button type="button" class="add-btn" onclick="addActivity()">+ Add Activity</button>';
     
+    // Budget - IMPROVED VERSION
     html += '<div class="form-subsection-title">💰 Budgetary Requirements</div>';
-    html += '<div id="budgetContainer">' + renderBudgetItems(d.budgetItems) + '</div>';
+    html += '<div id="budgetContainer">' + renderImprovedBudgetItems(d.budgetItems) + '</div>';
 
+    return html;
+}
+
+function renderImprovedActivities(activities) {
+    activities = activities || [];
+    if (activities.length === 0) {
+        activities = [{ name: '', description: '', objective: '', output: '', startDate: '', endDate: '' }];
+    }
+    
+    const today = new Date().toISOString().split('T')[0];
+    let html = '';
+    
+    for (let idx = 0; idx < activities.length; idx++) {
+        const act = activities[idx];
+        const startDate = act.startDate || '';
+        const endDate = act.endDate || '';
+        
+        html += `<div class="activity-card" data-activity-index="${idx}">
+            <div class="activity-header">
+                <span class="activity-title">Activity ${idx + 1}</span>
+                <button type="button" class="remove-activity-btn" onclick="removeActivity(${idx})" style="background: #e74c3c; border: none; color: white; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 0.7rem;">✕</button>
+            </div>
+            <div class="activity-field">
+                <label>Activity Name *</label>
+                <input type="text" class="act-name" value="${escapeHtml(act.name || '')}" placeholder="e.g., Data Gathering, Literature Review, Analysis" autocomplete="off">
+            </div>
+            <div class="activity-field">
+                <label>Description</label>
+                <textarea class="act-desc" rows="2" placeholder="Brief description of the activity" autocomplete="off">${escapeHtml(act.description || '')}</textarea>
+            </div>
+            <div class="activity-field">
+                <label>Objective</label>
+                <input type="text" class="act-objective" value="${escapeHtml(act.objective || '')}" placeholder="Which objective does this address?" autocomplete="off">
+            </div>
+            <div class="activity-field">
+                <label>Expected Output</label>
+                <input type="text" class="act-output" value="${escapeHtml(act.output || '')}" placeholder="Deliverable or expected result" autocomplete="off">
+            </div>
+            <div class="date-range-row">
+                <label>Start Date:</label>
+                <input type="date" class="act-start-date" min="${today}" value="${startDate}" onchange="updateEndDateMin(this)">
+                <label>End Date:</label>
+                <input type="date" class="act-end-date" min="${startDate || today}" value="${endDate}" ${!startDate ? 'disabled' : ''}>
+            </div>
+            <small class="activity-hint"><i class="fas fa-calendar-alt"></i> Select start date first, then end date (cannot be before start date)</small>
+        </div>`;
+    }
+    return html;
+}
+
+function renderImprovedBudgetItems(budgetItems) {
+    let items = [];
+    
+    if (budgetItems && budgetItems.length > 0) {
+        items = budgetItems;
+    } else if (currentDraftData && currentDraftData.budgetItems && currentDraftData.budgetItems.length > 0) {
+        items = currentDraftData.budgetItems;
+    } else {
+        items = [{
+            category: '',
+            subcategory: '',
+            itemName: '',
+            specs: '',
+            unitCost: 0,
+            qty: 1
+        }];
+    }
+    
+    let html = '<div id="budgetItemsContainer">';
+    
+    for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        const total = (item.unitCost || 0) * (item.qty || 1);
+        
+        let cardTitle = '';
+        const isEmpty = !item.category && !item.itemName && !item.specs && (item.unitCost === 0 || !item.unitCost);
+        
+        if (items.length === 1 && isEmpty) {
+            cardTitle = 'New Budget';
+        } else {
+            cardTitle = 'Budget ' + (i + 1);
+        }
+        
+        html += '<div class="budget-card" data-budget-index="' + i + '">';
+        html += '<div class="budget-card-header">';
+        html += '<span class="budget-card-title">' + cardTitle + '</span>';
+        html += '<button type="button" class="budget-card-remove" onclick="removeBudgetItem(' + i + ')">&times;</button>';
+        html += '</div>';
+        html += '<div class="budget-field">';
+        html += '<label>Category *</label>';
+        html += '<select class="budget-category" data-index="' + i + '" onchange="updateBudgetSubcategories(this)">';
+        html += '<option value="">Select Category</option>';
+        
+        for (const cat of Object.keys(BUDGET_STRUCTURE)) {
+            const selected = (item.category === cat) ? 'selected' : '';
+            html += '<option value="' + cat + '" ' + selected + '>' + cat + '</option>';
+        }
+        
+        html += '</select>';
+        html += '</div>';
+        html += '<div class="budget-field">';
+        html += '<label>Subcategory</label>';
+        html += '<select class="budget-subcategory" data-index="' + i + '" onchange="updateBudgetItemsList(this)">';
+        html += '<option value="">Select Subcategory</option>';
+        
+        if (item.category && BUDGET_STRUCTURE[item.category]) {
+            for (const sub of Object.keys(BUDGET_STRUCTURE[item.category])) {
+                const selected = (item.subcategory === sub) ? 'selected' : '';
+                html += '<option value="' + sub + '" ' + selected + '>' + sub + '</option>';
+            }
+        }
+        
+        html += '</select>';
+        html += '</div>';
+        html += '<div class="budget-field">';
+        html += '<label>Item *</label>';
+        html += '<select class="budget-item-select" data-index="' + i + '" onchange="updateBudgetItemName(this)">';
+        html += '<option value="">Select Item</option>';
+        
+        if (item.category && item.subcategory && BUDGET_STRUCTURE[item.category] && BUDGET_STRUCTURE[item.category][item.subcategory]) {
+            for (const itm of BUDGET_STRUCTURE[item.category][item.subcategory]) {
+                const selected = (item.itemName === itm) ? 'selected' : '';
+                html += '<option value="' + itm + '" ' + selected + '>' + itm + '</option>';
+            }
+        }
+        
+        html += '</select>';
+        html += '</div>';
+        html += '<div class="budget-field">';
+        html += '<label>Specifications / Description</label>';
+        html += '<input type="text" class="budget-specs" data-index="' + i + '" value="' + escapeHtml(item.specs || '') + '" placeholder="e.g., 2 vans for 3 days, includes driver" onchange="updateBudgetSpecs(this)">';
+        html += '</div>';
+        html += '<div class="budget-row">';
+        html += '<div class="budget-row-item">';
+        html += '<label>Unit Cost (₱) *</label>';
+        html += '<input type="number" class="budget-unit-cost" data-index="' + i + '" value="' + (item.unitCost || '') + '" placeholder="0.00" step="0.01" oninput="updateBudgetItemTotal(' + i + ')">';
+        html += '</div>';
+        html += '<div class="budget-row-item">';
+        html += '<label>Quantity</label>';
+        html += '<input type="number" class="budget-qty" data-index="' + i + '" value="' + (item.qty || 1) + '" placeholder="1" min="1" step="1" oninput="updateBudgetItemTotal(' + i + ')">';
+        html += '</div>';
+        html += '<div class="budget-row-item">';
+        html += '<label>Total</label>';
+        html += '<div class="budget-total-display" id="budgetTotalDisplay_' + i + '">₱' + total.toLocaleString() + '</div>';
+        html += '</div>';
+        html += '</div>';
+        html += '</div>';
+    }
+    
+    let grandTotal = 0;
+    items.forEach(function(item) {
+        grandTotal += (item.unitCost || 0) * (item.qty || 1);
+    });
+    
+    html += '</div>';
+    html += '<button type="button" class="add-budget-btn" onclick="addBudgetItem()">';
+    html += '<i class="fas fa-plus"></i> Add Budget Item';
+    html += '</button>';
+    html += '<div class="budget-summary-card">';
+    html += '<div class="budget-summary-grand">';
+    html += '<span><i class="fas fa-calculator"></i> GRAND TOTAL:</span>';
+    html += '<span>₱' + grandTotal.toLocaleString() + '</span>';
+    html += '</div>';
+    html += '</div>';
+    
     return html;
 }
 
@@ -3220,17 +3591,20 @@ function renderXURGForm2(draftData) {
     html += '<div class="form-group"><label>School/College <span class="required">*</span></label><input type="text" id="endorseSchool" name="endorseSchool_' + uniqueId + '" autocomplete="off" value="' + escapeHtml(d.endorseSchool || '') + '" placeholder="School or College"></div></div>';
     html += '<div class="form-group"><label>School Year <span class="required">*</span></label><input type="text" id="schoolYear" name="schoolYear_' + uniqueId + '" autocomplete="off" value="' + escapeHtml(d.schoolYear || '') + '" placeholder="e.g., 2025-2026"></div>';
     
+    // Digital Signatures - IMPROVED with side-by-side layout
     html += '<div class="form-subsection-title">✍️ Digital Signatures</div>';
-    html += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">';
+    html += '<div class="signatures-grid">';
     
-    html += '<div style="background: #f8f9fa; padding: 1rem; border-radius: 0.8rem; border-left: 3px solid var(--xavier-gold);">';
-    html += '<h4 style="margin-bottom: 0.5rem; color: var(--xavier-primary);"><i class="fas fa-user-tie"></i> Department Chair</h4>';
+    // Department Chair Card
+    html += '<div class="signature-card">';
+    html += '<h4><i class="fas fa-user-tie"></i> Department Chair</h4>';
     html += '<div class="form-group"><label>Full Name <span class="required">*</span></label><input type="text" id="fromChair" name="fromChair_' + uniqueId + '" autocomplete="off" value="' + escapeHtml(d.fromChair || '') + '" placeholder="Enter full name"></div>';
     html += '<div class="form-group"><label>Email Address <span class="required">*</span></label><input type="email" id="chairEmail" name="chairEmail_' + uniqueId + '" autocomplete="off" value="' + escapeHtml(d.chairEmail || '') + '" placeholder="chairperson@xu.edu.ph"></div>';
     html += '</div>';
     
-    html += '<div style="background: #f8f9fa; padding: 1rem; border-radius: 0.8rem; border-left: 3px solid var(--xavier-gold);">';
-    html += '<h4 style="margin-bottom: 0.5rem; color: var(--xavier-primary);"><i class="fas fa-university"></i> Dean</h4>';
+    // Dean Card
+    html += '<div class="signature-card">';
+    html += '<h4><i class="fas fa-university"></i> Dean</h4>';
     html += '<div class="form-group"><label>Full Name <span class="required">*</span></label><input type="text" id="deanName" name="deanName_' + uniqueId + '" autocomplete="off" value="' + escapeHtml(d.deanName || '') + '" placeholder="Enter full name"></div>';
     html += '<div class="form-group"><label>Email Address <span class="required">*</span></label><input type="email" id="deanEmail" name="deanEmail_' + uniqueId + '" autocomplete="off" value="' + escapeHtml(d.deanEmail || '') + '" placeholder="dean@xu.edu.ph"></div>';
     html += '</div>';
