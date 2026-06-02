@@ -4604,20 +4604,73 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                                 hasChanges = true;
                             }
                             
-                            if (!hasChanges && areArraysDifferent(currentFormData.teamMembers, originalData.teamMembers)) {
-                                console.log('Change detected in team members');
-                                hasChanges = true;
+                            // Compare Team members
+                            if (!hasChanges) {
+                                const normalizeTeamMembers = (members) => {
+                                    if (!members || !Array.isArray(members)) return [];
+                                    return members.map(m => ({
+                                        name: (m.name || '').trim(),
+                                        role: (m.role || '').trim()
+                                        // Intentionally exclude _id and any other metadata
+                                    })).filter(m => m.name !== '');
+                                };
+                                
+                                const currentTeamNormalized = normalizeTeamMembers(currentFormData.teamMembers);
+                                const originalTeamNormalized = normalizeTeamMembers(originalData.teamMembers);
+                                
+                                if (JSON.stringify(currentTeamNormalized) !== JSON.stringify(originalTeamNormalized)) {
+                                    console.log('Change detected in team members (actual content changed)');
+                                    hasChanges = true;
+                                }
                             }
                             
-                            if (!hasChanges && areArraysDifferent(currentFormData.activities, originalData.activities)) {
-                                console.log('Change detected in activities');
-                                hasChanges = true;
+                            //Compare Activities
+                            if (!hasChanges) {
+                                const normalizeActivities = (activities) => {
+                                    if (!activities || !Array.isArray(activities)) return [];
+                                    return activities.map(act => ({
+                                        name: (act.name || '').trim(),
+                                        description: (act.description || '').trim(),
+                                        objective: (act.objective || '').trim(),
+                                        output: (act.output || '').trim(),
+                                        startDate: act.startDate || '',
+                                        endDate: act.endDate || ''
+                                        // Intentionally exclude _id
+                                    })).filter(act => act.name !== ''); // Filter out empty activities
+                                };
+                                
+                                const currentNormalized = normalizeActivities(currentFormData.activities);
+                                const originalNormalized = normalizeActivities(originalData.activities);
+                                
+                                if (JSON.stringify(currentNormalized) !== JSON.stringify(originalNormalized)) {
+                                    console.log('Change detected in activities (actual content changed)');
+                                    hasChanges = true;
+                                }
                             }
                             
-                            if (!hasChanges && areArraysDifferent(currentFormData.budgetItems, originalData.budgetItems)) {
-                                console.log('Change detected in budget items');
-                                hasChanges = true;
-                            }
+                            //Compare Budget Items
+                            if (!hasChanges) {
+                                    const normalizeBudgetItems = (items) => {
+                                        if (!items || !Array.isArray(items)) return [];
+                                        return items.map(item => ({
+                                            category: (item.category || '').trim(),
+                                            subcategory: (item.subcategory || '').trim(),
+                                            itemName: (item.itemName || '').trim(),
+                                            specs: (item.specs || '').trim(),
+                                            unitCost: item.unitCost || 0,
+                                            qty: item.qty || 1
+                                            // Intentionally exclude _id
+                                        })).filter(item => item.category !== '' || item.itemName !== '');
+                                    };
+                                    
+                                    const currentBudgetNormalized = normalizeBudgetItems(currentFormData.budgetItems);
+                                    const originalBudgetNormalized = normalizeBudgetItems(originalData.budgetItems);
+                                    
+                                    if (JSON.stringify(currentBudgetNormalized) !== JSON.stringify(originalBudgetNormalized)) {
+                                        console.log('Change detected in budget items (actual content changed)');
+                                        hasChanges = true;
+                                    }
+                                }
                         }
                         
                         console.log('Has changes detected:', hasChanges);
@@ -4794,9 +4847,10 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                         
                         if (currentDraftData) {
                             const originalData = currentDraftData;
-                            const textFields = ['proposalTitle', 'piName', 'piEmail', 'dept', 'school', 'rationale', 'objectives', 'methodology', 'outputs'];
+                            const textFields = ['proposalTitle', 'piName', 'piEmail', 'dept', 'school', 'rationale', 'objectives', 'methodology', 'outputs', 'duration', 'extension', 'litReview', 'fromChair', 'chairEmail', 'deanName', 'deanEmail', 'endorseDept', 'endorseSchool', 'schoolYear'];
                             for (const field of textFields) {
                                 if (isDifferent(currentFormData[field], originalData[field])) {
+                                    console.log(`Change detected in ${field}`);
                                     hasChanges = true;
                                     break;
                                 }
