@@ -7,6 +7,9 @@ const emailjs = require('@emailjs/nodejs');
 const TestEmail = require('./models/TestEmail');
 const User = require('./models/User');
 const Settings = require('./models/Settings'); 
+const SignatureRequest = require('./models/SignatureRequest');
+const Application = require('./models/Application');
+
 require('dotenv').config();
 
 const Submission = mongoose.model('Submission', new mongoose.Schema({}, { strict: false }), 'submissions');
@@ -56,9 +59,15 @@ app.use(express.json());
 // MongoDB Connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://200520181_db_user:200520181_db_password@kuro-database.neg1meg.mongodb.net/kuro_portal?retryWrites=true&w=majority&appName=KURO-Database';
 
-mongoose.connect(MONGODB_URI)
-    .then(() => console.log('✅ MongoDB Connected successfully'))
-    .catch(err => console.error('❌ MongoDB Connection error:', err));
+mongoose.connect(MONGODB_URI, {
+    maxPoolSize: 10,
+    minPoolSize: 2,
+    maxIdleTimeMS: 30000,
+    socketTimeoutMS: 45000,
+    connectTimeoutMS: 10000
+})
+.then(() => console.log('✅ MongoDB Connected with optimized pool'))
+.catch(err => console.error('❌ MongoDB Connection error:', err));
 
 // Google OAuth client
 const googleClient = new OAuth2Client(
@@ -88,22 +97,18 @@ app.post('/api/auth/google', async (req, res) => {
         
         console.log(`✅ User authenticated: ${email}`);
         
-        // FIRST: Check if this is a test email
         const testEmail = await TestEmail.findOne({ email, isActive: true });
-        
         let user = await User.findOne({ email });
         
         if (testEmail) {
             console.log(`📧 Test account login: ${email}, role from test email: ${testEmail.role}`);
             
-            // If test email exists, always use its role
             if (!user) {
-                // Create user from test email
                 user = new User({
                     email,
                     name: testEmail.name || name,
                     picture,
-                    role: testEmail.role,  // Use role from TestEmail
+                    role: testEmail.role,
                     isSuperAdmin: false,
                     checkerRole: testEmail.role === 'check1' ? 'check1' : 
                                (testEmail.role === 'check2' ? 'check2' : 
@@ -113,7 +118,6 @@ app.post('/api/auth/google', async (req, res) => {
                 await user.save();
                 console.log(`✅ Created test user: ${email} with role ${testEmail.role}`);
             } else {
-                // Update existing user with test email role
                 user.role = testEmail.role;
                 user.isTestAccount = true;
                 if (testEmail.role === 'check1') user.checkerRole = 'check1';
@@ -123,7 +127,6 @@ app.post('/api/auth/google', async (req, res) => {
                 console.log(`✅ Updated test user: ${email} to role ${testEmail.role}`);
             }
             
-            // Check if the requested role matches the test email role
             let allowedRoles = ['student', 'faculty', 'admin', 'check1', 'check2', 'check3'];
             let requestedRoleMatches = (role === testEmail.role) || 
                                        (role === 'admin' && testEmail.role === 'admin');
@@ -135,11 +138,8 @@ app.post('/api/auth/google', async (req, res) => {
             }
             
         } else {
-            // Regular user (not test email)
             if (!user) {
                 let userRole = email.endsWith('@xu.edu.ph') ? 'faculty' : 'student';
-                
-                // Check if this email should be super admin
                 const superAdminsSetting = await Settings.findOne({ key: 'super_admins' });
                 const superAdmins = superAdminsSetting?.value || ['200520181@my.xu.edu.ph'];
                 const isSuperAdmin = superAdmins.includes(email);
@@ -157,7 +157,6 @@ app.post('/api/auth/google', async (req, res) => {
                 console.log(`✅ Created new user: ${email} with role ${userRole}`);
             }
             
-            // Check role permission for regular users
             const superAdminsSetting = await Settings.findOne({ key: 'super_admins' });
             const superAdmins = superAdminsSetting?.value || ['200520181@my.xu.edu.ph'];
             const isSuperAdminUser = superAdmins.includes(email);
@@ -172,7 +171,6 @@ app.post('/api/auth/google', async (req, res) => {
             }
         }
         
-        // Get super admin status for response
         const superAdminsSetting = await Settings.findOne({ key: 'super_admins' });
         const superAdmins = superAdminsSetting?.value || ['200520181@my.xu.edu.ph'];
         const isSuperAdminUser = superAdmins.includes(email);
@@ -184,7 +182,7 @@ app.post('/api/auth/google', async (req, res) => {
                 email: user.email,
                 name: user.name,
                 picture: user.picture || null,
-                role: testEmail ? testEmail.role : role,  // Use test email role if exists
+                role: testEmail ? testEmail.role : role,
                 checkerRole: user.checkerRole,
                 isSuperAdmin: isSuperAdminUser
             }
@@ -240,13 +238,11 @@ app.use('/api/notifications', notificationsRoutes);
 
 // ========== SINGLE APPLICATION ROUTES ==========
 
-// Get single application - FIXED to use Submission model
 app.get('/api/applications/:id', async (req, res) => {
     try {
         const { id } = req.params;
         console.log('🔍 GET single application by ID:', id);
         
-        // Use the Submission model (same as faculty applications endpoint)
         const application = await Submission.findOne({ id: id });
         
         if (!application) {
@@ -263,7 +259,6 @@ app.get('/api/applications/:id', async (req, res) => {
     }
 });
 
-// Update application (PUT with :id parameter)
 app.put('/api/applications/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -272,7 +267,6 @@ app.put('/api/applications/:id', async (req, res) => {
         
         console.log('📝 PUT update application:', id);
         
-        // Use Submission model
         const result = await Submission.findOneAndUpdate(
             { id: id },
             { $set: updates },
@@ -293,7 +287,6 @@ app.put('/api/applications/:id', async (req, res) => {
     }
 });
 
-// Delete application (DELETE with :id parameter)
 app.delete('/api/applications/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -314,9 +307,8 @@ app.delete('/api/applications/:id', async (req, res) => {
     }
 });
 
-// ========== FACULTY ROUTES (Specific paths - NO parameters) ==========
+// ========== FACULTY ROUTES ==========
 
-// Get faculty applications
 app.get('/api/faculty/applications', async (req, res) => {
     try {
         const userEmail = req.query.userEmail;
@@ -325,9 +317,8 @@ app.get('/api/faculty/applications', async (req, res) => {
             return res.status(400).json({ error: 'userEmail required' });
         }
         
-        // Use Application model (points to 'applications' collection)
-        const Application = mongoose.model('Application');
-        const applications = await Application.find({ 
+        const ApplicationModel = mongoose.model('Application');
+        const applications = await ApplicationModel.find({ 
             userEmail: userEmail 
         }).sort({ submittedDate: -1 });
         
@@ -337,15 +328,11 @@ app.get('/api/faculty/applications', async (req, res) => {
     }
 });
 
-// Debug endpoint - remove after fixing
+// FIXED: Debug endpoint - no more db.collection
 app.get('/api/debug/applications', async (req, res) => {
     try {
-        const db = mongoose.connection.db;
+        const allSubmissions = await Submission.find({});
         
-        // Get all submissions
-        const allSubmissions = await db.collection('submissions').find({}).toArray();
-        
-        // Get unique user emails
         const userEmails = [...new Set(allSubmissions.map(s => s.userEmail))];
         
         res.json({
@@ -363,7 +350,6 @@ app.get('/api/debug/applications', async (req, res) => {
     }
 });
 
-// Get faculty drafts
 app.get('/api/faculty/drafts', async (req, res) => {
     try {
         const userEmail = req.query.userEmail;
@@ -384,7 +370,6 @@ app.get('/api/faculty/drafts', async (req, res) => {
     }
 });
 
-// Save faculty draft
 app.post('/api/faculty/drafts', async (req, res) => {
     try {
         const draftData = req.body;
@@ -393,12 +378,10 @@ app.post('/api/faculty/drafts', async (req, res) => {
             return res.status(400).json({ error: 'userEmail required' });
         }
         
-        // Remove _id if it exists to avoid conflicts
         if (draftData._id) {
             delete draftData._id;
         }
         
-        // Upsert using the schema
         const result = await Draft.findOneAndUpdate(
             { draftId: draftData.draftId, userEmail: draftData.userEmail },
             { $set: draftData },
@@ -414,7 +397,6 @@ app.post('/api/faculty/drafts', async (req, res) => {
     }
 });
 
-// Delete faculty draft
 app.delete('/api/faculty/drafts/:draftId', async (req, res) => {
     try {
         const { draftId } = req.params;
@@ -443,7 +425,7 @@ app.delete('/api/faculty/drafts/:draftId', async (req, res) => {
     }
 });
 
-// Alias for faculty applications (my-submissions)
+// FIXED: my-submissions endpoint - using Submission model
 app.get('/api/my-submissions', async (req, res) => {
     try {
         const userEmail = req.query.userEmail;
@@ -453,15 +435,7 @@ app.get('/api/my-submissions', async (req, res) => {
             return res.status(400).json({ error: 'userEmail required' });
         }
         
-        const db = mongoose.connection.db;
-        
-        // Get all submissions
-        const allSubmissions = await db.collection('submissions').find({}).toArray();
-        
-        // Filter for this user
-        const userSubmissions = allSubmissions.filter(sub => 
-            sub.userEmail === userEmail
-        );
+        const userSubmissions = await Submission.find({ userEmail: userEmail });
         
         console.log(`✅ Found ${userSubmissions.length} submissions for ${userEmail}`);
         res.json(userSubmissions);
@@ -472,8 +446,7 @@ app.get('/api/my-submissions', async (req, res) => {
     }
 });
 
-// ========== REVIEWER ROUTES ==========
-// Get reviewer tasks
+// FIXED: reviewer tasks - using Mongoose models
 app.get('/api/reviewer/tasks', async (req, res) => {
     try {
         const userEmail = req.query.userEmail;
@@ -483,37 +456,24 @@ app.get('/api/reviewer/tasks', async (req, res) => {
         
         console.log('🔍 Fetching reviewer tasks for:', userEmail);
         
-        const db = mongoose.connection.db;
-        
         // Try to find in submissions collection first
-        let submissions = await db.collection('submissions').find({
+        let submissions = await Submission.find({
             'assignedReviewers.email': userEmail
-        }).toArray();
+        });
         
-        // If not found in submissions, try applications collection
+        // If not found, try applications collection
         if (submissions.length === 0) {
             console.log('No results in submissions, checking applications collection...');
-            submissions = await db.collection('applications').find({
+            const ApplicationModel = mongoose.model('Application');
+            submissions = await ApplicationModel.find({
                 'assignedReviewers.email': userEmail
-            }).toArray();
-        }
-        
-        // If still not found, try with different field names
-        if (submissions.length === 0) {
-            console.log('Still no results, checking with externalReview.reviewers...');
-            submissions = await db.collection('submissions').find({
-                'externalReview.reviewers.email': userEmail
-            }).toArray();
+            });
         }
         
         console.log(`✅ Found ${submissions.length} assigned applications for ${userEmail}`);
         
         const assignedTasks = submissions.map(sub => {
-            // Find the specific reviewer entry
             let myReview = sub.assignedReviewers?.find(r => r.email === userEmail);
-            if (!myReview && sub.externalReview?.reviewers) {
-                myReview = sub.externalReview.reviewers.find(r => r.email === userEmail);
-            }
             
             return {
                 id: sub.id,
@@ -536,13 +496,10 @@ app.get('/api/reviewer/tasks', async (req, res) => {
     }
 });
 
-
-// Update reviewer name (sync from Google)
 app.put('/api/users/reviewer-name', async (req, res) => {
     try {
         const { email, name } = req.body;
         
-        // Update in MongoDB instead of usersDB
         await User.findOneAndUpdate(
             { email },
             { name, updatedAt: new Date() }
@@ -555,22 +512,18 @@ app.put('/api/users/reviewer-name', async (req, res) => {
     }
 });
 
-// ========== SIGNATURE ROUTES ==========
+// ========== SIGNATURE ROUTES (FIXED) ==========
 
-// Generate signature links for an application
+// Generate signature links
 app.post('/api/applications/:appId/generate-signatures', async (req, res) => {
     try {
         const { appId } = req.params;
-        const { chairEmail, chairName, deanEmail, deanName, proposalTitle, piName } = req.body;
+        const { chairEmail, chairName, deanEmail, deanName } = req.body;
         
-        // Generate unique tokens for chair and dean
         const chairToken = 'sig_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8) + '_chair';
         const deanToken = 'sig_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8) + '_dean';
         
-        // Store signature requests in database
-        const db = mongoose.connection.db;
-        
-        const signatureRequest = {
+        const signatureRequest = new SignatureRequest({
             appId: appId,
             chairToken: chairToken,
             deanToken: deanToken,
@@ -581,29 +534,29 @@ app.post('/api/applications/:appId/generate-signatures', async (req, res) => {
             chairCompleted: false,
             deanCompleted: false,
             createdAt: new Date(),
-            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days expiry
-        };
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+        });
         
-        await db.collection('signature_requests').updateOne(
+        await SignatureRequest.findOneAndUpdate(
             { appId: appId },
-            { $set: signatureRequest },
+            signatureRequest,
             { upsert: true }
         );
         
-        // Update application with signature request info
-        await db.collection('applications').updateOne(
+        await Application.findOneAndUpdate(
             { id: appId },
-            { $set: { signatureRequests: {
-                chairToken: chairToken,
-                deanToken: deanToken,
-                sentAt: new Date().toISOString(),
-                emailsSent: false,
-                resendCount: 0
-            } } }
+            { $set: { 
+                signatureRequests: {
+                    chairToken: chairToken,
+                    deanToken: deanToken,
+                    sentAt: new Date().toISOString(),
+                    emailsSent: false,
+                    resendCount: 0
+                }
+            } }
         );
         
-        // Generate signature links
-        const baseUrl = 'https://kuro-portal.vercel.app'; // Your frontend URL
+        const baseUrl = 'https://kuro-portal.vercel.app';
         const chairLink = `${baseUrl}/signature-confirm.html?token=${chairToken}&role=chair&id=${appId}`;
         const deanLink = `${baseUrl}/signature-confirm.html?token=${deanToken}&role=dean&id=${appId}`;
         
@@ -621,23 +574,19 @@ app.post('/api/applications/:appId/generate-signatures', async (req, res) => {
     }
 });
 
-// Send signature emails
+// Send signature emails (unchanged - this one was fine)
 app.post('/api/applications/:appId/send-signature-emails', async (req, res) => {
     try {
         const { appId } = req.params;
         const { chairLink, deanLink, chairEmail, deanEmail, chairName, deanName, expiryDays } = req.body;
         
         console.log(`📧 Attempting to send emails for: ${appId}`);
-        console.log(`   Service ID: ${EMAILJS_SERVICE_ID ? '✅' : '❌'}`);
-        console.log(`   Chair Template: ${EMAILJS_CHAIR_TEMPLATE ? '✅' : '❌'}`);
-        console.log(`   Dean Template: ${EMAILJS_DEAN_TEMPLATE ? '✅' : '❌'}`);
         
         let chairSuccess = false;
         let deanSuccess = false;
         let chairError = null;
         let deanError = null;
         
-        // Send to Chair
         if (EMAILJS_SERVICE_ID && EMAILJS_CHAIR_TEMPLATE) {
             try {
                 const chairParams = {
@@ -648,30 +597,17 @@ app.post('/api/applications/:appId/send-signature-emails', async (req, res) => {
                     expiry_days: expiryDays || 7
                 };
                 
-                console.log('Sending chair email with params:', chairParams);
-                
-                const chairResponse = await emailjs.send(
-                    EMAILJS_SERVICE_ID, 
-                    EMAILJS_CHAIR_TEMPLATE, 
-                    chairParams,
-                    {
-                        publicKey: EMAILJS_PUBLIC_KEY,
-                        privateKey: EMAILJS_PRIVATE_KEY
-                    }
-                );
-                
-                console.log('Chair email sent:', chairResponse.status);
+                await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_CHAIR_TEMPLATE, chairParams, {
+                    publicKey: EMAILJS_PUBLIC_KEY,
+                    privateKey: EMAILJS_PRIVATE_KEY
+                });
                 chairSuccess = true;
             } catch (error) {
                 console.error('Chair email failed:', error.message);
                 chairError = error.message;
             }
-        } else {
-            console.error('Missing EmailJS config for chair email');
-            chairError = 'EmailJS not configured properly';
         }
         
-        // Send to Dean
         if (EMAILJS_SERVICE_ID && EMAILJS_DEAN_TEMPLATE) {
             try {
                 const deanParams = {
@@ -682,27 +618,15 @@ app.post('/api/applications/:appId/send-signature-emails', async (req, res) => {
                     expiry_days: expiryDays || 7
                 };
                 
-                console.log('Sending dean email with params:', deanParams);
-                
-                const deanResponse = await emailjs.send(
-                    EMAILJS_SERVICE_ID, 
-                    EMAILJS_DEAN_TEMPLATE, 
-                    deanParams,
-                    {
-                        publicKey: EMAILJS_PUBLIC_KEY,
-                        privateKey: EMAILJS_PRIVATE_KEY
-                    }
-                );
-                
-                console.log('Dean email sent:', deanResponse.status);
+                await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_DEAN_TEMPLATE, deanParams, {
+                    publicKey: EMAILJS_PUBLIC_KEY,
+                    privateKey: EMAILJS_PRIVATE_KEY
+                });
                 deanSuccess = true;
             } catch (error) {
                 console.error('Dean email failed:', error.message);
                 deanError = error.message;
             }
-        } else {
-            console.error('Missing EmailJS config for dean email');
-            deanError = 'EmailJS not configured properly';
         }
         
         res.json({ 
@@ -720,7 +644,7 @@ app.post('/api/applications/:appId/send-signature-emails', async (req, res) => {
     }
 });
 
-// ========== RESEND SIGNATURE REQUESTS ==========
+// FIXED: Resend signature requests
 app.post('/api/applications/:appId/resend-signatures', async (req, res) => {
     try {
         const { appId } = req.params;
@@ -728,66 +652,53 @@ app.post('/api/applications/:appId/resend-signatures', async (req, res) => {
         
         console.log(`📧 Resending signature requests for application: ${appId}`);
         
-        const db = mongoose.connection.db;
-        
-        // Get application data FIRST (to use in email params)
-        const appData = await db.collection('applications').findOne({ id: appId });
+        const appData = await Application.findOne({ id: appId });
         
         if (!appData) {
             console.error(`❌ Application not found: ${appId}`);
             return res.status(404).json({ error: 'Application not found' });
         }
         
-        // Generate new unique tokens
         const chairToken = 'sig_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8) + '_chair';
         const deanToken = 'sig_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8) + '_dean';
         
-        // Update signature requests in database
-        const signatureRequest = {
-            appId: appId,
-            chairToken: chairToken,
-            deanToken: deanToken,
-            chairEmail: chairEmail,
-            chairName: chairName,
-            deanEmail: deanEmail,
-            deanName: deanName,
-            chairCompleted: false,
-            deanCompleted: false,
-            createdAt: new Date(),
-            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-        };
-        
-        await db.collection('signature_requests').updateOne(
+        await SignatureRequest.findOneAndUpdate(
             { appId: appId },
-            { $set: signatureRequest },
+            {
+                appId: appId,
+                chairToken: chairToken,
+                deanToken: deanToken,
+                chairEmail: chairEmail,
+                chairName: chairName,
+                deanEmail: deanEmail,
+                deanName: deanName,
+                chairCompleted: false,
+                deanCompleted: false,
+                createdAt: new Date(),
+                expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+            },
             { upsert: true }
         );
         
-        // Update application with new signature tokens
-        await db.collection('applications').updateOne(
+        await Application.findOneAndUpdate(
             { id: appId },
             { 
                 $set: { 
                     'signatureRequests.chairToken': chairToken,
                     'signatureRequests.deanToken': deanToken,
-                    'signatureRequests.sentAt': new Date().toISOString(),
-                    'signatureRequests.resendCount': { $inc: 1 }
-                }
+                    'signatureRequests.sentAt': new Date().toISOString()
+                },
+                $inc: { 'signatureRequests.resendCount': 1 }
             }
         );
         
-        // Generate signature links
         const baseUrl = 'https://kuro-portal.vercel.app';
         const chairLink = `${baseUrl}/signature-confirm.html?token=${chairToken}&role=chair&id=${appId}`;
         const deanLink = `${baseUrl}/signature-confirm.html?token=${deanToken}&role=dean&id=${appId}`;
-        const SERVICE_ID = EMAILJS_SERVICE_ID;
-        const CHAIR_TEMPLATE = EMAILJS_CHAIR_TEMPLATE;
-        const DEAN_TEMPLATE = EMAILJS_DEAN_TEMPLATE;
         
         let chairSent = false;
         let deanSent = false;
         
-        // Send to Chair - using appData (not undefined application)
         try {
             const chairParams = {
                 to_email: chairEmail,
@@ -802,17 +713,15 @@ app.post('/api/applications/:appId/resend-signatures', async (req, res) => {
                 expiry_days: 7
             };
             
-            await emailjs.send(SERVICE_ID, CHAIR_TEMPLATE, chairParams, {
+            await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_CHAIR_TEMPLATE, chairParams, {
                 publicKey: process.env.EMAILJS_PUBLIC_KEY,
                 privateKey: process.env.EMAILJS_PRIVATE_KEY
             });
             chairSent = true;
-            console.log('Chair resend email sent');
         } catch (error) {
             console.error('Chair resend failed:', error);
         }
         
-        // Send to Dean - using appData (not undefined application)
         try {
             const deanParams = {
                 to_email: deanEmail,
@@ -827,12 +736,11 @@ app.post('/api/applications/:appId/resend-signatures', async (req, res) => {
                 expiry_days: 7
             };
             
-            await emailjs.send(SERVICE_ID, DEAN_TEMPLATE, deanParams, {
+            await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_DEAN_TEMPLATE, deanParams, {
                 publicKey: process.env.EMAILJS_PUBLIC_KEY,
                 privateKey: process.env.EMAILJS_PRIVATE_KEY
             });
             deanSent = true;
-            console.log('Dean resend email sent');
         } catch (error) {
             console.error('Dean resend failed:', error);
         }
@@ -851,25 +759,21 @@ app.post('/api/applications/:appId/resend-signatures', async (req, res) => {
     }
 });
 
-// Check signature status
+// Check signature status (this one was good!)
 app.get('/api/applications/:appId/signature-status', async (req, res) => {
     try {
         const { appId } = req.params;
         
-        const db = mongoose.connection.db;
-        const signatureRequest = await db.collection('signature_requests').findOne({ appId: appId });
+        const signatureRequest = await SignatureRequest.findOne({ appId: appId });
+        const application = await Application.findOne({ id: appId });
         
-        // Also get the application to check signatures
-        const application = await db.collection('applications').findOne({ id: appId });
-        
-        // Check if both signatures are complete and status needs update
-        if (signatureRequest && signatureRequest.chairCompleted && signatureRequest.deanCompleted) {
-            if (application.status === 'Awaiting Signatures') {
-                await db.collection('applications').updateOne(
+        if (signatureRequest?.chairCompleted && signatureRequest?.deanCompleted) {
+            if (application?.status === 'Awaiting Signatures') {
+                await Application.updateOne(
                     { id: appId },
                     { $set: { status: 'Pending Eligibility Check' } }
                 );
-                console.log('✅ Status synchronized to Pending Eligibility Check');
+                console.log('✅ Status synchronized');
             }
         }
         
@@ -879,35 +783,41 @@ app.get('/api/applications/:appId/signature-status', async (req, res) => {
             chairSignedAt: signatureRequest?.chairSignedAt,
             deanSignedAt: signatureRequest?.deanSignedAt
         });
-        
     } catch (error) {
         console.error('Error checking signature status:', error);
         res.status(500).json({ error: error.message });
     }
 });
 
-// Complete signature (when signatory clicks the link)
+// FIXED: Complete signature
 app.put('/api/signatures/:token/complete', async (req, res) => {
     try {
         const { token } = req.params;
         const { name, email } = req.body;
         
-        const db = mongoose.connection.db;
-        
-        // Determine if it's chair or dean token
         const isChair = token.includes('_chair');
         const isDean = token.includes('_dean');
         
         let updateField = {};
         if (isChair) {
-            updateField = { chairCompleted: true, chairSignedAt: new Date(), chairSignerName: name, chairSignerEmail: email };
+            updateField = { 
+                chairCompleted: true, 
+                chairSignedAt: new Date(), 
+                chairSignerName: name, 
+                chairSignerEmail: email 
+            };
         } else if (isDean) {
-            updateField = { deanCompleted: true, deanSignedAt: new Date(), deanSignerName: name, deanSignerEmail: email };
+            updateField = { 
+                deanCompleted: true, 
+                deanSignedAt: new Date(), 
+                deanSignerName: name, 
+                deanSignerEmail: email 
+            };
         } else {
             return res.status(400).json({ error: 'Invalid token' });
         }
         
-        const result = await db.collection('signature_requests').updateOne(
+        const result = await SignatureRequest.updateOne(
             { $or: [{ chairToken: token }, { deanToken: token }] },
             { $set: updateField }
         );
@@ -916,13 +826,12 @@ app.put('/api/signatures/:token/complete', async (req, res) => {
             return res.status(404).json({ error: 'Signature request not found' });
         }
         
-        // Update the application status if both signatures are complete
-        const signatureRequest = await db.collection('signature_requests').findOne({
+        const signatureRequest = await SignatureRequest.findOne({
             $or: [{ chairToken: token }, { deanToken: token }]
         });
         
         if (signatureRequest && signatureRequest.chairCompleted && signatureRequest.deanCompleted) {
-            await db.collection('submissions').updateOne(
+            await Submission.updateOne(
                 { id: signatureRequest.appId },
                 { $set: { status: 'Pending Eligibility Check' } }
             );
@@ -936,15 +845,12 @@ app.put('/api/signatures/:token/complete', async (req, res) => {
     }
 });
 
-// Get signature request by token
+// Get signature by token (this one was good!)
 app.get('/api/signatures/:token', async (req, res) => {
     try {
         const { token } = req.params;
         
-        const db = mongoose.connection.db;
-        
-        // Search in APPLICATIONS collection
-        const application = await db.collection('applications').findOne({
+        const application = await Application.findOne({
             $or: [
                 { 'signatureRequests.chairToken': token },
                 { 'signatureRequests.deanToken': token }
@@ -955,7 +861,6 @@ app.get('/api/signatures/:token', async (req, res) => {
             return res.status(404).json({ error: 'Signature request not found' });
         }
         
-        // Determine role
         const isChair = application.signatureRequests?.chairToken === token;
         const role = isChair ? 'chair' : 'dean';
         const signerEmail = isChair ? application.chairEmail : application.deanEmail;
@@ -981,7 +886,7 @@ app.get('/api/signatures/:token', async (req, res) => {
     }
 });
 
-// More detailed debug endpoint
+// Debug endpoint (unchanged)
 app.get('/api/debug/emailjs-detailed', async (req, res) => {
     try {
         const results = {
@@ -995,7 +900,6 @@ app.get('/api/debug/emailjs-detailed', async (req, res) => {
             testResults: {}
         };
         
-        // Test chair template
         try {
             const chairParams = {
                 to_email: "200520181@my.xu.edu.ph",
@@ -1004,8 +908,6 @@ app.get('/api/debug/emailjs-detailed', async (req, res) => {
                 signature_link: "https://test.com",
                 expiry_days: 7
             };
-            
-            console.log('Testing chair template with params:', chairParams);
             
             const chairResponse = await emailjs.send(
                 process.env.EMAILJS_SERVICE_ID,
@@ -1018,10 +920,9 @@ app.get('/api/debug/emailjs-detailed', async (req, res) => {
             );
             results.testResults.chair = { success: true, status: chairResponse.status };
         } catch (error) {
-            results.testResults.chair = { success: false, error: error.message, details: error };
+            results.testResults.chair = { success: false, error: error.message };
         }
         
-        // Test dean template
         try {
             const deanParams = {
                 to_email: "200520181@my.xu.edu.ph",
@@ -1042,7 +943,7 @@ app.get('/api/debug/emailjs-detailed', async (req, res) => {
             );
             results.testResults.dean = { success: true, status: deanResponse.status };
         } catch (error) {
-            results.testResults.dean = { success: false, error: error.message, details: error };
+            results.testResults.dean = { success: false, error: error.message };
         }
         
         res.json(results);
