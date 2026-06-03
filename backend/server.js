@@ -134,6 +134,20 @@ const startServer = async () => {
     
     startPingInterval();
     
+    // 🔥 FORCE clear any cached models that might have been created with wrong connection
+    console.log('🔄 Clearing mongoose model cache...');
+    const modelNames = Object.keys(mongoose.models);
+    for (const name of modelNames) {
+        delete mongoose.models[name];
+        console.log(`   Cleared model: ${name}`);
+    }
+    if (mongoose.modelSchemas) {
+        for (const name in mongoose.modelSchemas) {
+            delete mongoose.modelSchemas[name];
+        }
+    }
+    console.log('✅ Model cache cleared');
+    
     // ========== LOAD ALL MODELS (AFTER CONNECTION) ==========
     console.log('📦 Loading models...');
     const TestEmail = require('./models/TestEmail');
