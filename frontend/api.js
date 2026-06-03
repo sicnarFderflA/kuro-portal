@@ -37,44 +37,22 @@ async function apiRequest(endpoint, options = {}) {
     
     console.log('API Request:', url);
     
-    // Different timeout based on request type
-    let timeoutMs = 60000; // default 60 seconds
+    const response = await fetch(url, {
+        ...options,
+        headers,
+        body: body
+    });
     
-    // GET requests to applications might need more time
-    if (isGetRequest && endpoint.includes('/applications')) {
-        timeoutMs = 120000; // 120 seconds for application list
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Request failed' }));
+        throw new Error(error.error || `HTTP ${response.status}`);
     }
     
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-    
-    try {
-        const response = await fetch(url, {
-            ...options,
-            headers,
-            body: body,
-            signal: controller.signal
-        });
-        
-        clearTimeout(timeoutId);
-        
-        if (!response.ok) {
-            const error = await response.json().catch(() => ({ error: 'Request failed' }));
-            throw new Error(error.error || `HTTP ${response.status}`);
-        }
-        
-        if (response.status === 204) {
-            return null;
-        }
-        
-        return response.json();
-    } catch (error) {
-        clearTimeout(timeoutId);
-        if (error.name === 'AbortError') {
-            throw new Error('Request timeout - The operation took too long. Please try again.');
-        }
-        throw error;
+    if (response.status === 204) {
+        return null;
     }
+    
+    return response.json();
 }
 
 // Helper to get current user email

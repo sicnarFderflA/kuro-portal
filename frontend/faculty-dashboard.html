@@ -1309,18 +1309,6 @@ async function syncReviewerNameFromGoogle() {
     }
 }
 
-// Add this function near your other helper functions
-function compressBase64IfNeeded(base64String, maxSizeMB = 5) {
-    if (!base64String) return base64String;
-    // Rough estimate: base64 is about 33% larger than binary
-    const estimatedSizeMB = (base64String.length * 0.75) / (1024 * 1024);
-    if (estimatedSizeMB <= maxSizeMB) return base64String;
-    
-    console.warn(`CV file is ${estimatedSizeMB.toFixed(2)}MB, which may cause timeout`);
-    // For now, just log warning. You could implement actual compression here
-    return base64String;
-}
-
 function onGoogleSignIn(googleUser) {
     const profile = googleUser.getBasicProfile();
     const currentUser = {
@@ -2098,20 +2086,6 @@ async function hasFormChanges(modalRef) {
         return true;
     }
     
-    const hasNewPiCV = currentFormData.piCVData && 
-                       currentFormData.piCVData !== '' && 
-                       (!originalData.piCVData || currentFormData.piCVData !== originalData.piCVData);
-    
-    const hasNewTeamCVs = currentFormData.teamCVData && 
-                          currentFormData.teamCVData.length > 0 && 
-                          currentFormData.teamCVData.some((cv, idx) => 
-                              cv && cv !== '' && (!originalData.teamCVData || cv !== originalData.teamCVData[idx])
-                          );
-    
-    if (hasNewPiCV || hasNewTeamCVs) {
-        console.log('Change detected: New CV files uploaded');
-        return true;
-    }
     return false;
 }
 
@@ -3332,43 +3306,19 @@ function collectBudgetItems() {
 }
 
 async function collectFormData(modalRef = null) {
+    // Helper function to get element from either modalRef or document
+    const getEl = (id) => {
+        if (modalRef) {
+            return modalRef.querySelector(`#${id}`) || document.getElementById(id);
+        }
+        return document.getElementById(id);
+    };
+
     let piCVName = '';
     let piCVData = '';
     
-    // Helper to get element value safely
-    function getValue(id) {
-        let el = null;
-        if (modalRef) {
-            el = modalRef.querySelector(`#${id}`);
-        }
-        if (!el) {
-            el = document.getElementById(id);
-        }
-        return el ? el.value : '';
-    }
-    
-    function getElement(id) {
-        let el = null;
-        if (modalRef) {
-            el = modalRef.querySelector(`#${id}`);
-        }
-        if (!el) {
-            el = document.getElementById(id);
-        }
-        return el;
-    }
-    
-    // ========== PI CV - DIRECT DOM QUERY ==========
-    let piCVInput = null;
-    if (modalRef) {
-        piCVInput = modalRef.querySelector('#piCV');
-        console.log('Looking for #piCV in modal:', !!piCVInput);
-    }
-    if (!piCVInput) {
-        piCVInput = document.querySelector('#piCV');
-        console.log('Looking for #piCV in document:', !!piCVInput);
-    }
-    
+    // ========== PI CV - ALWAYS check file input FIRST ==========
+    const piCVInput = getEl('piCV');
     if (piCVInput && piCVInput.files && piCVInput.files.length > 0) {
         const file = piCVInput.files[0];
         console.log('🔍 Found NEW PI CV file in input:', file.name);
@@ -3380,41 +3330,31 @@ async function collectFormData(modalRef = null) {
             piCVData = await fileToBase64(file);
             console.log('✅ NEW PI CV captured:', piCVName);
         }
-    } else if (piCVInput) {
-        console.log('📁 No file in PI CV input. Files length:', piCVInput.files?.length);
-    } else {
-        console.log('❌ PI CV input element not found!');
+    }
+    // ONLY if no file was selected, then preserve existing
+    else if (currentDraftData && currentDraftData.piCVName) {
+        piCVName = currentDraftData.piCVName;
+        piCVData = currentDraftData.piCVData || '';
+        console.log('📁 No new PI CV - preserved existing:', piCVName);
     }
     
     // Get team members from DOM
-    const teamMembersContainer = modalRef ? modalRef.querySelector('#teamMembersContainer') : document.getElementById('teamMembersContainer');
-    const teamMembers = [];
-    if (teamMembersContainer) {
-        const rows = teamMembersContainer.querySelectorAll('.member-row');
-        rows.forEach(row => {
-            const inputs = row.querySelectorAll('input');
-            const name = inputs[0]?.value?.trim() || '';
-            const role = inputs[1]?.value?.trim() || '';
-            if (name) {
-                teamMembers.push({ name, role });
-            }
-        });
-    }
+    const teamMembers = Array.from(document.querySelectorAll('#teamMembersContainer .member-row'))
+        .map(row => ({ 
+            name: (row.children[0]?.value || '').trim(), 
+            role: (row.children[1]?.value || '').trim() 
+        }))
+        .filter(member => member.name !== '');
     
     // Initialize arrays
     let teamCVs = new Array(teamMembers.length).fill(null);
     let teamCVData = new Array(teamMembers.length).fill(null);
     
-    // ========== TEAM CVs - DIRECT DOM QUERY ==========
+    // ========== TEAM CVs - ALWAYS check file inputs FIRST ==========
     for (let i = 0; i < teamMembers.length; i++) {
-        let teamCVInput = null;
-        if (modalRef) {
-            teamCVInput = modalRef.querySelector(`#teamCV_${i}`);
-        }
-        if (!teamCVInput) {
-            teamCVInput = document.querySelector(`#teamCV_${i}`);
-        }
+        const teamCVInput = getEl('teamCV_' + i);
         
+        // FIRST: Check if a NEW file was uploaded
         if (teamCVInput && teamCVInput.files && teamCVInput.files.length > 0) {
             const file = teamCVInput.files[0];
             console.log(`🔍 Found NEW team CV file for member ${i}:`, file.name);
@@ -3430,87 +3370,74 @@ async function collectFormData(modalRef = null) {
                 teamCVData[i] = base64Data;
                 console.log(`✅ NEW team CV captured for member ${i}:`, file.name);
             }
-        } else if (teamCVInput) {
-            console.log(`📁 No file for member ${i}. Files length:`, teamCVInput.files?.length);
-        } else {
-            console.log(`❌ Team CV input #teamCV_${i} not found!`);
+        }
+        // ONLY if no new file, preserve existing
+        else if (currentDraftData && currentDraftData.teamCVs && currentDraftData.teamCVs[i] && currentDraftData.teamCVs[i].name) {
+            teamCVs[i] = { ...currentDraftData.teamCVs[i] };
+            if (currentDraftData.teamCVData && currentDraftData.teamCVData[i]) {
+                teamCVData[i] = currentDraftData.teamCVData[i];
+            }
+            console.log(`📁 No new file for member ${i} - preserved existing:`, teamCVs[i].name);
         }
     }
     
     // Collect activities
     const activities = [];
-    const activitiesContainer = modalRef ? modalRef.querySelector('#activitiesContainer') : document.getElementById('activitiesContainer');
-    if (activitiesContainer) {
-        const activityCards = activitiesContainer.querySelectorAll('.activity-card');
-        activityCards.forEach(card => {
-            const activity = {
-                name: card.querySelector('.act-name')?.value || '',
-                description: card.querySelector('.act-desc')?.value || '',
-                objective: card.querySelector('.act-objective')?.value || '',
-                output: card.querySelector('.act-output')?.value || '',
-                startDate: card.querySelector('.act-start-date')?.value || '',
-                endDate: card.querySelector('.act-end-date')?.value || ''
-            };
-            if (activity.name.trim() !== '') {
-                activities.push(activity);
-            }
-        });
-    }
+    const activityCards = document.querySelectorAll('#activitiesContainer .activity-card');
+    activityCards.forEach(card => {
+        const activity = {
+            name: card.querySelector('.act-name')?.value || '',
+            description: card.querySelector('.act-desc')?.value || '',
+            objective: card.querySelector('.act-objective')?.value || '',
+            output: card.querySelector('.act-output')?.value || '',
+            startDate: card.querySelector('.act-start-date')?.value || '',
+            endDate: card.querySelector('.act-end-date')?.value || ''
+        };
+        if (activity.name.trim() !== '') {
+            activities.push(activity);
+        }
+    });
     
     // Collect budget items
     const budgetItems = [];
-    const budgetContainer = modalRef ? modalRef.querySelector('#budgetContainer') : document.getElementById('budgetContainer');
-    if (budgetContainer) {
-        const budgetCards = budgetContainer.querySelectorAll('.budget-card');
-        budgetCards.forEach(card => {
-            const category = card.querySelector('.budget-category')?.value || '';
-            const subcategory = card.querySelector('.budget-subcategory')?.value || '';
-            const itemName = card.querySelector('.budget-item-select')?.value || '';
-            const specs = card.querySelector('.budget-specs')?.value || '';
-            const unitCost = parseFloat(card.querySelector('.budget-unit-cost')?.value) || 0;
-            const qty = parseFloat(card.querySelector('.budget-qty')?.value) || 1;
-            
-            if (category !== '' || itemName !== '') {
-                budgetItems.push({
-                    category: category,
-                    subcategory: subcategory,
-                    itemName: itemName,
-                    specs: specs,
-                    unitCost: unitCost,
-                    qty: qty
-                });
-            }
-        });
-    }
-    
-    // Collect references
-    const references = [];
-    const refsContainer = modalRef ? modalRef.querySelector('#referencesContainer') : document.getElementById('referencesContainer');
-    if (refsContainer) {
-        const refInputs = refsContainer.querySelectorAll('.reference-row input');
-        refInputs.forEach(input => {
-            const val = input.value.trim();
-            if (val) references.push(val);
-        });
-    }
+    const budgetCards = document.querySelectorAll('.budget-card');
+    budgetCards.forEach(card => {
+        const category = card.querySelector('.budget-category')?.value || '';
+        const subcategory = card.querySelector('.budget-subcategory')?.value || '';
+        const itemName = card.querySelector('.budget-item-select')?.value || '';
+        const specs = card.querySelector('.budget-specs')?.value || '';
+        const unitCost = parseFloat(card.querySelector('.budget-unit-cost')?.value) || 0;
+        const qty = parseFloat(card.querySelector('.budget-qty')?.value) || 1;
+        
+        if (category !== '' || itemName !== '') {
+            budgetItems.push({
+                category: category,
+                subcategory: subcategory,
+                itemName: itemName,
+                specs: specs,
+                unitCost: unitCost,
+                qty: qty
+            });
+        }
+    });
     
     return {
         // Form 1 - Project Profile
-        proposalTitle: getValue('projTitle'),
-        piName: getValue('piName'),
-        piEmail: getValue('piEmail'),
-        dept: getValue('dept'),
-        school: getValue('school'),
-        extension: getValue('extension'),
-        duration: getValue('duration'),
+        proposalTitle: getEl('projTitle')?.value || '',
+        piName: getEl('piName')?.value || '',
+        piEmail: getEl('piEmail')?.value || '',
+        dept: getEl('dept')?.value || '',
+        school: getEl('school')?.value || '',
+        extension: getEl('extension')?.value || '',
+        duration: getEl('duration')?.value || '',
         
         // Form 1 - Proposal Content
-        rationale: getValue('rationale'),
-        litReview: getValue('litReview'),
-        objectives: getValue('objectives'),
-        methodology: getValue('methodology'),
-        outputs: getValue('outputs'),
-        references: references,
+        rationale: getEl('rationale')?.value || '',
+        litReview: getEl('litReview')?.value || '',
+        objectives: getEl('objectives')?.value || '',
+        methodology: getEl('methodology')?.value || '',
+        outputs: getEl('outputs')?.value || '',
+        references: Array.from(document.querySelectorAll('#referencesContainer .reference-row input')).map(inp => inp.value).filter(v => v && v.trim() !== ''),
         
         // Form 1 - Team & Activities
         teamMembers: teamMembers,
@@ -3518,16 +3445,16 @@ async function collectFormData(modalRef = null) {
         budgetItems: budgetItems,
         
         // Form 2 - Endorsement Information
-        endorsementDate: getValue('endorsementDate'),
-        endorseDept: getValue('endorseDept'),
-        endorseSchool: getValue('endorseSchool'),
-        schoolYear: getValue('schoolYear'),
+        endorsementDate: getEl('endorsementDate')?.value || '',
+        endorseDept: getEl('endorseDept')?.value || '',
+        endorseSchool: getEl('endorseSchool')?.value || '',
+        schoolYear: getEl('schoolYear')?.value || '',
         
         // Form 2 - Signatures
-        fromChair: getValue('fromChair'),
-        chairEmail: getValue('chairEmail'),
-        deanName: getValue('deanName'),
-        deanEmail: getValue('deanEmail'),
+        fromChair: getEl('fromChair')?.value || '',
+        chairEmail: getEl('chairEmail')?.value || '',
+        deanName: getEl('deanName')?.value || '',
+        deanEmail: getEl('deanEmail')?.value || '',
         
         // Signatures status
         signatures: { chair: false, dean: false },
@@ -3929,40 +3856,7 @@ function attachCVFileHandlers(modalElement) {
                     currentDraftData.piCVData = base64Data;
                     currentDraftData.piCVStatus = 'pending';
                     await saveDrafts();
-                    
-                    // INSTEAD of re-rendering the whole tab, just update the status display
-                    const statusContainer = modalElement.querySelector('#piCVSection div[style*="background:"]');
-                    if (statusContainer) {
-                        statusContainer.innerHTML = `
-                            <div style="background: #e8f5e9; padding: 0.75rem; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
-                                <span style="font-size: 0.8rem; word-break: break-all;"><i class="fas fa-file-pdf" style="color: #e74c3c;"></i> ${escapeHtml(file.name)}</span>
-                                <div style="display: flex; gap: 0.5rem;">
-                                    <button type="button" class="view-pi-cv-btn" style="background: var(--xavier-gold); border: none; color: var(--xavier-primary); padding: 0.3rem 0.8rem; border-radius: 20px; cursor: pointer; font-size: 0.7rem; font-weight: 600;"><i class="fas fa-eye"></i> View</button>
-                                    <button type="button" class="remove-pi-cv-btn" style="background: #e74c3c; border: none; color: white; padding: 0.3rem 0.8rem; border-radius: 20px; cursor: pointer; font-size: 0.7rem; font-weight: 600;"><i class="fas fa-trash"></i> Remove</button>
-                                </div>
-                            </div>
-                            <small style="display: block; font-size: 0.65rem; color: #666; margin-top: 0.5rem;">Upload a new file to replace the current one</small>
-                        `;
-                        // Re-attach button handlers
-                        const viewBtn = statusContainer.querySelector('.view-pi-cv-btn');
-                        if (viewBtn) {
-                            viewBtn.addEventListener('click', () => openPDFViewer(file.name, base64Data));
-                        }
-                        const removeBtn = statusContainer.querySelector('.remove-pi-cv-btn');
-                        if (removeBtn) {
-                            removeBtn.addEventListener('click', async () => {
-                                currentDraftData.piCVName = '';
-                                currentDraftData.piCVData = '';
-                                currentDraftData.piCVStatus = 'missing';
-                                await saveDrafts();
-                                statusContainer.innerHTML = `
-                                    <div class="cv-pending-status" style="background: #fff3e0; padding: 0.75rem; border-radius: 8px; text-align: center;">
-                                        <i class="fas fa-clock" style="color: #f39c12;"></i> <span style="font-size: 0.8rem;">No file uploaded yet</span>
-                                    </div>
-                                `;
-                            });
-                        }
-                    }
+                    refreshCVTabContentAfterUpload(modalElement);
                     
                     if (oldFile) {
                         showFormNotification(`⟳ Replaced "${oldFile}" with "${file.name}"`, false, modalElement);
@@ -4010,71 +3904,7 @@ function attachCVFileHandlers(modalElement) {
                     currentDraftData.teamCVData[memberIdx] = base64Data;
                     
                     await saveDrafts();
-                    
-                    // INSTEAD of re-rendering the whole tab, just update the specific team member's status display
-                    const teamCard = modalElement.querySelector(`.cv-upload-card[data-member-index="${memberIdx}"]`);
-                    if (teamCard) {
-                        const statusContainer = teamCard.querySelector('div[style*="background:"]');
-                        if (statusContainer) {
-                            const memberName = (getCurrentTeamMembersFromForm1(modalElement)[memberIdx]?.name) || 'Team member';
-                            statusContainer.innerHTML = `
-                                <div style="background: #e8f5e9; padding: 0.75rem; border-radius: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
-                                    <span style="font-size: 0.8rem; word-break: break-all;"><i class="fas fa-file-pdf" style="color: #e74c3c;"></i> ${escapeHtml(file.name)}</span>
-                                    <div style="display: flex; gap: 0.5rem;">
-                                        <button type="button" class="view-team-cv-btn" data-member-idx="${memberIdx}" style="background: var(--xavier-gold); border: none; color: var(--xavier-primary); padding: 0.3rem 0.8rem; border-radius: 20px; cursor: pointer; font-size: 0.7rem; font-weight: 600;"><i class="fas fa-eye"></i> View</button>
-                                        <button type="button" class="remove-team-cv-btn" data-member-idx="${memberIdx}" style="background: #e74c3c; border: none; color: white; padding: 0.3rem 0.8rem; border-radius: 20px; cursor: pointer; font-size: 0.7rem; font-weight: 600;"><i class="fas fa-trash"></i> Remove</button>
-                                    </div>
-                                </div>
-                                <small style="display: block; font-size: 0.65rem; color: #666; margin-top: 0.5rem;">Upload a new file to replace</small>
-                            `;
-                            
-                            // Re-attach button handlers for this team member
-                            const viewBtn = statusContainer.querySelector('.view-team-cv-btn');
-                            if (viewBtn) {
-                                const newViewBtn = viewBtn.cloneNode(true);
-                                viewBtn.parentNode.replaceChild(newViewBtn, viewBtn);
-                                newViewBtn.addEventListener('click', () => {
-                                    openPDFViewer(file.name, base64Data);
-                                });
-                            }
-                            
-                            const removeBtn = statusContainer.querySelector('.remove-team-cv-btn');
-                            if (removeBtn) {
-                                const newRemoveBtn = removeBtn.cloneNode(true);
-                                removeBtn.parentNode.replaceChild(newRemoveBtn, removeBtn);
-                                newRemoveBtn.addEventListener('click', async () => {
-                                    if (currentDraftData && currentDraftData.teamCVs && currentDraftData.teamCVs[memberIdx]) {
-                                        const fileName = currentDraftData.teamCVs[memberIdx].name;
-                                        const result = await Swal.fire({
-                                            title: 'Remove CV?',
-                                            text: `Remove "${fileName}" from ${memberName}?`,
-                                            icon: 'warning',
-                                            showCancelButton: true,
-                                            confirmButtonColor: '#e74c3c',
-                                            cancelButtonColor: '#6c757d',
-                                            confirmButtonText: 'Yes, remove',
-                                            cancelButtonText: 'Cancel'
-                                        });
-                                        
-                                        if (result.isConfirmed) {
-                                            currentDraftData.teamCVs[memberIdx] = null;
-                                            if (currentDraftData.teamCVData) {
-                                                currentDraftData.teamCVData[memberIdx] = null;
-                                            }
-                                            await saveDrafts();
-                                            
-                                            statusContainer.innerHTML = `
-                                                <div class="cv-pending-status" style="background: #fff3e0; padding: 0.75rem; border-radius: 8px; text-align: center;">
-                                                    <i class="fas fa-clock" style="color: #f39c12;"></i> <span style="font-size: 0.8rem;">No file uploaded yet</span>
-                                                </div>
-                                            `;
-                                            showInlineNotification(null, `✓ Removed ${memberName}'s CV`, true);
-                                        }
-                                    }
-                                });
-                            }
-                        }
-                    }
+                    refreshCVTabContentAfterUpload(modalElement);
                     
                     const memberName = (getCurrentTeamMembersFromForm1(modalElement)[memberIdx]?.name) || 'Team member';
                     
@@ -4256,6 +4086,59 @@ function attachCVFileHandlers(modalElement) {
         }
     };
     modalElement.addEventListener('click', modalElement._teamCVViewHandler);
+}
+
+function refreshCVTabContentAfterUpload(modalElement) {
+    const cvTabContent = modalElement.querySelector('#tabCV');
+    if (cvTabContent && currentDraftData) {
+        const updatedTeamMembers = [];
+        const teamRows = modalElement.querySelectorAll('#teamMembersContainer .member-row');
+        teamRows.forEach(row => {
+            const nameInput = row.querySelector('input:first-child');
+            if (nameInput && nameInput.value.trim()) {
+                updatedTeamMembers.push({ name: nameInput.value.trim() });
+            }
+        });
+        
+        const piNameInput = modalElement.querySelector('#piName');
+        const updatedPIName = piNameInput ? piNameInput.value.trim() : currentDraftData.piName || '';
+        
+        currentDraftData.teamMembers = updatedTeamMembers;
+        currentDraftData.piName = updatedPIName;
+        
+        if (!currentDraftData.teamCVs) currentDraftData.teamCVs = [];
+        while (currentDraftData.teamCVs.length < updatedTeamMembers.length) {
+            currentDraftData.teamCVs.push(null);
+        }
+        
+        const scrollTop = cvTabContent.scrollTop;
+        
+        cvTabContent.innerHTML = renderCVUploadContent(currentDraftData, updatedTeamMembers);
+        
+        cvTabContent.scrollTop = scrollTop;
+        
+        attachCVFileHandlers(modalElement);
+        
+        // Auto-save after CV upload
+        saveDrafts();
+        
+        const cvTabBtn = modalElement.querySelector('.tab-btn[data-tab="cv"]');
+        if (cvTabBtn && !cvTabBtn.classList.contains('active')) {
+            cvTabBtn.style.position = 'relative';
+            const indicator = cvTabBtn.querySelector('.update-indicator');
+            if (!indicator) {
+                const span = document.createElement('span');
+                span.className = 'update-indicator';
+                span.textContent = ' ●';
+                span.style.color = '#2ecc71';
+                span.style.fontSize = '0.7rem';
+                cvTabBtn.appendChild(span);
+                setTimeout(() => {
+                    if (span) span.remove();
+                }, 2000);
+            }
+        }
+    }
 }
 
 function setCurrentEndorsementDate(modalElement) {
@@ -5181,30 +5064,7 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                     
                     // ========== CHECK FOR CHANGES IN EDIT MODE ==========
                     if (isEditMode && editAppId) {
-                        let hasChanges = await hasFormChanges(modal);
-
-                        // Also check if any file inputs have files selected
-                        const piCVInput = modal.querySelector('#piCV');
-                        const teamCVInputs = modal.querySelectorAll('[id^="teamCV_"]');
-                        let hasFileInputs = false;
-
-                        if (piCVInput && piCVInput.files && piCVInput.files.length > 0) {
-                            hasFileInputs = true;
-                            console.log('PI CV file input has new file');
-                        }
-
-                        for (let i = 0; i < teamCVInputs.length; i++) {
-                            if (teamCVInputs[i].files && teamCVInputs[i].files.length > 0) {
-                                hasFileInputs = true;
-                                console.log(`Team CV ${i} file input has new file`);
-                                break;
-                            }
-                        }
-
-                        if (hasFileInputs) {
-                            hasChanges = true;
-                            console.log('Force changes = true due to file inputs');
-                        }
+                        const hasChanges = await hasFormChanges(modal);
                         
                         if (!hasChanges) {
                             // No changes - just close the modal and RETURN
@@ -5269,33 +5129,6 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                                 if (!response.ok) throw new Error(existingApp.error || 'Application not found');
                                 
                                 console.log('Existing app data:', existingApp);
-                                console.log('New formData CVs:', {
-                                    piCVName: formData.piCVName,
-                                    hasPiCVData: !!formData.piCVData,
-                                    teamCVs: formData.teamCVs,
-                                    hasTeamCVData: formData.teamCVData?.length > 0
-                                });
-                                
-                                // CRITICAL: For CVs, the NEW uploaded files are in formData
-                                // They should OVERRIDE the existing ones
-                                const finalPiCVName = formData.piCVName || existingApp.piCVName;
-                                const finalPiCVData = formData.piCVData || existingApp.piCVData;
-                                
-                                // For team CVs - need to carefully merge
-                                let finalTeamCVs = [...(existingApp.teamCVs || [])];
-                                let finalTeamCVData = [...(existingApp.teamCVData || [])];
-                                
-                                // If new team CVs were uploaded, override
-                                if (formData.teamCVs && formData.teamCVs.length > 0) {
-                                    for (let i = 0; i < formData.teamCVs.length; i++) {
-                                        if (formData.teamCVs[i] && formData.teamCVs[i].name) {
-                                            finalTeamCVs[i] = formData.teamCVs[i];
-                                            if (formData.teamCVData && formData.teamCVData[i]) {
-                                                finalTeamCVData[i] = formData.teamCVData[i];
-                                            }
-                                        }
-                                    }
-                                }
                                 
                                 // Merge: use formData values if present, otherwise use existing
                                 const mergedData = {
@@ -5332,22 +5165,15 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                                     endorseSchool: formData.endorseSchool || existingApp.endorseSchool,
                                     schoolYear: formData.schoolYear || existingApp.schoolYear,
                                     endorsementDate: formData.endorsementDate || existingApp.endorsementDate,
-                                    // CRITICAL FIX: CV data - ALWAYS use formData if it has new files
-                                    // For PI CV
-                                    piCVName: finalPiCVName,
-                                    piCVData: finalPiCVData,
-                                    piCVStatus: formData.piCVData ? 'pending' : (existingApp.piCVStatus || 'pending'),
-                                    // For Team CVs - use the merged arrays
-                                    teamCVs: finalTeamCVs,
-                                    teamCVData: finalTeamCVData.map(cv => compressBase64IfNeeded(cv)),
+                                    // CV data - preserve existing if no new files
+                                    piCVName: formData.piCVName || existingApp.piCVName,
+                                    piCVData: formData.piCVData || existingApp.piCVData,
+                                    piCVStatus: existingApp.piCVStatus || 'pending',
+                                    teamCVs: formData.teamCVs && formData.teamCVs.length > 0 ? formData.teamCVs : existingApp.teamCVs,
+                                    teamCVData: formData.teamCVData && formData.teamCVData.length > 0 ? formData.teamCVData : existingApp.teamCVData,
                                 };
                                 
-                                console.log('Merged CV data:', {
-                                    piCVName: mergedData.piCVName,
-                                    hasPiCVData: !!mergedData.piCVData,
-                                    teamCVsCount: mergedData.teamCVs?.length,
-                                    hasTeamCVData: mergedData.teamCVData?.length > 0
-                                });
+                                console.log('Merged data for update:', mergedData);
                                 
                                 const result = await KURO_API.updateApplication(editAppId, mergedData);
                                 console.log('Update successful:', result);
