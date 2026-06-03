@@ -2257,6 +2257,13 @@ async function showDetails(sub) {
     
     const teamMembers = sub.teamMembers || [];
     
+    // ✅ FIXED: Get signature status correctly from nested objects
+    const signatures = sub.signatures || { chair: { signed: false }, dean: { signed: false } };
+    const chairSigned = signatures.chair?.signed || false;
+    const deanSigned = signatures.dean?.signed || false;
+    const chairSignedDate = signatures.chair?.signedDate;
+    const deanSignedDate = signatures.dean?.signedDate;
+    
     const piCVStatusObj = (sub.piCVStatus) ? sub.piCVStatus : (sub.piCVName ? 'pending' : 'missing');
     let piCVDisplayStatus = 'missing';
     let piCVIcon = '❌';
@@ -2349,10 +2356,6 @@ async function showDetails(sub) {
     });
     
     cvComplete = Math.round(((eligibleCVs) / totalCVs) * 100);
-    
-    const signatures = sub.signatures || { chair: false, dean: false };
-    const chairSigned = signatures.chair || false;
-    const deanSigned = signatures.dean || false;
     signatureComplete = ((chairSigned ? 1 : 0) + (deanSigned ? 1 : 0)) * 50;
     
     const overallProgress = Math.round((form1Complete + form2Complete + cvComplete + signatureComplete) / 4);
@@ -2413,13 +2416,21 @@ async function showDetails(sub) {
         return `width: ${percent}%; background: ${color}; height: 100%; border-radius: 10px; transition: width 0.3s;`;
     }
     
+    // ========== UPDATED HTML WITH APPLICATION ID (Style 1) ==========
     const html = `
         <div style="max-height: 65vh; overflow-y: auto; padding-right: 5px;">
             <div style="background: linear-gradient(135deg, #283871 0%, #1e2b57 100%); border-radius: 1rem; padding: 1.25rem; margin-bottom: 1.25rem; color: white;">
                 <div>
-                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
-                        <i class="fas fa-trophy" style="color: #D4AF37;"></i>
-                        <span style="font-size: 0.8rem; opacity: 0.9;">${escapeHtml(sub.grantTitle)}</span>
+                    <!-- Style 1: Badge in Header with Application ID -->
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-trophy" style="color: #D4AF37;"></i>
+                            <span style="font-size: 0.8rem; opacity: 0.9;">${escapeHtml(sub.grantTitle)}</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.3rem; background: rgba(255,255,255,0.15); padding: 0.2rem 0.7rem; border-radius: 40px;">
+                            <i class="fas fa-hashtag" style="color: #D4AF37; font-size: 0.65rem;"></i>
+                            <span style="font-size: 0.7rem; font-family: monospace;">${escapeHtml(sub.id)}</span>
+                        </div>
                     </div>
                     
                     <h3 style="font-size: 1rem; margin: 0 0 0.75rem 0; line-height: 1.4; word-break: break-word;">
@@ -2548,7 +2559,7 @@ async function showDetails(sub) {
                                     </span>
                                 </div>
                             </div>
-                            ${chairSigned ? `<div style="font-size: 0.65rem; color: #666; margin-left: 2.5rem;"><i class="fas fa-clock"></i> Signed: ${new Date(signatures.chair?.signedDate).toLocaleDateString() || 'N/A'}</div>` : ''}
+                            ${chairSigned && chairSignedDate ? `<div style="font-size: 0.65rem; color: #666; margin-left: 2.5rem;"><i class="fas fa-clock"></i> Signed: ${new Date(chairSignedDate).toLocaleDateString()}</div>` : ''}
                         </div>
                         
                         <div>
@@ -2566,7 +2577,7 @@ async function showDetails(sub) {
                                     </span>
                                 </div>
                             </div>
-                            ${deanSigned ? `<div style="font-size: 0.65rem; color: #666; margin-left: 2.5rem;"><i class="fas fa-clock"></i> Signed: ${new Date(signatures.dean?.signedDate).toLocaleDateString() || 'N/A'}</div>` : ''}
+                            ${deanSigned && deanSignedDate ? `<div style="font-size: 0.65rem; color: #666; margin-left: 2.5rem;"><i class="fas fa-clock"></i> Signed: ${new Date(deanSignedDate).toLocaleDateString()}</div>` : ''}
                         </div>
                         
                         <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid #eef2f0;">
