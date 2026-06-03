@@ -37,16 +37,23 @@ async function apiRequest(endpoint, options = {}) {
     
     console.log('API Request:', url);
     
-    // ADD TIMEOUT HERE - 60 seconds for large file uploads
+    // Different timeout based on request type
+    let timeoutMs = 60000; // default 60 seconds
+    
+    // GET requests to applications might need more time
+    if (isGetRequest && endpoint.includes('/applications')) {
+        timeoutMs = 120000; // 120 seconds for application list
+    }
+    
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     
     try {
         const response = await fetch(url, {
             ...options,
             headers,
             body: body,
-            signal: controller.signal  // Add this line
+            signal: controller.signal
         });
         
         clearTimeout(timeoutId);
@@ -64,7 +71,7 @@ async function apiRequest(endpoint, options = {}) {
     } catch (error) {
         clearTimeout(timeoutId);
         if (error.name === 'AbortError') {
-            throw new Error('Request timeout - file may be too large. Please try with smaller files.');
+            throw new Error('Request timeout - The operation took too long. Please try again.');
         }
         throw error;
     }
