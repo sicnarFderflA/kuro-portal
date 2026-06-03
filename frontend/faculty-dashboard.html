@@ -2086,6 +2086,20 @@ async function hasFormChanges(modalRef) {
         return true;
     }
     
+    const hasNewPiCV = currentFormData.piCVData && 
+                       currentFormData.piCVData !== '' && 
+                       (!originalData.piCVData || currentFormData.piCVData !== originalData.piCVData);
+    
+    const hasNewTeamCVs = currentFormData.teamCVData && 
+                          currentFormData.teamCVData.length > 0 && 
+                          currentFormData.teamCVData.some((cv, idx) => 
+                              cv && cv !== '' && (!originalData.teamCVData || cv !== originalData.teamCVData[idx])
+                          );
+    
+    if (hasNewPiCV || hasNewTeamCVs) {
+        console.log('Change detected: New CV files uploaded');
+        return true;
+    }
     return false;
 }
 
@@ -3331,11 +3345,16 @@ async function collectFormData(modalRef = null) {
             console.log('✅ NEW PI CV captured:', piCVName);
         }
     }
-    // ONLY if no file was selected, then preserve existing
-    else if (currentDraftData && currentDraftData.piCVName) {
+    // ONLY if no file was selected, then preserve existing (for draft mode)
+    else if (currentDraftData && currentDraftData.piCVName && !isEditMode) {
         piCVName = currentDraftData.piCVName;
         piCVData = currentDraftData.piCVData || '';
         console.log('📁 No new PI CV - preserved existing:', piCVName);
+    }
+    // For edit mode, if no new file, we'll preserve existing in the merge step
+    else if (isEditMode && currentDraftData && currentDraftData.piCVName) {
+        // Don't set anything here - let the merge handle it
+        console.log('📁 Edit mode - will preserve existing PI CV in merge if no new file');
     }
     
     // Get team members from DOM
@@ -3371,13 +3390,17 @@ async function collectFormData(modalRef = null) {
                 console.log(`✅ NEW team CV captured for member ${i}:`, file.name);
             }
         }
-        // ONLY if no new file, preserve existing
-        else if (currentDraftData && currentDraftData.teamCVs && currentDraftData.teamCVs[i] && currentDraftData.teamCVs[i].name) {
+        // ONLY if no new file, preserve existing (for draft mode)
+        else if (currentDraftData && currentDraftData.teamCVs && currentDraftData.teamCVs[i] && currentDraftData.teamCVs[i].name && !isEditMode) {
             teamCVs[i] = { ...currentDraftData.teamCVs[i] };
             if (currentDraftData.teamCVData && currentDraftData.teamCVData[i]) {
                 teamCVData[i] = currentDraftData.teamCVData[i];
             }
             console.log(`📁 No new file for member ${i} - preserved existing:`, teamCVs[i].name);
+        }
+        // For edit mode, leave null - will be filled from existing app during merge
+        else if (isEditMode && currentDraftData && currentDraftData.teamCVs && currentDraftData.teamCVs[i]) {
+            console.log(`📁 Edit mode - will preserve existing team CV for member ${i} in merge`);
         }
     }
     
