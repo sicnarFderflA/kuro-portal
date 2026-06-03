@@ -806,6 +806,17 @@ const startServer = async () => {
             const { chairEmail, chairName, deanEmail, deanName, proposalTitle, piName } = req.body;
             
             console.log(`📧 Resending signature requests for application: ${appId}`);
+            console.log('📧 Chair email:', chairEmail);
+            console.log('📧 Dean email:', deanEmail);
+            
+            // ✅ Validate emails
+            if (!chairEmail || !deanEmail) {
+                console.error('❌ Missing email addresses');
+                return res.status(400).json({ 
+                    error: 'Missing email addresses',
+                    message: 'Chair and Dean email addresses are required. Please update them in Form 2.'
+                });
+            }
             
             const appData = await Application.findOne({ id: appId });
             
@@ -814,13 +825,12 @@ const startServer = async () => {
                 return res.status(404).json({ error: 'Application not found' });
             }
             
-            // ✅ FIXED: Check if signatures are already complete using .signed property
+            // Check if signatures are already complete
             const chairSigned = appData.signatures?.chair?.signed || false;
             const deanSigned = appData.signatures?.dean?.signed || false;
             const bothSigned = chairSigned && deanSigned;
             
             if (bothSigned) {
-                console.log('⚠️ Both signatures already completed, cannot resend');
                 return res.status(400).json({ 
                     error: 'Signatures already completed',
                     message: 'Both signatures have already been completed. No need to resend.'

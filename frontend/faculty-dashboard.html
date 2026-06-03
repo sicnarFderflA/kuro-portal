@@ -3048,6 +3048,7 @@ async function autoGenerateSignatureLinks(application, appId, showNotifications 
 }
 
 async function resendSignatureRequests(application) {
+    // Check if signatures are already complete
     const chairSigned = application.signatures?.chair?.signed || false;
     const deanSigned = application.signatures?.dean?.signed || false;
     const bothSigned = chairSigned && deanSigned;
@@ -3062,8 +3063,18 @@ async function resendSignatureRequests(application) {
         return;
     }
     
-    // Show resend confirmation with additional info
-    const confirmResult = await Swal.fire({
+    // ✅ FIXED: Pass the email addresses from the application
+    if (!application.chairEmail || !application.deanEmail) {
+        await Swal.fire({
+            icon: 'error',
+            title: 'Missing Email Addresses',
+            text: 'Chair or Dean email addresses are missing. Please update them in Form 2 first.',
+            confirmButtonColor: '#D4AF37'
+        });
+        return;
+    }
+    
+    const result = await Swal.fire({
         title: 'Resend Signature Requests?',
         html: `
             <div style="text-align: left;">
@@ -3077,9 +3088,6 @@ async function resendSignatureRequests(application) {
                     </ul>
                     <li style="margin-top: 0.5rem;">⚠️ <strong>Old links will no longer work</strong></li>
                 </ul>
-                <p class="demo-note" style="margin-top: 1rem; padding: 0.5rem; background: #fff3cd; border-radius: 0.5rem;">
-                    <i class="fas fa-info-circle"></i> The signatories will receive new emails with updated signature links.
-                </p>
             </div>
         `,
         icon: 'question',
@@ -3089,33 +3097,42 @@ async function resendSignatureRequests(application) {
         cancelButtonText: 'Cancel'
     });
     
-    if (!confirmResult.isConfirmed) return;
+    if (!result.isConfirmed) return;
     
-    // Show loading
     showInlineNotification(null, '📧 Generating new links and sending emails...', true);
     
     try {
-        // Generate new tokens and send emails
-        await autoGenerateSignatureLinks(application, application.id, false);
+        // ✅ Pass all required data including emails
+        await KURO_API.resendSignatureRequests(application.id, {
+            chairEmail: application.chairEmail,
+            chairName: application.fromChair,
+            deanEmail: application.deanEmail,
+            deanName: application.deanName,
+            proposalTitle: application.proposalTitle,
+            piName: application.piName
+        });
         
         await Swal.fire({
             icon: 'success',
             title: 'Requests Resent!',
             html: `
                 New signature requests have been sent to:<br>
-                <strong>${escapeHtml(application.fromChair)}</strong> (${escapeHtml(application.chairEmail)})<br>
-                <strong>${escapeHtml(application.deanName)}</strong> (${escapeHtml(application.deanEmail)})<br><br>
+                <strong>${escapeHtml(application.fromChair || 'Chair')}</strong> (${escapeHtml(application.chairEmail)})<br>
+                <strong>${escapeHtml(application.deanName || 'Dean')}</strong> (${escapeHtml(application.deanEmail)})<br><br>
                 <small>They will receive new emails with updated links.</small>
             `,
             confirmButtonColor: '#D4AF37'
         });
+        
+        // Refresh the dashboard
+        await renderApplicant();
         
     } catch (error) {
         console.error('Resend failed:', error);
         await Swal.fire({
             icon: 'error',
             title: 'Resend Failed',
-            text: 'Failed to resend signature requests. Please try again.',
+            text: error.message || 'Failed to resend signature requests. Please try again.',
             confirmButtonColor: '#D4AF37'
         });
     }
