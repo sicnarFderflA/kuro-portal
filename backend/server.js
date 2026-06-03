@@ -814,6 +814,19 @@ const startServer = async () => {
                 return res.status(404).json({ error: 'Application not found' });
             }
             
+            // ✅ FIXED: Check if signatures are already complete using .signed property
+            const chairSigned = appData.signatures?.chair?.signed || false;
+            const deanSigned = appData.signatures?.dean?.signed || false;
+            const bothSigned = chairSigned && deanSigned;
+            
+            if (bothSigned) {
+                console.log('⚠️ Both signatures already completed, cannot resend');
+                return res.status(400).json({ 
+                    error: 'Signatures already completed',
+                    message: 'Both signatures have already been completed. No need to resend.'
+                });
+            }
+            
             const chairToken = 'sig_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8) + '_chair';
             const deanToken = 'sig_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8) + '_dean';
             
@@ -854,7 +867,7 @@ const startServer = async () => {
             let chairSent = false;
             let deanSent = false;
             
-            // ✅ Get ALL data from appData
+            // Get ALL data from appData
             const proposalTitleText = appData.proposalTitle || proposalTitle || 'N/A';
             const grantTitleText = appData.grantTitle || 'N/A';
             const durationText = appData.duration || 'N/A';
@@ -869,60 +882,71 @@ const startServer = async () => {
                 piName: piNameText
             });
             
-            try {
-                const chairParams = {
-                    to_email: chairEmail,
-                    to_name: chairName,
-                    chair_name: chairName,
-                    pi_name: piNameText,
-                    department: departmentText,
-                    proposal_title: proposalTitleText,
-                    grant_title: grantTitleText,
-                    duration: durationText,
-                    signature_link: chairLink,
-                    expiry_days: 7
-                };
-                
-                await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_CHAIR_TEMPLATE, chairParams, {
-                    publicKey: EMAILJS_PUBLIC_KEY,
-                    privateKey: EMAILJS_PRIVATE_KEY
-                });
-                chairSent = true;
-                console.log('✅ Chair email sent successfully');
-            } catch (error) {
-                console.error('Chair resend failed:', error);
+            // Only send to chair if not already signed
+            if (!chairSigned) {
+                try {
+                    const chairParams = {
+                        to_email: chairEmail,
+                        to_name: chairName,
+                        chair_name: chairName,
+                        pi_name: piNameText,
+                        department: departmentText,
+                        proposal_title: proposalTitleText,
+                        grant_title: grantTitleText,
+                        duration: durationText,
+                        signature_link: chairLink,
+                        expiry_days: 7
+                    };
+                    
+                    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_CHAIR_TEMPLATE, chairParams, {
+                        publicKey: EMAILJS_PUBLIC_KEY,
+                        privateKey: EMAILJS_PRIVATE_KEY
+                    });
+                    chairSent = true;
+                    console.log('✅ Chair email sent successfully');
+                } catch (error) {
+                    console.error('Chair resend failed:', error);
+                }
+            } else {
+                console.log('⚠️ Chair already signed, skipping email');
             }
             
-            try {
-                const deanParams = {
-                    to_email: deanEmail,
-                    to_name: deanName,
-                    dean_name: deanName,
-                    pi_name: piNameText,
-                    department: departmentText,
-                    proposal_title: proposalTitleText,
-                    grant_title: grantTitleText,
-                    duration: durationText,
-                    signature_link: deanLink,
-                    expiry_days: 7
-                };
-                
-                await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_DEAN_TEMPLATE, deanParams, {
-                    publicKey: EMAILJS_PUBLIC_KEY,
-                    privateKey: EMAILJS_PRIVATE_KEY
-                });
-                deanSent = true;
-                console.log('✅ Dean email sent successfully');
-            } catch (error) {
-                console.error('Dean resend failed:', error);
+            // Only send to dean if not already signed
+            if (!deanSigned) {
+                try {
+                    const deanParams = {
+                        to_email: deanEmail,
+                        to_name: deanName,
+                        dean_name: deanName,
+                        pi_name: piNameText,
+                        department: departmentText,
+                        proposal_title: proposalTitleText,
+                        grant_title: grantTitleText,
+                        duration: durationText,
+                        signature_link: deanLink,
+                        expiry_days: 7
+                    };
+                    
+                    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_DEAN_TEMPLATE, deanParams, {
+                        publicKey: EMAILJS_PUBLIC_KEY,
+                        privateKey: EMAILJS_PRIVATE_KEY
+                    });
+                    deanSent = true;
+                    console.log('✅ Dean email sent successfully');
+                } catch (error) {
+                    console.error('Dean resend failed:', error);
+                }
+            } else {
+                console.log('⚠️ Dean already signed, skipping email');
             }
             
             res.json({ 
-                success: chairSent && deanSent,
+                success: chairSent || deanSent,
                 chairSent: chairSent,
                 deanSent: deanSent,
                 chairLink: chairLink,
-                deanLink: deanLink
+                deanLink: deanLink,
+                message: `${chairSent ? 'Chair email sent. ' : ''}${deanSent ? 'Dean email sent.' : ''}`
             });
             
         } catch (error) {
