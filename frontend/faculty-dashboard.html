@@ -3320,28 +3320,19 @@ function collectBudgetItems() {
 }
 
 async function collectFormData(modalRef = null) {
-    // Helper function to get element from either modalRef or document
-    const getEl = (id) => {
-        // First try to find in modalRef
-        if (modalRef) {
-            const el = modalRef.querySelector(`#${id}`);
-            if (el) return el;
-        }
-        // Then try document
-        return document.getElementById(id);
-    };
-
     let piCVName = '';
     let piCVData = '';
     
-    // ========== PI CV - ALWAYS check file input DIRECTLY ==========
-    // Try multiple ways to find the PI CV input
+    // ========== PI CV - DIRECT DOM QUERY ==========
+    // Try to find PI CV input in the modal
     let piCVInput = null;
     if (modalRef) {
         piCVInput = modalRef.querySelector('#piCV');
+        console.log('Looking for #piCV in modal:', !!piCVInput);
     }
     if (!piCVInput) {
-        piCVInput = document.getElementById('piCV');
+        piCVInput = document.querySelector('#piCV');
+        console.log('Looking for #piCV in document:', !!piCVInput);
     }
     
     if (piCVInput && piCVInput.files && piCVInput.files.length > 0) {
@@ -3356,7 +3347,9 @@ async function collectFormData(modalRef = null) {
             console.log('✅ NEW PI CV captured:', piCVName);
         }
     } else if (piCVInput) {
-        console.log('📁 No file selected in PI CV input, checking value:', piCVInput.value);
+        console.log('📁 No file in PI CV input. Files length:', piCVInput.files?.length);
+    } else {
+        console.log('❌ PI CV input element not found!');
     }
     
     // Get team members from DOM
@@ -3371,18 +3364,16 @@ async function collectFormData(modalRef = null) {
     let teamCVs = new Array(teamMembers.length).fill(null);
     let teamCVData = new Array(teamMembers.length).fill(null);
     
-    // ========== TEAM CVs - ALWAYS check file inputs DIRECTLY ==========
+    // ========== TEAM CVs - DIRECT DOM QUERY ==========
     for (let i = 0; i < teamMembers.length; i++) {
-        // Try multiple ways to find the team CV input
         let teamCVInput = null;
         if (modalRef) {
             teamCVInput = modalRef.querySelector(`#teamCV_${i}`);
         }
         if (!teamCVInput) {
-            teamCVInput = document.getElementById(`teamCV_${i}`);
+            teamCVInput = document.querySelector(`#teamCV_${i}`);
         }
         
-        // FIRST: Check if a NEW file was uploaded
         if (teamCVInput && teamCVInput.files && teamCVInput.files.length > 0) {
             const file = teamCVInput.files[0];
             console.log(`🔍 Found NEW team CV file for member ${i}:`, file.name);
@@ -3399,7 +3390,9 @@ async function collectFormData(modalRef = null) {
                 console.log(`✅ NEW team CV captured for member ${i}:`, file.name);
             }
         } else if (teamCVInput) {
-            console.log(`📁 No file selected for member ${i}, input value:`, teamCVInput.value);
+            console.log(`📁 No file for member ${i}. Files length:`, teamCVInput.files?.length);
+        } else {
+            console.log(`❌ Team CV input #teamCV_${i} not found!`);
         }
     }
     
