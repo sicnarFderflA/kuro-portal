@@ -3323,8 +3323,30 @@ async function collectFormData(modalRef = null) {
     let piCVName = '';
     let piCVData = '';
     
+    // Helper to get element value safely
+    function getValue(id) {
+        let el = null;
+        if (modalRef) {
+            el = modalRef.querySelector(`#${id}`);
+        }
+        if (!el) {
+            el = document.getElementById(id);
+        }
+        return el ? el.value : '';
+    }
+    
+    function getElement(id) {
+        let el = null;
+        if (modalRef) {
+            el = modalRef.querySelector(`#${id}`);
+        }
+        if (!el) {
+            el = document.getElementById(id);
+        }
+        return el;
+    }
+    
     // ========== PI CV - DIRECT DOM QUERY ==========
-    // Try to find PI CV input in the modal
     let piCVInput = null;
     if (modalRef) {
         piCVInput = modalRef.querySelector('#piCV');
@@ -3353,12 +3375,19 @@ async function collectFormData(modalRef = null) {
     }
     
     // Get team members from DOM
-    const teamMembers = Array.from(document.querySelectorAll('#teamMembersContainer .member-row'))
-        .map(row => ({ 
-            name: (row.children[0]?.value || '').trim(), 
-            role: (row.children[1]?.value || '').trim() 
-        }))
-        .filter(member => member.name !== '');
+    const teamMembersContainer = modalRef ? modalRef.querySelector('#teamMembersContainer') : document.getElementById('teamMembersContainer');
+    const teamMembers = [];
+    if (teamMembersContainer) {
+        const rows = teamMembersContainer.querySelectorAll('.member-row');
+        rows.forEach(row => {
+            const inputs = row.querySelectorAll('input');
+            const name = inputs[0]?.value?.trim() || '';
+            const role = inputs[1]?.value?.trim() || '';
+            if (name) {
+                teamMembers.push({ name, role });
+            }
+        });
+    }
     
     // Initialize arrays
     let teamCVs = new Array(teamMembers.length).fill(null);
@@ -3398,61 +3427,78 @@ async function collectFormData(modalRef = null) {
     
     // Collect activities
     const activities = [];
-    const activityCards = document.querySelectorAll('#activitiesContainer .activity-card');
-    activityCards.forEach(card => {
-        const activity = {
-            name: card.querySelector('.act-name')?.value || '',
-            description: card.querySelector('.act-desc')?.value || '',
-            objective: card.querySelector('.act-objective')?.value || '',
-            output: card.querySelector('.act-output')?.value || '',
-            startDate: card.querySelector('.act-start-date')?.value || '',
-            endDate: card.querySelector('.act-end-date')?.value || ''
-        };
-        if (activity.name.trim() !== '') {
-            activities.push(activity);
-        }
-    });
+    const activitiesContainer = modalRef ? modalRef.querySelector('#activitiesContainer') : document.getElementById('activitiesContainer');
+    if (activitiesContainer) {
+        const activityCards = activitiesContainer.querySelectorAll('.activity-card');
+        activityCards.forEach(card => {
+            const activity = {
+                name: card.querySelector('.act-name')?.value || '',
+                description: card.querySelector('.act-desc')?.value || '',
+                objective: card.querySelector('.act-objective')?.value || '',
+                output: card.querySelector('.act-output')?.value || '',
+                startDate: card.querySelector('.act-start-date')?.value || '',
+                endDate: card.querySelector('.act-end-date')?.value || ''
+            };
+            if (activity.name.trim() !== '') {
+                activities.push(activity);
+            }
+        });
+    }
     
     // Collect budget items
     const budgetItems = [];
-    const budgetCards = document.querySelectorAll('.budget-card');
-    budgetCards.forEach(card => {
-        const category = card.querySelector('.budget-category')?.value || '';
-        const subcategory = card.querySelector('.budget-subcategory')?.value || '';
-        const itemName = card.querySelector('.budget-item-select')?.value || '';
-        const specs = card.querySelector('.budget-specs')?.value || '';
-        const unitCost = parseFloat(card.querySelector('.budget-unit-cost')?.value) || 0;
-        const qty = parseFloat(card.querySelector('.budget-qty')?.value) || 1;
-        
-        if (category !== '' || itemName !== '') {
-            budgetItems.push({
-                category: category,
-                subcategory: subcategory,
-                itemName: itemName,
-                specs: specs,
-                unitCost: unitCost,
-                qty: qty
-            });
-        }
-    });
+    const budgetContainer = modalRef ? modalRef.querySelector('#budgetContainer') : document.getElementById('budgetContainer');
+    if (budgetContainer) {
+        const budgetCards = budgetContainer.querySelectorAll('.budget-card');
+        budgetCards.forEach(card => {
+            const category = card.querySelector('.budget-category')?.value || '';
+            const subcategory = card.querySelector('.budget-subcategory')?.value || '';
+            const itemName = card.querySelector('.budget-item-select')?.value || '';
+            const specs = card.querySelector('.budget-specs')?.value || '';
+            const unitCost = parseFloat(card.querySelector('.budget-unit-cost')?.value) || 0;
+            const qty = parseFloat(card.querySelector('.budget-qty')?.value) || 1;
+            
+            if (category !== '' || itemName !== '') {
+                budgetItems.push({
+                    category: category,
+                    subcategory: subcategory,
+                    itemName: itemName,
+                    specs: specs,
+                    unitCost: unitCost,
+                    qty: qty
+                });
+            }
+        });
+    }
+    
+    // Collect references
+    const references = [];
+    const refsContainer = modalRef ? modalRef.querySelector('#referencesContainer') : document.getElementById('referencesContainer');
+    if (refsContainer) {
+        const refInputs = refsContainer.querySelectorAll('.reference-row input');
+        refInputs.forEach(input => {
+            const val = input.value.trim();
+            if (val) references.push(val);
+        });
+    }
     
     return {
         // Form 1 - Project Profile
-        proposalTitle: getEl('projTitle')?.value || '',
-        piName: getEl('piName')?.value || '',
-        piEmail: getEl('piEmail')?.value || '',
-        dept: getEl('dept')?.value || '',
-        school: getEl('school')?.value || '',
-        extension: getEl('extension')?.value || '',
-        duration: getEl('duration')?.value || '',
+        proposalTitle: getValue('projTitle'),
+        piName: getValue('piName'),
+        piEmail: getValue('piEmail'),
+        dept: getValue('dept'),
+        school: getValue('school'),
+        extension: getValue('extension'),
+        duration: getValue('duration'),
         
         // Form 1 - Proposal Content
-        rationale: getEl('rationale')?.value || '',
-        litReview: getEl('litReview')?.value || '',
-        objectives: getEl('objectives')?.value || '',
-        methodology: getEl('methodology')?.value || '',
-        outputs: getEl('outputs')?.value || '',
-        references: Array.from(document.querySelectorAll('#referencesContainer .reference-row input')).map(inp => inp.value).filter(v => v && v.trim() !== ''),
+        rationale: getValue('rationale'),
+        litReview: getValue('litReview'),
+        objectives: getValue('objectives'),
+        methodology: getValue('methodology'),
+        outputs: getValue('outputs'),
+        references: references,
         
         // Form 1 - Team & Activities
         teamMembers: teamMembers,
@@ -3460,16 +3506,16 @@ async function collectFormData(modalRef = null) {
         budgetItems: budgetItems,
         
         // Form 2 - Endorsement Information
-        endorsementDate: getEl('endorsementDate')?.value || '',
-        endorseDept: getEl('endorseDept')?.value || '',
-        endorseSchool: getEl('endorseSchool')?.value || '',
-        schoolYear: getEl('schoolYear')?.value || '',
+        endorsementDate: getValue('endorsementDate'),
+        endorseDept: getValue('endorseDept'),
+        endorseSchool: getValue('endorseSchool'),
+        schoolYear: getValue('schoolYear'),
         
         // Form 2 - Signatures
-        fromChair: getEl('fromChair')?.value || '',
-        chairEmail: getEl('chairEmail')?.value || '',
-        deanName: getEl('deanName')?.value || '',
-        deanEmail: getEl('deanEmail')?.value || '',
+        fromChair: getValue('fromChair'),
+        chairEmail: getValue('chairEmail'),
+        deanName: getValue('deanName'),
+        deanEmail: getValue('deanEmail'),
         
         // Signatures status
         signatures: { chair: false, dean: false },
