@@ -9,6 +9,14 @@ const TestEmail = require('../models/TestEmail');
 const mongoose = require('mongoose');
 const router = express.Router();
 
+// Add a helper function to check database connection
+const checkDbConnection = (req, res, next) => {
+    if (mongoose.connection.readyState !== 1) {
+        return res.status(503).json({ error: 'Database not connected' });
+    }
+    next();
+};
+
 // ============ MIDDLEWARE ============
 const isSuperAdmin = async (req, res, next) => {
     try {

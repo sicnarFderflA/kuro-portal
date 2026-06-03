@@ -12,9 +12,11 @@ router.get('/', async (req, res) => {
         if (role === 'faculty') query.userEmail = email;
         else if (role === 'student') query.userEmail = email;
         
+        // Make sure we're using the Application model correctly
         const apps = await Application.find(query).sort({ submittedDate: -1 });
         res.json(apps);
     } catch (error) {
+        console.error('Error in GET /applications:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -73,7 +75,6 @@ router.delete('/:id', async (req, res) => {
 });
 
 // ========== RESUBMIT RETURNED APPLICATION ==========
-// FIXED: Changed 'app' to 'router' and added mongoose import
 router.post('/:id/resubmit', async (req, res) => {
     try {
         const { id } = req.params;
@@ -81,13 +82,9 @@ router.post('/:id/resubmit', async (req, res) => {
         
         console.log(`📤 Resubmitting application: ${id}`);
         
-        const db = mongoose.connection.db;
+        // USE THE APPLICATION MODEL instead of direct db access
+        let application = await Application.findOne({ id: id });
         
-        // Get the existing application - check both collections
-        let application = await db.collection('submissions').findOne({ id: id });
-        if (!application) {
-            application = await db.collection('applications').findOne({ id: id });
-        }
         if (!application) {
             return res.status(404).json({ error: 'Application not found' });
         }
@@ -107,30 +104,20 @@ router.post('/:id/resubmit', async (req, res) => {
             console.log('Partial signatures, staying in Awaiting Signatures');
         }
         
-        // Update application - KEEP signatures
-        const updatedApplication = {
-            ...application,
-            status: nextStatus,
-            returnedFeedback: null,  // Clear the feedback
-            submittedDate: submittedDate || new Date().toISOString().slice(0, 10),
-            updatedAt: new Date().toISOString()
-        };
+        // Update application using the model
+        application.status = nextStatus;
+        application.returnedFeedback = null;  // Clear the feedback
+        application.submittedDate = submittedDate || new Date().toISOString().slice(0, 10);
+        application.updatedAt = new Date();
         
-        // Update in both possible collections
-        await db.collection('submissions').updateOne(
-            { id: id },
-            { $set: updatedApplication }
-        );
-        await db.collection('applications').updateOne(
-            { id: id },
-            { $set: updatedApplication },
-            { upsert: true }
-        );
+        await application.save();
         
-        // Add notification for admins
-        const adminEmails = await db.collection('users').find({ role: 'admin' }).toArray();
-        for (const admin of adminEmails) {
-            await db.collection('notifications').insertOne({
+        // Get admin users for notifications using the User model
+        const adminUsers = await User.find({ role: 'admin' });
+        
+        // Create notifications using the Notification model
+        for (const admin of adminUsers) {
+            await Notification.create({
                 userEmail: admin.email,
                 type: 'resubmission',
                 title: '📤 Application Resubmitted',
@@ -139,17 +126,16 @@ router.post('/:id/resubmit', async (req, res) => {
                 icon: '📤',
                 color: '#2ecc71',
                 isRead: false,
-                createdAt: new Date().toISOString()
+                createdAt: new Date()
             });
         }
         
         console.log(`✅ Application ${id} resubmitted with status: ${nextStatus}`);
-        res.json({ success: true, application: updatedApplication });
+        res.json({ success: true, application: application });
         
     } catch (error) {
         console.error('Resubmit failed:', error);
         res.status(500).json({ error: error.message });
     }
 });
-
 module.exports = router;

@@ -1,5 +1,6 @@
 const express = require('express');
 const Notification = require('../models/Notification');
+const User = require('../models/User');
 const router = express.Router();
 
 // Get user's notifications
