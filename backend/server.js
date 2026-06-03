@@ -64,7 +64,7 @@ app.options('*', cors());
 app.use(express.json());
 
 // MongoDB Connection settings
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://200520181_db_user:200520181_db_password@kuro-database.neg1meg.mongodb.net/kuro_portal?retryWrites=true&w=majority&appName=KURO-Database';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://200520181_db_user:codi4@kuro-database.neg1meg.mongodb.net/kuro_portal?retryWrites=true&w=majority&appName=KURO-Database';
 
 // Add connection event handlers
 mongoose.connection.on('error', err => {
