@@ -359,6 +359,27 @@ const startServer = async () => {
         }
     });
     
+    // Get FULL application data for editing (includes CV data, budget, activities, etc.)
+    app.get('/api/applications/:id/full', async (req, res) => {
+        try {
+            const { id } = req.params;
+            console.log('🔍 Fetching FULL application data for editing:', id);
+            
+            // Return ALL fields - no select restriction
+            const application = await Application.findOne({ id: id });
+            
+            if (!application) {
+                return res.status(404).json({ error: 'Application not found' });
+            }
+            
+            console.log('✅ Full application data retrieved');
+            res.json(application);
+        } catch (error) {
+            console.error('Error fetching full application:', error);
+            res.status(500).json({ error: error.message });
+        }
+    });
+
     // Get user by email
     app.get('/api/users/by-email', async (req, res) => {
         try {

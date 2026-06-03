@@ -1891,13 +1891,84 @@ function renderApplicationsList(filteredSubs, drafts) {
     container.innerHTML = html;
     
     // Attach event listeners
-    document.querySelectorAll('.view-sub').forEach(btn => btn.addEventListener('click', async (e) => { const id = btn.getAttribute('data-id'); const sub = filteredSubs.find(s => s.id === id); if(sub) await showDetails(sub); }));
-    document.querySelectorAll('.edit-sub').forEach(btn => btn.addEventListener('click', async (e) => { const id = btn.getAttribute('data-id'); const sub = filteredSubs.find(s => s.id === id); if(sub && sub.status !== 'Approved') { isEditMode = true; editAppId = id; editDraftId = null; selectedGrant = sub.grantTitle; currentDraftData = JSON.parse(JSON.stringify(sub)); openApplicationForm(true); } else if(sub && sub.status === 'Approved') { showInlineNotification(null, 'Approved applications cannot be edited.', false); } }));
-    document.querySelectorAll('.resubmit-sub').forEach(btn => btn.addEventListener('click', async (e) => { const id = btn.getAttribute('data-id'); const sub = filteredSubs.find(s => s.id === id); if(sub) await resubmitApplication(sub); }));
-    document.querySelectorAll('.delete-sub').forEach(btn => btn.addEventListener('click', async (e) => { const id = btn.getAttribute('data-id'); const result = await confirmDelete('this application'); if (result.isConfirmed) { await KURO_API.deleteApplication(id); await renderApplicant(); await showSuccess('Application deleted!', 'Deleted'); } }));
-    document.querySelectorAll('.edit-draft').forEach(btn => btn.addEventListener('click', async (e) => { const idx = parseInt(btn.getAttribute('data-idx')); const draft = drafts[idx]; editDraftId = idx; isEditMode = false; editAppId = null; selectedGrant = draft.grantTitle; currentDraftData = JSON.parse(JSON.stringify(draft)); if (draft.draftId) sessionStorage.setItem('current_draft_id', draft.draftId); openApplicationForm(false); }));
-    document.querySelectorAll('.delete-draft').forEach(btn => btn.addEventListener('click', async (e) => { const idx = parseInt(btn.getAttribute('data-idx')); const draft = drafts[idx]; const result = await confirmDelete(draft?.proposalTitle || 'this draft'); if (result.isConfirmed) { await KURO_API.deleteFacultyDraft(draft.draftId || draft.id); await renderApplicant(); await showSuccess('Draft deleted!', 'Deleted'); } }));
-    document.querySelectorAll('.resend-signature-btn').forEach(btn => { btn.addEventListener('click', async () => { const id = btn.getAttribute('data-id'); const sub = filteredSubs.find(s => s.id === id); if (sub) await resendSignatureRequests(sub); else showInlineNotification(null, 'Application not found', false); }); });
+    document.querySelectorAll('.view-sub').forEach(btn => btn.addEventListener('click', async (e) => { 
+        const id = btn.getAttribute('data-id'); 
+        const sub = filteredSubs.find(s => s.id === id); 
+        if(sub) await showDetails(sub); 
+    }));
+
+    // ✅ UPDATED EDIT HANDLER - Fetches full application data
+    document.querySelectorAll('.edit-sub').forEach(btn => btn.addEventListener('click', async (e) => {
+        const id = btn.getAttribute('data-id');
+        
+        // Fetch FULL application data (not just the limited version)
+        try {
+            const response = await fetch(`${API_URL}/api/applications/${id}/full`);
+            const fullApp = await response.json();
+            
+            if(fullApp && fullApp.status !== 'Approved') {
+                isEditMode = true;
+                editAppId = id;
+                editDraftId = null;
+                selectedGrant = fullApp.grantTitle;
+                currentDraftData = fullApp;  // Now has ALL fields!
+                openApplicationForm(true);
+            } else if(fullApp && fullApp.status === 'Approved') {
+                showInlineNotification(null, 'Approved applications cannot be edited.', false);
+            }
+        } catch (error) {
+            console.error('Failed to load application data:', error);
+            showInlineNotification(null, 'Failed to load application data. Please try again.', false);
+        }
+    }));
+
+    document.querySelectorAll('.resubmit-sub').forEach(btn => btn.addEventListener('click', async (e) => { 
+        const id = btn.getAttribute('data-id'); 
+        const sub = filteredSubs.find(s => s.id === id); 
+        if(sub) await resubmitApplication(sub); 
+    }));
+
+    document.querySelectorAll('.delete-sub').forEach(btn => btn.addEventListener('click', async (e) => { 
+        const id = btn.getAttribute('data-id'); 
+        const result = await confirmDelete('this application'); 
+        if (result.isConfirmed) { 
+            await KURO_API.deleteApplication(id); 
+            await renderApplicant(); 
+            await showSuccess('Application deleted!', 'Deleted'); 
+        } 
+    }));
+
+    document.querySelectorAll('.edit-draft').forEach(btn => btn.addEventListener('click', async (e) => { 
+        const idx = parseInt(btn.getAttribute('data-idx')); 
+        const draft = drafts[idx]; 
+        editDraftId = idx; 
+        isEditMode = false; 
+        editAppId = null; 
+        selectedGrant = draft.grantTitle; 
+        currentDraftData = JSON.parse(JSON.stringify(draft)); 
+        if (draft.draftId) sessionStorage.setItem('current_draft_id', draft.draftId); 
+        openApplicationForm(false); 
+    }));
+
+    document.querySelectorAll('.delete-draft').forEach(btn => btn.addEventListener('click', async (e) => { 
+        const idx = parseInt(btn.getAttribute('data-idx')); 
+        const draft = drafts[idx]; 
+        const result = await confirmDelete(draft?.proposalTitle || 'this draft'); 
+        if (result.isConfirmed) { 
+            await KURO_API.deleteFacultyDraft(draft.draftId || draft.id); 
+            await renderApplicant(); 
+            await showSuccess('Draft deleted!', 'Deleted'); 
+        } 
+    }));
+
+    document.querySelectorAll('.resend-signature-btn').forEach(btn => { 
+        btn.addEventListener('click', async () => { 
+            const id = btn.getAttribute('data-id'); 
+            const sub = filteredSubs.find(s => s.id === id); 
+            if (sub) await resendSignatureRequests(sub); 
+            else showInlineNotification(null, 'Application not found', false); 
+        }); 
+    });
 }
 
 function getStatusDisplayName(status) {
