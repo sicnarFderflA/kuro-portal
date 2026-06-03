@@ -37,22 +37,37 @@ async function apiRequest(endpoint, options = {}) {
     
     console.log('API Request:', url);
     
-    const response = await fetch(url, {
-        ...options,
-        headers,
-        body: body
-    });
+    // ADD TIMEOUT HERE - 60 seconds for large file uploads
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
     
-    if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'Request failed' }));
-        throw new Error(error.error || `HTTP ${response.status}`);
+    try {
+        const response = await fetch(url, {
+            ...options,
+            headers,
+            body: body,
+            signal: controller.signal  // Add this line
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({ error: 'Request failed' }));
+            throw new Error(error.error || `HTTP ${response.status}`);
+        }
+        
+        if (response.status === 204) {
+            return null;
+        }
+        
+        return response.json();
+    } catch (error) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+            throw new Error('Request timeout - file may be too large. Please try with smaller files.');
+        }
+        throw error;
     }
-    
-    if (response.status === 204) {
-        return null;
-    }
-    
-    return response.json();
 }
 
 // Helper to get current user email

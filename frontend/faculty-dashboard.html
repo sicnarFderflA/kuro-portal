@@ -1309,6 +1309,18 @@ async function syncReviewerNameFromGoogle() {
     }
 }
 
+// Add this function near your other helper functions
+function compressBase64IfNeeded(base64String, maxSizeMB = 5) {
+    if (!base64String) return base64String;
+    // Rough estimate: base64 is about 33% larger than binary
+    const estimatedSizeMB = (base64String.length * 0.75) / (1024 * 1024);
+    if (estimatedSizeMB <= maxSizeMB) return base64String;
+    
+    console.warn(`CV file is ${estimatedSizeMB.toFixed(2)}MB, which may cause timeout`);
+    // For now, just log warning. You could implement actual compression here
+    return base64String;
+}
+
 function onGoogleSignIn(googleUser) {
     const profile = googleUser.getBasicProfile();
     const currentUser = {
@@ -5327,7 +5339,7 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                                     piCVStatus: formData.piCVData ? 'pending' : (existingApp.piCVStatus || 'pending'),
                                     // For Team CVs - use the merged arrays
                                     teamCVs: finalTeamCVs,
-                                    teamCVData: finalTeamCVData,
+                                    teamCVData: finalTeamCVData.map(cv => compressBase64IfNeeded(cv)),
                                 };
                                 
                                 console.log('Merged CV data:', {
