@@ -114,11 +114,54 @@ const applicationSchema = new mongoose.Schema({
 
 }, { strict: false });
 
+// ========== PERFORMANCE INDEXES ==========
+// These indexes dramatically speed up queries
+
+// 1. Faculty dashboard - Get user's applications sorted by date
+applicationSchema.index({ userEmail: 1, submittedDate: -1 });
+
+// 2. Admin dashboard - Filter by status
+applicationSchema.index({ status: 1, submittedDate: -1 });
+
+// 3. Admin dashboard - Filter by grant
+applicationSchema.index({ grantTitle: 1, submittedDate: -1 });
+
+// 4. Faculty filtering by status
+applicationSchema.index({ userEmail: 1, status: 1 });
+
+// 5. Reviewer tasks - Find by assigned reviewer
+applicationSchema.index({ 'assignedReviewers.email': 1 });
+
+// 6. Signature links - Quick token lookup
+applicationSchema.index({ 'signatureRequests.chairToken': 1 });
+applicationSchema.index({ 'signatureRequests.deanToken': 1 });
+
+// 7. Date-based reports
+applicationSchema.index({ submittedDate: -1 });
+
+// 8. CV status filtering (admin)
+applicationSchema.index({ piCVStatus: 1 });
+applicationSchema.index({ 'teamCVs.status': 1 });
+
+// 9. Combined admin filters (status + grant)
+applicationSchema.index({ status: 1, grantTitle: 1 });
+
+// 10. Full-text search on proposal title (for search functionality)
+applicationSchema.index({ proposalTitle: 'text' });
+
+console.log('📊 Application indexes configured');
+
 // Create or get existing model (SINGLE export)
 const Application = mongoose.models.Application || mongoose.model('Application', applicationSchema);
 
-// Log connection info if already connected
+// Ensure indexes are created (MongoDB will create them automatically)
+// This is just for logging
 if (mongoose.connection.readyState === 1) {
+    Application.syncIndexes().then(() => {
+        console.log('✅ Application indexes synced');
+    }).catch(err => {
+        console.error('⚠️ Index sync warning:', err.message);
+    });
     console.log('✅ Application model connected to:', mongoose.connection.host);
 }
 

@@ -3855,9 +3855,14 @@ function attachCVFileHandlers(modalElement) {
                     currentDraftData.piCVName = file.name;
                     currentDraftData.piCVData = base64Data;
                     currentDraftData.piCVStatus = 'pending';
+                    
+                    // ✅ FIX: Save draft WITHOUT refreshing
                     await saveDrafts();
+                    
+                    // ✅ FIX: Only refresh CV tab content
                     refreshCVTabContentAfterUpload(modalElement);
                     
+                    // ✅ FIX: Show notification instead of reloading
                     if (oldFile) {
                         showFormNotification(`⟳ Replaced "${oldFile}" with "${file.name}"`, false, modalElement);
                     } else {
@@ -4088,6 +4093,7 @@ function attachCVFileHandlers(modalElement) {
     modalElement.addEventListener('click', modalElement._teamCVViewHandler);
 }
 
+// REPLACE this function
 function refreshCVTabContentAfterUpload(modalElement) {
     const cvTabContent = modalElement.querySelector('#tabCV');
     if (cvTabContent && currentDraftData) {
@@ -4111,20 +4117,24 @@ function refreshCVTabContentAfterUpload(modalElement) {
             currentDraftData.teamCVs.push(null);
         }
         
+        // ✅ FIX: Store current scroll position
         const scrollTop = cvTabContent.scrollTop;
         
+        // ✅ FIX: Only refresh the CV tab content, NOT the whole modal
         cvTabContent.innerHTML = renderCVUploadContent(currentDraftData, updatedTeamMembers);
         
+        // ✅ FIX: Restore scroll position
         cvTabContent.scrollTop = scrollTop;
         
+        // Re-attach event handlers
         attachCVFileHandlers(modalElement);
         
-        // Auto-save after CV upload
+        // ✅ FIX: Auto-save draft after upload (not refresh)
         saveDrafts();
         
+        // ✅ FIX: Show visual indicator that CV was updated
         const cvTabBtn = modalElement.querySelector('.tab-btn[data-tab="cv"]');
         if (cvTabBtn && !cvTabBtn.classList.contains('active')) {
-            cvTabBtn.style.position = 'relative';
             const indicator = cvTabBtn.querySelector('.update-indicator');
             if (!indicator) {
                 const span = document.createElement('span');

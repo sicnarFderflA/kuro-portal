@@ -471,11 +471,15 @@ const startServer = async () => {
             }
             
             console.log('📋 Fetching applications for faculty:', userEmail);
-            console.log('Database host:', mongoose.connection.host);
             
+            // ✅ OPTIMIZED: Use lean() for faster queries (returns plain JS objects)
+            // ✅ OPTIMIZED: Select only needed fields
             const applications = await Application.find({ 
                 userEmail: userEmail 
-            }).sort({ submittedDate: -1 });
+            })
+            .select('id grantTitle proposalTitle status submittedDate piName piEmail signatures signatureRequests piCVName piCVStatus teamCVs teamMembers returnedFeedback uploadFeedback')
+            .sort({ submittedDate: -1 })
+            .lean();  // ← This makes it MUCH faster!
             
             console.log(`✅ Found ${applications.length} applications`);
             res.json(applications);
