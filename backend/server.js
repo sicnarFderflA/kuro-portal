@@ -70,11 +70,11 @@ const connectWithRetry = async (retries = 5, delay = 5000) => {
     for (let i = 0; i < retries; i++) {
         try {
             await mongoose.connect(MONGODB_URI, {
-                maxPoolSize: 10,
-                minPoolSize: 2,
-                socketTimeoutMS: 30000,
-                connectTimeoutMS: 15000,
-                serverSelectionTimeoutMS: 15000,
+                maxPoolSize: 5,
+                minPoolSize: 0,
+                socketTimeoutMS: 60000,
+                connectTimeoutMS: 60000,
+                serverSelectionTimeoutMS: 60000,
                 heartbeatFrequencyMS: 10000,
             });
             console.log('✅ MongoDB Connected successfully to:', mongoose.connection.host);
