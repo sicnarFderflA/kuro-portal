@@ -50,10 +50,17 @@ app.use(cors({
         'https://kuro-portal.vercel.app',
         'https://kuro-portal-bolh5jg78-sicnar-fdefl-a-s-projects.vercel.app',
         'http://localhost:5500',
-        'http://localhost:3000'
+        'http://localhost:3000',
+        'https://kuro-portal.vercel.app'
     ],
-    credentials: true
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    optionsSuccessStatus: 200
 }));
+
+// Handle preflight requests explicitly
+app.options('*', cors());
 app.use(express.json());
 
 // MongoDB Connection settings
