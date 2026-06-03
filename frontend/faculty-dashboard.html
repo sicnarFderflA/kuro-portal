@@ -2544,62 +2544,47 @@ async function showDetails(sub) {
                         </h4>
                     </div>
                     <div style="padding: 1rem;">
+                        <!-- Department Chair -->
                         <div style="margin-bottom: 1rem;">
-                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
                                 <div style="width: 32px; height: 32px; background: #f8f9fa; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
                                     <i class="fas fa-user-tie" style="color: var(--xavier-primary);"></i>
                                 </div>
-                                <div>
+                                <div style="flex: 1;">
                                     <div style="font-weight: 600; font-size: 0.8rem;">Department Chair</div>
                                     ${sub.fromChair ? `<div style="font-size: 0.65rem; color: #999;">${escapeHtml(sub.fromChair)}</div>` : ''}
-                                    ${sub.chairEmail ? `<div style="font-size: 0.6rem; color: #aaa; margin-top: 0.1rem;">${escapeHtml(sub.chairEmail)}</div>` : ''}
+                                    ${sub.chairEmail ? `<div style="font-size: 0.6rem; color: #aaa;">${escapeHtml(sub.chairEmail)}</div>` : ''}
                                 </div>
-                                <div style="margin-left: auto;">
+                                <div>
                                     <span style="display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.6rem; border-radius: 40px; font-size: 0.7rem; background: ${chairSigned ? '#e0f5e6' : '#fff0db'}; color: ${chairSigned ? '#1e6f3f' : '#b45f1b'};">
                                         ${chairSigned ? '✅ Signed' : '⏳ Pending'}
                                     </span>
                                 </div>
                             </div>
-                            ${chairSigned && chairSignedDate ? `<div style="font-size: 0.65rem; color: #666; margin-left: 2.5rem;"><i class="fas fa-clock"></i> Signed: ${new Date(chairSignedDate).toLocaleDateString()}</div>` : ''}
+                            ${chairSigned && chairSignedDate ? `<div style="font-size: 0.65rem; color: #666; margin-top: 0.3rem; margin-left: 2.5rem;"><i class="fas fa-clock"></i> Signed: ${new Date(chairSignedDate).toLocaleDateString()}</div>` : ''}
                         </div>
 
+                        <!-- Dean -->
                         <div>
-                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
                                 <div style="width: 32px; height: 32px; background: #f8f9fa; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
                                     <i class="fas fa-university" style="color: var(--xavier-primary);"></i>
                                 </div>
-                                <div>
+                                <div style="flex: 1;">
                                     <div style="font-weight: 600; font-size: 0.8rem;">Dean</div>
                                     ${sub.deanName ? `<div style="font-size: 0.65rem; color: #999;">${escapeHtml(sub.deanName)}</div>` : ''}
-                                    ${sub.deanEmail ? `<div style="font-size: 0.6rem; color: #aaa; margin-top: 0.1rem;">${escapeHtml(sub.deanEmail)}</div>` : ''}
-                                </div>
-                                <div style="margin-left: auto;">
-                                    <span style="display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.6rem; border-radius: 40px; font-size: 0.7rem; background: ${deanSigned ? '#e0f5e6' : '#fff0db'}; color: ${deanSigned ? '#1e6f3f' : '#b45f1b'};">
-                                        ${deanSigned ? '✅ Signed' : '⏳ Pending'}
-                                    </span>
-                                </div>
-                            </div>
-                            ${deanSigned && deanSignedDate ? `<div style="font-size: 0.65rem; color: #666; margin-left: 2.5rem;"><i class="fas fa-clock"></i> Signed: ${new Date(deanSignedDate).toLocaleDateString()}</div>` : ''}
-                        </div>
-                        
-                        <div>
-                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-                                <div style="width: 32px; height: 32px; background: #f8f9fa; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                    <i class="fas fa-university" style="color: var(--xavier-primary);"></i>
+                                    ${sub.deanEmail ? `<div style="font-size: 0.6rem; color: #aaa;">${escapeHtml(sub.deanEmail)}</div>` : ''}
                                 </div>
                                 <div>
-                                    <div style="font-weight: 600; font-size: 0.8rem;">Dean</div>
-                                    <div style="font-size: 0.65rem; color: #999;">${escapeHtml(sub.deanName || 'Not assigned')}</div>
-                                </div>
-                                <div style="margin-left: auto;">
                                     <span style="display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.6rem; border-radius: 40px; font-size: 0.7rem; background: ${deanSigned ? '#e0f5e6' : '#fff0db'}; color: ${deanSigned ? '#1e6f3f' : '#b45f1b'};">
                                         ${deanSigned ? '✅ Signed' : '⏳ Pending'}
                                     </span>
                                 </div>
                             </div>
-                            ${deanSigned && deanSignedDate ? `<div style="font-size: 0.65rem; color: #666; margin-left: 2.5rem;"><i class="fas fa-clock"></i> Signed: ${new Date(deanSignedDate).toLocaleDateString()}</div>` : ''}
+                            ${deanSigned && deanSignedDate ? `<div style="font-size: 0.65rem; color: #666; margin-top: 0.3rem; margin-left: 2.5rem;"><i class="fas fa-clock"></i> Signed: ${new Date(deanSignedDate).toLocaleDateString()}</div>` : ''}
                         </div>
                         
+                        <!-- Info Note -->
                         <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid #eef2f0;">
                             <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.7rem; color: #666;">
                                 <i class="fas fa-envelope"></i>
