@@ -14,7 +14,7 @@ try {
 const mongoose = require('mongoose');
 
 // Use your existing MongoDB connection string
-const MONGODB_URI = 'mongodb+srv://200520181_db_user:200520181_db_password@kuro-database.neg1meg.mongodb.net/kuro_portal?retryWrites=true&w=majority';
+const MONGODB_URI = 'mongodb+srv://200520181_db_user:200520181_db_password@kuro-database.neg1meg.mongodb.net/?appName=KURO-Database';
 
 // Define schemas directly in the script (so we don't need model files)
 const submissionSchema = new mongoose.Schema({
