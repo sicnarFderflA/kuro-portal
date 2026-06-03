@@ -5,15 +5,13 @@ const mongoose = require('mongoose');
 const { OAuth2Client } = require('google-auth-library');
 const emailjs = require('@emailjs/nodejs');
 const TestEmail = require('./models/TestEmail');
+const Application = require('./models/Application');
 const User = require('./models/User');
 const Settings = require('./models/Settings'); 
 const SignatureRequest = require('./models/SignatureRequest');
-const Application = require('./models/Application');  // ← Keep this ONE
+
 
 require('dotenv').config();
-
-// Define Submission model pointing to correct collection
-const Submission = mongoose.model('Submission', new mongoose.Schema({}, { strict: false }), 'applications');
 
 emailjs.init({
     publicKey: process.env.EMAILJS_PUBLIC_KEY,
@@ -441,28 +439,6 @@ app.get('/api/faculty/applications', async (req, res) => {
     }
 });
 
-// FIXED: Debug endpoint - no more db.collection
-app.get('/api/debug/applications', async (req, res) => {
-    try {
-        const allSubmissions = await Submission.find({});
-        
-        const userEmails = [...new Set(allSubmissions.map(s => s.userEmail))];
-        
-        res.json({
-            totalSubmissions: allSubmissions.length,
-            userEmails: userEmails,
-            submissions: allSubmissions.map(s => ({
-                id: s.id,
-                userEmail: s.userEmail,
-                proposalTitle: s.proposalTitle,
-                status: s.status
-            }))
-        });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
 app.get('/api/faculty/drafts', async (req, res) => {
     try {
         const userEmail = req.query.userEmail;
@@ -534,27 +510,6 @@ app.delete('/api/faculty/drafts/:draftId', async (req, res) => {
         
     } catch (error) {
         console.error('Error deleting draft:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// FIXED: my-submissions endpoint - using Submission model
-app.get('/api/my-submissions', async (req, res) => {
-    try {
-        const userEmail = req.query.userEmail;
-        console.log('📋 My submissions requested for:', userEmail);
-        
-        if (!userEmail) {
-            return res.status(400).json({ error: 'userEmail required' });
-        }
-        
-        const userSubmissions = await Submission.find({ userEmail: userEmail });
-        
-        console.log(`✅ Found ${userSubmissions.length} submissions for ${userEmail}`);
-        res.json(userSubmissions);
-        
-    } catch (error) {
-        console.error('❌ Error fetching my submissions:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -945,7 +900,7 @@ app.put('/api/signatures/:token/complete', async (req, res) => {
         
         if (signatureRequest && signatureRequest.chairCompleted && signatureRequest.deanCompleted) {
             // Update status to move to Check 1
-            await Submission.updateOne(
+            await Application.updateOne(
                 { id: signatureRequest.appId },
                 { 
                     $set: { 

@@ -1,6 +1,7 @@
 // models/Application.js
 const mongoose = require('mongoose');
 
+// Define schema FIRST
 const applicationSchema = new mongoose.Schema({
     // Basic Info
     id: { type: String, required: true, unique: true },
@@ -79,15 +80,6 @@ const applicationSchema = new mongoose.Schema({
         resendCount: { type: Number, default: 0 }
     },
     
-    // CV Uploads
-    piCVName: { type: String },
-    piCVStatus: { type: String, default: 'pending' },
-    teamCVs: [{
-        name: { type: String },
-        status: { type: String, default: 'pending' }
-    }],
-    uploadFeedback: { type: String },
-    
     // Review Feedback
     returnedFeedback: { type: String },
     check1Feedback: { type: String },
@@ -110,18 +102,24 @@ const applicationSchema = new mongoose.Schema({
         status: { type: String, default: 'pending' }
     }],
 
-    // CV Uploads - ADD DATA FIELDS
+    // CV Uploads - Data fields
     piCVName: { type: String },
-    piCVData: { type: String },  // ← ADD THIS - Base64 encoded CV
-    piCVStatus: { type: String, default: 'pending' },
-    
+    piCVData: { type: String },
     teamCVs: [{
         name: { type: String },
-        data: { type: String },   // ← ADD THIS - Base64 encoded CV
+        data: { type: String },
         status: { type: String, default: 'pending' }
     }],
     uploadFeedback: { type: String },
 
 }, { strict: false });
 
-module.exports = mongoose.model('Application', applicationSchema);
+// Create or get existing model (SINGLE export)
+const Application = mongoose.models.Application || mongoose.model('Application', applicationSchema);
+
+// Log connection info if already connected
+if (mongoose.connection.readyState === 1) {
+    console.log('✅ Application model connected to:', mongoose.connection.host);
+}
+
+module.exports = Application;
