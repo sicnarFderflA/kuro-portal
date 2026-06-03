@@ -434,6 +434,7 @@ const startServer = async () => {
         }
     });
     
+    // ========== UPDATE APPLICATION ==========
     app.put('/api/applications/:id', async (req, res) => {
         try {
             const { id } = req.params;
@@ -441,13 +442,19 @@ const startServer = async () => {
             updates.updatedAt = new Date();
             
             console.log('📝 PUT update application:', id);
-            console.log('🔌 Current connection host:', mongoose.connection.host);  // ← ADD THIS
-            console.log('📊 Database name:', mongoose.connection.name);            // ← ADD THIS
+            console.log('🔌 Current connection host:', mongoose.connection.host);
+            console.log('📊 Database name:', mongoose.connection.name);
+            console.log('📝 Updates received:', JSON.stringify(updates, null, 2));
+            
+            // Handle signature updates specially
+            if (updates.signatures) {
+                console.log('✍️ Signature update detected:', updates.signatures);
+            }
             
             const result = await Application.findOneAndUpdate(
                 { id: id },
                 { $set: updates },
-                { returnDocument: 'after' }
+                { new: true, runValidators: false }  // Use 'new: true' instead of returnDocument
             );
             
             if (!result) {
@@ -456,34 +463,7 @@ const startServer = async () => {
             }
             
             console.log('✅ Updated application:', id);
-            res.json({ success: true, data: result });
-            
-        } catch (error) {
-            console.error('Error updating application:', error);
-            res.status(500).json({ error: error.message });
-        }
-    });
-
-    app.put('/api/applications/:id', async (req, res) => {
-        try {
-            const { id } = req.params;
-            const updates = req.body;
-            updates.updatedAt = new Date();
-            
-            console.log('📝 PUT update application:', id);
-            
-            const result = await Application.findOneAndUpdate(
-                { id: id },
-                { $set: updates },
-                { returnDocument: 'after' }
-            );
-            
-            if (!result) {
-                console.log('❌ Application not found for update:', id);
-                return res.status(404).json({ error: 'Application not found' });
-            }
-            
-            console.log('✅ Updated application:', id);
+            console.log('📝 New signature status:', result.signatures);
             res.json({ success: true, data: result });
             
         } catch (error) {
@@ -874,16 +854,31 @@ const startServer = async () => {
             let chairSent = false;
             let deanSent = false;
             
+            // ✅ Get ALL data from appData
+            const proposalTitleText = appData.proposalTitle || proposalTitle || 'N/A';
+            const grantTitleText = appData.grantTitle || 'N/A';
+            const durationText = appData.duration || 'N/A';
+            const departmentText = appData.dept || appData.endorseDept || 'N/A';
+            const piNameText = appData.piName || piName || 'N/A';
+            
+            console.log('📧 Email data:', {
+                proposalTitle: proposalTitleText,
+                grantTitle: grantTitleText,
+                duration: durationText,
+                department: departmentText,
+                piName: piNameText
+            });
+            
             try {
                 const chairParams = {
                     to_email: chairEmail,
                     to_name: chairName,
                     chair_name: chairName,
-                    pi_name: piName || 'N/A',
-                    department: appData.dept || 'N/A',
-                    proposal_title: proposalTitle || 'N/A',
-                    grant_title: appData.grantTitle || 'N/A',
-                    duration: appData.duration || 'N/A',
+                    pi_name: piNameText,
+                    department: departmentText,
+                    proposal_title: proposalTitleText,
+                    grant_title: grantTitleText,
+                    duration: durationText,
                     signature_link: chairLink,
                     expiry_days: 7
                 };
@@ -893,6 +888,7 @@ const startServer = async () => {
                     privateKey: EMAILJS_PRIVATE_KEY
                 });
                 chairSent = true;
+                console.log('✅ Chair email sent successfully');
             } catch (error) {
                 console.error('Chair resend failed:', error);
             }
@@ -902,11 +898,11 @@ const startServer = async () => {
                     to_email: deanEmail,
                     to_name: deanName,
                     dean_name: deanName,
-                    pi_name: piName || 'N/A',
-                    department: appData.dept || 'N/A',
-                    proposal_title: proposalTitle || 'N/A',
-                    grant_title: appData.grantTitle || 'N/A',
-                    duration: appData.duration || 'N/A',
+                    pi_name: piNameText,
+                    department: departmentText,
+                    proposal_title: proposalTitleText,
+                    grant_title: grantTitleText,
+                    duration: durationText,
                     signature_link: deanLink,
                     expiry_days: 7
                 };
@@ -916,6 +912,7 @@ const startServer = async () => {
                     privateKey: EMAILJS_PRIVATE_KEY
                 });
                 deanSent = true;
+                console.log('✅ Dean email sent successfully');
             } catch (error) {
                 console.error('Dean resend failed:', error);
             }

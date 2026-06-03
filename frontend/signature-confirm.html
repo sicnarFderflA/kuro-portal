@@ -518,8 +518,8 @@
             }
             
             try {
-                // Update signature via API
-                await KURO_API.updateApplication(appId, {
+                // ✅ CORRECT: Update signature using the correct nested structure
+                const signatureUpdate = {
                     signatures: {
                         [role]: {
                             signed: true,
@@ -528,7 +528,12 @@
                             signerName: authenticatedUser.name
                         }
                     }
-                });
+                };
+                
+                console.log('✍️ Sending signature update:', signatureUpdate);
+                
+                // Update signature via API
+                await KURO_API.updateApplication(appId, signatureUpdate);
                 
                 // Mark request as completed
                 await KURO_API.markSignatureComplete(token, {
@@ -537,8 +542,10 @@
                     signerName: authenticatedUser.name
                 });
 
-                // Check if both signatures are now complete and update status
+                // Check if both signatures are now complete
                 const updatedApp = await KURO_API.getApplication(appId);
+                console.log('Updated app signatures:', updatedApp.signatures);
+                
                 if (updatedApp.signatures?.chair?.signed && updatedApp.signatures?.dean?.signed) {
                     // Update status to Pending Eligibility Check
                     await KURO_API.updateApplication(appId, {
