@@ -472,16 +472,16 @@ const startServer = async () => {
             
             console.log('📋 Fetching applications for faculty:', userEmail);
             
-            // ✅ OPTIMIZED: Use lean() for faster queries (returns plain JS objects)
-            // ✅ OPTIMIZED: Select only needed fields
+            // ✅ This should return ALL applications for the faculty member
             const applications = await Application.find({ 
                 userEmail: userEmail 
             })
             .select('id grantTitle proposalTitle status submittedDate piName piEmail signatures signatureRequests piCVName piCVStatus teamCVs teamMembers returnedFeedback uploadFeedback')
             .sort({ submittedDate: -1 })
-            .lean();  // ← This makes it MUCH faster!
+            .lean();
             
-            console.log(`✅ Found ${applications.length} applications`);
+            console.log(`✅ Found ${applications.length} applications for faculty`);
+            console.log(`Statuses: ${applications.map(a => a.status).join(', ')}`);
             res.json(applications);
         } catch (error) {
             console.error('❌ Error in /api/faculty/applications:', error);

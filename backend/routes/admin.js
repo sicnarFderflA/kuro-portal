@@ -73,6 +73,7 @@ router.get('/applications', async (req, res) => {
         // ONLY GET APPLICATIONS THAT ARE FULLY SUBMITTED
         // Status should be one of these (not 'Awaiting Signatures')
         const validStatuses = [
+            'Awaiting Signatures',
             'Pending Eligibility Check',
             'Pending Secondary Check', 
             'Pending Final Check',
