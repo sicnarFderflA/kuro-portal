@@ -472,11 +472,11 @@ const startServer = async () => {
             
             console.log('📋 Fetching applications for faculty:', userEmail);
             
-            // ✅ This should return ALL applications for the faculty member
+            // ✅ ADD 'userEmail' to the select list
             const applications = await Application.find({ 
                 userEmail: userEmail 
             })
-            .select('id grantTitle proposalTitle status submittedDate piName piEmail signatures signatureRequests piCVName piCVStatus teamCVs teamMembers returnedFeedback uploadFeedback')
+            .select('id grantTitle proposalTitle status submittedDate piName piEmail signatures signatureRequests piCVName piCVStatus teamCVs teamMembers returnedFeedback uploadFeedback userEmail')
             .sort({ submittedDate: -1 })
             .lean();
             
@@ -573,11 +573,11 @@ const startServer = async () => {
                 return res.status(400).json({ error: 'userEmail required' });
             }
             
-            const userSubmissions = await Application.find({ userEmail: userEmail });
+            const userSubmissions = await Application.find({ userEmail: userEmail })
+                .select('id grantTitle proposalTitle status submittedDate piName userEmail');
             
             console.log(`✅ Found ${userSubmissions.length} submissions for ${userEmail}`);
             res.json(userSubmissions);
-            
         } catch (error) {
             console.error('❌ Error fetching my submissions:', error);
             res.status(500).json({ error: error.message });
