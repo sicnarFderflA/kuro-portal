@@ -1,6 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const Application = require('../models/Application');
+const User = require('../models/User');
+const Notification = require('../models/Notification');
 const router = express.Router();
 
 // Get all applications (filtered by role)
@@ -12,7 +14,6 @@ router.get('/', async (req, res) => {
         if (role === 'faculty') query.userEmail = email;
         else if (role === 'student') query.userEmail = email;
         
-        // Make sure we're using the Application model correctly
         const apps = await Application.find(query).sort({ submittedDate: -1 });
         res.json(apps);
     } catch (error) {
@@ -82,20 +83,18 @@ router.post('/:id/resubmit', async (req, res) => {
         
         console.log(`📤 Resubmitting application: ${id}`);
         
-        // USE THE APPLICATION MODEL instead of direct db access
+        // ✅ USE THE APPLICATION MODEL (NOT direct db access)
         let application = await Application.findOne({ id: id });
         
         if (!application) {
             return res.status(404).json({ error: 'Application not found' });
         }
         
-        // Preserve existing signatures - DO NOT reset them
+        // Preserve existing signatures
         const existingSignatures = application.signatures || { chair: { signed: false }, dean: { signed: false } };
         
-        // Determine next status based on signature status
         let nextStatus = status || 'Awaiting Signatures';
         
-        // If both signatures are already signed, go to Check 1 directly
         if (existingSignatures.chair?.signed && existingSignatures.dean?.signed) {
             nextStatus = 'Pending Eligibility Check';
             console.log('Both signatures already signed, moving to Eligibility Check');
@@ -104,18 +103,17 @@ router.post('/:id/resubmit', async (req, res) => {
             console.log('Partial signatures, staying in Awaiting Signatures');
         }
         
-        // Update application using the model
+        // Update using the model
         application.status = nextStatus;
-        application.returnedFeedback = null;  // Clear the feedback
+        application.returnedFeedback = null;
         application.submittedDate = submittedDate || new Date().toISOString().slice(0, 10);
         application.updatedAt = new Date();
         
         await application.save();
         
-        // Get admin users for notifications using the User model
+        // Get admin users for notifications
         const adminUsers = await User.find({ role: 'admin' });
         
-        // Create notifications using the Notification model
         for (const admin of adminUsers) {
             await Notification.create({
                 userEmail: admin.email,
@@ -138,4 +136,5 @@ router.post('/:id/resubmit', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
 module.exports = router;
