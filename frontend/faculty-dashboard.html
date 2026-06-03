@@ -5087,7 +5087,30 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                     
                     // ========== CHECK FOR CHANGES IN EDIT MODE ==========
                     if (isEditMode && editAppId) {
-                        const hasChanges = await hasFormChanges(modal);
+                        let hasChanges = await hasFormChanges(modal);
+
+                        // Also check if any file inputs have files selected
+                        const piCVInput = modal.querySelector('#piCV');
+                        const teamCVInputs = modal.querySelectorAll('[id^="teamCV_"]');
+                        let hasFileInputs = false;
+
+                        if (piCVInput && piCVInput.files && piCVInput.files.length > 0) {
+                            hasFileInputs = true;
+                            console.log('PI CV file input has new file');
+                        }
+
+                        for (let i = 0; i < teamCVInputs.length; i++) {
+                            if (teamCVInputs[i].files && teamCVInputs[i].files.length > 0) {
+                                hasFileInputs = true;
+                                console.log(`Team CV ${i} file input has new file`);
+                                break;
+                            }
+                        }
+
+                        if (hasFileInputs) {
+                            hasChanges = true;
+                            console.log('Force changes = true due to file inputs');
+                        }
                         
                         if (!hasChanges) {
                             // No changes - just close the modal and RETURN
