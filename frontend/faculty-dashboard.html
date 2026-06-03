@@ -1136,6 +1136,8 @@ let isEditMode = false;
 let editAppId = null;
 let currentSwalInstance = null;
 let currentActiveTab = 'xurg1';
+let saveTimeout = null;
+let pendingSave = false;
 
 const FACULTY_GRANTS_DATA = {
     "INSTITUTIONAL RESEARCH (IR) AWARD": { 
@@ -1945,7 +1947,6 @@ async function hasFormChanges(modalRef) {
     
     // If no original data exists, treat as having changes (new form)
     if (!currentDraftData) {
-        // Check if any field has content
         const hasTitle = currentFormData.proposalTitle && currentFormData.proposalTitle.trim() !== '';
         const hasAnyContent = currentFormData.piName || 
                             currentFormData.piEmail ||
@@ -1979,7 +1980,7 @@ async function hasFormChanges(modalRef) {
         return false;
     }
     
-    // Compare text fields
+    // Compare text fields (FAST)
     const textFields = ['proposalTitle', 'piName', 'piEmail', 'dept', 'school', 'rationale', 'objectives', 'methodology', 'outputs', 'duration', 'extension', 'litReview', 'fromChair', 'chairEmail', 'deanName', 'deanEmail', 'endorseDept', 'endorseSchool', 'schoolYear'];
     for (const field of textFields) {
         if (isDifferent(currentFormData[field], originalData[field])) {
@@ -1988,48 +1989,39 @@ async function hasFormChanges(modalRef) {
         }
     }
     
-    // Compare references
+    // Compare references (FAST - just array of strings)
     if (areArraysDifferent(currentFormData.references, originalData.references)) {
         console.log('Change detected in references');
         return true;
     }
     
-    // Compare Team members
+    // Compare Team members (FAST - just names and roles)
     const normalizeTeamMembers = (members) => {
         if (!members || !Array.isArray(members)) return [];
-        // Only compare names, ignore roles for change detection
-        // This prevents false positives when roles are empty vs filled with placeholders
         return members
-            .filter(m => m && m.name) // Filter out null/undefined
+            .filter(m => m && m.name)
             .map(m => ({
                 name: (m.name || '').trim(),
-                // Don't include role in comparison - it causes false positives
-                // role: (m.role || '').trim()
+                role: (m.role || '').trim()
             }))
             .filter(m => m.name !== '');
     };
 
     const currentTeamNormalized = normalizeTeamMembers(currentFormData.teamMembers);
     const originalTeamNormalized = normalizeTeamMembers(originalData.teamMembers);
-
-    // Sort for consistent comparison
     currentTeamNormalized.sort((a, b) => a.name.localeCompare(b.name));
     originalTeamNormalized.sort((a, b) => a.name.localeCompare(b.name));
 
     if (JSON.stringify(currentTeamNormalized) !== JSON.stringify(originalTeamNormalized)) {
-        console.log('Change detected in team members (names changed)');
-        console.log('Current names:', currentTeamNormalized);
-        console.log('Original names:', originalTeamNormalized);
+        console.log('Change detected in team members');
         return true;
-    } else {
-        console.log('No change in team member names, ignoring role differences');
     }
     
-    // Compare Activities
+    // Compare Activities (FAST)
     const normalizeActivities = (activities) => {
         if (!activities || !Array.isArray(activities)) return [];
         return activities
-            .filter(act => act && act.name) // Filter out null/undefined and ensure name exists
+            .filter(act => act && act.name)
             .map(act => ({
                 name: (act.name || '').trim(),
                 description: (act.description || '').trim(),
@@ -2043,23 +2035,19 @@ async function hasFormChanges(modalRef) {
 
     const currentNormalized = normalizeActivities(currentFormData.activities);
     const originalNormalized = normalizeActivities(originalData.activities);
-
-    // Sort by name for consistent comparison
     currentNormalized.sort((a, b) => a.name.localeCompare(b.name));
     originalNormalized.sort((a, b) => a.name.localeCompare(b.name));
 
     if (JSON.stringify(currentNormalized) !== JSON.stringify(originalNormalized)) {
         console.log('Change detected in activities');
-        console.log('Current activities:', currentNormalized);
-        console.log('Original activities:', originalNormalized);
         return true;
     }
     
-    // Compare Budget Items
+    // Compare Budget Items (FAST)
     const normalizeBudgetItems = (items) => {
         if (!items || !Array.isArray(items)) return [];
         return items
-            .filter(item => item && (item.category || item.itemName)) // Filter out null/undefined
+            .filter(item => item && (item.category || item.itemName))
             .map(item => ({
                 category: (item.category || '').trim(),
                 subcategory: (item.subcategory || '').trim(),
@@ -2073,16 +2061,42 @@ async function hasFormChanges(modalRef) {
 
     const currentBudgetNormalized = normalizeBudgetItems(currentFormData.budgetItems);
     const originalBudgetNormalized = normalizeBudgetItems(originalData.budgetItems);
-
-    // Sort for consistent comparison
     const sortBudgetKey = (item) => `${item.category}|${item.subcategory}|${item.itemName}|${item.specs}|${item.unitCost}|${item.qty}`;
     currentBudgetNormalized.sort((a, b) => sortBudgetKey(a).localeCompare(sortBudgetKey(b)));
     originalBudgetNormalized.sort((a, b) => sortBudgetKey(a).localeCompare(sortBudgetKey(b)));
 
     if (JSON.stringify(currentBudgetNormalized) !== JSON.stringify(originalBudgetNormalized)) {
         console.log('Change detected in budget items');
-        console.log('Current budget:', currentBudgetNormalized);
-        console.log('Original budget:', originalBudgetNormalized);
+        return true;
+    }
+    
+    // ========== CV CHANGE DETECTION (OPTIMIZED - ONLY CHECK NAMES) ==========
+    // Compare PI CV - only check filename, NOT the actual Base64 data
+    const currentPiCVName = (currentFormData.piCVName || '').trim();
+    const originalPiCVName = (originalData.piCVName || '').trim();
+    if (currentPiCVName !== originalPiCVName) {
+        console.log('Change detected in PI CV (filename changed)');
+        return true;
+    }
+
+    if (isDifferent(currentFormData.piCVStatus, originalData.piCVStatus)) {
+    console.log('Change detected in PI CV status');
+    return true;
+    }
+    
+    // Compare Team CVs - only check filenames, NOT Base64 data
+    const getTeamCVNames = (teamCVs) => {
+        if (!teamCVs || !Array.isArray(teamCVs)) return [];
+        return teamCVs.map(cv => cv && cv.name ? (cv.name || '').trim() : '').filter(n => n !== '');
+    };
+    
+    const currentTeamCVNames = getTeamCVNames(currentFormData.teamCVs);
+    const originalTeamCVNames = getTeamCVNames(originalData.teamCVs);
+    currentTeamCVNames.sort();
+    originalTeamCVNames.sort();
+    
+    if (JSON.stringify(currentTeamCVNames) !== JSON.stringify(originalTeamCVNames)) {
+        console.log('Change detected in team CVs (filenames changed)');
         return true;
     }
     
@@ -3818,14 +3832,27 @@ async function saveDraftToStorage(showNotification = true, modalEl = null) {
 }
 
 async function saveDrafts() {
-    if (currentDraftData && currentDraftData.draftId) {
+    // Don't save if we're already saving or if no draft exists
+    if (!currentDraftData || !currentDraftData.draftId) {
+        return;
+    }
+    
+    // Clear any pending save
+    if (saveTimeout) {
+        clearTimeout(saveTimeout);
+    }
+    
+    // Debounce: wait 1 second after last keystroke before saving
+    saveTimeout = setTimeout(async () => {
         try {
             await KURO_API.saveFacultyDraft(currentDraftData);
-            console.log('Draft auto-saved:', currentDraftData.draftId);
+            console.log('📝 Draft auto-saved (debounced):', currentDraftData.draftId);
         } catch (error) {
             console.error('Failed to auto-save draft:', error);
+        } finally {
+            saveTimeout = null;
         }
-    }
+    }, 1000);  // ← Wait 1 second after user stops typing
 }
 
 function attachCVFileHandlers(modalElement) {
@@ -4128,9 +4155,6 @@ function refreshCVTabContentAfterUpload(modalElement) {
         
         // Re-attach event handlers
         attachCVFileHandlers(modalElement);
-        
-        // ✅ FIX: Auto-save draft after upload (not refresh)
-        saveDrafts();
         
         // ✅ FIX: Show visual indicator that CV was updated
         const cvTabBtn = modalElement.querySelector('.tab-btn[data-tab="cv"]');
@@ -4467,7 +4491,6 @@ function updateBudgetTotals() {
 let mainModalRef = null;
 
 async function openApplicationForm(isEdit, restoreTab = null) {
-    
     // Clean up any pending discard data when opening a new form
     const pendingKey = sessionStorage.getItem('pending_discard_key');
     if (pendingKey) {
@@ -4478,7 +4501,7 @@ async function openApplicationForm(isEdit, restoreTab = null) {
     console.log('currentDraftData:', currentDraftData);
     console.log('selectedGrant:', selectedGrant);
     
-    // ========== CRITICAL FIX: For edit mode, ensure selectedGrant is set from currentDraftData ==========
+    // For edit mode, ensure selectedGrant is set from currentDraftData
     if (isEdit && currentDraftData && currentDraftData.grantTitle) {
         if (!selectedGrant || selectedGrant !== currentDraftData.grantTitle) {
             selectedGrant = currentDraftData.grantTitle;
@@ -4486,13 +4509,13 @@ async function openApplicationForm(isEdit, restoreTab = null) {
         }
     }
     
-    // ========== CRITICAL FIX: If editing and no selectedGrant, try to recover ==========
+    // If editing and no selectedGrant, try to recover
     if (isEdit && !selectedGrant && currentDraftData && currentDraftData.grantTitle) {
         selectedGrant = currentDraftData.grantTitle;
         console.log('Recovered selectedGrant from currentDraftData:', selectedGrant);
     }
     
-    // ========== For new applications (not edit), show grant selection if no grant ==========
+    // For new applications (not edit), show grant selection if no grant
     if (!isEdit && !selectedGrant) {
         console.log('No selectedGrant for new app, showing grant selection');
         await openGrantSelection();
@@ -4521,7 +4544,6 @@ async function openApplicationForm(isEdit, restoreTab = null) {
     }
     
     const d = currentDraftData || {};
-    let isSaved = false;
     
     if (!currentDraftData) {
         currentDraftData = {
@@ -4579,7 +4601,7 @@ async function openApplicationForm(isEdit, restoreTab = null) {
         width: '1000px',
         showConfirmButton: false,
         showCancelButton: false,
-        showCloseButton: false,  // IMPORTANT: Disable the default close button
+        showCloseButton: false,
         footer: customButtons,
         allowOutsideClick: false,
         allowEscapeKey: false,
@@ -4596,6 +4618,7 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                 }
             });
 
+            // Tab switching
             modal.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.addEventListener('click', function(e) {
                     e.stopPropagation();
@@ -4655,6 +4678,7 @@ async function openApplicationForm(isEdit, restoreTab = null) {
             updateBudgetTotals();
             setCurrentEndorsementDate(modal);
             
+            // Function to refresh CV tab content (without auto-saving)
             function refreshCVTabContent() {
                 const cvTabContent = modal.querySelector('#tabCV');
                 if (cvTabContent) {
@@ -4677,15 +4701,6 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                         input.removeEventListener('input', refreshCVTabContent);
                         input.addEventListener('input', refreshCVTabContent);
                     });
-                    
-                    if (!teamMembersContainer._formObserver) {
-                        const observer = new MutationObserver(() => {
-                            refreshCVTabContent();
-                            setupForm1Listeners();
-                        });
-                        observer.observe(teamMembersContainer, { childList: true, subtree: true });
-                        teamMembersContainer._formObserver = observer;
-                    }
                 }
                 
                 const piNameInput = modal.querySelector('#piName');
@@ -4707,21 +4722,57 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                     e.stopPropagation();
                     e.preventDefault();
                     
-                    // Save current form data before changing grant
-                    const currentFormData = await collectFormData();
+                    const currentFormData = await collectFormData(modal);
                     
-                    // Update currentDraftData with latest form data
+                    // Check if there are unsaved changes
                     if (currentDraftData) {
-                        Object.assign(currentDraftData, currentFormData);
-                        currentDraftData.grantTitle = selectedGrant;
-                        saveDrafts(); // Save to drafts for recovery
+                        let hasChanges = false;
+                        const textFields = ['proposalTitle', 'piName', 'piEmail', 'dept', 'school', 'rationale', 'objectives', 'methodology', 'outputs', 'duration', 'extension', 'litReview', 'fromChair', 'chairEmail', 'deanName', 'deanEmail', 'endorseDept', 'endorseSchool', 'schoolYear'];
+                        for (const field of textFields) {
+                            if ((currentFormData[field] || '') !== (currentDraftData[field] || '')) {
+                                hasChanges = true;
+                                break;
+                            }
+                        }
+                        
+                        if (hasChanges) {
+                            const result = await Swal.fire({
+                                title: 'Unsaved Changes',
+                                text: 'You have unsaved changes. What would you like to do?',
+                                icon: 'warning',
+                                showDenyButton: true,
+                                showCancelButton: true,
+                                confirmButtonText: 'Save Draft',
+                                denyButtonText: 'Discard Changes',
+                                cancelButtonText: 'Stay Here'
+                            });
+                            
+                            if (result.isConfirmed) {
+                                // Save draft
+                                Object.assign(currentDraftData, currentFormData);
+                                currentDraftData.grantTitle = selectedGrant;
+                                await KURO_API.saveFacultyDraft(currentDraftData);
+                                showFormNotification('✓ Draft saved!', false, modal);
+                                Swal.close();
+                                setTimeout(async () => {
+                                    await openGrantSelectionWithPreselected(selectedGrant);
+                                }, 100);
+                                return;
+                            } else if (result.isDenied) {
+                                // Discard changes
+                                Swal.close();
+                                setTimeout(async () => {
+                                    await openGrantSelectionWithPreselected(selectedGrant);
+                                }, 100);
+                                return;
+                            } else {
+                                // Stay - do nothing
+                                return;
+                            }
+                        }
                     }
                     
-                    // Close the current modal
                     Swal.close();
-                    
-                    // Open grant selection with the current grant pre-selected
-                    // This allows user to change the grant type while keeping all data
                     setTimeout(async () => {
                         await openGrantSelectionWithPreselected(selectedGrant);
                     }, 100);
@@ -4739,31 +4790,42 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                     e.preventDefault();
                     
                     const currentFormData = await collectFormData(modal);
-                    
-                    // Check if this is a NEW application (not edit, not existing draft)
+                    const isEditingExistingApp = isEditMode && editAppId;
+                    const isEditingExistingDraft = editDraftId !== null && currentDraftData?.proposalTitle;
                     const isNewApplication = !isEditMode && !editAppId && !currentDraftData?.draftId;
                     
-                    // Check if editing an EXISTING application
-                    const isEditingExistingApp = isEditMode && editAppId;
+                    // Helper to check if form has any content
+                    function hasFormContent() {
+                        return currentFormData.proposalTitle?.trim() ||
+                               currentFormData.piName?.trim() ||
+                               currentFormData.piEmail?.trim() ||
+                               (currentFormData.teamMembers && currentFormData.teamMembers.length > 0 && currentFormData.teamMembers.some(m => m.name));
+                    }
                     
-                    // Check if editing an existing DRAFT
-                    const isEditingExistingDraft = editDraftId !== null && currentDraftData?.proposalTitle;
+                    // Helper to check if data has changed
+                    function hasDataChanged() {
+                        if (!currentDraftData) return hasFormContent();
+                        
+                        const textFields = ['proposalTitle', 'piName', 'piEmail', 'dept', 'school', 'rationale', 'objectives', 'methodology', 'outputs', 'duration', 'extension', 'litReview', 'fromChair', 'chairEmail', 'deanName', 'deanEmail', 'endorseDept', 'endorseSchool', 'schoolYear'];
+                        for (const field of textFields) {
+                            if ((currentFormData[field] || '') !== (currentDraftData[field] || '')) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    }
                     
-                    // ========== FOR EXISTING APPLICATIONS (Pending/Submitted) ==========
+                    const hasChanges = hasDataChanged();
+                    console.log('Has changes:', hasChanges);
+                    
+                    // For existing applications - check for changes
                     if (isEditingExistingApp) {
-                        const hasChanges = await hasFormChanges(modal);
-                        
-                        console.log('Has changes detected:', hasChanges);
-                        
                         if (!hasChanges) {
-                            // No changes - just close
-                            console.log('No changes, closing');
                             Swal.close();
                             renderApplicant();
                             return;
                         }
                         
-                        // Has changes - show options
                         const result = await Swal.fire({
                             title: 'Unsaved Changes',
                             text: 'You have made changes to this application. What would you like to do?',
@@ -4775,133 +4837,81 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                             cancelButtonColor: '#e74c3c',
                             confirmButtonText: 'Save Changes',
                             denyButtonText: 'Discard Changes',
-                            cancelButtonText: 'Cancel, Stay Here'
+                            cancelButtonText: 'Stay Here'
                         });
                         
                         if (result.isConfirmed) {
-                            // Save changes - direct update function
-                            console.log('Saving changes directly...');
+                            // Save changes
+                            const formData = await collectFormData(modal);
+                            const response = await fetch(`${API_URL}/api/applications/${editAppId}`);
+                            const existingApp = await response.json();
                             
-                            // Close the confirmation modal first
-                            Swal.close();
+                            const mergedData = {
+                                id: editAppId,
+                                userEmail: currentUser.email,
+                                grantTitle: selectedGrant || existingApp.grantTitle,
+                                status: existingApp.status,
+                                submittedDate: existingApp.submittedDate,
+                                signatures: existingApp.signatures,
+                                signatureRequests: existingApp.signatureRequests,
+                                proposalTitle: formData.proposalTitle || existingApp.proposalTitle,
+                                piName: formData.piName || existingApp.piName,
+                                piEmail: formData.piEmail || existingApp.piEmail,
+                                dept: formData.dept || existingApp.dept,
+                                school: formData.school || existingApp.school,
+                                extension: formData.extension || existingApp.extension,
+                                duration: formData.duration || existingApp.duration,
+                                rationale: formData.rationale || existingApp.rationale,
+                                litReview: formData.litReview || existingApp.litReview,
+                                objectives: formData.objectives || existingApp.objectives,
+                                methodology: formData.methodology || existingApp.methodology,
+                                outputs: formData.outputs || existingApp.outputs,
+                                references: formData.references && formData.references.length > 0 ? formData.references : existingApp.references,
+                                teamMembers: formData.teamMembers && formData.teamMembers.length > 0 ? formData.teamMembers : existingApp.teamMembers,
+                                activities: formData.activities && formData.activities.length > 0 ? formData.activities : existingApp.activities,
+                                budgetItems: formData.budgetItems && formData.budgetItems.length > 0 ? formData.budgetItems : existingApp.budgetItems,
+                                fromChair: formData.fromChair || existingApp.fromChair,
+                                chairEmail: formData.chairEmail || existingApp.chairEmail,
+                                deanName: formData.deanName || existingApp.deanName,
+                                deanEmail: formData.deanEmail || existingApp.deanEmail,
+                                endorseDept: formData.endorseDept || existingApp.endorseDept,
+                                endorseSchool: formData.endorseSchool || existingApp.endorseSchool,
+                                schoolYear: formData.schoolYear || existingApp.schoolYear,
+                                endorsementDate: formData.endorsementDate || existingApp.endorsementDate,
+                                piCVName: formData.piCVName || existingApp.piCVName,
+                                piCVData: formData.piCVData || existingApp.piCVData,
+                                piCVStatus: existingApp.piCVStatus || 'pending',
+                                teamCVs: formData.teamCVs && formData.teamCVs.length > 0 ? formData.teamCVs : existingApp.teamCVs,
+                                teamCVData: formData.teamCVData && formData.teamCVData.length > 0 ? formData.teamCVData : existingApp.teamCVData,
+                            };
                             
-                            // Show loading indicator
-                            showInlineNotification(null, 'Updating application...', true);
+                            await KURO_API.updateApplication(editAppId, mergedData);
                             
-                            try {
-                                // Get fresh form data using the modal reference
-                                const formData = await collectFormData(modal);
-                                const appId = editAppId;
-                                
-                                // Get existing application to preserve data
-                                const response = await fetch(`${API_URL}/api/applications/${appId}`);
-                                const existingApp = await response.json();
-                                
-                                // Merge data properly
-                                const mergedData = {
-                                    id: appId,
-                                    userEmail: currentUser.email,
-                                    grantTitle: selectedGrant || existingApp.grantTitle,
-                                    grantType: "Faculty Research Grant",
-                                    status: existingApp.status,
-                                    submittedDate: existingApp.submittedDate,
-                                    signatures: existingApp.signatures,
-                                    signatureRequests: existingApp.signatureRequests,
-                                    proposalTitle: formData.proposalTitle || existingApp.proposalTitle,
-                                    piName: formData.piName || existingApp.piName,
-                                    piEmail: formData.piEmail || existingApp.piEmail,
-                                    dept: formData.dept || existingApp.dept,
-                                    school: formData.school || existingApp.school,
-                                    extension: formData.extension || existingApp.extension,
-                                    duration: formData.duration || existingApp.duration,
-                                    rationale: formData.rationale || existingApp.rationale,
-                                    litReview: formData.litReview || existingApp.litReview,
-                                    objectives: formData.objectives || existingApp.objectives,
-                                    methodology: formData.methodology || existingApp.methodology,
-                                    outputs: formData.outputs || existingApp.outputs,
-                                    references: formData.references && formData.references.length > 0 ? formData.references : existingApp.references,
-                                    teamMembers: formData.teamMembers && formData.teamMembers.length > 0 ? formData.teamMembers : existingApp.teamMembers,
-                                    activities: formData.activities && formData.activities.length > 0 ? formData.activities : existingApp.activities,
-                                    budgetItems: formData.budgetItems && formData.budgetItems.length > 0 ? formData.budgetItems : existingApp.budgetItems,
-                                    fromChair: formData.fromChair || existingApp.fromChair,
-                                    chairEmail: formData.chairEmail || existingApp.chairEmail,
-                                    deanName: formData.deanName || existingApp.deanName,
-                                    deanEmail: formData.deanEmail || existingApp.deanEmail,
-                                    endorseDept: formData.endorseDept || existingApp.endorseDept,
-                                    endorseSchool: formData.endorseSchool || existingApp.endorseSchool,
-                                    schoolYear: formData.schoolYear || existingApp.schoolYear,
-                                    endorsementDate: formData.endorsementDate || existingApp.endorsementDate,
-                                    piCVName: formData.piCVName || existingApp.piCVName,
-                                    piCVData: formData.piCVData || existingApp.piCVData,
-                                    piCVStatus: existingApp.piCVStatus || 'pending',
-                                    teamCVs: formData.teamCVs && formData.teamCVs.length > 0 ? formData.teamCVs : existingApp.teamCVs,
-                                    teamCVData: formData.teamCVData && formData.teamCVData.length > 0 ? formData.teamCVData : existingApp.teamCVData,
-                                };
-                                
-                                const result = await KURO_API.updateApplication(appId, mergedData);
-                                console.log('Direct update successful:', result);
-                                
-                                // Delete draft if exists
-                                if (editDraftId !== null) {
-                                    try {
-                                        const drafts = await KURO_API.getFacultyDrafts();
-                                        const draftToDelete = drafts[editDraftId];
-                                        if (draftToDelete?.draftId) {
-                                            await KURO_API.deleteFacultyDraft(draftToDelete.draftId);
-                                        }
-                                        sessionStorage.removeItem('current_draft_id');
-                                        editDraftId = null;
-                                    } catch (draftError) {
-                                        console.error('Error deleting draft:', draftError);
-                                    }
+                            if (editDraftId !== null) {
+                                const drafts = await KURO_API.getFacultyDrafts();
+                                const draftToDelete = drafts[editDraftId];
+                                if (draftToDelete?.draftId) {
+                                    await KURO_API.deleteFacultyDraft(draftToDelete.draftId);
                                 }
-                                
-                                // Refresh the dashboard
-                                await renderApplicant();
-                                
-                                // Show success message
-                                showInlineNotification(null, '✅ Application updated successfully!', true);
-                                
-                            } catch (error) {
-                                console.error('Direct update failed:', error);
-                                showInlineNotification(null, '❌ Failed to update application. Please try again.', false);
-                                
-                                // Reopen the form if needed
-                                setTimeout(async () => {
-                                    await openApplicationForm(isEditMode, currentActiveTab);
-                                }, 500);
+                                sessionStorage.removeItem('current_draft_id');
+                                editDraftId = null;
                             }
                             
+                            Swal.close();
+                            await renderApplicant();
+                            showInlineNotification(null, '✅ Application updated successfully!', true);
                             return;
                         } else if (result.isDenied) {
-                            // Discard changes - just close
-                            console.log('Discarding changes');
                             Swal.close();
                             renderApplicant();
                             return;
                         } else {
-                            // Cancel - user wants to stay and continue editing
-                            console.log('User chose to stay, continuing editing');
-                            return; // Just return, don't close
+                            return;
                         }
                     }
                     
-                    // ========== FOR EXISTING DRAFTS ==========
+                    // For existing drafts
                     if (isEditingExistingDraft) {
-                        let hasChanges = false;
-                        
-                        if (currentDraftData) {
-                            const originalData = currentDraftData;
-                            const textFields = ['proposalTitle', 'piName', 'piEmail', 'dept', 'school', 'rationale', 'objectives', 'methodology', 'outputs', 'duration', 'extension', 'litReview', 'fromChair', 'chairEmail', 'deanName', 'deanEmail', 'endorseDept', 'endorseSchool', 'schoolYear'];
-                            for (const field of textFields) {
-                                if (isDifferent(currentFormData[field], originalData[field])) {
-                                    console.log(`Change detected in ${field}`);
-                                    hasChanges = true;
-                                    break;
-                                }
-                            }
-                        }
-                        
                         if (!hasChanges) {
                             Swal.close();
                             renderApplicant();
@@ -4923,11 +4933,10 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                         });
                         
                         if (result.isConfirmed) {
-                            // Save draft
                             if (currentDraftData) {
                                 Object.assign(currentDraftData, currentFormData);
-                                await saveDrafts();
-                                showInlineNotification(modal, '📝 Draft saved!', true);
+                                await KURO_API.saveFacultyDraft(currentDraftData);
+                                showFormNotification('📝 Draft saved!', false, modal);
                             }
                             Swal.close();
                             renderApplicant();
@@ -4937,127 +4946,51 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                             renderApplicant();
                             return;
                         } else {
-                            // Stay - do nothing
                             return;
                         }
                     }
                     
-                    // ========== FOR NEW APPLICATIONS ==========
-                    if (isNewApplication) {
-                        const hasTitle = currentFormData.proposalTitle && currentFormData.proposalTitle.trim() !== '';
-                        const hasAnyContent = currentFormData.piName || 
-                                            currentFormData.piEmail ||
-                                            currentFormData.dept ||
-                                            currentFormData.school ||
-                                            currentFormData.rationale ||
-                                            currentFormData.objectives ||
-                                            (currentFormData.teamMembers && currentFormData.teamMembers.length > 0 && currentFormData.teamMembers.some(m => m.name)) ||
-                                            (currentFormData.budgetItems && currentFormData.budgetItems.length > 0 && currentFormData.budgetItems.some(b => b.category || b.itemName));
+                    // For new applications
+                    if (isNewApplication && hasFormContent()) {
+                        const result = await Swal.fire({
+                            title: 'Save as Draft?',
+                            text: 'Would you like to save your progress as a draft before closing?',
+                            icon: 'question',
+                            showDenyButton: true,
+                            showCancelButton: true,
+                            confirmButtonColor: '#D4AF37',
+                            denyButtonColor: '#6c757d',
+                            cancelButtonColor: '#e74c3c',
+                            confirmButtonText: 'Save Draft',
+                            denyButtonText: 'Discard',
+                            cancelButtonText: 'Stay Here'
+                        });
                         
-                        if (hasAnyContent) {
-                            if (!hasTitle) {
-                                // Require title to save
-                                Swal.close();
-                                
-                                const titleResult = await Swal.fire({
-                                    title: 'Project Title Required',
-                                    html: `
-                                        <div style="text-align: left;">
-                                            <p>You have entered data but no project title.</p>
-                                            <div class="form-group" style="margin-top: 1rem;">
-                                                <label style="font-weight: 600; color: #0B2B4F;">Project Title <span style="color: #e74c3c;">*</span></label>
-                                                <input type="text" id="requiredTitleInput" class="swal2-input" placeholder="Enter project title" style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #ddd;">
-                                            </div>
-                                        </div>
-                                    `,
-                                    icon: 'warning',
-                                    showCancelButton: true,
-                                    confirmButtonColor: '#D4AF37',
-                                    cancelButtonColor: '#6c757d',
-                                    confirmButtonText: 'Save Draft',
-                                    cancelButtonText: 'Discard',
-                                    preConfirm: () => {
-                                        const title = document.getElementById('requiredTitleInput')?.value;
-                                        if (!title || title.trim() === '') {
-                                            Swal.showValidationMessage('Project Title is required');
-                                            return false;
-                                        }
-                                        return title;
-                                    }
-                                });
-                                
-                                if (titleResult.isConfirmed && titleResult.value) {
-                                    currentFormData.proposalTitle = titleResult.value;
-                                    const draftId = 'DRF_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
-                                    sessionStorage.setItem('current_draft_id', draftId);
-                                    
-                                    if (!currentDraftData) currentDraftData = {};
-                                    Object.assign(currentDraftData, currentFormData);
-                                    currentDraftData.grantTitle = selectedGrant;
-                                    currentDraftData.draftId = draftId;
-                                    currentDraftData.lastSaved = new Date().toISOString().slice(0, 10);
-                                    
-                                    await saveDrafts();
-                                    showInlineNotification(modal, '📝 Draft saved!', true);
-                                }
-                                
-                                Swal.close();
-                                renderApplicant();
-                                return;
-                            } else {
-                                // Has title - ask to save draft
-                                const result = await Swal.fire({
-                                    title: 'Save as Draft?',
-                                    text: 'Would you like to save your progress as a draft before closing?',
-                                    icon: 'question',
-                                    showDenyButton: true,
-                                    showCancelButton: true,
-                                    confirmButtonColor: '#D4AF37',
-                                    denyButtonColor: '#6c757d',
-                                    cancelButtonColor: '#e74c3c',
-                                    confirmButtonText: 'Save Draft',
-                                    denyButtonText: 'Discard',
-                                    cancelButtonText: 'Stay Here'
-                                });
-                                
-                                if (result.isConfirmed) {
-                                    const draftId = 'DRF_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
-                                    sessionStorage.setItem('current_draft_id', draftId);
-                                    
-                                    if (!currentDraftData) currentDraftData = {};
-                                    Object.assign(currentDraftData, currentFormData);
-                                    currentDraftData.grantTitle = selectedGrant;
-                                    currentDraftData.draftId = draftId;
-                                    currentDraftData.lastSaved = new Date().toISOString().slice(0, 10);
-                                    
-                                    await saveDrafts();
-                                    showInlineNotification(modal, '📝 Draft saved!', true);
-                                    Swal.close();
-                                    renderApplicant();
-                                    return;
-                                } else if (result.isDenied) {
-                                    Swal.close();
-                                    renderApplicant();
-                                    return;
-                                } else {
-                                    // Stay - do nothing
-                                    return;
-                                }
-                            }
-                        } else {
-                            // No content - just close
-                            Swal.close();
-                            renderApplicant();
-                            return;
+                        if (result.isConfirmed) {
+                            const draftId = 'DRF_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+                            sessionStorage.setItem('current_draft_id', draftId);
+                            
+                            if (!currentDraftData) currentDraftData = {};
+                            Object.assign(currentDraftData, currentFormData);
+                            currentDraftData.grantTitle = selectedGrant;
+                            currentDraftData.draftId = draftId;
+                            currentDraftData.lastSaved = new Date().toISOString().slice(0, 10);
+                            currentDraftData.userEmail = currentUser.email;
+                            
+                            await KURO_API.saveFacultyDraft(currentDraftData);
+                            showFormNotification('📝 Draft saved!', false, modal);
                         }
+                        
+                        Swal.close();
+                        renderApplicant();
+                        return;
                     }
                     
-                    // Fallback
                     Swal.close();
                     renderApplicant();
                 });
             }
-
+            
             // ========== SUBMIT BUTTON HANDLER ==========
             const submitBtn = modal.querySelector('#customSubmitBtn');
             if (submitBtn) {
@@ -5068,45 +5001,18 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                     e.stopPropagation();
                     e.preventDefault();
                     
-                    console.log('🔘🔘🔘 SUBMIT BUTTON CLICKED 🔘🔘🔘');
-                    console.log('isEditMode:', isEditMode);
-                    console.log('editAppId:', editAppId);
-                    
-                    // ========== CHECK FOR CHANGES IN EDIT MODE ==========
-                    if (isEditMode && editAppId) {
-                        const hasChanges = await hasFormChanges(modal);
-                        
-                        if (!hasChanges) {
-                            // No changes - just close the modal and RETURN
-                            console.log('No changes detected, closing modal');
-                            await Swal.fire({
-                                icon: 'info',
-                                title: 'No Changes',
-                                text: 'No changes were made to the application.',
-                                confirmButtonColor: '#D4AF37',
-                                timer: 1500,
-                                showConfirmButton: false
-                            });
-                            Swal.close();
-                            renderApplicant();
-                            return;  // ✅ IMPORTANT: Exit the handler here!
-                        }
-                    }
-                    
-                    // Show loading state (only reaches here if there ARE changes)
                     newSubmitBtn.disabled = true;
                     newSubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
                     
                     try {
                         let formData = await collectFormData(modal);
-                        console.log('Form data collected:', formData);
                         
                         const today = new Date();
                         const year = today.getFullYear();
                         const month = String(today.getMonth() + 1).padStart(2, '0');
                         const day = String(today.getDate()).padStart(2, '0');
                         const submissionDate = `${year}-${month}-${day}`;
-
+                        
                         const endorsementDateInput = modal.querySelector('#endorsementDate');
                         if (endorsementDateInput) {
                             endorsementDateInput.value = submissionDate;
@@ -5130,147 +5036,126 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                             return;
                         }
                         
-                        // ========== EDIT MODE (UPDATE EXISTING APPLICATION) ==========
+                        // Edit Mode
                         if (isEditMode && editAppId) {
-                            try {
-                                // Get the existing application first
-                                const response = await fetch(`${API_URL}/api/applications/${editAppId}`);
-                                const existingApp = await response.json();
-                                if (!response.ok) throw new Error(existingApp.error || 'Application not found');
-                                
-                                console.log('Existing app data:', existingApp);
-                                
-                                // Merge: use formData values if present, otherwise use existing
-                                const mergedData = {
-                                    id: editAppId,
-                                    userEmail: currentUser.email,
-                                    grantTitle: selectedGrant || existingApp.grantTitle,
-                                    grantType: "Faculty Research Grant",
-                                    status: existingApp.status,
-                                    submittedDate: existingApp.submittedDate,
-                                    signatures: existingApp.signatures,
-                                    signatureRequests: existingApp.signatureRequests,
-                                    // Form fields - use formData if has value, else existing
-                                    proposalTitle: formData.proposalTitle || existingApp.proposalTitle,
-                                    piName: formData.piName || existingApp.piName,
-                                    piEmail: formData.piEmail || existingApp.piEmail,
-                                    dept: formData.dept || existingApp.dept,
-                                    school: formData.school || existingApp.school,
-                                    extension: formData.extension || existingApp.extension,
-                                    duration: formData.duration || existingApp.duration,
-                                    rationale: formData.rationale || existingApp.rationale,
-                                    litReview: formData.litReview || existingApp.litReview,
-                                    objectives: formData.objectives || existingApp.objectives,
-                                    methodology: formData.methodology || existingApp.methodology,
-                                    outputs: formData.outputs || existingApp.outputs,
-                                    references: formData.references && formData.references.length > 0 ? formData.references : existingApp.references,
-                                    teamMembers: formData.teamMembers && formData.teamMembers.length > 0 ? formData.teamMembers : existingApp.teamMembers,
-                                    activities: formData.activities && formData.activities.length > 0 ? formData.activities : existingApp.activities,
-                                    budgetItems: formData.budgetItems && formData.budgetItems.length > 0 ? formData.budgetItems : existingApp.budgetItems,
-                                    fromChair: formData.fromChair || existingApp.fromChair,
-                                    chairEmail: formData.chairEmail || existingApp.chairEmail,
-                                    deanName: formData.deanName || existingApp.deanName,
-                                    deanEmail: formData.deanEmail || existingApp.deanEmail,
-                                    endorseDept: formData.endorseDept || existingApp.endorseDept,
-                                    endorseSchool: formData.endorseSchool || existingApp.endorseSchool,
-                                    schoolYear: formData.schoolYear || existingApp.schoolYear,
-                                    endorsementDate: formData.endorsementDate || existingApp.endorsementDate,
-                                    // CV data - preserve existing if no new files
-                                    piCVName: formData.piCVName || existingApp.piCVName,
-                                    piCVData: formData.piCVData || existingApp.piCVData,
-                                    piCVStatus: existingApp.piCVStatus || 'pending',
-                                    teamCVs: formData.teamCVs && formData.teamCVs.length > 0 ? formData.teamCVs : existingApp.teamCVs,
-                                    teamCVData: formData.teamCVData && formData.teamCVData.length > 0 ? formData.teamCVData : existingApp.teamCVData,
-                                };
-                                
-                                console.log('Merged data for update:', mergedData);
-                                
-                                const result = await KURO_API.updateApplication(editAppId, mergedData);
-                                console.log('Update successful:', result);
-                                
-                                // Delete draft if it exists
-                                if (editDraftId !== null) {
-                                    const drafts = await KURO_API.getFacultyDrafts();
-                                    const draftToDelete = drafts[editDraftId];
-                                    if (draftToDelete?.draftId) {
-                                        await KURO_API.deleteFacultyDraft(draftToDelete.draftId);
-                                    }
-                                    sessionStorage.removeItem('current_draft_id');
-                                    editDraftId = null;
+                            const response = await fetch(`${API_URL}/api/applications/${editAppId}`);
+                            const existingApp = await response.json();
+                            
+                            const mergedData = {
+                                id: editAppId,
+                                userEmail: currentUser.email,
+                                grantTitle: selectedGrant || existingApp.grantTitle,
+                                status: existingApp.status,
+                                submittedDate: existingApp.submittedDate,
+                                signatures: existingApp.signatures,
+                                signatureRequests: existingApp.signatureRequests,
+                                proposalTitle: formData.proposalTitle || existingApp.proposalTitle,
+                                piName: formData.piName || existingApp.piName,
+                                piEmail: formData.piEmail || existingApp.piEmail,
+                                dept: formData.dept || existingApp.dept,
+                                school: formData.school || existingApp.school,
+                                extension: formData.extension || existingApp.extension,
+                                duration: formData.duration || existingApp.duration,
+                                rationale: formData.rationale || existingApp.rationale,
+                                litReview: formData.litReview || existingApp.litReview,
+                                objectives: formData.objectives || existingApp.objectives,
+                                methodology: formData.methodology || existingApp.methodology,
+                                outputs: formData.outputs || existingApp.outputs,
+                                references: formData.references && formData.references.length > 0 ? formData.references : existingApp.references,
+                                teamMembers: formData.teamMembers && formData.teamMembers.length > 0 ? formData.teamMembers : existingApp.teamMembers,
+                                activities: formData.activities && formData.activities.length > 0 ? formData.activities : existingApp.activities,
+                                budgetItems: formData.budgetItems && formData.budgetItems.length > 0 ? formData.budgetItems : existingApp.budgetItems,
+                                fromChair: formData.fromChair || existingApp.fromChair,
+                                chairEmail: formData.chairEmail || existingApp.chairEmail,
+                                deanName: formData.deanName || existingApp.deanName,
+                                deanEmail: formData.deanEmail || existingApp.deanEmail,
+                                endorseDept: formData.endorseDept || existingApp.endorseDept,
+                                endorseSchool: formData.endorseSchool || existingApp.endorseSchool,
+                                schoolYear: formData.schoolYear || existingApp.schoolYear,
+                                endorsementDate: formData.endorsementDate || existingApp.endorsementDate,
+                                piCVName: formData.piCVName || existingApp.piCVName,
+                                piCVData: formData.piCVData || existingApp.piCVData,
+                                piCVStatus: existingApp.piCVStatus || 'pending',
+                                teamCVs: formData.teamCVs && formData.teamCVs.length > 0 ? formData.teamCVs : existingApp.teamCVs,
+                                teamCVData: formData.teamCVData && formData.teamCVData.length > 0 ? formData.teamCVData : existingApp.teamCVData,
+                            };
+                            
+                            await KURO_API.updateApplication(editAppId, mergedData);
+                            
+                            if (editDraftId !== null) {
+                                const drafts = await KURO_API.getFacultyDrafts();
+                                const draftToDelete = drafts[editDraftId];
+                                if (draftToDelete?.draftId) {
+                                    await KURO_API.deleteFacultyDraft(draftToDelete.draftId);
                                 }
-                                
-                                await renderApplicant();
-                                
-                                await Swal.fire({
-                                    icon: 'success',
-                                    title: 'Updated!',
-                                    text: 'Application updated successfully.',
-                                    confirmButtonColor: '#D4AF37',
-                                    timer: 2000,
-                                    showConfirmButton: false
-                                });
-                                Swal.close();
-                                return;
-                                
-                            } catch (error) {
-                                console.error('Update failed:', error);
-                                showFormNotification('Failed to update application: ' + error.message, true, modal);
-                                newSubmitBtn.disabled = false;
-                                newSubmitBtn.innerHTML = 'Update Application';
-                                return;
+                                sessionStorage.removeItem('current_draft_id');
+                                editDraftId = null;
+                            }
+                            
+                            Swal.close();
+                            await renderApplicant();
+                            await Swal.fire({
+                                icon: 'success',
+                                title: 'Updated!',
+                                text: 'Application updated successfully.',
+                                confirmButtonColor: '#D4AF37',
+                                timer: 2000,
+                                showConfirmButton: false
+                            });
+                            return;
+                        }
+                        
+                        // New Submission Mode
+                        const newId = "FRG" + Date.now();
+                        const newSubmission = { 
+                            id: newId, 
+                            grantTitle: selectedGrant, 
+                            grantType: "Faculty Research Grant", 
+                            status: "Awaiting Signatures",
+                            submittedDate: submissionDate,
+                            signatures: { chair: { signed: false }, dean: { signed: false } },
+                            piCVStatus: 'pending',
+                            userEmail: currentUser.email,
+                            ...formData
+                        };
+                        
+                        const created = await KURO_API.createApplication(newSubmission);
+                        
+                        if (!formData.chairEmail || !formData.deanEmail) {
+                            showFormNotification('⚠️ Please fill in Department Chair and Dean email addresses in Form 2.', true, modal);
+                            newSubmitBtn.disabled = false;
+                            newSubmitBtn.innerHTML = 'Submit Application';
+                            return;
+                        }
+                        
+                        try {
+                            await autoGenerateSignatureLinks(created, created.id);
+                        } catch (sigError) {
+                            console.error('Signature generation failed:', sigError);
+                            showFormNotification('⚠️ Application saved but signature emails failed. You can resend signatures later.', false, modal);
+                        }
+                        
+                        if (editDraftId !== null) {
+                            try {
+                                const drafts = await KURO_API.getFacultyDrafts();
+                                const draftToDelete = drafts[editDraftId];
+                                if (draftToDelete?.draftId) {
+                                    await KURO_API.deleteFacultyDraft(draftToDelete.draftId);
+                                }
+                                sessionStorage.removeItem('current_draft_id');
+                                editDraftId = null;
+                            } catch (draftError) {
+                                console.error('Error deleting draft:', draftError);
                             }
                         }
                         
-                        // ========== NEW SUBMISSION MODE ==========
-                        if (!isEditMode || !editAppId) {
-                            const newId = "FRG" + Date.now();
-                            const newSubmission = { 
-                                id: newId, 
-                                grantTitle: selectedGrant, 
-                                grantType: "Faculty Research Grant", 
-                                status: "Awaiting Signatures",
-                                submittedDate: new Date().toISOString().slice(0,10),
-                                signatures: { chair: { signed: false }, dean: { signed: false } },
-                                piCVStatus: 'pending',
-                                userEmail: currentUser.email,
-                                ...formData
-                            };
-                            
-                            console.log('Creating new application:', newSubmission);
-                            
-                            const created = await KURO_API.createApplication(newSubmission);
-                            console.log('Application created:', created);
-                            
-                            if (!formData.chairEmail || !formData.deanEmail) {
-                                showFormNotification('⚠️ Please fill in Department Chair and Dean email addresses in Form 2.', true, modal);
-                                newSubmitBtn.disabled = false;
-                                newSubmitBtn.innerHTML = 'Submit Application';
-                                return;
-                            }
-                            
-                            try {
-                                await autoGenerateSignatureLinks(created, created.id);
-                            } catch (sigError) {
-                                console.error('Signature generation failed:', sigError);
-                                showFormNotification('⚠️ Application saved but signature emails failed. You can resend signatures later.', false, modal);
-                            }
-                            
-                            if (editDraftId !== null) {
-                                try {
-                                    const drafts = await KURO_API.getFacultyDrafts();
-                                    const draftToDelete = drafts[editDraftId];
-                                    if (draftToDelete?.draftId) {
-                                        await KURO_API.deleteFacultyDraft(draftToDelete.draftId);
-                                    }
-                                    sessionStorage.removeItem('current_draft_id');
-                                    editDraftId = null;
-                                } catch (draftError) {
-                                    console.error('Error deleting draft:', draftError);
-                                }
-                            }
-                            
-                            await renderApplicant();
-                            
+                        // Clear current draft data
+                        currentDraftData = null;
+                        
+                        Swal.close();
+                        await renderApplicant();
+                        
+                        setTimeout(async () => {
                             await Swal.fire({
                                 icon: 'success',
                                 title: 'Submitted!',
@@ -5279,13 +5164,11 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                                 timer: 3000,
                                 showConfirmButton: false
                             });
-                            Swal.close();
-                        }
+                        }, 100);
                         
                     } catch (error) {
                         console.error('Submission failed:', error);
                         showFormNotification('Failed to submit: ' + error.message, true, modal);
-                    } finally {
                         newSubmitBtn.disabled = false;
                         newSubmitBtn.innerHTML = isEditMode ? 'Update Application' : 'Submit Application';
                     }
@@ -5306,37 +5189,13 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                     
                     const formData = await collectFormData(modal);
                     
-                    // Check if project title exists
                     if (!formData.proposalTitle || formData.proposalTitle.trim() === '') {
-                        // Show modal asking for title
                         const result = await Swal.fire({
                             title: 'Project Title Required',
-                            html: `
-                                <div style="text-align: left;">
-                                    <p>A project title is required to save your work as a draft.</p>
-                                    <div class="form-group" style="margin-top: 1rem;">
-                                        <label style="font-weight: 600; color: #0B2B4F;">Project Title <span style="color: #e74c3c;">*</span></label>
-                                        <input type="text" id="draftTitleInput" class="swal2-input" placeholder="Enter project title" style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #ddd;">
-                                    </div>
-                                </div>
-                            `,
+                            html: `<div class="form-group"><label>Project Title <span class="required">*</span></label><input type="text" id="draftTitleInput" class="swal2-input" placeholder="Enter project title"></div>`,
                             icon: 'warning',
                             showCancelButton: true,
-                            confirmButtonColor: '#D4AF37',
-                            cancelButtonColor: '#6c757d',
                             confirmButtonText: 'Save Draft',
-                            cancelButtonText: 'Cancel',
-                            didOpen: () => {
-                                const titleInput = document.getElementById('draftTitleInput');
-                                if (titleInput) {
-                                    titleInput.focus();
-                                    titleInput.addEventListener('keypress', (e) => {
-                                        if (e.key === 'Enter') {
-                                            Swal.clickConfirm();
-                                        }
-                                    });
-                                }
-                            },
                             preConfirm: () => {
                                 const title = document.getElementById('draftTitleInput')?.value;
                                 if (!title || title.trim() === '') {
@@ -5347,28 +5206,10 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                             }
                         });
                         
-                        if (!result.isConfirmed) {
-                            return; // User cancelled
-                        }
-                        
-                        // Set the title from the modal
+                        if (!result.isConfirmed) return;
                         formData.proposalTitle = result.value;
-                        
-                        // Also update the DOM input
                         const titleField = modal.querySelector('#projTitle');
-                        if (titleField) {
-                            titleField.value = result.value;
-                        }
-                    }
-                    
-                    // Continue with saving the draft...
-                    if (currentDraftData) {
-                        Object.assign(currentDraftData, formData);
-                        currentDraftData.grantTitle = selectedGrant;
-                        currentDraftData.lastSaved = new Date().toISOString().slice(0, 10);
-                        currentDraftData.lastSavedTime = new Date().toISOString();
-                    } else {
-                        currentDraftData = { ...formData, grantTitle: selectedGrant };
+                        if (titleField) titleField.value = result.value;
                     }
                     
                     let draftId = sessionStorage.getItem('current_draft_id');
@@ -5376,23 +5217,24 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                         draftId = 'DRF_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
                         sessionStorage.setItem('current_draft_id', draftId);
                     }
+                    
+                    if (!currentDraftData) {
+                        currentDraftData = {};
+                    }
+                    Object.assign(currentDraftData, formData);
+                    currentDraftData.grantTitle = selectedGrant;
                     currentDraftData.draftId = draftId;
+                    currentDraftData.lastSaved = new Date().toISOString().slice(0, 10);
                     currentDraftData.userEmail = currentUser.email;
                     
-                    try {
-                        await KURO_API.saveFacultyDraft(currentDraftData);
-                        editDraftId = null; // Reset after save
-                        showFormNotification('✓ Draft saved successfully!', false, modal);
-                        
-                        setTimeout(() => {
-                            Swal.close();
-                            renderApplicant();
-                        }, 500);
-                        
-                    } catch (error) {
-                        console.error('Failed to save draft:', error);
-                        showFormNotification('❌ Failed to save draft. Please try again.', true, modal);
-                    }
+                    await KURO_API.saveFacultyDraft(currentDraftData);
+                    editDraftId = null;
+                    showFormNotification('✓ Draft saved successfully!', false, modal);
+                    
+                    setTimeout(() => {
+                        Swal.close();
+                        renderApplicant();
+                    }, 500);
                 });
             }
         }
