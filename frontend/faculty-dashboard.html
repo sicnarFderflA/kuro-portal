@@ -5129,6 +5129,33 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                                 if (!response.ok) throw new Error(existingApp.error || 'Application not found');
                                 
                                 console.log('Existing app data:', existingApp);
+                                console.log('New formData CVs:', {
+                                    piCVName: formData.piCVName,
+                                    hasPiCVData: !!formData.piCVData,
+                                    teamCVs: formData.teamCVs,
+                                    hasTeamCVData: formData.teamCVData?.length > 0
+                                });
+                                
+                                // CRITICAL: For CVs, the NEW uploaded files are in formData
+                                // They should OVERRIDE the existing ones
+                                const finalPiCVName = formData.piCVName || existingApp.piCVName;
+                                const finalPiCVData = formData.piCVData || existingApp.piCVData;
+                                
+                                // For team CVs - need to carefully merge
+                                let finalTeamCVs = [...(existingApp.teamCVs || [])];
+                                let finalTeamCVData = [...(existingApp.teamCVData || [])];
+                                
+                                // If new team CVs were uploaded, override
+                                if (formData.teamCVs && formData.teamCVs.length > 0) {
+                                    for (let i = 0; i < formData.teamCVs.length; i++) {
+                                        if (formData.teamCVs[i] && formData.teamCVs[i].name) {
+                                            finalTeamCVs[i] = formData.teamCVs[i];
+                                            if (formData.teamCVData && formData.teamCVData[i]) {
+                                                finalTeamCVData[i] = formData.teamCVData[i];
+                                            }
+                                        }
+                                    }
+                                }
                                 
                                 // Merge: use formData values if present, otherwise use existing
                                 const mergedData = {
@@ -5165,15 +5192,22 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                                     endorseSchool: formData.endorseSchool || existingApp.endorseSchool,
                                     schoolYear: formData.schoolYear || existingApp.schoolYear,
                                     endorsementDate: formData.endorsementDate || existingApp.endorsementDate,
-                                    // CV data - preserve existing if no new files
-                                    piCVName: formData.piCVName || existingApp.piCVName,
-                                    piCVData: formData.piCVData || existingApp.piCVData,
-                                    piCVStatus: existingApp.piCVStatus || 'pending',
-                                    teamCVs: formData.teamCVs && formData.teamCVs.length > 0 ? formData.teamCVs : existingApp.teamCVs,
-                                    teamCVData: formData.teamCVData && formData.teamCVData.length > 0 ? formData.teamCVData : existingApp.teamCVData,
+                                    // CRITICAL FIX: CV data - ALWAYS use formData if it has new files
+                                    // For PI CV
+                                    piCVName: finalPiCVName,
+                                    piCVData: finalPiCVData,
+                                    piCVStatus: formData.piCVData ? 'pending' : (existingApp.piCVStatus || 'pending'),
+                                    // For Team CVs - use the merged arrays
+                                    teamCVs: finalTeamCVs,
+                                    teamCVData: finalTeamCVData,
                                 };
                                 
-                                console.log('Merged data for update:', mergedData);
+                                console.log('Merged CV data:', {
+                                    piCVName: mergedData.piCVName,
+                                    hasPiCVData: !!mergedData.piCVData,
+                                    teamCVsCount: mergedData.teamCVs?.length,
+                                    hasTeamCVData: mergedData.teamCVData?.length > 0
+                                });
                                 
                                 const result = await KURO_API.updateApplication(editAppId, mergedData);
                                 console.log('Update successful:', result);
