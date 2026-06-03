@@ -294,7 +294,8 @@ app.get('/api/applications/:id', async (req, res) => {
         const { id } = req.params;
         console.log('🔍 GET single application by ID:', id);
         
-        const application = await Submission.findOne({ id: id }).select('-piCVData -teamCVData');
+        // Use Application model instead of Submission
+        const application = await Application.findOne({ id: id }).select('-piCVData -teamCVData');
         
         if (!application) {
             console.log('❌ Application not found:', id);
@@ -336,9 +337,10 @@ app.get('/api/users/by-email', async (req, res) => {
 app.get('/api/applications/:id/cv', async (req, res) => {
     try {
         const { id } = req.params;
-        const { type, index } = req.query;  // type: 'pi' or 'team', index: team member index
+        const { type, index } = req.query;
         
-        const application = await Submission.findOne({ id: id });
+        // Use Application model
+        const application = await Application.findOne({ id: id });
         if (!application) {
             return res.status(404).json({ error: 'Application not found' });
         }
@@ -351,7 +353,7 @@ app.get('/api/applications/:id/cv', async (req, res) => {
             cvName = application.piCVName;
         } else if (type === 'team' && index !== undefined) {
             const idx = parseInt(index);
-            cvData = application.teamCVData?.[idx];
+            cvData = application.teamCVs?.[idx]?.data;
             cvName = application.teamCVs?.[idx]?.name;
         }
         
@@ -373,7 +375,8 @@ app.put('/api/applications/:id', async (req, res) => {
         
         console.log('📝 PUT update application:', id);
         
-        const result = await Submission.findOneAndUpdate(
+        // Use Application model
+        const result = await Application.findOneAndUpdate(
             { id: id },
             { $set: updates },
             { returnDocument: 'after' }
@@ -398,7 +401,8 @@ app.delete('/api/applications/:id', async (req, res) => {
         const { id } = req.params;
         console.log('🗑️ DELETE application:', id);
         
-        const result = await Submission.findOneAndDelete({ id: id });
+        // Use Application model
+        const result = await Application.findOneAndDelete({ id: id });
         
         if (!result) {
             return res.status(404).json({ error: 'Application not found' });
@@ -412,7 +416,6 @@ app.delete('/api/applications/:id', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
-
 // ========== FACULTY ROUTES ==========
 
 app.get('/api/faculty/applications', async (req, res) => {
@@ -423,13 +426,17 @@ app.get('/api/faculty/applications', async (req, res) => {
             return res.status(400).json({ error: 'userEmail required' });
         }
         
-        const ApplicationModel = mongoose.model('Application');
-        const applications = await ApplicationModel.find({ 
+        console.log('📋 Fetching applications for faculty:', userEmail);
+        
+        // Use the imported Application model directly
+        const applications = await Application.find({ 
             userEmail: userEmail 
         }).sort({ submittedDate: -1 });
         
+        console.log(`✅ Found ${applications.length} applications`);
         res.json(applications);
     } catch (error) {
+        console.error('❌ Error in /api/faculty/applications:', error);
         res.status(500).json({ error: error.message });
     }
 });
