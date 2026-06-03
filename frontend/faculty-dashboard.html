@@ -5125,87 +5125,126 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                     e.stopPropagation();
                     e.preventDefault();
                     
-                    newSubmitBtn.disabled = true;
-                    newSubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+                    // Validate required fields first
+                    let formData = await collectFormData(modal);
                     
-                    try {
-                        let formData = await collectFormData(modal);
+                    const today = new Date();
+                    const year = today.getFullYear();
+                    const month = String(today.getMonth() + 1).padStart(2, '0');
+                    const day = String(today.getDate()).padStart(2, '0');
+                    const submissionDate = `${year}-${month}-${day}`;
+                    
+                    const endorsementDateInput = modal.querySelector('#endorsementDate');
+                    if (endorsementDateInput) {
+                        endorsementDateInput.value = submissionDate;
+                    }
+                    formData.endorsementDate = submissionDate;
+                    
+                    clearAllHighlights(modal);
+                    const activities = collectActivities();
+                    if (!validateActivityDates(activities)) {
+                        return;
+                    }
+                    
+                    const errors = validateAndHighlightFields(formData, modal);
+                    if (errors.length > 0) {
+                        scrollToFirstError(modal);
+                        showFormNotification('Please complete all required fields (highlighted in red).', true, modal);
+                        return;
+                    }
+                    
+                    // ========== EDIT MODE: CHECK FOR CHANGES ==========
+                    if (isEditMode && editAppId) {
+                        const originalData = currentDraftData;
                         
-                        const today = new Date();
-                        const year = today.getFullYear();
-                        const month = String(today.getMonth() + 1).padStart(2, '0');
-                        const day = String(today.getDate()).padStart(2, '0');
-                        const submissionDate = `${year}-${month}-${day}`;
-                        
-                        const endorsementDateInput = modal.querySelector('#endorsementDate');
-                        if (endorsementDateInput) {
-                            endorsementDateInput.value = submissionDate;
+                        // Helper to check if any field actually changed
+                        function hasRealChanges() {
+                            const textFields = ['proposalTitle', 'piName', 'piEmail', 'dept', 'school', 'rationale', 'objectives', 'methodology', 'outputs', 'duration', 'extension', 'litReview', 'fromChair', 'chairEmail', 'deanName', 'deanEmail', 'endorseDept', 'endorseSchool', 'schoolYear', 'endorsementDate'];
+                            
+                            for (const field of textFields) {
+                                const currentVal = (formData[field] || '').trim();
+                                const originalVal = (originalData[field] || '').trim();
+                                if (currentVal !== originalVal) {
+                                    console.log(`📝 Change detected in: ${field}`);
+                                    return true;
+                                }
+                            }
+                            
+                            if (JSON.stringify(formData.references || []) !== JSON.stringify(originalData.references || [])) return true;
+                            if (JSON.stringify(formData.teamMembers || []) !== JSON.stringify(originalData.teamMembers || [])) return true;
+                            if (JSON.stringify(formData.activities || []) !== JSON.stringify(originalData.activities || [])) return true;
+                            if (JSON.stringify(formData.budgetItems || []) !== JSON.stringify(originalData.budgetItems || [])) return true;
+                            if ((formData.piCVName || '') !== (originalData.piCVName || '')) return true;
+                            
+                            return false;
                         }
-                        formData.endorsementDate = submissionDate;
                         
-                        clearAllHighlights(modal);
-                        const activities = collectActivities();
-                        if (!validateActivityDates(activities)) {
+                        const hasChanges = hasRealChanges();
+                        
+                        if (!hasChanges) {
+                            // No changes - just close and show message
                             newSubmitBtn.disabled = false;
-                            newSubmitBtn.innerHTML = isEditMode ? 'Update Application' : 'Submit Application';
+                            newSubmitBtn.innerHTML = 'Update Application';
+                            Swal.close();
+                            await Swal.fire({
+                                icon: 'info',
+                                title: 'No Changes',
+                                text: 'No changes were detected in the application.',
+                                confirmButtonColor: '#D4AF37',
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+                            await renderApplicant();
                             return;
                         }
                         
-                        const errors = validateAndHighlightFields(formData, modal);
-                        if (errors.length > 0) {
-                            scrollToFirstError(modal);
-                            showFormNotification('Please complete all required fields (highlighted in red).', true, modal);
-                            newSubmitBtn.disabled = false;
-                            newSubmitBtn.innerHTML = isEditMode ? 'Update Application' : 'Submit Application';
-                            return;
-                        }
+                        // ✅ HAS CHANGES - SAVE DIRECTLY (NO EXTRA CONFIRMATION)
+                        newSubmitBtn.disabled = true;
+                        newSubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
                         
-                        // Edit Mode
-                        if (isEditMode && editAppId) {
-                            const response = await fetch(`${API_URL}/api/applications/${editAppId}`);
-                            const existingApp = await response.json();
+                        try {
+                            // Build update object with ONLY changed fields
+                            const updateData = {};
+                            const textFields = ['proposalTitle', 'piName', 'piEmail', 'dept', 'school', 'rationale', 'objectives', 'methodology', 'outputs', 'duration', 'extension', 'litReview', 'fromChair', 'chairEmail', 'deanName', 'deanEmail', 'endorseDept', 'endorseSchool', 'schoolYear', 'endorsementDate'];
                             
-                            const mergedData = {
-                                id: editAppId,
-                                userEmail: currentUser.email,
-                                grantTitle: selectedGrant || existingApp.grantTitle,
-                                status: existingApp.status,
-                                submittedDate: existingApp.submittedDate,
-                                signatures: existingApp.signatures,
-                                signatureRequests: existingApp.signatureRequests,
-                                proposalTitle: formData.proposalTitle || existingApp.proposalTitle,
-                                piName: formData.piName || existingApp.piName,
-                                piEmail: formData.piEmail || existingApp.piEmail,
-                                dept: formData.dept || existingApp.dept,
-                                school: formData.school || existingApp.school,
-                                extension: formData.extension || existingApp.extension,
-                                duration: formData.duration || existingApp.duration,
-                                rationale: formData.rationale || existingApp.rationale,
-                                litReview: formData.litReview || existingApp.litReview,
-                                objectives: formData.objectives || existingApp.objectives,
-                                methodology: formData.methodology || existingApp.methodology,
-                                outputs: formData.outputs || existingApp.outputs,
-                                references: formData.references && formData.references.length > 0 ? formData.references : existingApp.references,
-                                teamMembers: formData.teamMembers && formData.teamMembers.length > 0 ? formData.teamMembers : existingApp.teamMembers,
-                                activities: formData.activities && formData.activities.length > 0 ? formData.activities : existingApp.activities,
-                                budgetItems: formData.budgetItems && formData.budgetItems.length > 0 ? formData.budgetItems : existingApp.budgetItems,
-                                fromChair: formData.fromChair || existingApp.fromChair,
-                                chairEmail: formData.chairEmail || existingApp.chairEmail,
-                                deanName: formData.deanName || existingApp.deanName,
-                                deanEmail: formData.deanEmail || existingApp.deanEmail,
-                                endorseDept: formData.endorseDept || existingApp.endorseDept,
-                                endorseSchool: formData.endorseSchool || existingApp.endorseSchool,
-                                schoolYear: formData.schoolYear || existingApp.schoolYear,
-                                endorsementDate: formData.endorsementDate || existingApp.endorsementDate,
-                                piCVName: formData.piCVName || existingApp.piCVName,
-                                piCVData: formData.piCVData || existingApp.piCVData,
-                                piCVStatus: existingApp.piCVStatus || 'pending',
-                                teamCVs: formData.teamCVs && formData.teamCVs.length > 0 ? formData.teamCVs : existingApp.teamCVs,
-                                teamCVData: formData.teamCVData && formData.teamCVData.length > 0 ? formData.teamCVData : existingApp.teamCVData,
-                            };
+                            for (const field of textFields) {
+                                const currentVal = (formData[field] || '').trim();
+                                const originalVal = (originalData[field] || '').trim();
+                                if (currentVal !== originalVal) {
+                                    updateData[field] = formData[field];
+                                }
+                            }
                             
-                            await KURO_API.updateApplication(editAppId, mergedData);
+                            if (JSON.stringify(formData.references || []) !== JSON.stringify(originalData.references || [])) {
+                                updateData.references = formData.references;
+                            }
                             
+                            if (JSON.stringify(formData.teamMembers || []) !== JSON.stringify(originalData.teamMembers || [])) {
+                                updateData.teamMembers = formData.teamMembers;
+                            }
+                            
+                            if (JSON.stringify(formData.activities || []) !== JSON.stringify(originalData.activities || [])) {
+                                updateData.activities = formData.activities;
+                            }
+                            
+                            if (JSON.stringify(formData.budgetItems || []) !== JSON.stringify(originalData.budgetItems || [])) {
+                                updateData.budgetItems = formData.budgetItems;
+                            }
+                            
+                            if ((formData.piCVName || '') !== (originalData.piCVName || '')) {
+                                updateData.piCVName = formData.piCVName;
+                                updateData.piCVData = formData.piCVData;
+                                updateData.piCVStatus = 'pending';
+                            }
+                            
+                            updateData.updatedAt = new Date();
+                            
+                            console.log('📝 Updating changed fields:', Object.keys(updateData));
+                            
+                            const result = await KURO_API.updateApplication(editAppId, updateData);
+                            console.log('✅ Update successful:', result);
+                            
+                            // Delete draft if exists
                             if (editDraftId !== null) {
                                 const drafts = await KURO_API.getFacultyDrafts();
                                 const draftToDelete = drafts[editDraftId];
@@ -5218,84 +5257,27 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                             
                             Swal.close();
                             await renderApplicant();
+                            
                             await Swal.fire({
                                 icon: 'success',
-                                title: 'Updated!',
+                                title: 'Saved!',
                                 text: 'Application updated successfully.',
                                 confirmButtonColor: '#D4AF37',
                                 timer: 2000,
                                 showConfirmButton: false
                             });
-                            return;
-                        }
-                        
-                        // New Submission Mode
-                        const newId = "FRG" + Date.now();
-                        const newSubmission = { 
-                            id: newId, 
-                            grantTitle: selectedGrant, 
-                            grantType: "Faculty Research Grant", 
-                            status: "Awaiting Signatures",
-                            submittedDate: submissionDate,
-                            signatures: { chair: { signed: false }, dean: { signed: false } },
-                            piCVStatus: 'pending',
-                            userEmail: currentUser.email,
-                            ...formData
-                        };
-                        
-                        const created = await KURO_API.createApplication(newSubmission);
-                        
-                        if (!formData.chairEmail || !formData.deanEmail) {
-                            showFormNotification('⚠️ Please fill in Department Chair and Dean email addresses in Form 2.', true, modal);
+                            
+                        } catch (error) {
+                            console.error('Update failed:', error);
+                            showFormNotification('Failed to update application: ' + error.message, true, modal);
                             newSubmitBtn.disabled = false;
-                            newSubmitBtn.innerHTML = 'Submit Application';
-                            return;
+                            newSubmitBtn.innerHTML = 'Update Application';
                         }
-                        
-                        try {
-                            await autoGenerateSignatureLinks(created, created.id);
-                        } catch (sigError) {
-                            console.error('Signature generation failed:', sigError);
-                            showFormNotification('⚠️ Application saved but signature emails failed. You can resend signatures later.', false, modal);
-                        }
-                        
-                        if (editDraftId !== null) {
-                            try {
-                                const drafts = await KURO_API.getFacultyDrafts();
-                                const draftToDelete = drafts[editDraftId];
-                                if (draftToDelete?.draftId) {
-                                    await KURO_API.deleteFacultyDraft(draftToDelete.draftId);
-                                }
-                                sessionStorage.removeItem('current_draft_id');
-                                editDraftId = null;
-                            } catch (draftError) {
-                                console.error('Error deleting draft:', draftError);
-                            }
-                        }
-                        
-                        // Clear current draft data
-                        currentDraftData = null;
-                        
-                        Swal.close();
-                        await renderApplicant();
-                        
-                        setTimeout(async () => {
-                            await Swal.fire({
-                                icon: 'success',
-                                title: 'Submitted!',
-                                text: 'Application submitted successfully!',
-                                confirmButtonColor: '#D4AF37',
-                                timer: 3000,
-                                showConfirmButton: false
-                            });
-                        }, 100);
-                        
-                    } catch (error) {
-                        console.error('Submission failed:', error);
-                        showFormNotification('Failed to submit: ' + error.message, true, modal);
-                        newSubmitBtn.disabled = false;
-                        newSubmitBtn.innerHTML = isEditMode ? 'Update Application' : 'Submit Application';
+                        return;
                     }
+                    
+                    // ========== NEW SUBMISSION MODE ==========
+                    // ... (keep your existing new submission code)
                 });
             }
             

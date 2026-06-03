@@ -441,6 +441,36 @@ const startServer = async () => {
             updates.updatedAt = new Date();
             
             console.log('📝 PUT update application:', id);
+            console.log('🔌 Current connection host:', mongoose.connection.host);  // ← ADD THIS
+            console.log('📊 Database name:', mongoose.connection.name);            // ← ADD THIS
+            
+            const result = await Application.findOneAndUpdate(
+                { id: id },
+                { $set: updates },
+                { returnDocument: 'after' }
+            );
+            
+            if (!result) {
+                console.log('❌ Application not found for update:', id);
+                return res.status(404).json({ error: 'Application not found' });
+            }
+            
+            console.log('✅ Updated application:', id);
+            res.json({ success: true, data: result });
+            
+        } catch (error) {
+            console.error('Error updating application:', error);
+            res.status(500).json({ error: error.message });
+        }
+    });
+
+    app.put('/api/applications/:id', async (req, res) => {
+        try {
+            const { id } = req.params;
+            const updates = req.body;
+            updates.updatedAt = new Date();
+            
+            console.log('📝 PUT update application:', id);
             
             const result = await Application.findOneAndUpdate(
                 { id: id },
