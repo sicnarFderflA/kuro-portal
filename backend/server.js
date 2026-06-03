@@ -503,11 +503,11 @@ const startServer = async () => {
             
             console.log('📋 Fetching applications for faculty:', userEmail);
             
-            // ✅ ADD 'userEmail' to the select list
+            // ✅ ADD chairEmail and deanEmail to the select list
             const applications = await Application.find({ 
                 userEmail: userEmail 
             })
-            .select('id grantTitle proposalTitle status submittedDate piName piEmail signatures signatureRequests piCVName piCVStatus teamCVs teamMembers returnedFeedback uploadFeedback userEmail')
+            .select('id grantTitle proposalTitle status submittedDate piName piEmail signatures signatureRequests piCVName piCVStatus teamCVs teamMembers returnedFeedback uploadFeedback userEmail fromChair chairEmail deanName deanEmail')
             .sort({ submittedDate: -1 })
             .lean();
             
