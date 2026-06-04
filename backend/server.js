@@ -562,6 +562,20 @@ const startServer = async () => {
             res.status(500).json({ error: error.message });
         }
     });
+
+    app.get('/api/applications/:id/edit', async (req, res) => {
+        try {
+            const { id } = req.params;
+            const application = await Application.findOne({ id: id });
+            if (!application) {
+                return res.status(404).json({ error: 'Application not found' });
+            }
+            res.json(application);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    });
+
     
     // ========== REVIEWER TASKS ==========
     app.get('/api/reviewer/tasks', async (req, res) => {

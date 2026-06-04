@@ -225,19 +225,6 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-app.get('/api/applications/:id/edit', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const application = await Application.findOne({ id: id });
-        if (!application) {
-            return res.status(404).json({ error: 'Application not found' });
-        }
-        res.json(application);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
 // Delete application
 router.delete('/:id', async (req, res) => {
     try {
