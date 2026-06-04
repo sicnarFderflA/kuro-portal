@@ -220,11 +220,10 @@ router.delete('/:id', async (req, res) => {
 router.post('/:id/resubmit', async (req, res) => {
     try {
         const { id } = req.params;
-        const { status, returnedFeedback, submittedDate } = req.body;
+        const { returnedFeedback, submittedDate } = req.body;  // Remove 'status' parameter
         
         console.log(`📤 Resubmitting application: ${id}`);
         
-        // ✅ USE THE APPLICATION MODEL (NOT direct db access)
         let application = await Application.findOne({ id: id });
         
         if (!application) {
@@ -234,17 +233,27 @@ router.post('/:id/resubmit', async (req, res) => {
         // Preserve existing signatures
         const existingSignatures = application.signatures || { chair: { signed: false }, dean: { signed: false } };
         
-        let nextStatus = status || 'Awaiting Signatures';
+        let nextStatus;
         
-        if (existingSignatures.chair?.signed && existingSignatures.dean?.signed) {
+        // ✅ CORRECT LOGIC
+        const bothSigned = existingSignatures.chair?.signed && existingSignatures.dean?.signed;
+        const atLeastOneSigned = existingSignatures.chair?.signed || existingSignatures.dean?.signed;
+        
+        if (bothSigned) {
+            // Both signatures complete → ready for eligibility review
             nextStatus = 'Pending Eligibility Check';
-            console.log('Both signatures already signed, moving to Eligibility Check');
-        } else if (existingSignatures.chair?.signed || existingSignatures.dean?.signed) {
+            console.log('Both signatures complete, moving to Eligibility Check');
+        } else if (atLeastOneSigned) {
+            // Only one signature → wait for the other
             nextStatus = 'Awaiting Signatures';
             console.log('Partial signatures, staying in Awaiting Signatures');
+        } else {
+            // No signatures → wait for both
+            nextStatus = 'Awaiting Signatures';
+            console.log('No signatures, staying in Awaiting Signatures');
         }
         
-        // Update using the model
+        // Update application
         application.status = nextStatus;
         application.returnedFeedback = null;
         application.submittedDate = submittedDate || new Date().toISOString().slice(0, 10);
