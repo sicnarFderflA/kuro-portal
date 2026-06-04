@@ -2811,7 +2811,7 @@ function renderCVReviewContent(app) {
                 <i class="fas fa-file-pdf"></i>
                 <div class="cv-filename">${escapeHtml(app.piCVName || 'No CV uploaded')}</div>
                 <div class="cv-file-actions">
-                    <select class="cv-status-change cv-select" data-type="pi" data-idx="0">
+                    <select class="cv-status-change cv-select" data-type="pi" data-idx="0" data-old-status="${app.piCVStatus || 'pending'}">
                         <option value="pending" ${app.piCVStatus === 'pending' ? 'selected' : ''}>⏳ Pending</option>
                         <option value="eligible" ${app.piCVStatus === 'eligible' ? 'selected' : ''}>✅ Eligible</option>
                         <option value="ineligible" ${app.piCVStatus === 'ineligible' ? 'selected' : ''}>❌ Ineligible</option>
@@ -2854,10 +2854,10 @@ function renderCVReviewContent(app) {
                         <div class="cv-filename">${hasCV ? escapeHtml(cv.name) : 'No CV uploaded'}</div>
                         <div class="cv-file-actions">
                             ${hasCV ? `
-                                <select class="cv-status-change cv-select" data-type="team" data-idx="${i}">
-                                    <option value="pending" ${cv.status === 'pending' ? 'selected' : ''}>⏳ Pending</option>
-                                    <option value="eligible" ${cv.status === 'eligible' ? 'selected' : ''}>✅ Eligible</option>
-                                    <option value="ineligible" ${cv.status === 'ineligible' ? 'selected' : ''}>❌ Ineligible</option>
+                                <select class="cv-status-change cv-select" data-type="team" data-idx="${i}" data-old-status="${cv?.status || 'pending'}">
+                                    <option value="pending" ${cv?.status === 'pending' ? 'selected' : ''}>⏳ Pending</option>
+                                    <option value="eligible" ${cv?.status === 'eligible' ? 'selected' : ''}>✅ Eligible</option>
+                                    <option value="ineligible" ${cv?.status === 'ineligible' ? 'selected' : ''}>❌ Ineligible</option>
                                 </select>
                                 <button class="cv-view-btn" data-type="team" data-idx="${i}" data-cv-name="${escapeHtml(cv.name)}"><i class="fas fa-eye"></i> View CV</button>
                             ` : ''}
@@ -3374,29 +3374,70 @@ function attachCVHandlersInModal(modal, email, appId) {
             const type = this.getAttribute('data-type');
             const idx = parseInt(this.getAttribute('data-idx')) || 0;
             const newStatus = this.value;
+            const oldStatus = this.getAttribute('data-old-status') || (type === 'pi' ? 
+                (window.currentAppData?.piCVStatus || 'pending') : 
+                (window.currentAppData?.teamCVs?.[idx]?.status || 'pending'));
             
-            // Show loading state
+            // Store the selected value to revert if needed
+            const selectedValue = this.value;
+            
+            // Show loading state on the select only
             const originalHtml = this.innerHTML;
             this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
             this.disabled = true;
             
             try {
+                let result;
                 if (type === 'pi') {
-                    await KURO_API.updatePICVStatus(appId, newStatus);
-                    showToast(`PI CV status changed to ${newStatus}`, 'success');
+                    result = await KURO_API.updatePICVStatus(appId, newStatus);
                 } else {
-                    await KURO_API.updateTeamCVStatus(appId, idx, newStatus);
-                    showToast(`Team member CV status changed to ${newStatus}`, 'success');
+                    result = await KURO_API.updateTeamCVStatus(appId, idx, newStatus);
                 }
                 
-                // Refresh the modal with updated data
-                await viewApplicationDetails(appId);
+                if (result && result.success) {
+                    // Update the data-OLD-status attribute
+                    this.setAttribute('data-old-status', newStatus);
+                    
+                    // Update local cache if exists
+                    if (window.currentAppData) {
+                        if (type === 'pi') {
+                            window.currentAppData.piCVStatus = newStatus;
+                        } else {
+                            if (!window.currentAppData.teamCVs) window.currentAppData.teamCVs = [];
+                            if (!window.currentAppData.teamCVs[idx]) window.currentAppData.teamCVs[idx] = {};
+                            window.currentAppData.teamCVs[idx].status = newStatus;
+                        }
+                    }
+                    
+                    // Show success notification WITHOUT refreshing modal
+                    showToast(`✓ CV status changed to ${newStatus}`, 'success');
+                    
+                    // Update the status badge in the UI without full refresh
+                    const statusBadge = this.closest('.cv-person-card')?.querySelector('.cv-person-status');
+                    if (statusBadge) {
+                        // Update the badge class and text
+                        const oldClasses = statusBadge.className;
+                        statusBadge.className = `cv-person-status cv-status-${newStatus}`;
+                        
+                        let statusText = '';
+                        if (newStatus === 'eligible') statusText = '✅ Eligible';
+                        else if (newStatus === 'ineligible') statusText = '❌ Ineligible';
+                        else statusText = '⏳ Pending';
+                        statusBadge.textContent = statusText;
+                    }
+                    
+                    // Update the CV progress bar if visible
+                    updateCVProgressBar(modal, appId);
+                    
+                } else {
+                    throw new Error('Update failed');
+                }
                 
             } catch (error) {
                 console.error('Failed to update CV status:', error);
-                showToast('Failed to update CV status: ' + error.message, 'error');
+                showToast('❌ Failed to update CV status: ' + error.message, 'error');
                 // Revert the select value
-                this.value = newStatus === 'eligible' ? 'pending' : (newStatus === 'ineligible' ? 'eligible' : 'ineligible');
+                this.value = oldStatus;
             } finally {
                 this.innerHTML = originalHtml;
                 this.disabled = false;
@@ -3458,6 +3499,49 @@ function attachCVHandlersInModal(modal, email, appId) {
                 showToast('Failed to save feedback', 'error'); 
             }
         };
+    }
+}
+
+function updateCVProgressBar(modal, appId) {
+    // Get the current data from the modal or fetch updated counts
+    const cvCards = modal.querySelectorAll('.cv-person-card');
+    let eligible = 0, pending = 0, ineligible = 0, missing = 0;
+    let total = 0;
+    
+    cvCards.forEach(card => {
+        const statusBadge = card.querySelector('.cv-person-status');
+        if (statusBadge) {
+            const statusText = statusBadge.textContent;
+            if (statusText.includes('Eligible')) eligible++;
+            else if (statusText.includes('Ineligible')) ineligible++;
+            else if (statusText.includes('Pending')) pending++;
+            else missing++;
+            total++;
+        }
+    });
+    
+    // Update the progress display in the modal header
+    const proposalMeta = modal.querySelector('.proposal-meta');
+    if (proposalMeta) {
+        const spans = proposalMeta.querySelectorAll('span');
+        if (spans.length >= 4) {
+            spans[0].innerHTML = `<i class="fas fa-chart-pie"></i> Progress: ${eligible}/${total} Eligible`;
+            spans[1].innerHTML = `<i class="fas fa-clock"></i> ${pending} Pending`;
+            spans[2].innerHTML = `<i class="fas fa-times-circle"></i> ${ineligible} Ineligible`;
+            spans[3].innerHTML = `<i class="fas fa-file"></i> ${missing} Missing`;
+        }
+    }
+    
+    // Update the progress bar
+    const progressPercent = total > 0 ? ((eligible + pending) / total) * 100 : 0;
+    const progressFill = modal.querySelector('.cv-progress-fill');
+    if (progressFill) {
+        progressFill.style.width = `${progressPercent}%`;
+    }
+    
+    const progressText = modal.querySelector('.cv-progress-text');
+    if (progressText) {
+        progressText.textContent = `${Math.round(progressPercent)}% Complete`;
     }
 }
 
