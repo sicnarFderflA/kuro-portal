@@ -118,9 +118,9 @@ async function getApplication(appId) {
 }
 
 async function getFacultyApplications() {
-    return apiRequest('/faculty/applications');
+    const user = JSON.parse(sessionStorage.getItem('kuro_user') || '{}');
+    return apiRequest(`/my-submissions?userEmail=${encodeURIComponent(user.email)}`);
 }
-
 async function getAdminApplications() {
     return apiRequest('/admin/applications');
 }
