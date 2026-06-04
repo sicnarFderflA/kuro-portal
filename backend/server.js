@@ -333,7 +333,7 @@ const startServer = async () => {
     const notificationsRoutes = require('./routes/notifications');
     
     // Use routes
-    app.use('/api/applications', applicationsRoutes);
+    app.use('/api', applicationsRoutes);
     app.use('/api/admin', adminRoutes);
     app.use('/api/notifications', notificationsRoutes);
     
