@@ -444,11 +444,11 @@
             align-items: center;
             gap: 0.3rem;
         }
-        .status-badge.application-approved { background: var(--success); color: white; }
-        .status-badge.application-awaiting { background: var(--warning); color: white; }
-        .status-badge.application-review { background: var(--info); color: white; }
+        .status-badge.application-approved { background: #2ecc71; color: white; }
+        .status-badge.application-awaiting { background: #f39c12; color: white; }
+        .status-badge.application-pending-check { background: #3498db; color: white; }
         .status-badge.application-draft { background: #6c757d; color: white; }
-        .status-badge.application-returned { background: var(--danger); color: white; }
+        .status-badge.application-returned { background: #e74c3c; color: white; }
         .status-badge.cv-eligible { background: #d4edda; color: #155724; }
         .status-badge.cv-pending { background: #fff3cd; color: #856404; }
         .status-badge.cv-ineligible { background: #f8d7da; color: #721c24; }
@@ -2049,7 +2049,7 @@ function getStatusClass(status) {
         'Approved': 'application-approved',
         'Returned': 'application-returned'
     };
-    return classes[status] || 'application-review';
+    return classes[status] || 'application-pending-check';
 }
 
 // Helper function for CV status summary
