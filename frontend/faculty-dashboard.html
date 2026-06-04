@@ -5419,11 +5419,10 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                         return;
                     }
                     
-                    // ========== EDIT MODE: CHECK FOR CHANGES ==========
+                    // ========== EDIT MODE: UPDATE EXISTING APPLICATION ==========
                     if (isEditMode && editAppId) {
                         const originalData = currentDraftData;
                         
-                        // Helper to check if any field actually changed
                         function hasRealChanges() {
                             const textFields = ['proposalTitle', 'piName', 'piEmail', 'dept', 'school', 'rationale', 'objectives', 'methodology', 'outputs', 'duration', 'extension', 'litReview', 'fromChair', 'chairEmail', 'deanName', 'deanEmail', 'endorseDept', 'endorseSchool', 'schoolYear', 'endorsementDate'];
                             
@@ -5431,7 +5430,6 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                                 const currentVal = (formData[field] || '').trim();
                                 const originalVal = (originalData[field] || '').trim();
                                 if (currentVal !== originalVal) {
-                                    console.log(`📝 Change detected in: ${field}`);
                                     return true;
                                 }
                             }
@@ -5448,7 +5446,6 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                         const hasChanges = hasRealChanges();
                         
                         if (!hasChanges) {
-                            // No changes - just close and show message
                             newSubmitBtn.disabled = false;
                             newSubmitBtn.innerHTML = 'Update Application';
                             Swal.close();
@@ -5464,12 +5461,10 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                             return;
                         }
                         
-                        // ✅ HAS CHANGES - SAVE DIRECTLY (NO EXTRA CONFIRMATION)
                         newSubmitBtn.disabled = true;
                         newSubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
                         
                         try {
-                            // Build update object with ONLY changed fields
                             const updateData = {};
                             const textFields = ['proposalTitle', 'piName', 'piEmail', 'dept', 'school', 'rationale', 'objectives', 'methodology', 'outputs', 'duration', 'extension', 'litReview', 'fromChair', 'chairEmail', 'deanName', 'deanEmail', 'endorseDept', 'endorseSchool', 'schoolYear', 'endorsementDate'];
                             
@@ -5505,12 +5500,8 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                             
                             updateData.updatedAt = new Date();
                             
-                            console.log('📝 Updating changed fields:', Object.keys(updateData));
+                            await KURO_API.updateApplication(editAppId, updateData);
                             
-                            const result = await KURO_API.updateApplication(editAppId, updateData);
-                            console.log('✅ Update successful:', result);
-                            
-                            // Delete draft if exists
                             if (editDraftId !== null) {
                                 const drafts = await KURO_API.getFacultyDrafts();
                                 const draftToDelete = drafts[editDraftId];
@@ -5526,7 +5517,7 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                             
                             await Swal.fire({
                                 icon: 'success',
-                                title: 'Saved!',
+                                title: 'Updated!',
                                 text: 'Application updated successfully.',
                                 confirmButtonColor: '#D4AF37',
                                 timer: 2000,
@@ -5542,8 +5533,140 @@ async function openApplicationForm(isEdit, restoreTab = null) {
                         return;
                     }
                     
-                    // ========== NEW SUBMISSION MODE ==========
-                    // ... (keep your existing new submission code)
+                    // ========== NEW SUBMISSION MODE - FIXED! ==========
+                    // Validate CV uploads before submission
+                    const teamMembers = formData.teamMembers || [];
+                    let missingCVs = [];
+                    
+                    if (!formData.piCVName || formData.piCVName.trim() === '') {
+                        missingCVs.push('Principal Investigator');
+                    }
+                    
+                    for (let i = 0; i < teamMembers.length; i++) {
+                        if (!formData.teamCVs || !formData.teamCVs[i] || !formData.teamCVs[i].name) {
+                            const memberName = teamMembers[i].name || `Team Member ${i + 1}`;
+                            if (memberName && memberName.trim() !== '') {
+                                missingCVs.push(memberName);
+                            }
+                        }
+                    }
+                    
+                    if (missingCVs.length > 0) {
+                        await Swal.fire({
+                            icon: 'warning',
+                            title: 'Missing CV Uploads',
+                            html: `The following team members need to upload their CVs before submission:<br><br>
+                                <strong>${missingCVs.join(', ')}</strong><br><br>
+                                Please upload all required CVs in the CV Uploads tab.`,
+                            confirmButtonColor: '#D4AF37'
+                        });
+                        const cvTabBtn = modal.querySelector('.tab-btn[data-tab="cv"]');
+                        if (cvTabBtn) cvTabBtn.click();
+                        return;
+                    }
+                    
+                    // Confirm submission
+                    const confirmResult = await Swal.fire({
+                        title: 'Submit Application?',
+                        html: `<div style="text-align: left;">
+                            <p><strong>Grant:</strong> ${selectedGrant}</p>
+                            <p><strong>Project Title:</strong> ${escapeHtml(formData.proposalTitle || '')}</p>
+                            <p><strong>Principal Investigator:</strong> ${escapeHtml(formData.piName || '')}</p>
+                            <hr>
+                            <p><i class="fas fa-info-circle"></i> 
+                            ${!formData.chairEmail || !formData.deanEmail ? 
+                                '<strong style="color: #e74c3c;">⚠️ Missing signature contacts!</strong><br>Please ensure Chair and Dean emails are filled in Form 2.' : 
+                                'Signature requests will be sent to your Department Chair and Dean.'}
+                            </p>
+                        </div>`,
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#D4AF37',
+                        confirmButtonText: 'Submit',
+                        cancelButtonText: 'Cancel'
+                    });
+                    
+                    if (!confirmResult.isConfirmed) return;
+                    
+                    newSubmitBtn.disabled = true;
+                    newSubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+                    
+                    try {
+                        // Determine initial status
+                        let initialStatus = 'Pending Eligibility Check';
+                        if (formData.chairEmail && formData.deanEmail && formData.fromChair && formData.deanName) {
+                            initialStatus = 'Awaiting Signatures';
+                        }
+                        
+                        const submissionData = {
+                            ...formData,
+                            grantTitle: selectedGrant,
+                            userEmail: currentUser.email,
+                            status: initialStatus,
+                            submittedDate: submissionDate,
+                            signatures: { chair: { signed: false }, dean: { signed: false } }
+                        };
+                        
+                        // Create the application
+                        const created = await KURO_API.createApplication(submissionData);
+                        
+                        // Generate signature links if emails exist
+                        if (formData.chairEmail && formData.deanEmail && formData.fromChair && formData.deanName) {
+                            try {
+                                await KURO_API.generateSignatureLinks(created.id, {
+                                    chairEmail: formData.chairEmail,
+                                    chairName: formData.fromChair,
+                                    deanEmail: formData.deanEmail,
+                                    deanName: formData.deanName,
+                                    proposalTitle: formData.proposalTitle,
+                                    piName: formData.piName
+                                });
+                                
+                                await KURO_API.sendSignatureEmails(created.id, {
+                                    chairEmail: formData.chairEmail,
+                                    deanEmail: formData.deanEmail,
+                                    chairName: formData.fromChair,
+                                    deanName: formData.deanName,
+                                    proposalTitle: formData.proposalTitle,
+                                    piName: formData.piName,
+                                    expiryDays: 7
+                                });
+                            } catch (sigError) {
+                                console.warn('Signature email error (non-fatal):', sigError);
+                            }
+                        }
+                        
+                        // Delete draft if it exists
+                        const draftId = sessionStorage.getItem('current_draft_id');
+                        if (draftId) {
+                            try {
+                                await KURO_API.deleteFacultyDraft(draftId);
+                            } catch (e) {
+                                console.warn('Could not delete draft:', e);
+                            }
+                            sessionStorage.removeItem('current_draft_id');
+                        }
+                        
+                        Swal.close();
+                        await renderApplicant();
+                        
+                        await Swal.fire({
+                            icon: 'success',
+                            title: 'Application Submitted!',
+                            html: `Your application has been submitted successfully.<br><br>
+                                <strong>Application ID:</strong> ${created.id}<br><br>
+                                ${formData.chairEmail && formData.deanEmail ? 
+                                    '✅ Signature requests have been sent to your Department Chair and Dean.' : 
+                                    '📋 Your application will be reviewed by the research office.'}`,
+                            confirmButtonColor: '#D4AF37'
+                        });
+                        
+                    } catch (error) {
+                        console.error('Submission failed:', error);
+                        showFormNotification('Failed to submit application: ' + (error.message || 'Unknown error'), true, modal);
+                        newSubmitBtn.disabled = false;
+                        newSubmitBtn.innerHTML = 'Submit Application';
+                    }
                 });
             }
             
