@@ -1601,7 +1601,7 @@ async function renderNotificationDropdown(userEmail) {
         const container = document.getElementById('notificationList');
         if (!container) return;
         
-        if (notifications.length === 0) {
+        if (!notifications || notifications.length === 0) {
             container.innerHTML = '<div style="padding: 2rem; text-align: center; color: #999;">No notifications yet</div>';
             return;
         }
@@ -1614,8 +1614,8 @@ async function renderNotificationDropdown(userEmail) {
                      data-id="${notif._id}" 
                      data-app-id="${notif.appId || ''}">
                     <div style="display: flex; gap: 0.8rem; align-items: flex-start;">
-                        <div class="notification-icon" style="background: ${notif.color}20;">
-                            <span style="font-size: 1rem;">${notif.icon}</span>
+                        <div class="notification-icon" style="background: ${notif.color || '#D4AF37'}20;">
+                            <span style="font-size: 1rem;">${notif.icon || '🔔'}</span>
                         </div>
                         <div class="notification-content">
                             <div class="notification-title">${escapeHtml(notif.title)}</div>
@@ -1630,7 +1630,7 @@ async function renderNotificationDropdown(userEmail) {
         
         container.innerHTML = html;
         
-        // Add click handlers
+        // Add click handlers to notifications
         document.querySelectorAll('.notification-item').forEach(item => {
             item.addEventListener('click', async () => {
                 const id = item.dataset.id;
@@ -1643,12 +1643,18 @@ async function renderNotificationDropdown(userEmail) {
                 if (dropdown) dropdown.style.display = 'none';
                 
                 if (appId) {
-                    showDetails(appId);
+                    // Find and show the application details
+                    const sub = { id: appId };
+                    showDetails(sub);
                 }
             });
         });
     } catch (error) {
         console.error('Failed to render notifications:', error);
+        const container = document.getElementById('notificationList');
+        if (container) {
+            container.innerHTML = '<div style="padding: 1rem; text-align: center; color: #999;">Unable to load notifications</div>';
+        }
     }
 }
 
@@ -1656,25 +1662,59 @@ function initNotificationSystem() {
     const currentUser = JSON.parse(sessionStorage.getItem('kuro_user'));
     if (!currentUser || !currentUser.email) return;
     
-    // Silently fail - don't crash the dashboard
-    updateNotificationBadge(currentUser.email).catch(() => {});
-    
     const bell = document.getElementById('notificationBell');
     const dropdown = document.getElementById('notificationDropdown');
     
-    if (bell && dropdown) {
-        bell.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            const isVisible = dropdown.style.display === 'block';
-            dropdown.style.display = isVisible ? 'none' : 'block';
-            if (!isVisible) {
-                try {
-                    await renderNotificationDropdown(currentUser.email);
-                } catch (error) {
-                    console.warn('Cannot load notifications:', error);
-                    dropdown.innerHTML = '<div style="padding: 1rem; text-align: center;">Notifications unavailable</div>';
+    if (!bell || !dropdown) {
+        console.warn('Notification elements not found');
+        return;
+    }
+    
+    // Update badge on load
+    updateNotificationBadge(currentUser.email);
+    
+    // Remove existing listeners to avoid duplicates
+    const newBell = bell.cloneNode(true);
+    bell.parentNode.replaceChild(newBell, bell);
+    
+    newBell.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const isVisible = dropdown.style.display === 'block';
+        
+        if (isVisible) {
+            dropdown.style.display = 'none';
+        } else {
+            dropdown.style.display = 'block';
+            try {
+                await renderNotificationDropdown(currentUser.email);
+            } catch (error) {
+                console.warn('Cannot load notifications:', error);
+                const container = document.getElementById('notificationList');
+                if (container) {
+                    container.innerHTML = '<div style="padding: 1rem; text-align: center;">Unable to load notifications</div>';
                 }
             }
+        }
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!dropdown.contains(e.target) && !newBell.contains(e.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
+    
+    // Mark all read button
+    const markAllBtn = document.getElementById('markAllReadBtn');
+    if (markAllBtn) {
+        const newMarkAllBtn = markAllBtn.cloneNode(true);
+        markAllBtn.parentNode.replaceChild(newMarkAllBtn, markAllBtn);
+        
+        newMarkAllBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            await KURO_API.markAllNotificationsRead(currentUser.email);
+            updateNotificationBadge(currentUser.email);
+            await renderNotificationDropdown(currentUser.email);
         });
     }
 }
