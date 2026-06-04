@@ -1345,6 +1345,69 @@
             .app-info-grid { grid-template-columns: 1fr; gap: 0.8rem; }
         }
         @media (max-width: 1000px) { .stats-compact-grid { grid-template-columns: repeat(3, 1fr); } }
+
+                /* ========== GOLD ACCENT PAGINATION (Admin) ========== */
+        .pagination-gold {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .pagination-gold .page-btn {
+            background: white;
+            border: 1px solid var(--border-light);
+            padding: 0.4rem 0.9rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--primary);
+            transition: all 0.2s ease;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .pagination-gold .page-btn:hover:not(:disabled) {
+            background: var(--gold);
+            border-color: var(--gold);
+            color: var(--primary);
+            transform: translateY(-1px);
+        }
+
+        .pagination-gold .page-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+            box-shadow: 0 2px 4px rgba(11, 43, 79, 0.2);
+        }
+
+        .pagination-gold .page-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .pagination-gold .page-ellipsis {
+            padding: 0.4rem 0.2rem;
+            color: #94a3b8;
+            font-size: 0.7rem;
+        }
+
+        .pagination-gold .page-info {
+            margin-left: 0.75rem;
+            font-size: 0.7rem;
+            color: var(--primary);
+            background: rgba(201, 160, 61, 0.1);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
     </style>
 </head>
 <body>
@@ -1940,37 +2003,58 @@ function renderApplicationsPage() {
 function renderPaginationControls(currentPage, totalPages) {
     const container = document.getElementById('paginationControls');
     if (!container) return;
-    if (totalPages <= 1) { container.innerHTML = ''; return; }
     
-    let html = '<div class="pagination">';
-    html += `<button class="page-btn" data-page="prev" ${currentPage === 1 ? 'disabled' : ''}><i class="fas fa-chevron-left"></i></button>`;
+    if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
     
+    let html = '<div class="pagination-gold">';
+    
+    // Previous button
+    html += `<button class="page-btn" data-page="prev" ${currentPage === 1 ? 'disabled' : ''}>
+        <i class="fas fa-chevron-left" style="font-size: 0.7rem;"></i> Prev
+    </button>`;
+    
+    // Page numbers
     let startPage = Math.max(1, currentPage - 2);
     let endPage = Math.min(totalPages, currentPage + 2);
     
     if (startPage > 1) {
         html += `<button class="page-btn" data-page="1">1</button>`;
-        if (startPage > 2) html += `<span>...</span>`;
+        if (startPage > 2) html += `<span class="page-ellipsis">...</span>`;
     }
+    
     for (let i = startPage; i <= endPage; i++) {
         html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
     }
+    
     if (endPage < totalPages) {
-        if (endPage < totalPages - 1) html += `<span>...</span>`;
+        if (endPage < totalPages - 1) html += `<span class="page-ellipsis">...</span>`;
         html += `<button class="page-btn" data-page="${totalPages}">${totalPages}</button>`;
     }
     
-    html += `<button class="page-btn" data-page="next" ${currentPage === totalPages ? 'disabled' : ''}><i class="fas fa-chevron-right"></i></button>`;
-    html += `<span class="page-info">${(currentPage-1)*rowsPerPage + 1}-${Math.min(currentPage*rowsPerPage, currentFilteredApps.length)} of ${currentFilteredApps.length}</span></div>`;
+    // Next button
+    html += `<button class="page-btn" data-page="next" ${currentPage === totalPages ? 'disabled' : ''}>
+        Next <i class="fas fa-chevron-right" style="font-size: 0.7rem;"></i>
+    </button>`;
+    
+    // Page info
+    html += `<span class="page-info">${(currentPage-1)*rowsPerPage + 1}-${Math.min(currentPage*rowsPerPage, currentFilteredApps.length)} of ${currentFilteredApps.length}</span>`;
+    html += '</div>';
     
     container.innerHTML = html;
     
     container.querySelectorAll('.page-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const page = btn.getAttribute('data-page');
-            if (page === 'prev' && currentPage > 1) currentPage--;
-            else if (page === 'next' && currentPage < totalPages) currentPage++;
-            else if (!isNaN(parseInt(page))) currentPage = parseInt(page);
+            if (page === 'prev' && currentPage > 1) {
+                currentPage--;
+            } else if (page === 'next' && currentPage < totalPages) {
+                currentPage++;
+            } else if (!isNaN(parseInt(page))) {
+                currentPage = parseInt(page);
+            }
             renderApplicationsPage();
         });
     });

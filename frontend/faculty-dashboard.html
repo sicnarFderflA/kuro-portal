@@ -962,6 +962,68 @@
             .form-row { grid-template-columns: 1fr; }
             .activity-grid { grid-template-columns: 1fr; }
         }
+
+                /* ========== GOLD ACCENT PAGINATION ========== */
+        .pagination-gold {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .pagination-gold .page-btn {
+            background: white;
+            border: 1px solid var(--border-light);
+            padding: 0.4rem 0.9rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--xavier-primary);
+            transition: all 0.2s ease;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .pagination-gold .page-btn:hover:not(:disabled) {
+            background: var(--xavier-gold);
+            border-color: var(--xavier-gold);
+            color: var(--xavier-primary);
+            transform: translateY(-1px);
+        }
+
+        .pagination-gold .page-btn.active {
+            background: var(--xavier-primary);
+            border-color: var(--xavier-primary);
+            color: white;
+            box-shadow: 0 2px 4px rgba(11, 43, 79, 0.2);
+        }
+
+        .pagination-gold .page-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .pagination-gold .page-ellipsis {
+            padding: 0.4rem 0.2rem;
+            color: #94a3b8;
+            font-size: 0.7rem;
+        }
+
+        .pagination-gold .page-info {
+            margin-left: 0.75rem;
+            font-size: 0.7rem;
+            color: var(--xavier-primary);
+            background: rgba(201, 160, 61, 0.1);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
@@ -1892,25 +1954,35 @@ function renderFacultyPaginatedList() {
 function renderFacultyPaginationControls(currentPage, totalPages) {
     const container = document.getElementById('paginationControls');
     if (!container) return;
+    
     if (totalPages <= 1) {
         container.innerHTML = '';
         return;
     }
     
-    let html = '<div class="pagination" style="display: flex; justify-content: flex-end; align-items: center; gap: 0.5rem; margin-top: 1rem;">';
-    html += `<button class="page-btn" data-page="prev" ${currentPage === 1 ? 'disabled' : ''} style="padding: 0.3rem 0.8rem;"><i class="fas fa-chevron-left"></i> Prev</button>`;
+    let html = '<div class="pagination-gold">';
     
-    // Show page numbers
+    // Previous button
+    html += `<button class="page-btn" data-page="prev" ${currentPage === 1 ? 'disabled' : ''}>
+        <i class="fas fa-chevron-left" style="font-size: 0.7rem;"></i> Prev
+    </button>`;
+    
+    // Page numbers
     for (let i = 1; i <= totalPages; i++) {
         if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
             html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
         } else if (i === currentPage - 2 || i === currentPage + 2) {
-            html += `<span style="margin: 0 0.3rem;">...</span>`;
+            html += `<span class="page-ellipsis">...</span>`;
         }
     }
     
-    html += `<button class="page-btn" data-page="next" ${currentPage === totalPages ? 'disabled' : ''} style="padding: 0.3rem 0.8rem;">Next <i class="fas fa-chevron-right"></i></button>`;
-    html += `<span class="page-info" style="margin-left: 0.8rem; font-size: 0.7rem;">Page ${currentPage} of ${totalPages}</span>`;
+    // Next button
+    html += `<button class="page-btn" data-page="next" ${currentPage === totalPages ? 'disabled' : ''}>
+        Next <i class="fas fa-chevron-right" style="font-size: 0.7rem;"></i>
+    </button>`;
+    
+    // Page info
+    html += `<span class="page-info">Page ${currentPage} of ${totalPages}</span>`;
     html += '</div>';
     
     container.innerHTML = html;
