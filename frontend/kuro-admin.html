@@ -11,6 +11,10 @@
     <script src="api.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        textarea {
+            font-family: 'Inter', sans-serif;
+        }
         
         :root {
             --primary: #0B2B4F;
@@ -1773,7 +1777,7 @@ async function renderDashboard() {
                 <div class="search-wrapper"><i class="fas fa-search"></i><input type="text" id="searchFilter" placeholder="Search by title or applicant..."></div>
                 <div class="filter-badge" style="background:var(--gold); color:var(--primary);"><i class="fas fa-sliders-h"></i> Advanced filters</div>
             </div>
-            <div class="apps-section"><h3><i class="fas fa-list-ul"></i> Research applications <span style="font-size:0.8rem; background:#EFF3F8; padding:0.2rem 0.6rem; border-radius:40px;">${total} total</span></h3><div id="applicationsList"></div><div id="paginationControls"></div></div>
+            <div class="apps-section"><h3><i class="fas fa-list-ul"></i> Research Applications <span style="font-size:0.8rem; background:#EFF3F8; padding:0.2rem 0.6rem; border-radius:40px;">${total} total</span></h3><div id="applicationsList"></div><div id="paginationControls"></div></div>
         </div>`;
         
         document.getElementById('mainContent').innerHTML = html;
@@ -2001,7 +2005,7 @@ function renderCompactApplicationsList(filtered) {
         else { statusClass = 'status-check1'; statusText = app.status; }
         
         html += `<tr>
-            <td><span class="grant-tag">${escapeHtml(app.grantTitle).substring(0, 25)}</span></td>
+            <td>${escapeHtml(app.grantTitle)}</td>
             <td style="font-weight:500;">${escapeHtml(app.proposalTitle || 'N/A').substring(0, 50)}</td>
             <td>${escapeHtml(app.piName || app.userEmail?.split('@')[0] || 'N/A')}</td>
             <td>${app.submittedDate || 'N/A'}</td>
