@@ -3374,14 +3374,9 @@ function attachCVHandlersInModal(modal, email, appId) {
             const type = this.getAttribute('data-type');
             const idx = parseInt(this.getAttribute('data-idx')) || 0;
             const newStatus = this.value;
-            const oldStatus = this.getAttribute('data-old-status') || (type === 'pi' ? 
-                (window.currentAppData?.piCVStatus || 'pending') : 
-                (window.currentAppData?.teamCVs?.[idx]?.status || 'pending'));
+            const oldStatus = this.getAttribute('data-old-status') || 'pending';
             
-            // Store the selected value to revert if needed
-            const selectedValue = this.value;
-            
-            // Show loading state on the select only
+            // Show loading state
             const originalHtml = this.innerHTML;
             this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
             this.disabled = true;
@@ -3395,10 +3390,40 @@ function attachCVHandlersInModal(modal, email, appId) {
                 }
                 
                 if (result && result.success) {
-                    // Update the data-OLD-status attribute
+                    // ✅ Update the select's data-old-status attribute
                     this.setAttribute('data-old-status', newStatus);
                     
-                    // Update local cache if exists
+                    // ✅ Also update the select's value (it should already be correct)
+                    // but just to be sure:
+                    this.value = newStatus;
+                    
+                    // ✅ Update the select options to show the correct selected state
+                    const options = this.querySelectorAll('option');
+                    options.forEach(opt => {
+                        if (opt.value === newStatus) {
+                            opt.selected = true;
+                        }
+                    });
+                    
+                    // Show success notification
+                    showToast(`✓ CV status changed to ${newStatus}`, 'success');
+                    
+                    // Update the status badge
+                    const statusBadge = this.closest('.cv-person-card')?.querySelector('.cv-person-status');
+                    if (statusBadge) {
+                        statusBadge.className = `cv-person-status cv-status-${newStatus}`;
+                        let statusText = '';
+                        if (newStatus === 'eligible') statusText = '✅ Eligible';
+                        else if (newStatus === 'ineligible') statusText = '❌ Ineligible';
+                        else statusText = '⏳ Pending';
+                        statusBadge.textContent = statusText;
+                    }
+                    
+                    // Update progress bar
+                    updateCVProgressBar(modal, appId);
+                    
+                    // Optional: Update the select's inner HTML to reflect the change
+                    // This ensures if the modal is closed and reopened, it will show the correct status
                     if (window.currentAppData) {
                         if (type === 'pi') {
                             window.currentAppData.piCVStatus = newStatus;
@@ -3409,26 +3434,6 @@ function attachCVHandlersInModal(modal, email, appId) {
                         }
                     }
                     
-                    // Show success notification WITHOUT refreshing modal
-                    showToast(`✓ CV status changed to ${newStatus}`, 'success');
-                    
-                    // Update the status badge in the UI without full refresh
-                    const statusBadge = this.closest('.cv-person-card')?.querySelector('.cv-person-status');
-                    if (statusBadge) {
-                        // Update the badge class and text
-                        const oldClasses = statusBadge.className;
-                        statusBadge.className = `cv-person-status cv-status-${newStatus}`;
-                        
-                        let statusText = '';
-                        if (newStatus === 'eligible') statusText = '✅ Eligible';
-                        else if (newStatus === 'ineligible') statusText = '❌ Ineligible';
-                        else statusText = '⏳ Pending';
-                        statusBadge.textContent = statusText;
-                    }
-                    
-                    // Update the CV progress bar if visible
-                    updateCVProgressBar(modal, appId);
-                    
                 } else {
                     throw new Error('Update failed');
                 }
@@ -3438,6 +3443,13 @@ function attachCVHandlersInModal(modal, email, appId) {
                 showToast('❌ Failed to update CV status: ' + error.message, 'error');
                 // Revert the select value
                 this.value = oldStatus;
+                // Also revert the option selection
+                const options = this.querySelectorAll('option');
+                options.forEach(opt => {
+                    if (opt.value === oldStatus) {
+                        opt.selected = true;
+                    }
+                });
             } finally {
                 this.innerHTML = originalHtml;
                 this.disabled = false;
