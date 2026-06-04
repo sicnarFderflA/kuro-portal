@@ -1164,6 +1164,8 @@ app.put('/api/applications/:id', async (req, res) => {
         const updates = req.body;
         updates.updatedAt = new Date();
         
+        console.log(`📝 PUT /api/applications/${id}`);
+        
         const application = await Application.findOneAndUpdate(
             { id: id },
             { $set: updates },
@@ -1176,6 +1178,7 @@ app.put('/api/applications/:id', async (req, res) => {
         
         res.json(application);
     } catch (error) {
+        console.error('Error updating application:', error);
         res.status(500).json({ error: error.message });
     }
 });
