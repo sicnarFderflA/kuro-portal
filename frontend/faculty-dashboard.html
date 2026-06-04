@@ -455,7 +455,7 @@
         .status-badge.cv-missing { background: #F1F5F9; color: #475569; }
         .status-badge.signature-sent { background: #DBEAFE; color: #1E40AF; }
         .status-badge.signature-pending { background: #FEF3C7; color: #B45309; }
-        
+
         .card-body-modern { padding: 1.25rem; }
         .project-title {
             font-size: 1rem;
@@ -1836,10 +1836,10 @@ function renderApplicationsList(filteredSubs, drafts) {
     for (const sub of filteredSubs) {
         const cvStatus = getCVStatusSummary(sub);
         let cvStatusText = '', cvStatusClass = '';
-        if (cvStatus.eligible === cvStatus.total) { cvStatusText = '✅ CV Eligible'; cvStatusClass = 'cv-eligible'; }
-        else if (cvStatus.ineligible > 0) { cvStatusText = `❌ ${cvStatus.ineligible} CV Ineligible`; cvStatusClass = 'cv-ineligible'; }
-        else if (cvStatus.pending > 0) { cvStatusText = `⏳ ${cvStatus.pending} CV Pending`; cvStatusClass = 'cv-pending'; }
-        else { cvStatusText = `📄 ${cvStatus.missing} CV Missing`; cvStatusClass = 'cv-missing'; }
+        if (cvStatus.eligible === cvStatus.total) { cvStatusText = '✅ CV Eligible'; cvStatusClass = 'cv-eligible'; cvIconHtml = '<i class="fas fa-check-circle"></i>';}
+        else if (cvStatus.ineligible > 0) { cvStatusText = `❌ ${cvStatus.ineligible} CV Ineligible`; cvStatusClass = 'cv-ineligible'; cvIconHtml = '<i class="fas fa-times-circle"></i>';}
+        else if (cvStatus.pending > 0) { cvStatusText = `⏳ ${cvStatus.pending} CV Pending`; cvStatusClass = 'cv-pending'; cvIconHtml = '<i class="fas fa-clock"></i>';}
+        else { cvStatusText = `📄 ${cvStatus.missing} CV Missing`; cvStatusClass = 'cv-missing'; cvIconHtml = '<i class="fas fa-file-alt"></i>';}
         
         const cvProgressPercent = ((cvStatus.eligible + cvStatus.pending) / cvStatus.total) * 100;
         let cvProgressClass = cvStatus.ineligible > 0 ? 'bad' : (cvStatus.pending > 0 ? 'warning' : 'good');
@@ -2037,7 +2037,7 @@ function getStatusIcon(status) {
         'Approved': '🎉',
         'Returned': '↩️'
     };
-    return icons[status] || '📄';
+    return icons[status] || '<i class="fas fa-file-alt"></i>';
 }
 
 function getStatusClass(status) {
