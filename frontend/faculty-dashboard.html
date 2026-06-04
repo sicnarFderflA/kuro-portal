@@ -1948,7 +1948,7 @@ function renderApplicationsList(filteredSubs, drafts) {
         
         // Fetch FULL application data (not just the limited version)
         try {
-            const response = await fetch(`${API_URL}/api/applications/${id}`);
+            const response = await fetch(`${API_URL}/api/applications/${id}/edit`);
             const fullApp = await response.json();
             
             if(fullApp && fullApp.status !== 'Approved') {
