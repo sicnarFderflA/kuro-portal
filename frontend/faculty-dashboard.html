@@ -1142,6 +1142,10 @@ let currentSwalInstance = null;
 let currentActiveTab = 'xurg1';
 let saveTimeout = null;
 let pendingSave = false;
+let facultyCurrentPage = 1;
+let facultyRowsPerPage = 5;
+let facultyFilteredApps = [];
+let facultyFilteredDrafts = [];
 
 const FACULTY_GRANTS_DATA = {
     "INSTITUTIONAL RESEARCH (IR) AWARD": { 
@@ -1774,7 +1778,7 @@ async function renderApplicant() {
             </div>
             <div class="filter-bar-faculty">
                 <div class="filter-badge"><i class="fas fa-tag"></i><select id="grantFilter"><option value="all">All Grants</option>${Object.keys(FACULTY_GRANTS_DATA).map(g => `<option value="${g}">${g.substring(0, 25)}</option>`).join('')}</select></div>
-                <div class="filter-badge"><i class="fas fa-flag-checkered"></i><select id="statusFilter"><option value="all">All Status</option><option value="Awaiting Signatures">⏳ Awaiting Signatures</option><option value="Pending Eligibility Check">🔍 Eligibility Review</option><option value="Pending Secondary Check">📋 Secondary Review</option><option value="Pending Final Check">✅ Final Review</option><option value="Approved">🎉 Approved</option><option value="Returned">↩️ Returned</option></select></div>
+                <div class="filter-badge"><i class="fas fa-flag-checkered"></i><select id="statusFilter"><option value="all">All Status</option><option value="draft">📝 Draft</option><option value="Awaiting Signatures">⏳ Awaiting Signatures</option><option value="Pending Eligibility Check">🔍 Eligibility Review</option><option value="Pending Secondary Check">📋 Secondary Review</option><option value="Pending Final Check">✅ Final Review</option><option value="Approved">🎉 Approved</option><option value="Returned">↩️ Returned</option></select></div>
                 <div class="filter-badge"><i class="fas fa-file-pdf"></i><select id="cvFilter"><option value="all">CV Status</option><option value="eligible">✅ Eligible</option><option value="pending">⏳ Pending</option><option value="missing">📄 Missing</option><option value="ineligible">❌ Ineligible</option></select></div>
                 <div class="search-wrapper-faculty"><i class="fas fa-search"></i><input type="text" id="searchFilter" placeholder="Search by title or grant..."></div>
             </div>`;
@@ -1811,25 +1815,120 @@ function filterAndRenderApps(filteredSubs, drafts) {
     const cvFilter = document.getElementById('cvFilter')?.value || 'all';
     const searchFilter = document.getElementById('searchFilter')?.value || '';
     
-    let filteredApps = filteredSubs.filter(app => {
-        if (grantFilter !== 'all' && app.grantTitle !== grantFilter) return false;
-        if (statusFilter !== 'all' && app.status !== statusFilter) return false;
-        if (cvFilter !== 'all') {
-            const cvStat = getCVStatusSummary(app);
-            if (cvFilter === 'eligible' && cvStat.eligible === 0) return false;
-            if (cvFilter === 'pending' && cvStat.pending === 0) return false;
-            if (cvFilter === 'missing' && cvStat.missing === 0) return false;
-            if (cvFilter === 'ineligible' && cvStat.ineligible === 0) return false;
-        }
-        if (searchFilter) {
-            const s = searchFilter.toLowerCase();
-            if (!(app.proposalTitle || '').toLowerCase().includes(s) && !(app.piName || '').toLowerCase().includes(s)) return false;
-        }
-        return true;
-    });
+    // Check if we're filtering for drafts only
+    const showOnlyDrafts = (statusFilter === 'draft');
     
-    renderApplicationsList(filteredApps, drafts);
+    let filteredApps = [];
+    
+    // Only filter applications if NOT showing only drafts
+    if (!showOnlyDrafts) {
+        filteredApps = filteredSubs.filter(app => {
+            if (grantFilter !== 'all' && app.grantTitle !== grantFilter) return false;
+            if (statusFilter !== 'all' && app.status !== statusFilter) return false;
+            if (cvFilter !== 'all') {
+                const cvStat = getCVStatusSummary(app);
+                if (cvFilter === 'eligible' && cvStat.eligible === 0) return false;
+                if (cvFilter === 'pending' && cvStat.pending === 0) return false;
+                if (cvFilter === 'missing' && cvStat.missing === 0) return false;
+                if (cvFilter === 'ineligible' && cvStat.ineligible === 0) return false;
+            }
+            if (searchFilter) {
+                const s = searchFilter.toLowerCase();
+                if (!(app.proposalTitle || '').toLowerCase().includes(s) && !(app.piName || '').toLowerCase().includes(s)) return false;
+            }
+            return true;
+        });
+    }
+    
+    // Filter drafts (only when showing drafts or when search filter is applied)
+    let filteredDrafts = [];
+    if (showOnlyDrafts || searchFilter !== '' || grantFilter !== 'all') {
+        filteredDrafts = drafts.filter(draft => {
+            if (grantFilter !== 'all' && draft.grantTitle !== grantFilter) return false;
+            if (searchFilter) {
+                const s = searchFilter.toLowerCase();
+                if (!(draft.proposalTitle || '').toLowerCase().includes(s)) return false;
+            }
+            return true;
+        });
+    }
+    
+    // If showing only drafts, clear apps
+    if (showOnlyDrafts) {
+        filteredApps = [];
+    }
+    
+    // Reset to page 1 when filters change
+    facultyCurrentPage = 1;
+    facultyFilteredApps = filteredApps;
+    facultyFilteredDrafts = filteredDrafts;
+    
+    renderFacultyPaginatedList();
 }
+
+// ========== PAGINATION FUNCTIONS FOR FACULTY DASHBOARD ==========
+function renderFacultyPaginatedList() {
+    const start = (facultyCurrentPage - 1) * facultyRowsPerPage;
+    const end = start + facultyRowsPerPage;
+    
+    const totalItems = facultyFilteredApps.length + facultyFilteredDrafts.length;
+    const totalPages = Math.ceil(totalItems / facultyRowsPerPage);
+    
+    // Combine and paginate
+    let allItems = [
+        ...facultyFilteredApps.map(app => ({ type: 'application', data: app })),
+        ...facultyFilteredDrafts.map(draft => ({ type: 'draft', data: draft }))
+    ];
+    
+    const pageItems = allItems.slice(start, end);
+    const pageApps = pageItems.filter(item => item.type === 'application').map(item => item.data);
+    const pageDrafts = pageItems.filter(item => item.type === 'draft').map(item => item.data);
+    
+    renderApplicationsList(pageApps, pageDrafts);
+    renderFacultyPaginationControls(facultyCurrentPage, totalPages);
+}
+
+function renderFacultyPaginationControls(currentPage, totalPages) {
+    const container = document.getElementById('paginationControls');
+    if (!container) return;
+    if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    let html = '<div class="pagination" style="display: flex; justify-content: flex-end; align-items: center; gap: 0.5rem; margin-top: 1rem;">';
+    html += `<button class="page-btn" data-page="prev" ${currentPage === 1 ? 'disabled' : ''} style="padding: 0.3rem 0.8rem;"><i class="fas fa-chevron-left"></i> Prev</button>`;
+    
+    // Show page numbers
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+            html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+        } else if (i === currentPage - 2 || i === currentPage + 2) {
+            html += `<span style="margin: 0 0.3rem;">...</span>`;
+        }
+    }
+    
+    html += `<button class="page-btn" data-page="next" ${currentPage === totalPages ? 'disabled' : ''} style="padding: 0.3rem 0.8rem;">Next <i class="fas fa-chevron-right"></i></button>`;
+    html += `<span class="page-info" style="margin-left: 0.8rem; font-size: 0.7rem;">Page ${currentPage} of ${totalPages}</span>`;
+    html += '</div>';
+    
+    container.innerHTML = html;
+    
+    container.querySelectorAll('.page-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const page = btn.getAttribute('data-page');
+            if (page === 'prev' && facultyCurrentPage > 1) {
+                facultyCurrentPage--;
+            } else if (page === 'next' && facultyCurrentPage < totalPages) {
+                facultyCurrentPage++;
+            } else if (!isNaN(parseInt(page))) {
+                facultyCurrentPage = parseInt(page);
+            }
+            renderFacultyPaginatedList();
+        });
+    });
+}
+
 
 function renderApplicationsList(filteredSubs, drafts) {
     const container = document.getElementById('applicationsList');
