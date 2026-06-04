@@ -146,6 +146,25 @@ router.get('/faculty/applications/metadata', async (req, res) => {
     }
 });
 
+// GET /api/faculty/applications - Simple email-based auth for faculty
+router.get('/faculty/applications', async (req, res) => {
+    try {
+        const { userEmail } = req.query;
+        
+        if (!userEmail) {
+            return res.status(400).json({ error: 'userEmail required' });
+        }
+        
+        const applications = await Application.find({ userEmail: userEmail })
+            .select('id grantTitle proposalTitle status submittedDate piName piEmail signatures signatureRequests piCVName piCVStatus teamCVs teamMembers returnedFeedback uploadFeedback userEmail fromChair chairEmail deanName deanEmail')
+            .sort({ submittedDate: -1 });
+        
+        res.json(applications);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Get all applications (filtered by role)
 router.get('/', async (req, res) => {
     try {
