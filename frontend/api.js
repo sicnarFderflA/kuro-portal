@@ -227,23 +227,23 @@ async function resetCheckStage(appId, resetData) {
 // ==================== CV REVIEW API (ADMIN) ====================
 
 async function updatePICVStatus(appId, status) {
-    return apiRequest(`/admin/applications/${appId}/cv/pi`, {
+    return apiRequest(`/applications/${appId}/cv/pi/status`, {
         method: 'PUT',
-        body: JSON.stringify({ status, updatedBy: getCurrentUserEmail() })
+        body: JSON.stringify({ status, userEmail: getCurrentUserEmail() })
     });
 }
 
 async function updateTeamCVStatus(appId, index, status) {
-    return apiRequest(`/admin/applications/${appId}/cv/team/${index}`, {
+    return apiRequest(`/applications/${appId}/cv/team/${index}/status`, {
         method: 'PUT',
-        body: JSON.stringify({ status, updatedBy: getCurrentUserEmail() })
+        body: JSON.stringify({ status, userEmail: getCurrentUserEmail() })
     });
 }
 
 async function saveCVFeedback(appId, feedback) {
-    return apiRequest(`/admin/applications/${appId}/cv/feedback`, {
-        method: 'POST',
-        body: JSON.stringify({ feedback, updatedBy: getCurrentUserEmail() })
+    return apiRequest(`/applications/${appId}/cv/feedback`, {
+        method: 'PUT',
+        body: JSON.stringify({ feedback, userEmail: getCurrentUserEmail() })
     });
 }
 

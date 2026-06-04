@@ -3366,16 +3366,41 @@ function openPDFViewer(fileName, base64Data) {
 function attachCVHandlersInModal(modal, email, appId) {
     const cvSelects = modal.querySelectorAll('.cv-status-change');
     cvSelects.forEach(select => {
-        select.onchange = async function() {
+        // Remove existing listener to avoid duplicates
+        const newSelect = select.cloneNode(true);
+        select.parentNode.replaceChild(newSelect, select);
+        
+        newSelect.onchange = async function() {
             const type = this.getAttribute('data-type');
             const idx = parseInt(this.getAttribute('data-idx')) || 0;
             const newStatus = this.value;
+            
+            // Show loading state
+            const originalHtml = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            this.disabled = true;
+            
             try {
-                if (type === 'pi') await KURO_API.updatePICVStatus(appId, newStatus);
-                else await KURO_API.updateTeamCVStatus(appId, idx, newStatus);
-                showToast(`CV status changed to ${newStatus}`, 'success');
-                viewApplicationDetails(appId);
-            } catch (error) { showToast('Failed to update CV status', 'error'); }
+                if (type === 'pi') {
+                    await KURO_API.updatePICVStatus(appId, newStatus);
+                    showToast(`PI CV status changed to ${newStatus}`, 'success');
+                } else {
+                    await KURO_API.updateTeamCVStatus(appId, idx, newStatus);
+                    showToast(`Team member CV status changed to ${newStatus}`, 'success');
+                }
+                
+                // Refresh the modal with updated data
+                await viewApplicationDetails(appId);
+                
+            } catch (error) {
+                console.error('Failed to update CV status:', error);
+                showToast('Failed to update CV status: ' + error.message, 'error');
+                // Revert the select value
+                this.value = newStatus === 'eligible' ? 'pending' : (newStatus === 'ineligible' ? 'eligible' : 'ineligible');
+            } finally {
+                this.innerHTML = originalHtml;
+                this.disabled = false;
+            }
         };
     });
     

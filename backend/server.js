@@ -467,7 +467,184 @@ const startServer = async () => {
         }
     });
 
-    
+    app.put('/api/applications/:id/cv/pi/status', async (req, res) => {
+        try {
+            const { id } = req.params;
+            const { status, userEmail } = req.body;
+            
+            // Verify admin/checker permissions
+            const user = await User.findOne({ email: userEmail });
+            const isAdmin = user?.role === 'admin';
+            const isSuperAdmin = userEmail === '200520181@my.xu.edu.ph';
+            const isChecker = user?.checkerRole === 'check1' || user?.checkerRole === 'check2' || user?.checkerRole === 'check3';
+            
+            if (!isAdmin && !isSuperAdmin && !isChecker) {
+                return res.status(403).json({ error: 'Permission denied' });
+            }
+            
+            const application = await Application.findOne({ id: id });
+            if (!application) {
+                return res.status(404).json({ error: 'Application not found' });
+            }
+            
+            // Update PI CV status
+            application.piCVStatus = status;
+            application.updatedAt = new Date();
+            await application.save();
+            
+            // Create notification for faculty
+            const statusText = status === 'eligible' ? '✅ Eligible' : (status === 'ineligible' ? '❌ Ineligible' : '⏳ Pending');
+            
+            await Notification.create({
+                userEmail: application.userEmail,
+                type: 'cv_status_update',
+                title: '📄 CV Status Updated',
+                message: `Your CV has been marked as ${statusText} for "${application.proposalTitle?.substring(0, 50)}".`,
+                appId: id,
+                icon: status === 'eligible' ? '✅' : (status === 'ineligible' ? '❌' : '⏳'),
+                color: status === 'eligible' ? '#2ecc71' : (status === 'ineligible' ? '#e74c3c' : '#f39c12'),
+                isRead: false,
+                createdAt: new Date()
+            });
+            
+            console.log(`✅ Updated PI CV status for ${id} to ${status}`);
+            res.json({ success: true, status: status });
+            
+        } catch (error) {
+            console.error('Error updating PI CV status:', error);
+            res.status(500).json({ error: error.message });
+        }
+    });
+
+    // Update Team CV Status
+    app.put('/api/applications/:id/cv/team/:index/status', async (req, res) => {
+        try {
+            const { id, index } = req.params;
+            const { status, userEmail } = req.body;
+            const teamIndex = parseInt(index);
+            
+            // Verify admin/checker permissions
+            const user = await User.findOne({ email: userEmail });
+            const isAdmin = user?.role === 'admin';
+            const isSuperAdmin = userEmail === '200520181@my.xu.edu.ph';
+            const isChecker = user?.checkerRole === 'check1' || user?.checkerRole === 'check2' || user?.checkerRole === 'check3';
+            
+            if (!isAdmin && !isSuperAdmin && !isChecker) {
+                return res.status(403).json({ error: 'Permission denied' });
+            }
+            
+            const application = await Application.findOne({ id: id });
+            if (!application) {
+                return res.status(404).json({ error: 'Application not found' });
+            }
+            
+            // Ensure teamCVs array exists
+            if (!application.teamCVs) {
+                application.teamCVs = [];
+            }
+            
+            // Ensure the specific team CV exists
+            if (!application.teamCVs[teamIndex]) {
+                application.teamCVs[teamIndex] = { name: null, status: 'pending' };
+            }
+            
+            // Update team CV status
+            application.teamCVs[teamIndex].status = status;
+            application.updatedAt = new Date();
+            await application.save();
+            
+            // Get team member name for notification
+            const memberName = application.teamMembers?.[teamIndex]?.name || `Team Member ${teamIndex + 1}`;
+            const statusText = status === 'eligible' ? '✅ Eligible' : (status === 'ineligible' ? '❌ Ineligible' : '⏳ Pending');
+            
+            // Create notification for faculty
+            await Notification.create({
+                userEmail: application.userEmail,
+                type: 'cv_status_update',
+                title: '📄 Team CV Status Updated',
+                message: `${memberName}'s CV has been marked as ${statusText} for "${application.proposalTitle?.substring(0, 50)}".`,
+                appId: id,
+                icon: status === 'eligible' ? '✅' : (status === 'ineligible' ? '❌' : '⏳'),
+                color: status === 'eligible' ? '#2ecc71' : (status === 'ineligible' ? '#e74c3c' : '#f39c12'),
+                isRead: false,
+                createdAt: new Date()
+            });
+            
+            console.log(`✅ Updated team CV status for ${id}, member ${teamIndex} to ${status}`);
+            res.json({ success: true, status: status });
+            
+        } catch (error) {
+            console.error('Error updating team CV status:', error);
+            res.status(500).json({ error: error.message });
+        }
+    });
+
+    // Save CV Feedback
+    app.put('/api/applications/:id/cv/feedback', async (req, res) => {
+        try {
+            const { id } = req.params;
+            const { feedback, userEmail } = req.body;
+            
+            // Verify admin/checker permissions
+            const user = await User.findOne({ email: userEmail });
+            const isAdmin = user?.role === 'admin';
+            const isSuperAdmin = userEmail === '200520181@my.xu.edu.ph';
+            const isChecker = user?.checkerRole === 'check1' || user?.checkerRole === 'check2' || user?.checkerRole === 'check3';
+            
+            if (!isAdmin && !isSuperAdmin && !isChecker) {
+                return res.status(403).json({ error: 'Permission denied' });
+            }
+            
+            const application = await Application.findOne({ id: id });
+            if (!application) {
+                return res.status(404).json({ error: 'Application not found' });
+            }
+            
+            application.uploadFeedback = feedback;
+            application.updatedAt = new Date();
+            await application.save();
+            
+            console.log(`✅ Saved CV feedback for ${id}`);
+            res.json({ success: true, feedback: feedback });
+            
+        } catch (error) {
+            console.error('Error saving CV feedback:', error);
+            res.status(500).json({ error: error.message });
+        }
+    });
+
+     app.get('/api/applications/:id/full', async (req, res) => {
+        try {
+            const { id } = req.params;
+            const { userEmail } = req.query;
+            
+            console.log(`🔍 Fetching FULL application: ${id}`);
+            
+            const application = await Application.findOne({ id: id });
+            if (!application) {
+                return res.status(404).json({ error: 'Application not found' });
+            }
+            
+            // Check permissions
+            const user = await User.findOne({ email: userEmail });
+            const isAdmin = user?.role === 'admin';
+            const isSuperAdmin = userEmail === '200520181@my.xu.edu.ph';
+            const isOwner = application.userEmail === userEmail;
+            const isReviewer = user?.role === 'reviewer';
+            const isChecker = user?.checkerRole === 'check1' || user?.checkerRole === 'check2' || user?.checkerRole === 'check3';
+            
+            if (!isAdmin && !isSuperAdmin && !isOwner && !isReviewer && !isChecker) {
+                return res.status(403).json({ error: 'Access denied' });
+            }
+            
+            res.json(application);
+            
+        } catch (error) {
+            console.error('Error in GET /applications/:id/full:', error);
+            res.status(500).json({ error: error.message });
+        }
+    });
+
     app.get('/api/faculty/drafts', async (req, res) => {
         try {
             const userEmail = req.query.userEmail;
