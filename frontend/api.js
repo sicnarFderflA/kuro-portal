@@ -86,7 +86,12 @@ async function googleSignIn(credential, role) {
 
 // ==================== NOTIFICATIONS API ====================
 async function getNotifications(userEmail) {
-    return apiRequest(`/notifications?userEmail=${encodeURIComponent(userEmail)}`);
+    try {
+        return await apiRequest(`/notifications?userEmail=${encodeURIComponent(userEmail)}`);
+    } catch (error) {
+        console.warn('Notifications API failed, returning empty array');
+        return [];  // Return empty array instead of throwing
+    }
 }
 
 async function createNotification(notification) {

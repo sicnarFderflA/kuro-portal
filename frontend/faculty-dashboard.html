@@ -1576,9 +1576,13 @@ async function updateNotificationBadge(userEmail) {
             }
         }
     } catch (error) {
-        console.error('Failed to update badge:', error);
+        console.warn('⚠️ Notification badge disabled:', error.message);
+        // Hide badge on error
+        const badge = document.getElementById('notificationBadge');
+        if (badge) badge.style.display = 'none';
     }
 }
+
 
 function getTimeAgo(dateString) {
     const date = new Date(dateString);
@@ -1650,38 +1654,25 @@ async function renderNotificationDropdown(userEmail) {
 
 function initNotificationSystem() {
     const currentUser = JSON.parse(sessionStorage.getItem('kuro_user'));
-    if (currentUser && currentUser.email) {
-        updateNotificationBadge(currentUser.email);
-        
-        const bell = document.getElementById('notificationBell');
-        const dropdown = document.getElementById('notificationDropdown');
-        
-        if (bell && dropdown) {
-            bell.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                const isVisible = dropdown.style.display === 'block';
-                dropdown.style.display = isVisible ? 'none' : 'block';
-                if (!isVisible) {
+    if (!currentUser || !currentUser.email) return;
+    
+    // Silently fail - don't crash the dashboard
+    updateNotificationBadge(currentUser.email).catch(() => {});
+    
+    const bell = document.getElementById('notificationBell');
+    const dropdown = document.getElementById('notificationDropdown');
+    
+    if (bell && dropdown) {
+        bell.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const isVisible = dropdown.style.display === 'block';
+            dropdown.style.display = isVisible ? 'none' : 'block';
+            if (!isVisible) {
+                try {
                     await renderNotificationDropdown(currentUser.email);
-                }
-            });
-        }
-        
-        const markAllBtn = document.getElementById('markAllReadBtn');
-        if (markAllBtn) {
-            markAllBtn.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                await KURO_API.markAllNotificationsRead(currentUser.email);
-                updateNotificationBadge(currentUser.email);
-                await renderNotificationDropdown(currentUser.email);
-            });
-        }
-        
-        // Close dropdown when clicking outside
-        document.addEventListener('click', (e) => {
-            if (dropdown && bell) {
-                if (!dropdown.contains(e.target) && !bell.contains(e.target)) {
-                    dropdown.style.display = 'none';
+                } catch (error) {
+                    console.warn('Cannot load notifications:', error);
+                    dropdown.innerHTML = '<div style="padding: 1rem; text-align: center;">Notifications unavailable</div>';
                 }
             }
         });
@@ -1692,8 +1683,22 @@ async function renderApplicant() {
     try {
         const mySubs = await KURO_API.getFacultyApplicationsMetadata();
         const drafts = await KURO_API.getFacultyDrafts();
-        const reviewerTasksData = await KURO_API.getReviewerTasks();
         
+        // ✅ WRAP reviewer tasks in try-catch so it doesn't block
+        let reviewerTasksData = { assignedTasks: [] };
+        try {
+            reviewerTasksData = await KURO_API.getReviewerTasks();
+        } catch (error) {
+            console.warn('Reviewer tasks not available:', error);
+        }
+        
+        // ✅ WRAP notification badge in try-catch
+        try {
+            updateNotificationBadge(currentUser.email);
+        } catch (error) {
+            console.warn('Notification badge not available:', error);
+        }
+
         const filteredSubs = mySubs.filter(sub => sub.userEmail === currentUser.email);
         const hasReviewerTasks = reviewerTasksData.assignedTasks && reviewerTasksData.assignedTasks.length > 0;
         const switchBtn = document.getElementById('switchReviewerBtn');
@@ -3151,7 +3156,7 @@ async function resendSignatureRequests(application) {
 
 async function checkSignatureStatus() {
     try {
-        const mySubs = await KURO_API.getFacultyApplications();
+        const mySubs = await KURO_API.getFacultyApplicationsMetadata();
         
         for (const sub of mySubs) {
             if (sub.signatureRequests?.chairToken || sub.signatureRequests?.deanToken) {
@@ -3180,7 +3185,7 @@ async function checkSignatureStatus() {
 }
 
 // Keep the interval but use API version
-setInterval(checkSignatureStatus, 30000);
+//setInterval(checkSignatureStatus, 30000);
 
 window.updateEndDateMin = function(startDateInput) {
     const activityCard = startDateInput.closest('.activity-card');
@@ -5801,7 +5806,7 @@ window.updateBudgetTotals = updateBudgetTotals;
 document.getElementById('logoutBtn').onclick = () => { sessionStorage.clear(); window.location.href = "login.html"; };
 
 // Initialize notification system
-initNotificationSystem();
+//initNotificationSystem();
 
 window.addEventListener('storage', function(e) {
     if (e.key === 'kuro_signature_updated') {
