@@ -5806,7 +5806,7 @@ window.updateBudgetTotals = updateBudgetTotals;
 document.getElementById('logoutBtn').onclick = () => { sessionStorage.clear(); window.location.href = "login.html"; };
 
 // Initialize notification system
-//initNotificationSystem();
+initNotificationSystem();
 
 window.addEventListener('storage', function(e) {
     if (e.key === 'kuro_signature_updated') {
