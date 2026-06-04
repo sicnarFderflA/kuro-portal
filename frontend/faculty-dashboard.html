@@ -2485,28 +2485,38 @@ async function showDetails(sub) {
     const chairSignedDate = signatures.chair?.signedDate;
     const deanSignedDate = signatures.dean?.signedDate;
     
-    const piCVStatusObj = (sub.piCVStatus) ? sub.piCVStatus : (sub.piCVName ? 'pending' : 'missing');
+    let piCVStatusObj = 'missing';
     let piCVDisplayStatus = 'missing';
     let piCVIcon = '❌';
     let piCVStatusText = 'Missing CV';
-    let piCVTextColor = '';
-    
-    if (piCVStatusObj === 'eligible') {
-        piCVDisplayStatus = 'eligible';
-        piCVIcon = '✅';
-        piCVStatusText = 'Eligible';
-        piCVTextColor = '#2ecc71';
-    } else if (piCVStatusObj === 'ineligible') {
-        piCVDisplayStatus = 'ineligible';
-        piCVIcon = '🔴';
-        piCVStatusText = 'Ineligible';
-        piCVTextColor = '#e74c3c';
-    } else if (piCVStatusObj === 'pending' && sub.piCVName) {
-        piCVDisplayStatus = 'pending';
-        piCVIcon = '⏳';
-        piCVStatusText = 'Pending Review';
-        piCVTextColor = '#f39c12';
+    let piCVTextColor = '#999';
+
+    // Check if PI CV file exists
+    if (sub.piCVName && sub.piCVName.trim() !== '') {
+        // CV file exists - check its status
+        if (sub.piCVStatus === 'eligible') {
+            piCVStatusObj = 'eligible';
+            piCVDisplayStatus = 'eligible';
+            piCVIcon = '✅';
+            piCVStatusText = 'Eligible';
+            piCVTextColor = '#2ecc71';
+        } else if (sub.piCVStatus === 'ineligible') {
+            piCVStatusObj = 'ineligible';
+            piCVDisplayStatus = 'ineligible';
+            piCVIcon = '🔴';
+            piCVStatusText = 'Ineligible';
+            piCVTextColor = '#e74c3c';
+        } else {
+            // Has file but status not set (pending review)
+            piCVStatusObj = 'pending';
+            piCVDisplayStatus = 'pending';
+            piCVIcon = '⏳';
+            piCVStatusText = 'Pending Review';
+            piCVTextColor = '#f39c12';
+        }
     } else {
+        // No CV file
+        piCVStatusObj = 'missing';
         piCVDisplayStatus = 'missing';
         piCVIcon = '❌';
         piCVStatusText = 'Missing CV';
@@ -2530,26 +2540,32 @@ async function showDetails(sub) {
     
     const teamCVStatuses = teamMembers.map((member, idx) => {
         const cv = sub.teamCVs && sub.teamCVs[idx];
-        const cvStatus = (cv && cv.status) ? cv.status : (cv && cv.name ? 'pending' : 'missing');
+        const hasFile = cv && cv.name && cv.name.trim() !== '';
         
-        let statusText = '', statusIcon = '', statusTextColor = '';
+        let cvStatus = 'missing';
+        let statusText = 'Missing CV';
+        let statusIcon = '❌';
+        let statusTextColor = '#999';
         
-        if (cvStatus === 'eligible') {
-            statusText = 'Eligible';
-            statusIcon = '✅';
-            statusTextColor = '#2ecc71';
-        } else if (cvStatus === 'ineligible') {
-            statusText = 'Ineligible';
-            statusIcon = '🔴';
-            statusTextColor = '#e74c3c';
-        } else if (cvStatus === 'pending' && cv && cv.name) {
-            statusText = 'Pending Review';
-            statusIcon = '⏳';
-            statusTextColor = '#f39c12';
-        } else {
-            statusText = 'Missing CV';
-            statusIcon = '❌';
-            statusTextColor = '#999';
+        if (hasFile) {
+            // CV file exists - check its status
+            if (cv.status === 'eligible') {
+                cvStatus = 'eligible';
+                statusText = 'Eligible';
+                statusIcon = '✅';
+                statusTextColor = '#2ecc71';
+            } else if (cv.status === 'ineligible') {
+                cvStatus = 'ineligible';
+                statusText = 'Ineligible';
+                statusIcon = '🔴';
+                statusTextColor = '#e74c3c';
+            } else {
+                // Has file but status not set (pending review)
+                cvStatus = 'pending';
+                statusText = 'Pending Review';
+                statusIcon = '⏳';
+                statusTextColor = '#f39c12';
+            }
         }
         
         return { 
