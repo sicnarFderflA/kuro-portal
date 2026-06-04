@@ -330,13 +330,87 @@ const startServer = async () => {
     // ========== IMPORT ROUTES ==========
     const applicationsRoutes = require('./routes/applications');
     const adminRoutes = require('./routes/admin');
-    const notificationsRoutes = require('./routes/notifications');
     
     // Use routes
     app.use('/api', applicationsRoutes);
     app.use('/api/admin', adminRoutes);
-    app.use('/api/notifications', notificationsRoutes);
 
+    // GET /api/notifications - Get notifications for a user
+    app.get('/api/notifications', async (req, res) => {
+        try {
+            const { userEmail } = req.query;
+            
+            if (!userEmail) {
+                return res.status(400).json({ error: 'userEmail required' });
+            }
+            
+            const notifications = await Notification.find({ userEmail: userEmail })
+                .sort({ createdAt: -1 })
+                .limit(50);
+            
+            res.json(notifications);
+        } catch (error) {
+            console.error('Error fetching notifications:', error);
+            res.status(500).json({ error: error.message });
+        }
+    });
+
+    // POST /api/notifications - Create a notification
+    app.post('/api/notifications', async (req, res) => {
+        try {
+            const notification = new Notification(req.body);
+            await notification.save();
+            res.json(notification);
+        } catch (error) {
+            console.error('Error creating notification:', error);
+            res.status(500).json({ error: error.message });
+        }
+    });
+
+    // PUT /api/notifications/:id/read - Mark a notification as read
+    app.put('/api/notifications/:id/read', async (req, res) => {
+        try {
+            const { id } = req.params;
+            await Notification.findByIdAndUpdate(id, { isRead: true, readAt: new Date() });
+            res.json({ success: true });
+        } catch (error) {
+            console.error('Error marking notification read:', error);
+            res.status(500).json({ error: error.message });
+        }
+    });
+
+    // PUT /api/notifications/mark-all-read - Mark all notifications as read
+    app.put('/api/notifications/mark-all-read', async (req, res) => {
+        try {
+            const { userEmail } = req.body;
+            
+            if (!userEmail) {
+                return res.status(400).json({ error: 'userEmail required' });
+            }
+            
+            await Notification.updateMany(
+                { userEmail: userEmail, isRead: false },
+                { isRead: true, readAt: new Date() }
+            );
+            
+            res.json({ success: true });
+        } catch (error) {
+            console.error('Error marking all read:', error);
+            res.status(500).json({ error: error.message });
+        }
+    });
+
+    // DELETE /api/notifications/:id - Delete a notification
+    app.delete('/api/notifications/:id', async (req, res) => {
+        try {
+            const { id } = req.params;
+            await Notification.findByIdAndDelete(id);
+            res.json({ success: true });
+        } catch (error) {
+            console.error('Error deleting notification:', error);
+            res.status(500).json({ error: error.message });
+        }
+    });
     // Get user by email
     app.get('/api/users/by-email', async (req, res) => {
         try {
