@@ -2847,63 +2847,7 @@ async function showDetails(sub) {
 }
 
 async function resubmitApplication(app) {
-    const bothSigned = app.signatures?.chair?.signed && app.signatures?.dean?.signed;
-    const atLeastOneSigned = app.signatures?.chair?.signed || app.signatures?.dean?.signed;
-    
-    let nextStatusMessage = '';
-    if (bothSigned) {
-        nextStatusMessage = 'Your application will go directly to Eligibility Review (Check 1).';
-    } else if (atLeastOneSigned) {
-        nextStatusMessage = 'Your application will wait for the remaining signature(s) before proceeding to review.';
-    } else {
-        nextStatusMessage = 'Signature requests will be sent to your Chair and Dean. The application will be submitted once both have signed.';
-    }
-    
-    const result = await Swal.fire({
-        title: 'Resubmit Application?',
-        html: `<div style="text-align: left;">
-            <p>You are about to resubmit this returned application.</p>
-            <p style="margin-top: 0.5rem;"><strong>Make sure you have addressed the feedback:</strong></p>
-            <div style="background: #fff3cd; padding: 0.8rem; border-radius: 0.5rem; margin-top: 0.5rem;">
-                ${escapeHtml(app.returnedFeedback || 'No specific feedback provided.')}
-            </div>
-            <p class="demo-note" style="margin-top: 1rem;">
-                <i class="fas fa-info-circle"></i> ${nextStatusMessage}
-            </p>
-        </div>`,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#D4AF37',
-        confirmButtonText: 'Yes, Resubmit',
-        cancelButtonText: 'Cancel'
-    });
-    
-    if (result.isConfirmed) {
-        try {
-            // ✅ Don't send status - let backend decide
-            const updatedApp = await KURO_API.resubmitApplication(app.id, {
-                returnedFeedback: null,
-                submittedDate: new Date().toISOString().slice(0, 10)
-            });
-            
-            await KURO_API.createNotification({
-                userEmail: currentUser.email,
-                type: 'resubmission',
-                title: '📤 Application Resubmitted',
-                message: `Your application "${app.proposalTitle}" has been resubmitted.`,
-                appId: app.id,
-                icon: '📤',
-                color: '#2ecc71'
-            });
-            
-            showInlineNotification(null, '✓ Application resubmitted!', true);
-            await renderApplicant();
-            
-        } catch (error) {
-            console.error('Resubmit failed:', error);
-            showInlineNotification(null, 'Failed to resubmit application. Please try again.', false);
-        }
-    }
+    await KURO_API.resubmitApplication(app);
 }
 
 async function openGrantSelection() {
