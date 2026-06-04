@@ -105,6 +105,7 @@ const applicationSchema = new mongoose.Schema({
     // CV Uploads - Data fields
     piCVName: { type: String },
     piCVData: { type: String },
+    piCVStatus: { type: String, default: 'pending' },
     teamCVs: [{
         name: { type: String },
         data: { type: String },
