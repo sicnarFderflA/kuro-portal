@@ -410,7 +410,7 @@ const startServer = async () => {
     const adminRoutes = require('./routes/admin');
     
     // Use routes
-    app.use('/api/applications', applicationsRoutes);s
+    app.use('/api/applications', applicationsRoutes);
     app.use('/api/admin', adminRoutes);
 
     // Get user by email
