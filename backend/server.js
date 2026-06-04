@@ -336,49 +336,6 @@ const startServer = async () => {
     app.use('/api', applicationsRoutes);
     app.use('/api/admin', adminRoutes);
     app.use('/api/notifications', notificationsRoutes);
-    
-    // ========== SINGLE APPLICATION ROUTES ==========
-    app.get('/api/applications/:id', async (req, res) => {
-        try {
-            const { id } = req.params;
-            console.log('🔍 GET single application by ID:', id);
-            
-            const application = await Application.findOne({ id: id }).select('-piCVData -teamCVData');
-            
-            if (!application) {
-                console.log('❌ Application not found:', id);
-                return res.status(404).json({ error: 'Application not found' });
-            }
-            
-            console.log('✅ Found application:', application.id);
-            res.json(application);
-            
-        } catch (error) {
-            console.error('Error fetching application:', error);
-            res.status(500).json({ error: error.message });
-        }
-    });
-    
-    // Get FULL application data for editing (includes CV data, budget, activities, etc.)
-    app.get('/api/applications/:id/full', async (req, res) => {
-        try {
-            const { id } = req.params;
-            console.log('🔍 Fetching FULL application data for editing:', id);
-            
-            // Return ALL fields - no select restriction
-            const application = await Application.findOne({ id: id });
-            
-            if (!application) {
-                return res.status(404).json({ error: 'Application not found' });
-            }
-            
-            console.log('✅ Full application data retrieved');
-            res.json(application);
-        } catch (error) {
-            console.error('Error fetching full application:', error);
-            res.status(500).json({ error: error.message });
-        }
-    });
 
     // Get user by email
     app.get('/api/users/by-email', async (req, res) => {
@@ -433,92 +390,7 @@ const startServer = async () => {
             res.status(500).json({ error: error.message });
         }
     });
-    
-    // ========== UPDATE APPLICATION ==========
-    app.put('/api/applications/:id', async (req, res) => {
-        try {
-            const { id } = req.params;
-            const updates = req.body;
-            updates.updatedAt = new Date();
-            
-            console.log('📝 PUT update application:', id);
-            console.log('🔌 Current connection host:', mongoose.connection.host);
-            console.log('📊 Database name:', mongoose.connection.name);
-            console.log('📝 Updates received:', JSON.stringify(updates, null, 2));
-            
-            // Handle signature updates specially
-            if (updates.signatures) {
-                console.log('✍️ Signature update detected:', updates.signatures);
-            }
-            
-            const result = await Application.findOneAndUpdate(
-                { id: id },
-                { $set: updates },
-                { new: true, runValidators: false }  // Use 'new: true' instead of returnDocument
-            );
-            
-            if (!result) {
-                console.log('❌ Application not found for update:', id);
-                return res.status(404).json({ error: 'Application not found' });
-            }
-            
-            console.log('✅ Updated application:', id);
-            console.log('📝 New signature status:', result.signatures);
-            res.json({ success: true, data: result });
-            
-        } catch (error) {
-            console.error('Error updating application:', error);
-            res.status(500).json({ error: error.message });
-        }
-    });
-    
-    app.delete('/api/applications/:id', async (req, res) => {
-        try {
-            const { id } = req.params;
-            console.log('🗑️ DELETE application:', id);
-            
-            const result = await Application.findOneAndDelete({ id: id });
-            
-            if (!result) {
-                return res.status(404).json({ error: 'Application not found' });
-            }
-            
-            console.log('✅ Deleted application:', id);
-            res.json({ success: true });
-            
-        } catch (error) {
-            console.error('Error deleting application:', error);
-            res.status(500).json({ error: error.message });
-        }
-    });
-    
-    // ========== FACULTY ROUTES ==========
-    app.get('/api/faculty/applications', async (req, res) => {
-        try {
-            const userEmail = req.query.userEmail;
-            
-            if (!userEmail) {
-                return res.status(400).json({ error: 'userEmail required' });
-            }
-            
-            console.log('📋 Fetching applications for faculty:', userEmail);
-            
-            // ✅ ADD chairEmail and deanEmail to the select list
-            const applications = await Application.find({ 
-                userEmail: userEmail 
-            })
-            .select('id grantTitle proposalTitle status submittedDate piName piEmail signatures signatureRequests piCVName piCVStatus teamCVs teamMembers returnedFeedback uploadFeedback userEmail fromChair chairEmail deanName deanEmail')
-            .sort({ submittedDate: -1 })
-            .lean();
-            
-            console.log(`✅ Found ${applications.length} applications for faculty`);
-            console.log(`Statuses: ${applications.map(a => a.status).join(', ')}`);
-            res.json(applications);
-        } catch (error) {
-            console.error('❌ Error in /api/faculty/applications:', error);
-            res.status(500).json({ error: error.message });
-        }
-    });
+
     
     app.get('/api/faculty/drafts', async (req, res) => {
         try {

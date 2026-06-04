@@ -1681,7 +1681,7 @@ function initNotificationSystem() {
 
 async function renderApplicant() {
     try {
-        const mySubs = await KURO_API.getFacultyApplicationsMetadata();
+        const mySubs = await KURO_API.getFacultyApplications();
         const drafts = await KURO_API.getFacultyDrafts();
         
         // ✅ WRAP reviewer tasks in try-catch so it doesn't block
