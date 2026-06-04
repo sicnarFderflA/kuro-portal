@@ -145,6 +145,23 @@ async function resubmitApplication(appId, data) {
     });
 }
 
+async function getAdminApplicationsMetadata() {
+    const user = JSON.parse(sessionStorage.getItem('kuro_user') || '{}');
+    return apiRequest(`/admin/applications/metadata?userEmail=${encodeURIComponent(user.email)}`);
+}
+
+// For single application view - FULL data including CVs
+async function getFullApplicationById(appId) {
+    const user = JSON.parse(sessionStorage.getItem('kuro_user') || '{}');
+    return apiRequest(`/applications/${appId}/full?userEmail=${encodeURIComponent(user.email)}`);
+}
+
+// For faculty dashboard - metadata only
+async function getFacultyApplicationsMetadata() {
+    const user = JSON.parse(sessionStorage.getItem('kuro_user') || '{}');
+    return apiRequest(`/faculty/applications/metadata?userEmail=${encodeURIComponent(user.email)}`);
+}
+
 // ==================== CHECK STAGE API (ADMIN) ====================
 
 // Check 1 (Eligibility Review)
@@ -457,6 +474,10 @@ window.KURO_API = {
     updateApplication,
     deleteApplication,
     resubmitApplication,
+
+    getAdminApplicationsMetadata,
+    getFullApplicationById,
+    getFacultyApplicationsMetadata,
     
     // Check Stages (Admin)
     approveCheck1,

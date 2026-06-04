@@ -5,6 +5,147 @@ const User = require('../models/User');
 const Notification = require('../models/Notification');
 const router = express.Router();
 
+router.get('/:id/full', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { userEmail } = req.query;
+        
+        console.log(`🔍 Fetching FULL application: ${id} for user: ${userEmail}`);
+        
+        const application = await Application.findOne({ id: id });
+        if (!application) {
+            return res.status(404).json({ error: 'Application not found' });
+        }
+        
+        // Check permissions
+        const user = await User.findOne({ email: userEmail });
+        const isAdmin = user?.role === 'admin';
+        const isSuperAdmin = userEmail === '200520181@my.xu.edu.ph';
+        const isOwner = application.userEmail === userEmail;
+        const isReviewer = user?.role === 'reviewer';
+        
+        if (!isAdmin && !isSuperAdmin && !isOwner && !isReviewer) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+        
+        // Return FULL application data (including CVs)
+        res.json(application);
+        
+    } catch (error) {
+        console.error('Error in GET /applications/:id/full:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// GET /api/admin/applications/metadata - Lightweight metadata for admin dashboard
+router.get('/admin/applications/metadata', async (req, res) => {
+    try {
+        const { userEmail } = req.query;
+        
+        console.log(`📊 Fetching admin applications metadata for: ${userEmail}`);
+        
+        // Verify admin status
+        const user = await User.findOne({ email: userEmail });
+        const isAdmin = user?.role === 'admin';
+        const isSuperAdmin = userEmail === '200520181@my.xu.edu.ph';
+        
+        if (!isAdmin && !isSuperAdmin) {
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+        
+        // Get all applications
+        const applications = await Application.find({}).sort({ submittedDate: -1 });
+        
+        // Return ONLY metadata (exclude heavy fields)
+        const metadata = applications.map(app => ({
+            id: app.id,
+            grantTitle: app.grantTitle,
+            proposalTitle: app.proposalTitle,
+            userEmail: app.userEmail,
+            piName: app.piName,
+            submittedDate: app.submittedDate,
+            status: app.status,
+            returnedFeedback: app.returnedFeedback,
+            
+            // CV summary (counts only, no actual data)
+            piCVStatus: app.piCVStatus,
+            piCVName: app.piCVName ? true : false,  // Just boolean if exists
+            teamCVsCount: app.teamCVs?.length || 0,
+            teamCVsUploaded: app.teamCVs?.filter(cv => cv && cv.name).length || 0,
+            
+            // Signature summary
+            signatures: {
+                chair: app.signatures?.chair?.signed || false,
+                dean: app.signatures?.dean?.signed || false
+            },
+            
+            // Dates
+            createdAt: app.createdAt,
+            updatedAt: app.updatedAt,
+            check1CompletedAt: app.check1CompletedAt,
+            check2CompletedAt: app.check2CompletedAt,
+            check3CompletedAt: app.check3CompletedAt
+        }));
+        
+        console.log(`✅ Returning ${metadata.length} applications (metadata only)`);
+        res.json(metadata);
+        
+    } catch (error) {
+        console.error('Error in GET /admin/applications/metadata:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// GET /api/faculty/applications/metadata - Lightweight metadata for faculty dashboard
+router.get('/faculty/applications/metadata', async (req, res) => {
+    try {
+        const { userEmail } = req.query;
+        
+        console.log(`📊 Fetching faculty applications metadata for: ${userEmail}`);
+        
+        if (!userEmail) {
+            return res.status(400).json({ error: 'userEmail required' });
+        }
+        
+        // Get only this faculty's applications
+        const applications = await Application.find({ userEmail: userEmail }).sort({ submittedDate: -1 });
+        
+        // Return ONLY metadata
+        const metadata = applications.map(app => ({
+            id: app.id,
+            grantTitle: app.grantTitle,
+            proposalTitle: app.proposalTitle,
+            piName: app.piName,
+            submittedDate: app.submittedDate,
+            status: app.status,
+            returnedFeedback: app.returnedFeedback,
+            
+            // CV summary
+            piCVStatus: app.piCVStatus,
+            piCVName: app.piCVName ? true : false,
+            teamCVsCount: app.teamCVs?.length || 0,
+            teamCVsUploaded: app.teamCVs?.filter(cv => cv && cv.name).length || 0,
+            
+            // Signature summary
+            signatures: {
+                chair: app.signatures?.chair?.signed || false,
+                dean: app.signatures?.dean?.signed || false
+            },
+            
+            signatureRequests: {
+                sentAt: app.signatureRequests?.sentAt
+            }
+        }));
+        
+        console.log(`✅ Returning ${metadata.length} applications for faculty`);
+        res.json(metadata);
+        
+    } catch (error) {
+        console.error('Error in GET /faculty/applications/metadata:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Get all applications (filtered by role)
 router.get('/', async (req, res) => {
     try {

@@ -1690,7 +1690,7 @@ function initNotificationSystem() {
 
 async function renderApplicant() {
     try {
-        const mySubs = await KURO_API.getFacultyApplications();
+        const mySubs = await KURO_API.getFacultyApplicationsMetadata();
         const drafts = await KURO_API.getFacultyDrafts();
         const reviewerTasksData = await KURO_API.getReviewerTasks();
         

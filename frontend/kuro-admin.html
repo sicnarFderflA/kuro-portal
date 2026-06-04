@@ -1542,28 +1542,12 @@ function initNotificationSystem() {
 
 // API Data functions
 async function getAllApplications() {
-    const userEmail = getCurrentUserEmail();
     try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000);
-        
-        const response = await fetch(`${API_URL}/api/admin/applications?userEmail=${encodeURIComponent(userEmail)}`, {
-            signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-        
-        if (!response.ok) {
-            console.warn(`API returned ${response.status}: ${response.statusText}`);
-            return [];
-        }
-        const data = await response.json();
-        return Array.isArray(data) ? data : [];
+        const applications = await KURO_API.getAdminApplicationsMetadata();
+        console.log(`✅ Loaded ${applications.length} applications (metadata only)`);
+        return applications;
     } catch (error) {
-        if (error.name === 'AbortError') {
-            console.error('Request timeout for applications');
-        } else {
-            console.error('Failed to load applications:', error);
-        }
+        console.error('Failed to load applications:', error);
         return [];
     }
 }
@@ -1910,6 +1894,34 @@ function filterApplications(allApps) {
     });
 }
 
+async function deleteApplicationHandler(appId) {
+    const result = await Swal.fire({
+        title: 'Delete Application?',
+        text: 'This action cannot be undone. The application will be permanently deleted.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#e74c3c',
+        confirmButtonText: 'Yes, delete'
+    });
+    
+    if (result.isConfirmed) {
+        try {
+            const userEmail = getCurrentUserEmail();
+            const response = await fetch(`${API_URL}/api/applications/${appId}?userEmail=${encodeURIComponent(userEmail)}`, {
+                method: 'DELETE'
+            });
+            
+            if (!response.ok) throw new Error('Failed to delete');
+            
+            showToast('Application deleted successfully', 'success');
+            renderDashboard(); // Refresh the dashboard
+        } catch (error) {
+            console.error('Delete failed:', error);
+            showToast('Failed to delete application', 'error');
+        }
+    }
+}
+
 function renderApplicationsListWithPagination(filteredApps) {
     currentFilteredApps = filteredApps;
     currentPage = 1;
@@ -2012,11 +2024,9 @@ function renderCompactApplicationsList(filtered) {
 // ============ APPLICATION DETAILS VIEW ============
 async function viewApplicationDetails(appId) {
     try {
-        const response = await fetch(`${API_URL}/api/applications/${appId}`);
-        if (!response.ok) throw new Error('Application not found');
-        const app = await response.json();
+        const app = await KURO_API.getFullApplicationById(appId);
         
-        console.log('Full Application Data:', app);
+        console.log('Full Application Data loaded:', app.id);
         
         // Ensure arrays exist
         if (!app.teamCVs) app.teamCVs = [];
@@ -3272,23 +3282,17 @@ function openPDFViewer(fileName, base64Data) {
     
     // Clean up the base64 data
     let cleanBase64 = base64Data;
-    
-    // Remove any existing data URL prefix if present
     if (cleanBase64.includes('base64,')) {
         cleanBase64 = cleanBase64.split('base64,')[1];
     }
-    
-    // Remove whitespace and newlines
     cleanBase64 = cleanBase64.replace(/\s/g, '');
     
-    // Validate it looks like base64
     if (!/^[A-Za-z0-9+/=]+$/.test(cleanBase64)) {
         showToast('Invalid PDF data format. The file may be corrupted.', 'error');
         return;
     }
     
     try {
-        // Decode base64 to binary
         const byteCharacters = atob(cleanBase64);
         const byteNumbers = new Array(byteCharacters.length);
         for (let i = 0; i < byteCharacters.length; i++) {
@@ -3296,17 +3300,65 @@ function openPDFViewer(fileName, base64Data) {
         }
         const byteArray = new Uint8Array(byteNumbers);
         const blob = new Blob([byteArray], { type: 'application/pdf' });
-        
-        // Create object URL and open in new tab
         const url = URL.createObjectURL(blob);
-        window.open(url, '_blank');
         
-        // Clean up the object URL after a delay
-        setTimeout(() => URL.revokeObjectURL(url), 10000);
+        // Create modal HTML (matching faculty dashboard)
+        const modalHtml = `
+            <div id="pdfViewerModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 100000; visibility: visible; opacity: 1; transition: all 0.3s ease;">
+                <div style="background: white; border-radius: 24px; width: 1000px; max-width: 90vw; height: 85vh; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4); transform: scale(1); opacity: 1; transition: all 0.3s ease;">
+                    <div style="background: linear-gradient(135deg, #0B2B4F 0%, #1e2b57 100%); padding: 1rem 1.5rem; color: white; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #C9A03D;">
+                        <h3 style="font-size: 1rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+                            <i class="fas fa-file-pdf" style="color: #C9A03D;"></i>
+                            ${escapeHtml(fileName || 'Curriculum Vitae Preview')}
+                        </h3>
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <div style="font-size: 0.65rem; opacity: 0.7;">
+                                <i class="fas fa-expand"></i>
+                                <span>1000px × 85vh</span>
+                            </div>
+                            <button id="closePdfModalBtn" style="background: rgba(255,255,255,0.1); border: none; color: white; font-size: 1rem; cursor: pointer; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div style="flex: 1; padding: 1rem; background: #f5f5f5;">
+                        <iframe src="${url}" style="width: 100%; height: 100%; border: none; border-radius: 12px; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"></iframe>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        const modal = document.getElementById('pdfViewerModal');
+        const closeBtn = document.getElementById('closePdfModalBtn');
+        
+        const closeModal = () => {
+            if (modal) {
+                modal.style.opacity = '0';
+                modal.style.visibility = 'hidden';
+                setTimeout(() => {
+                    modal.remove();
+                    URL.revokeObjectURL(url);
+                }, 300);
+            }
+        };
+        
+        closeBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+        
+        document.addEventListener('keydown', function escHandler(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+                document.removeEventListener('keydown', escHandler);
+            }
+        });
         
     } catch (error) {
-        console.error('PDF opening failed:', error);
-        showToast('Failed to open PDF. The file may be corrupted.', 'error');
+        console.error('PDF preview failed:', error);
+        showToast('Failed to preview PDF. The file may be corrupted.', 'error');
     }
 }
 
@@ -3327,37 +3379,29 @@ function attachCVHandlersInModal(modal, email, appId) {
         };
     });
     
-    // FIXED: Thread-safe CV button handler
-    const viewButtons = modal.querySelectorAll('.view-cv-btn');
+    // FIXED: Use correct class name '.cv-view-btn'
+    const viewButtons = modal.querySelectorAll('.cv-view-btn');
     viewButtons.forEach(btn => {
-        // Capture the current button's attributes BEFORE the async operation
         const type = btn.getAttribute('data-type');
         const idx = btn.getAttribute('data-idx') || '0';
         const cvName = btn.getAttribute('data-cv-name');
-        const buttonAppId = appId; // Capture the current appId
+        const buttonAppId = appId;
         
-        // Remove existing listener to avoid duplicates
         const newBtn = btn.cloneNode(true);
         btn.parentNode.replaceChild(newBtn, btn);
         
         newBtn.onclick = async function(e) {
             e.preventDefault();
-            
-            // Use the captured values, NOT reading from DOM again
             console.log(`Opening CV: type=${type}, idx=${idx}, appId=${buttonAppId}`);
             
-            // Show loading indicator
             const originalHtml = this.innerHTML;
             this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
             this.disabled = true;
             
             try {
-                // Use captured values
                 const response = await fetch(`${API_URL}/api/applications/${buttonAppId}/cv?type=${type}&index=${idx}`);
                 if (!response.ok) throw new Error('Failed to load CV');
-                
                 const data = await response.json();
-                
                 if (data.cvData) {
                     openPDFViewer(data.cvName || cvName, data.cvData);
                 } else {
@@ -3373,15 +3417,21 @@ function attachCVHandlersInModal(modal, email, appId) {
         };
     });
 
-    const saveFeedbackBtn = modal.querySelector('.save-feedback-btn');
+    // FIXED: Use correct ID selector
+    const saveFeedbackBtn = modal.querySelector('#saveFeedbackBtn');
     if (saveFeedbackBtn) {
-        saveFeedbackBtn.onclick = async function() {
+        const newSaveBtn = saveFeedbackBtn.cloneNode(true);
+        saveFeedbackBtn.parentNode.replaceChild(newSaveBtn, saveFeedbackBtn);
+        
+        newSaveBtn.onclick = async function() {
             const feedback = modal.querySelector('#cvFeedbackText')?.value || '';
             try {
                 await KURO_API.saveCVFeedback(appId, feedback);
                 showToast('Feedback saved!', 'success');
                 viewApplicationDetails(appId);
-            } catch (error) { showToast('Failed to save feedback', 'error'); }
+            } catch (error) { 
+                showToast('Failed to save feedback', 'error'); 
+            }
         };
     }
 }
