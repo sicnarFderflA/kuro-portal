@@ -1140,6 +1140,59 @@ const startServer = async () => {
             res.status(500).json({ error: error.message });
         }
     });
+
+    // ========== DIRECT APPLICATION ROUTES (TEMPORARY FIX) ==========
+
+// GET single application
+app.get('/api/applications/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const application = await Application.findOne({ id: id });
+        if (!application) {
+            return res.status(404).json({ error: 'Application not found' });
+        }
+        res.json(application);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// PUT update application
+app.put('/api/applications/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updates = req.body;
+        updates.updatedAt = new Date();
+        
+        const application = await Application.findOneAndUpdate(
+            { id: id },
+            { $set: updates },
+            { new: true }
+        );
+        
+        if (!application) {
+            return res.status(404).json({ error: 'Application not found' });
+        }
+        
+        res.json(application);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// DELETE application
+app.delete('/api/applications/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await Application.findOneAndDelete({ id: id });
+        if (!result) {
+            return res.status(404).json({ error: 'Application not found' });
+        }
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
     
     // ========== 404 HANDLER ==========
     app.use((req, res) => {
