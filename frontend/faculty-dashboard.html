@@ -1817,6 +1817,7 @@ function filterAndRenderApps(filteredSubs, drafts) {
     
     // Check if we're filtering for drafts only
     const showOnlyDrafts = (statusFilter === 'draft');
+    const showAllStatus = (statusFilter === 'all');
     
     let filteredApps = [];
     
@@ -1840,9 +1841,9 @@ function filterAndRenderApps(filteredSubs, drafts) {
         });
     }
     
-    // Filter drafts (only when showing drafts or when search filter is applied)
+    // Filter drafts - ALWAYS include when showAllStatus OR showOnlyDrafts OR filters applied
     let filteredDrafts = [];
-    if (showOnlyDrafts || searchFilter !== '' || grantFilter !== 'all') {
+    if (showOnlyDrafts || showAllStatus || searchFilter !== '' || grantFilter !== 'all') {
         filteredDrafts = drafts.filter(draft => {
             if (grantFilter !== 'all' && draft.grantTitle !== grantFilter) return false;
             if (searchFilter) {
