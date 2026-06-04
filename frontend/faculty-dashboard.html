@@ -3301,7 +3301,10 @@ async function resendSignatureRequests(application) {
             deanEmail: application.deanEmail,
             deanName: application.deanName,
             proposalTitle: application.proposalTitle,
-            piName: application.piName
+            piName: application.piName,
+            department: application.dept || application.endorseDept || '',
+            grantTitle: application.grantTitle || '',
+            duration: application.duration || ''
         });
         
         await Swal.fire({
