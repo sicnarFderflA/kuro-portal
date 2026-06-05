@@ -1071,14 +1071,14 @@ const startServer = async () => {
                 { id: appId },
                 { 
                     $set: { 
-                        'signatureRequests': {  // ✅ Replace entire object
+                        'signatureRequests': {
                             chairToken: chairToken,
                             deanToken: deanToken,
                             sentAt: new Date().toISOString(),
-                            emailsSent: false
+                            emailsSent: false,
+                            resendCount: (application.signatureRequests?.resendCount || 0) + 1  // Calculate increment manually
                         }
-                    },
-                    $inc: { 'signatureRequests.resendCount': 1 }
+                    }
                 }
             );
                         
