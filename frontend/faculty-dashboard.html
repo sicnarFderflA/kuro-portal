@@ -2463,23 +2463,38 @@ function normalizeFormDataForComparison(formData) {
 }
 
 async function showDetails(sub) {
+    // ✅ ALWAYS fetch fresh data from API to ensure signatures are up-to-date
+    let freshSub = sub;
+    try {
+        const response = await fetch(`${API_URL}/api/applications/${sub.id}/full?userEmail=${currentUser.email}`);
+        if (response.ok) {
+            freshSub = await response.json();
+            console.log('✅ Fetched fresh application data for:', sub.id);
+        } else {
+            console.warn('Could not fetch fresh data, using cached data');
+        }
+    } catch (error) {
+        console.warn('Error fetching fresh data:', error);
+    }
+    
+    // Use freshSub for all subsequent data
+    const appData = freshSub;
+    
     let form1Complete = 0;
     let form2Complete = 0;
     let cvComplete = 0;
     let signatureComplete = 0;
     
     const form1Fields = ['proposalTitle', 'piName', 'piEmail', 'dept', 'school', 'extension', 'duration', 'rationale', 'litReview', 'objectives', 'methodology', 'outputs'];
-    let form1Filled = form1Fields.filter(f => sub[f] && sub[f].toString().trim() !== '').length;
+    let form1Filled = form1Fields.filter(f => appData[f] && appData[f].toString().trim() !== '').length;
     form1Complete = Math.round((form1Filled / form1Fields.length) * 100);
     
     const form2Fields = ['endorsementDate', 'fromChair', 'chairEmail', 'deanName', 'deanEmail', 'endorseDept', 'endorseSchool', 'schoolYear'];
-    let form2Filled = form2Fields.filter(f => sub[f] && sub[f].toString().trim() !== '').length;
+    let form2Filled = form2Fields.filter(f => appData[f] && appData[f].toString().trim() !== '').length;
     form2Complete = Math.round((form2Filled / form2Fields.length) * 100);
     
-    const teamMembers = sub.teamMembers || [];
-    
-    // ✅ FIXED: Get signature status correctly from nested objects
-    const signatures = sub.signatures || { chair: { signed: false }, dean: { signed: false } };
+    const teamMembers = appData.teamMembers || [];
+    const signatures = appData.signatures || { chair: { signed: false }, dean: { signed: false } };
     const chairSigned = signatures.chair?.signed || false;
     const deanSigned = signatures.dean?.signed || false;
     const chairSignedDate = signatures.chair?.signedDate;
@@ -2492,54 +2507,45 @@ async function showDetails(sub) {
     let piCVTextColor = '#999';
 
     // Check if PI CV file exists
-    if (sub.piCVName && sub.piCVName.trim() !== '') {
-        // CV file exists - check its status
-        if (sub.piCVStatus === 'eligible') {
+    if (appData.piCVName && appData.piCVName.trim() !== '') {
+        if (appData.piCVStatus === 'eligible') {
             piCVStatusObj = 'eligible';
             piCVDisplayStatus = 'eligible';
             piCVIcon = '✅';
             piCVStatusText = 'Eligible';
             piCVTextColor = '#2ecc71';
-        } else if (sub.piCVStatus === 'ineligible') {
+        } else if (appData.piCVStatus === 'ineligible') {
             piCVStatusObj = 'ineligible';
             piCVDisplayStatus = 'ineligible';
             piCVIcon = '🔴';
             piCVStatusText = 'Ineligible';
             piCVTextColor = '#e74c3c';
         } else {
-            // Has file but status not set (pending review)
             piCVStatusObj = 'pending';
             piCVDisplayStatus = 'pending';
             piCVIcon = '⏳';
             piCVStatusText = 'Pending Review';
             piCVTextColor = '#f39c12';
         }
-    } else {
-        // No CV file
-        piCVStatusObj = 'missing';
-        piCVDisplayStatus = 'missing';
-        piCVIcon = '❌';
-        piCVStatusText = 'Missing CV';
-        piCVTextColor = '#999';
     }
 
     let checkInfo = '';
-    if (sub.status === 'Pending Eligibility Check') {
+    if (appData.status === 'Pending Eligibility Check') {
         checkInfo = '<div class="detail-section" style="background:#e8f0fe; margin-bottom:1rem;"><h4>🔍 Current Stage: Eligibility Review (Check 1)</h4><p style="font-size:0.75rem;">The Eligibility Officer is reviewing your application for completeness and eligibility requirements.</p></div>';
-    } else if (sub.status === 'Pending Secondary Check') {
+    } else if (appData.status === 'Pending Secondary Check') {
         checkInfo = '<div class="detail-section" style="background:#e8f0fe; margin-bottom:1rem;"><h4>📋 Current Stage: Secondary Review (Check 2)</h4><p style="font-size:0.75rem;">The Secondary Checker is reviewing the eligibility findings and evaluating the proposal.</p></div>';
-    } else if (sub.status === 'Pending Final Check') {
+    } else if (appData.status === 'Pending Final Check') {
         checkInfo = '<div class="detail-section" style="background:#e8f0fe; margin-bottom:1rem;"><h4>✅ Current Stage: Final Review (Check 3)</h4><p style="font-size:0.75rem;">The Final Approver is conducting the final review before approval.</p></div>';
-    } else if (sub.status === 'Returned') {
+    } else if (appData.status === 'Returned') {
         checkInfo = `<div class="detail-section" style="background:#fff3cd; margin-bottom:1rem; border-left:4px solid #e74c3c;">
             <h4 style="color:#856404;"><i class="fas fa-feedback"></i> Revision Required</h4>
-            <p style="font-size:0.8rem;">${escapeHtml(sub.returnedFeedback || 'Please check the feedback from the research office.')}</p>
+            <p style="font-size:0.8rem;">${escapeHtml(appData.returnedFeedback || 'Please check the feedback from the research office.')}</p>
             <p style="font-size:0.7rem; margin-top:0.5rem;"><i class="fas fa-info-circle"></i> Please address the feedback and click "Resubmit" to continue the review process.</p>
         </div>`;
     }
     
     const teamCVStatuses = teamMembers.map((member, idx) => {
-        const cv = sub.teamCVs && sub.teamCVs[idx];
+        const cv = appData.teamCVs && appData.teamCVs[idx];
         const hasFile = cv && cv.name && cv.name.trim() !== '';
         
         let cvStatus = 'missing';
@@ -2597,14 +2603,14 @@ async function showDetails(sub) {
     
     const overallProgress = Math.round((form1Complete + form2Complete + cvComplete + signatureComplete) / 4);
     
-    const submittedDate = sub.submittedDate ? new Date(sub.submittedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A';
+    const submittedDate = appData.submittedDate ? new Date(appData.submittedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A';
     
     let statusBadgeStyle = '';
     let statusIcon = '';
-    if (sub.status === 'Approved') {
+    if (appData.status === 'Approved') {
         statusBadgeStyle = 'background: #e0f5e6; color: #1e6f3f;';
         statusIcon = '✅';
-    } else if (sub.status === 'Awaiting Signatures') {
+    } else if (appData.status === 'Awaiting Signatures') {
         statusBadgeStyle = 'background: #e3ecff; color: #2c5f9a;';
         statusIcon = '⏳';
     } else {
@@ -2621,7 +2627,7 @@ async function showDetails(sub) {
                     <i class="fas fa-user-tie" style="color: var(--xavier-primary); font-size: 0.9rem;"></i>
                 </div>
                 <div>
-                    <div style="font-weight: 600; color: #1A2E3F;">${escapeHtml(sub.piName || 'Principal Investigator')}</div>
+                    <div style="font-weight: 600; color: #1A2E3F;">${escapeHtml(appData.piName || 'Principal Investigator')}</div>
                     <div style="font-size: 0.7rem; color: #999;">Principal Investigator</div>
                 </div>
             </div>
@@ -2662,24 +2668,24 @@ async function showDetails(sub) {
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;">
                         <div style="display: flex; align-items: center; gap: 0.5rem;">
                             <i class="fas fa-trophy" style="color: #D4AF37;"></i>
-                            <span style="font-size: 0.8rem; opacity: 0.9;">${escapeHtml(sub.grantTitle)}</span>
+                            <span style="font-size: 0.8rem; opacity: 0.9;">${escapeHtml(appData.grantTitle)}</span>
                         </div>
                         <div style="display: flex; align-items: center; gap: 0.3rem; background: rgba(255,255,255,0.15); padding: 0.2rem 0.7rem; border-radius: 40px;">
                             <i class="fas fa-hashtag" style="color: #D4AF37; font-size: 0.65rem;"></i>
-                            <span style="font-size: 0.7rem; font-family: monospace;">${escapeHtml(sub.id)}</span>
+                            <span style="font-size: 0.7rem; font-family: monospace;">${escapeHtml(appData.id)}</span>
                         </div>
                     </div>
                     
                     <h3 style="font-size: 1rem; margin: 0 0 0.75rem 0; line-height: 1.4; word-break: break-word;">
-                        ${escapeHtml(sub.proposalTitle || 'Untitled')}
+                        ${escapeHtml(appData.proposalTitle || 'Untitled')}
                     </h3>
                     
                     <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.5rem;">
                         <span style="font-size: 0.75rem; opacity: 0.85; display: flex; align-items: center; gap: 0.4rem;">
-                            <i class="fas fa-user"></i> ${escapeHtml(sub.piName || 'N/A')}
+                            <i class="fas fa-user"></i> ${escapeHtml(appData.piName || 'N/A')}
                         </span>
                         <div style="display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(255,255,255,0.15); padding: 0.25rem 0.7rem; border-radius: 40px; font-size: 0.7rem; font-weight: 600; white-space: nowrap;">
-                            ${statusIcon} ${sub.status}
+                            ${statusIcon} ${appData.status}
                         </div>
                     </div>
                     
@@ -2789,8 +2795,8 @@ async function showDetails(sub) {
                                 </div>
                                 <div style="flex: 1;">
                                     <div style="font-weight: 600; font-size: 0.8rem;">Department Chair</div>
-                                    ${sub.fromChair ? `<div style="font-size: 0.65rem; color: #999;">${escapeHtml(sub.fromChair)}</div>` : ''}
-                                    ${sub.chairEmail ? `<div style="font-size: 0.6rem; color: #aaa;">${escapeHtml(sub.chairEmail)}</div>` : ''}
+                                    ${appData.fromChair ? `<div style="font-size: 0.65rem; color: #999;">${escapeHtml(appData.fromChair)}</div>` : ''}
+                                    ${appData.chairEmail ? `<div style="font-size: 0.6rem; color: #aaa;">${escapeHtml(appData.chairEmail)}</div>` : ''}
                                 </div>
                                 <div>
                                     <span style="display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.6rem; border-radius: 40px; font-size: 0.7rem; background: ${chairSigned ? '#e0f5e6' : '#fff0db'}; color: ${chairSigned ? '#1e6f3f' : '#b45f1b'};">
@@ -2809,8 +2815,8 @@ async function showDetails(sub) {
                                 </div>
                                 <div style="flex: 1;">
                                     <div style="font-weight: 600; font-size: 0.8rem;">Dean</div>
-                                    ${sub.deanName ? `<div style="font-size: 0.65rem; color: #999;">${escapeHtml(sub.deanName)}</div>` : ''}
-                                    ${sub.deanEmail ? `<div style="font-size: 0.6rem; color: #aaa;">${escapeHtml(sub.deanEmail)}</div>` : ''}
+                                    ${appData.deanName ? `<div style="font-size: 0.65rem; color: #999;">${escapeHtml(appData.deanName)}</div>` : ''}
+                                    ${appData.deanEmail ? `<div style="font-size: 0.6rem; color: #aaa;">${escapeHtml(appData.deanEmail)}</div>` : ''}
                                 </div>
                                 <div>
                                     <span style="display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.6rem; border-radius: 40px; font-size: 0.7rem; background: ${deanSigned ? '#e0f5e6' : '#fff0db'}; color: ${deanSigned ? '#1e6f3f' : '#b45f1b'};">
@@ -2837,7 +2843,7 @@ async function showDetails(sub) {
                     <i class="fas fa-comment-dots" style="color: #D4AF37;"></i> Admin Feedback
                 </h4>
                 <div style="background: #f8f9fa; padding: 0.75rem; border-radius: 0.5rem; font-size: 0.8rem; color: #666; border-left: 3px solid #D4AF37;">
-                    ${escapeHtml(sub.uploadFeedback || 'No feedback received yet.')}
+                    ${escapeHtml(appData.uploadFeedback || 'No feedback received yet.')}
                 </div>
             </div>
         </div>
