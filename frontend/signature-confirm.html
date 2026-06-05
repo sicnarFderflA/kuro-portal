@@ -643,7 +643,6 @@
         }
         
         try {
-            // ✅ FIXED: Use the correct endpoint that returns the signature request data
             const response = await fetch(`${API_URL}/api/signatures/${token}`);
             
             if (!response.ok) {
@@ -667,20 +666,28 @@
             const signatureData = await response.json();
             console.log('Signature data received:', signatureData);
             
-            // Check if already signed
+            // ✅ FIXED: Use the correct property names from the API response
             const isChair = role === 'chair';
-            const isAlreadySigned = isChair ? signatureData.chairCompleted : signatureData.deanCompleted;
             
-            if (isAlreadySigned) {
-                document.getElementById('statusMessage').innerHTML = `
-                    <div class="success">
-                        <i class="fas fa-check-circle"></i> 
-                        <strong>✅ Signature Already Completed!</strong><br><br>
-                        You have already signed this document.
-                    </div>
-                `;
-                document.getElementById('signatureIcon').style.background = '#2ecc71';
-                return;
+            // Check if already signed - we need to check the signature request status
+            // For this, we need to fetch the signature request separately or have the backend return status
+            // Let's check the signature status via another call
+            const statusResponse = await fetch(`${API_URL}/api/applications/${appId}/signature-status`);
+            if (statusResponse.ok) {
+                const statusData = await statusResponse.json();
+                const isAlreadySigned = isChair ? statusData.chairCompleted : statusData.deanCompleted;
+                
+                if (isAlreadySigned) {
+                    document.getElementById('statusMessage').innerHTML = `
+                        <div class="success">
+                            <i class="fas fa-check-circle"></i> 
+                            <strong>✅ Signature Already Completed!</strong><br><br>
+                            You have already signed this document.
+                        </div>
+                    `;
+                    document.getElementById('signatureIcon').style.background = '#2ecc71';
+                    return;
+                }
             }
             
             // Check if expired
@@ -696,14 +703,17 @@
                 return;
             }
             
-            // Store the request data
+            // ✅ Store the request data using the correct property names from the API
             request = {
-                signerEmail: isChair ? signatureData.chairEmail : signatureData.deanEmail,
-                signerName: isChair ? signatureData.chairName : signatureData.deanName,
-                application: signatureData.application,
+                signerEmail: signatureData.signerEmail,  // This comes directly from the API
+                signerName: signatureData.signerName,    // This comes directly from the API
+                application: signatureData.application,  // This comes directly from the API
                 role: role,
-                token: token
+                token: token,
+                appId: appId
             };
+            
+            console.log('Request data stored:', request);
             
             document.getElementById('statusMessage').innerHTML = '<span style="color: #2ecc71;">✓ Valid signature request found. Please sign in to continue.</span>';
             document.getElementById('loginSection').style.display = 'block';
