@@ -1071,12 +1071,14 @@ const startServer = async () => {
                 { id: appId },
                 { 
                     $set: { 
-                        'signatureRequests.chairToken': chairToken,
-                        'signatureRequests.deanToken': deanToken,
-                        'signatureRequests.sentAt': new Date().toISOString(),
-                        'signatureRequests.emailsSent': false
-                    },
-                    $inc: { 'signatureRequests.resendCount': 1 }  // ← Increments instead of resetting to 1
+                        'signatureRequests': {  // ✅ Replace entire object
+                            chairToken: chairToken,
+                            deanToken: deanToken,
+                            sentAt: new Date().toISOString(),
+                            emailsSent: false
+                        },
+                        $inc: { 'signatureRequests.resendCount': 1 }
+                    }
                 }
             );
                         
