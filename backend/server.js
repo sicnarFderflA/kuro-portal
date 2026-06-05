@@ -1076,9 +1076,9 @@ const startServer = async () => {
                             deanToken: deanToken,
                             sentAt: new Date().toISOString(),
                             emailsSent: false
-                        },
-                        $inc: { 'signatureRequests.resendCount': 1 }
-                    }
+                        }
+                    },
+                    $inc: { 'signatureRequests.resendCount': 1 }
                 }
             );
                         
