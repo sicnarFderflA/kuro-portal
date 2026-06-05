@@ -730,7 +730,7 @@ const startServer = async () => {
             }
             
             const userSubmissions = await Application.find({ userEmail: userEmail })
-                .select('id grantTitle proposalTitle status submittedDate piName userEmail piCVName piCVStatus teamMembers teamCVs signatures');
+                .select('id grantTitle proposalTitle status submittedDate piName userEmail piCVName piCVStatus teamMembers teamCVs signatures chairEmail deanEmail fromChair deanName');
             
             console.log(`✅ Found ${userSubmissions.length} submissions for ${userEmail}`);
             res.json(userSubmissions);
