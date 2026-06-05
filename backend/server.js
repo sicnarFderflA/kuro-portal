@@ -1011,14 +1011,14 @@ const startServer = async () => {
         try {
             const { appId } = req.params;
             
-            // ✅ FETCH THE APPLICATION FROM DATABASE
+            // Fetch the application
             const application = await Application.findOne({ id: appId });
             
             if (!application) {
                 return res.status(404).json({ error: 'Application not found' });
             }
             
-            // ✅ CHECK IF SIGNATURES ARE ALREADY COMPLETE
+            // Check if signatures are already complete
             const chairSigned = application.signatures?.chair?.signed || false;
             const deanSigned = application.signatures?.dean?.signed || false;
             const bothSigned = chairSigned && deanSigned;
@@ -1030,33 +1030,24 @@ const startServer = async () => {
                 });
             }
             
-            // ✅ USE DATA FROM DATABASE, NOT FROM REQUEST BODY
+            // Get emails from database
             const finalChairEmail = application.chairEmail;
             const finalChairName = application.fromChair;
             const finalDeanEmail = application.deanEmail;
             const finalDeanName = application.deanName;
             
-            // ✅ VALIDATE USING DATABASE VALUES
             if (!finalChairEmail || !finalDeanEmail) {
-                console.error('❌ Missing email addresses in database:', { 
-                    chairEmail: finalChairEmail, 
-                    deanEmail: finalDeanEmail 
-                });
                 return res.status(400).json({ 
                     error: 'Missing email addresses',
-                    message: 'Chair and Dean email addresses are missing in the application. Please update them in Form 2 first.'
+                    message: 'Chair and Dean email addresses are missing in the application.'
                 });
             }
-            
-            console.log('📧 Resending signatures for app:', appId);
-            console.log('📧 Chair:', finalChairEmail, finalChairName);
-            console.log('📧 Dean:', finalDeanEmail, finalDeanName);
             
             // Generate new tokens
             const chairToken = 'sig_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8) + '_chair';
             const deanToken = 'sig_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8) + '_dean';
             
-            // Save to SignatureRequest collection
+            // Update or create SignatureRequest
             await SignatureRequest.findOneAndUpdate(
                 { appId: appId },
                 {
@@ -1075,24 +1066,25 @@ const startServer = async () => {
                 { upsert: true }
             );
             
-            // Update application with new tokens
+            // ✅ FIX: Initialize signatureRequests as an object, not null
             await Application.findOneAndUpdate(
                 { id: appId },
                 { 
                     $set: { 
                         'signatureRequests.chairToken': chairToken,
                         'signatureRequests.deanToken': deanToken,
-                        'signatureRequests.sentAt': new Date().toISOString()
+                        'signatureRequests.sentAt': new Date().toISOString(),
+                        'signatureRequests.emailsSent': false
                     },
-                    $inc: { 'signatureRequests.resendCount': 1 }
+                    $inc: { 'signatureRequests.resendCount': 1 }  // ← Increments instead of resetting to 1
                 }
             );
-            
+                        
             const baseUrl = 'https://kuro-portal.vercel.app';
             const chairLink = `${baseUrl}/signature-confirm.html?token=${chairToken}&role=chair&id=${appId}`;
             const deanLink = `${baseUrl}/signature-confirm.html?token=${deanToken}&role=dean&id=${appId}`;
             
-            // Get additional data from database for email
+            // Get additional data for emails
             const department = application.dept || application.endorseDept || 'N/A';
             const grantTitle = application.grantTitle || 'N/A';
             const duration = application.duration || 'N/A';
@@ -1103,7 +1095,6 @@ const startServer = async () => {
             let chairSent = false;
             let deanSent = false;
             
-            // Send to Chair (if not already signed)
             if (!chairSigned) {
                 try {
                     const chairParams = {
@@ -1128,11 +1119,8 @@ const startServer = async () => {
                 } catch (error) {
                     console.error('Chair email failed:', error);
                 }
-            } else {
-                console.log('⚠️ Chair already signed, skipping email');
             }
             
-            // Send to Dean (if not already signed)
             if (!deanSigned) {
                 try {
                     const deanParams = {
@@ -1157,8 +1145,6 @@ const startServer = async () => {
                 } catch (error) {
                     console.error('Dean email failed:', error);
                 }
-            } else {
-                console.log('⚠️ Dean already signed, skipping email');
             }
             
             res.json({ 
@@ -1175,7 +1161,7 @@ const startServer = async () => {
             res.status(500).json({ error: error.message });
         }
     });
-    
+        
     app.get('/api/applications/:appId/signature-status', async (req, res) => {
         try {
             const { appId } = req.params;
