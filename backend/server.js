@@ -1210,6 +1210,9 @@ const startServer = async () => {
             const { token } = req.params;
             const { name, email } = req.body;
             
+            console.log('🔐 Completing signature for token:', token);
+            
+            // Find the signature request
             const signatureRequest = await SignatureRequest.findOne({
                 $or: [{ chairToken: token }, { deanToken: token }]
             });
@@ -1218,25 +1221,27 @@ const startServer = async () => {
                 return res.status(404).json({ error: 'Signature request not found' });
             }
             
-            // ✅ CHECK EXPIRATION
+            // Check expiration
             if (signatureRequest.expiresAt && new Date() > new Date(signatureRequest.expiresAt)) {
                 return res.status(410).json({ 
                     error: 'Link Expired',
-                    message: 'This signature link has expired (7 days). Please request a new link.'
+                    message: 'This signature link has expired (7 days).'
                 });
             }
             
             const isChair = token === signatureRequest.chairToken;
             const isDean = token === signatureRequest.deanToken;
             
-            // Check if already signed
+            // Check if already signed for this role
             const alreadySigned = isChair ? signatureRequest.chairCompleted : signatureRequest.deanCompleted;
             if (alreadySigned) {
                 return res.status(400).json({ error: 'Already signed' });
             }
             
-            // Update signature
+            // Update SignatureRequest
             let updateField = {};
+            let roleName = '';
+            
             if (isChair) {
                 updateField = { 
                     chairCompleted: true, 
@@ -1244,6 +1249,7 @@ const startServer = async () => {
                     chairSignerName: name, 
                     chairSignerEmail: email 
                 };
+                roleName = 'Department Chair';
             } else {
                 updateField = { 
                     deanCompleted: true, 
@@ -1251,6 +1257,7 @@ const startServer = async () => {
                     deanSignerName: name, 
                     deanSignerEmail: email 
                 };
+                roleName = 'Dean';
             }
             
             await SignatureRequest.updateOne(
@@ -1258,16 +1265,80 @@ const startServer = async () => {
                 { $set: updateField }
             );
             
-            // If both signed, update application status
+            // ✅ ALSO UPDATE THE APPLICATION
+            const application = await Application.findOne({ id: signatureRequest.appId });
+            
+            if (application) {
+                // Update the signatures in the Application collection
+                const appUpdate = {};
+                
+                if (isChair) {
+                    appUpdate['signatures.chair'] = {
+                        signed: true,
+                        signedDate: new Date(),
+                        signerEmail: email,
+                        signerName: name
+                    };
+                } else {
+                    appUpdate['signatures.dean'] = {
+                        signed: true,
+                        signedDate: new Date(),
+                        signerEmail: email,
+                        signerName: name
+                    };
+                }
+                
+                await Application.updateOne(
+                    { id: signatureRequest.appId },
+                    { $set: appUpdate }
+                );
+                
+                console.log(`✅ Updated Application ${signatureRequest.appId} for ${roleName}`);
+            }
+            
+            // Get updated signature request
             const updatedRequest = await SignatureRequest.findById(signatureRequest._id);
+            
+            // Create notification for faculty
+            await Notification.create({
+                userEmail: application.userEmail,
+                type: 'signature_completed',
+                title: '✅ Signature Received',
+                message: `${roleName} has signed the endorsement letter for "${application.proposalTitle?.substring(0, 50)}".`,
+                appId: signatureRequest.appId,
+                icon: '✅',
+                color: '#2ecc71',
+                isRead: false,
+                createdAt: new Date()
+            });
+            
+            // If both signed, update application status
             if (updatedRequest.chairCompleted && updatedRequest.deanCompleted) {
+                console.log('🎉 Both signatures complete! Moving to Pending Eligibility Check');
+                
                 await Application.updateOne(
                     { id: signatureRequest.appId },
                     { $set: { status: 'Pending Eligibility Check' } }
                 );
+                
+                await Notification.create({
+                    userEmail: application.userEmail,
+                    type: 'signatures_complete',
+                    title: '📋 All Signatures Received',
+                    message: `Both Chair and Dean have signed. Your application is now moving to eligibility review.`,
+                    appId: signatureRequest.appId,
+                    icon: '📋',
+                    color: '#D4AF37',
+                    isRead: false,
+                    createdAt: new Date()
+                });
             }
             
-            res.json({ success: true, message: 'Signature completed' });
+            res.json({ 
+                success: true, 
+                message: `${roleName} signature completed successfully`,
+                bothSigned: updatedRequest.chairCompleted && updatedRequest.deanCompleted
+            });
             
         } catch (error) {
             console.error('Error completing signature:', error);
