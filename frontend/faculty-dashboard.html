@@ -3304,47 +3304,61 @@ async function resendSignatureRequests(application) {
         return;
     }
     
-    // ✅ FIXED: Pass the email addresses from the application
-    if (!application.chairEmail || !application.deanEmail) {
+    // ✅ Determine which signatures are missing
+    const missingChair = !chairSigned;
+    const missingDean = !deanSigned;
+    
+    // Check if we have the required email addresses
+    if ((missingChair && !application.chairEmail) || (missingDean && !application.deanEmail)) {
         await Swal.fire({
             icon: 'error',
             title: 'Missing Email Addresses',
-            text: 'Chair or Dean email addresses are missing. Please update them in Form 2 first.',
+            text: 'Required email addresses are missing. Please update them in Form 2 first.',
             confirmButtonColor: '#D4AF37'
         });
         return;
     }
     
-    const result = await Swal.fire({
-        title: 'Resend Signature Requests?',
+    // Build the confirmation message based on who is missing
+    let missingList = [];
+    if (missingChair) missingList.push(`📧 Chair: ${escapeHtml(application.chairEmail || application.fromChair || 'Chair')}`);
+    if (missingDean) missingList.push(`📧 Dean: ${escapeHtml(application.deanEmail || application.deanName || 'Dean')}`);
+    
+    const confirmResult = await Swal.fire({
+        title: `Resend to ${missingChair && missingDean ? 'Both' : (missingChair ? 'Chair' : 'Dean')}?`,
         html: `
             <div style="text-align: left;">
                 <p>This will:</p>
                 <ul style="margin-left: 1.5rem; margin-bottom: 1rem;">
-                    <li>Generate <strong>new signature links</strong></li>
-                    <li>Send <strong>new emails</strong> to:</li>
-                    <ul style="margin-left: 1.5rem;">
-                        <li>📧 <strong>Chair:</strong> ${escapeHtml(application.chairEmail)}</li>
-                        <li>📧 <strong>Dean:</strong> ${escapeHtml(application.deanEmail)}</li>
-                    </ul>
-                    <li style="margin-top: 0.5rem;">⚠️ <strong>Old links will no longer work</strong></li>
+                    <li>Generate <strong>new signature link(s)</strong></li>
+                    <li>Send <strong>new email(s)</strong> to:</li>
                 </ul>
+                <div style="background: #f8f9fa; padding: 0.75rem; border-radius: 8px; margin: 0.5rem 0;">
+                    ${missingList.map(email => `<div style="margin: 0.25rem 0;">${email}</div>`).join('')}
+                </div>
+                <p style="margin-top: 1rem; color: #e74c3c; font-size: 0.8rem;">
+                    <i class="fas fa-exclamation-triangle"></i> Note: Only missing signatories will receive new links.
+                    ${!missingChair ? '<br>✅ Chair has already signed - no new link will be sent.' : ''}
+                    ${!missingDean ? '<br>✅ Dean has already signed - no new link will be sent.' : ''}
+                </p>
             </div>
         `,
         icon: 'question',
         showCancelButton: true,
         confirmButtonColor: '#D4AF37',
-        confirmButtonText: 'Yes, Resend',
+        confirmButtonText: `Send to ${missingChair && missingDean ? 'Both' : (missingChair ? 'Chair Only' : 'Dean Only')}`,
         cancelButtonText: 'Cancel'
     });
     
-    if (!result.isConfirmed) return;
+    if (!confirmResult.isConfirmed) return;
     
     showInlineNotification(null, '📧 Generating new links and sending emails...', true);
     
     try {
-        // ✅ Pass all required data including emails
-        await KURO_API.resendSignatureRequests(application.id, {
+        // ✅ Call API with which signatories to resend
+        const result = await KURO_API.resendSignatureRequests(application.id, {
+            resendChair: missingChair,
+            resendDean: missingDean,
             chairEmail: application.chairEmail,
             chairName: application.fromChair,
             deanEmail: application.deanEmail,
@@ -3356,15 +3370,19 @@ async function resendSignatureRequests(application) {
             duration: application.duration || ''
         });
         
+        let successMessage = '';
+        if (missingChair && missingDean) {
+            successMessage = `New signature requests have been sent to both Chair and Dean.`;
+        } else if (missingChair) {
+            successMessage = `New signature request has been sent to the Chair: <strong>${escapeHtml(application.chairEmail)}</strong>`;
+        } else if (missingDean) {
+            successMessage = `New signature request has been sent to the Dean: <strong>${escapeHtml(application.deanEmail)}</strong>`;
+        }
+        
         await Swal.fire({
             icon: 'success',
-            title: 'Requests Resent!',
-            html: `
-                New signature requests have been sent to:<br>
-                <strong>${escapeHtml(application.fromChair || 'Chair')}</strong> (${escapeHtml(application.chairEmail)})<br>
-                <strong>${escapeHtml(application.deanName || 'Dean')}</strong> (${escapeHtml(application.deanEmail)})<br><br>
-                <small>They will receive new emails with updated links.</small>
-            `,
+            title: 'Request Sent!',
+            html: successMessage + '<br><br><small>The signatory will receive a new email with an updated link.</small>',
             confirmButtonColor: '#D4AF37'
         });
         
@@ -3376,7 +3394,7 @@ async function resendSignatureRequests(application) {
         await Swal.fire({
             icon: 'error',
             title: 'Resend Failed',
-            text: error.message || 'Failed to resend signature requests. Please try again.',
+            text: error.message || 'Failed to resend signature request. Please try again.',
             confirmButtonColor: '#D4AF37'
         });
     }
