@@ -814,7 +814,31 @@ const startServer = async () => {
     app.post('/api/applications/:appId/generate-signatures', async (req, res) => {
         try {
             const { appId } = req.params;
-            const { chairEmail, chairName, deanEmail, deanName } = req.body;
+            
+            // ✅ FETCH APPLICATION FROM DATABASE
+            const application = await Application.findOne({ id: appId });
+            
+            if (!application) {
+                return res.status(404).json({ error: 'Application not found' });
+            }
+            
+            // ✅ USE DATA FROM DATABASE
+            const chairEmail = application.chairEmail;
+            const chairName = application.fromChair;
+            const deanEmail = application.deanEmail;
+            const deanName = application.deanName;
+            
+            // ✅ VALIDATE REQUIRED FIELDS
+            if (!chairEmail || !deanEmail) {
+                console.error('❌ Missing email addresses in database:', { 
+                    chairEmail, 
+                    deanEmail 
+                });
+                return res.status(400).json({ 
+                    error: 'Missing email addresses',
+                    message: 'Chair and Dean email addresses are missing in the application. Please update them in Form 2 first.'
+                });
+            }
             
             const chairToken = 'sig_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8) + '_chair';
             const deanToken = 'sig_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8) + '_dean';
@@ -856,6 +880,10 @@ const startServer = async () => {
             const chairLink = `${baseUrl}/signature-confirm.html?token=${chairToken}&role=chair&id=${appId}`;
             const deanLink = `${baseUrl}/signature-confirm.html?token=${deanToken}&role=dean&id=${appId}`;
             
+            console.log(`✅ Generated signature links for app: ${appId}`);
+            console.log(`   Chair: ${chairEmail} (${chairName})`);
+            console.log(`   Dean: ${deanEmail} (${deanName})`);
+            
             res.json({ 
                 success: true, 
                 chairLink: chairLink, 
@@ -873,21 +901,47 @@ const startServer = async () => {
     app.post('/api/applications/:appId/send-signature-emails', async (req, res) => {
         try {
             const { appId } = req.params;
-            const { chairLink, deanLink, chairEmail, deanEmail, chairName, deanName, expiryDays } = req.body;
+            const { chairLink, deanLink, expiryDays } = req.body;
             
-            console.log(`📧 Attempting to send emails for: ${appId}`);
+            // ✅ FETCH APPLICATION FROM DATABASE
+            const application = await Application.findOne({ id: appId });
+            
+            if (!application) {
+                return res.status(404).json({ error: 'Application not found' });
+            }
+            
+            // ✅ USE DATA FROM DATABASE
+            const chairEmail = application.chairEmail;
+            const chairName = application.fromChair;
+            const deanEmail = application.deanEmail;
+            const deanName = application.deanName;
+            const proposalTitle = application.proposalTitle || 'N/A';
+            const piName = application.piName || 'N/A';
+            const department = application.dept || application.endorseDept || 'N/A';
+            const grantTitle = application.grantTitle || 'N/A';
+            const duration = application.duration || 'N/A';
+            
+            console.log(`📧 Sending signature emails for: ${appId}`);
+            console.log(`   Chair: ${chairEmail}`);
+            console.log(`   Dean: ${deanEmail}`);
             
             let chairSuccess = false;
             let deanSuccess = false;
             let chairError = null;
             let deanError = null;
             
-            if (EMAILJS_SERVICE_ID && EMAILJS_CHAIR_TEMPLATE) {
+            // Send to Chair
+            if (EMAILJS_SERVICE_ID && EMAILJS_CHAIR_TEMPLATE && chairEmail) {
                 try {
                     const chairParams = {
                         to_email: chairEmail,
                         to_name: chairName,
                         chair_name: chairName,
+                        pi_name: piName,
+                        department: department,
+                        proposal_title: proposalTitle,
+                        grant_title: grantTitle,
+                        duration: duration,
                         signature_link: chairLink,
                         expiry_days: expiryDays || 7
                     };
@@ -897,18 +951,25 @@ const startServer = async () => {
                         privateKey: EMAILJS_PRIVATE_KEY
                     });
                     chairSuccess = true;
+                    console.log('✅ Chair email sent successfully');
                 } catch (error) {
                     console.error('Chair email failed:', error.message);
                     chairError = error.message;
                 }
             }
             
-            if (EMAILJS_SERVICE_ID && EMAILJS_DEAN_TEMPLATE) {
+            // Send to Dean
+            if (EMAILJS_SERVICE_ID && EMAILJS_DEAN_TEMPLATE && deanEmail) {
                 try {
                     const deanParams = {
                         to_email: deanEmail,
                         to_name: deanName,
                         dean_name: deanName,
+                        pi_name: piName,
+                        department: department,
+                        proposal_title: proposalTitle,
+                        grant_title: grantTitle,
+                        duration: duration,
                         signature_link: deanLink,
                         expiry_days: expiryDays || 7
                     };
@@ -918,11 +979,18 @@ const startServer = async () => {
                         privateKey: EMAILJS_PRIVATE_KEY
                     });
                     deanSuccess = true;
+                    console.log('✅ Dean email sent successfully');
                 } catch (error) {
                     console.error('Dean email failed:', error.message);
                     deanError = error.message;
                 }
             }
+            
+            // Update application to mark emails as sent
+            await Application.findOneAndUpdate(
+                { id: appId },
+                { $set: { 'signatureRequests.emailsSent': chairSuccess || deanSuccess } }
+            );
             
             res.json({ 
                 success: chairSuccess || deanSuccess,
@@ -1142,9 +1210,32 @@ const startServer = async () => {
             const { token } = req.params;
             const { name, email } = req.body;
             
-            const isChair = token.includes('_chair');
-            const isDean = token.includes('_dean');
+            const signatureRequest = await SignatureRequest.findOne({
+                $or: [{ chairToken: token }, { deanToken: token }]
+            });
             
+            if (!signatureRequest) {
+                return res.status(404).json({ error: 'Signature request not found' });
+            }
+            
+            // ✅ CHECK EXPIRATION
+            if (signatureRequest.expiresAt && new Date() > new Date(signatureRequest.expiresAt)) {
+                return res.status(410).json({ 
+                    error: 'Link Expired',
+                    message: 'This signature link has expired (7 days). Please request a new link.'
+                });
+            }
+            
+            const isChair = token === signatureRequest.chairToken;
+            const isDean = token === signatureRequest.deanToken;
+            
+            // Check if already signed
+            const alreadySigned = isChair ? signatureRequest.chairCompleted : signatureRequest.deanCompleted;
+            if (alreadySigned) {
+                return res.status(400).json({ error: 'Already signed' });
+            }
+            
+            // Update signature
             let updateField = {};
             if (isChair) {
                 updateField = { 
@@ -1153,41 +1244,27 @@ const startServer = async () => {
                     chairSignerName: name, 
                     chairSignerEmail: email 
                 };
-            } else if (isDean) {
+            } else {
                 updateField = { 
                     deanCompleted: true, 
                     deanSignedAt: new Date(), 
                     deanSignerName: name, 
                     deanSignerEmail: email 
                 };
-            } else {
-                return res.status(400).json({ error: 'Invalid token' });
             }
             
-            const result = await SignatureRequest.updateOne(
-                { $or: [{ chairToken: token }, { deanToken: token }] },
+            await SignatureRequest.updateOne(
+                { _id: signatureRequest._id },
                 { $set: updateField }
             );
             
-            if (result.matchedCount === 0) {
-                return res.status(404).json({ error: 'Signature request not found' });
-            }
-            
-            const signatureRequest = await SignatureRequest.findOne({
-                $or: [{ chairToken: token }, { deanToken: token }]
-            });
-            
-            if (signatureRequest && signatureRequest.chairCompleted && signatureRequest.deanCompleted) {
+            // If both signed, update application status
+            const updatedRequest = await SignatureRequest.findById(signatureRequest._id);
+            if (updatedRequest.chairCompleted && updatedRequest.deanCompleted) {
                 await Application.updateOne(
                     { id: signatureRequest.appId },
-                    { 
-                        $set: { 
-                            status: 'Pending Eligibility Check',
-                            submittedDate: new Date().toISOString().slice(0, 10)
-                        } 
-                    }
+                    { $set: { status: 'Pending Eligibility Check' } }
                 );
-                console.log('✅ Application submitted for review');
             }
             
             res.json({ success: true, message: 'Signature completed' });
@@ -1202,34 +1279,46 @@ const startServer = async () => {
         try {
             const { token } = req.params;
             
-            const application = await Application.findOne({
-                $or: [
-                    { 'signatureRequests.chairToken': token },
-                    { 'signatureRequests.deanToken': token }
-                ]
+            const signatureRequest = await SignatureRequest.findOne({
+                $or: [{ chairToken: token }, { deanToken: token }]
             });
             
-            if (!application) {
+            if (!signatureRequest) {
                 return res.status(404).json({ error: 'Signature request not found' });
             }
             
-            const isChair = application.signatureRequests?.chairToken === token;
-            const role = isChair ? 'chair' : 'dean';
-            const signerEmail = isChair ? application.chairEmail : application.deanEmail;
-            const signerName = isChair ? application.fromChair : application.deanName;
+            // ✅ CHECK EXPIRATION
+            if (signatureRequest.expiresAt && new Date() > new Date(signatureRequest.expiresAt)) {
+                return res.status(410).json({ 
+                    error: 'Link Expired',
+                    message: 'This signature link has expired (7 days). Please request a new link from the faculty member.'
+                });
+            }
+            
+            // Check if already signed
+            const isChair = token === signatureRequest.chairToken;
+            const isDean = token === signatureRequest.deanToken;
+            const alreadySigned = isChair ? signatureRequest.chairCompleted : signatureRequest.deanCompleted;
+            
+            if (alreadySigned) {
+                return res.status(400).json({ 
+                    error: 'Already Signed',
+                    message: 'This document has already been signed.'
+                });
+            }
+            
+            const application = await Application.findOne({ id: signatureRequest.appId });
             
             res.json({
-                appId: application.id,
-                role: role,
-                signerEmail: signerEmail,
-                signerName: signerName,
-                completed: false,
-                expiresAt: application.signatureRequests?.expiresAt || null,
+                appId: signatureRequest.appId,
+                role: isChair ? 'chair' : 'dean',
+                signerEmail: isChair ? signatureRequest.chairEmail : signatureRequest.deanEmail,
+                signerName: isChair ? signatureRequest.chairName : signatureRequest.deanName,
+                expiresAt: signatureRequest.expiresAt,
                 application: {
-                    proposalTitle: application.proposalTitle,
-                    piName: application.piName,
-                    grantTitle: application.grantTitle,
-                    userEmail: application.userEmail
+                    proposalTitle: application?.proposalTitle,
+                    piName: application?.piName,
+                    grantTitle: application?.grantTitle
                 }
             });
             
