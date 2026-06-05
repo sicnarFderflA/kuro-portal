@@ -2076,8 +2076,17 @@ function renderApplicationsList(filteredSubs, drafts) {
         } else if (sub.status !== 'Approved') {
             html += `<button class="card-action-btn edit-sub" data-id="${sub.id}"><i class="fas fa-edit"></i> Edit</button>`;
         }
-        if (sub.status === 'Awaiting Signatures' && !bothSigned) {
-            html += `<button class="card-action-btn warning resend-signature-btn" data-id="${sub.id}"><i class="fas fa-paper-plane"></i> Resend Signature</button>`;
+
+        
+        if (!bothSigned) {
+            // Show for Awaiting Signatures status
+            if (sub.status === 'Awaiting Signatures') {
+                html += `<button class="card-action-btn warning resend-signature-btn" data-id="${sub.id}"><i class="fas fa-paper-plane"></i> Resend Signature</button>`;
+            }
+            // ALSO show for Pending Eligibility Check if signatures are incomplete (stuck state)
+            else if (sub.status === 'Pending Eligibility Check' && (chairSigned !== deanSigned)) {
+                html += `<button class="card-action-btn warning resend-signature-btn" data-id="${sub.id}"><i class="fas fa-paper-plane"></i> Resend Missing Signature</button>`;
+            }
         }
         html += `<button class="card-action-btn danger delete-sub" data-id="${sub.id}"><i class="fas fa-trash"></i> Delete</button>
             </div>

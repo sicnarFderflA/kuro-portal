@@ -1277,12 +1277,16 @@ const startServer = async () => {
                 
                 // Update both signatures and optionally status
                 const updateData = { signatures: updatedSignatures };
+
+                 const updatedRequest = await SignatureRequest.findById(signatureRequest._id);
                 
-                // Check if both are now signed
-                const updatedRequest = await SignatureRequest.findById(signatureRequest._id);
                 if (updatedRequest.chairCompleted && updatedRequest.deanCompleted) {
                     updateData.status = 'Pending Eligibility Check';
                     console.log('🎉 Both signatures complete! Moving to Pending Eligibility Check');
+                } else {
+                    // ✅ FIX: Keep status as "Awaiting Signatures" if not both signed
+                    updateData.status = 'Awaiting Signatures';
+                    console.log(`⏳ ${isChair ? 'Chair' : 'Dean'} signed. Waiting for other signature...`);
                 }
                 
                 await Application.updateOne(
