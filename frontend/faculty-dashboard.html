@@ -2463,23 +2463,32 @@ function normalizeFormDataForComparison(formData) {
 }
 
 async function showDetails(sub) {
-    // ✅ ALWAYS fetch fresh data from API to ensure signatures are up-to-date
-    let freshSub = sub;
+    // ✅ ALWAYS fetch fresh data from API - NO FALLBACK to cached data
+    let appData = null;
+    
     try {
         const response = await fetch(`${API_URL}/api/applications/${sub.id}/full?userEmail=${currentUser.email}`);
-        if (response.ok) {
-            freshSub = await response.json();
-            console.log('✅ Fetched fresh application data for:', sub.id);
-        } else {
-            console.warn('Could not fetch fresh data, using cached data');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
+        
+        appData = await response.json();
+        console.log('✅ Fetched fresh application data for:', sub.id);
+        console.log('📋 Signature status:', appData.signatures);
+        
     } catch (error) {
-        console.warn('Error fetching fresh data:', error);
+        console.error('❌ Failed to fetch application data:', error);
+        await Swal.fire({
+            icon: 'error',
+            title: 'Unable to Load Data',
+            text: 'Could not load application details. Please try again.',
+            confirmButtonColor: '#D4AF37'
+        });
+        return;
     }
     
-    // Use freshSub for all subsequent data
-    const appData = freshSub;
-    
+    // Calculate progress metrics
     let form1Complete = 0;
     let form2Complete = 0;
     let cvComplete = 0;
@@ -2500,13 +2509,13 @@ async function showDetails(sub) {
     const chairSignedDate = signatures.chair?.signedDate;
     const deanSignedDate = signatures.dean?.signedDate;
     
+    // CV Status calculations
     let piCVStatusObj = 'missing';
     let piCVDisplayStatus = 'missing';
     let piCVIcon = '❌';
     let piCVStatusText = 'Missing CV';
     let piCVTextColor = '#999';
 
-    // Check if PI CV file exists
     if (appData.piCVName && appData.piCVName.trim() !== '') {
         if (appData.piCVStatus === 'eligible') {
             piCVStatusObj = 'eligible';
@@ -2529,6 +2538,7 @@ async function showDetails(sub) {
         }
     }
 
+    // Status-specific info
     let checkInfo = '';
     if (appData.status === 'Pending Eligibility Check') {
         checkInfo = '<div class="detail-section" style="background:#e8f0fe; margin-bottom:1rem;"><h4>🔍 Current Stage: Eligibility Review (Check 1)</h4><p style="font-size:0.75rem;">The Eligibility Officer is reviewing your application for completeness and eligibility requirements.</p></div>';
@@ -2544,6 +2554,7 @@ async function showDetails(sub) {
         </div>`;
     }
     
+    // Team CV statuses
     const teamCVStatuses = teamMembers.map((member, idx) => {
         const cv = appData.teamCVs && appData.teamCVs[idx];
         const hasFile = cv && cv.name && cv.name.trim() !== '';
@@ -2554,7 +2565,6 @@ async function showDetails(sub) {
         let statusTextColor = '#999';
         
         if (hasFile) {
-            // CV file exists - check its status
             if (cv.status === 'eligible') {
                 cvStatus = 'eligible';
                 statusText = 'Eligible';
@@ -2566,7 +2576,6 @@ async function showDetails(sub) {
                 statusIcon = '🔴';
                 statusTextColor = '#e74c3c';
             } else {
-                // Has file but status not set (pending review)
                 cvStatus = 'pending';
                 statusText = 'Pending Review';
                 statusIcon = '⏳';
@@ -2583,6 +2592,7 @@ async function showDetails(sub) {
         };
     });
     
+    // CV counts
     let eligibleCVs = 0, pendingCVs = 0, ineligibleCVs = 0, missingCVs = 0;
     let totalCVs = 1 + teamMembers.length;
     
@@ -2605,6 +2615,7 @@ async function showDetails(sub) {
     
     const submittedDate = appData.submittedDate ? new Date(appData.submittedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A';
     
+    // Status badge styling
     let statusBadgeStyle = '';
     let statusIcon = '';
     if (appData.status === 'Approved') {
@@ -2618,6 +2629,7 @@ async function showDetails(sub) {
         statusIcon = '📋';
     }
     
+    // CV list HTML
     let cvListHtml = '';
 
     cvListHtml += `
@@ -2659,20 +2671,24 @@ async function showDetails(sub) {
         return `width: ${percent}%; background: ${color}; height: 100%; border-radius: 10px; transition: width 0.3s;`;
     }
     
-    // ========== UPDATED HTML WITH APPLICATION ID (Style 1) ==========
+    // Main HTML with Refresh button
     const html = `
         <div style="max-height: 65vh; overflow-y: auto; padding-right: 5px;">
             <div style="background: linear-gradient(135deg, #283871 0%, #1e2b57 100%); border-radius: 1rem; padding: 1.25rem; margin-bottom: 1.25rem; color: white;">
                 <div>
-                    <!-- Style 1: Badge in Header with Application ID -->
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;">
                         <div style="display: flex; align-items: center; gap: 0.5rem;">
                             <i class="fas fa-trophy" style="color: #D4AF37;"></i>
                             <span style="font-size: 0.8rem; opacity: 0.9;">${escapeHtml(appData.grantTitle)}</span>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 0.3rem; background: rgba(255,255,255,0.15); padding: 0.2rem 0.7rem; border-radius: 40px;">
-                            <i class="fas fa-hashtag" style="color: #D4AF37; font-size: 0.65rem;"></i>
-                            <span style="font-size: 0.7rem; font-family: monospace;">${escapeHtml(appData.id)}</span>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <div style="display: flex; align-items: center; gap: 0.3rem; background: rgba(255,255,255,0.15); padding: 0.2rem 0.7rem; border-radius: 40px;">
+                                <i class="fas fa-hashtag" style="color: #D4AF37; font-size: 0.65rem;"></i>
+                                <span style="font-size: 0.7rem; font-family: monospace;">${escapeHtml(appData.id)}</span>
+                            </div>
+                            <button id="refreshDetailsBtn" style="background: rgba(255,255,255,0.15); border: none; color: #D4AF37; cursor: pointer; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;">
+                                <i class="fas fa-sync-alt" style="font-size: 0.8rem;"></i>
+                            </button>
                         </div>
                     </div>
                     
@@ -2694,6 +2710,8 @@ async function showDetails(sub) {
                     </div>
                 </div>
             </div>
+            
+            ${checkInfo}
             
             <div style="background: white; border-radius: 1rem; padding: 1.25rem; margin-bottom: 1.25rem; border: 1px solid #eef2f0;">
                 <h4 style="color: #283871; font-size: 0.9rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
@@ -2784,6 +2802,7 @@ async function showDetails(sub) {
                     <div style="background: #f8f9fa; padding: 0.75rem 1rem; border-bottom: 1px solid #eef2f0;">
                         <h4 style="color: #283871; font-size: 0.85rem; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
                             <i class="fas fa-signature" style="color: #D4AF37;"></i> Signature Status
+                            ${!chairSigned || !deanSigned ? '<span style="font-size: 0.6rem; font-weight: normal; margin-left: 0.5rem;">(Click refresh to update)</span>' : ''}
                         </h4>
                     </div>
                     <div style="padding: 1rem;">
@@ -2849,7 +2868,7 @@ async function showDetails(sub) {
         </div>
     `;
     
-    await Swal.fire({
+    const result = await Swal.fire({
         title: '<div style="display: flex; justify-content: space-between; align-items: center;"><span>Application Details</span><button id="customModalCloseBtn" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999; line-height: 1; padding: 0 8px;">&times;</button></div>',
         html: html,
         width: '750px',
@@ -2858,10 +2877,25 @@ async function showDetails(sub) {
         confirmButtonText: 'Close',
         showCancelButton: false,
         didOpen: (modal) => {
+            // Close button handler
             const closeBtn = modal.querySelector('#customModalCloseBtn');
             if (closeBtn) {
                 closeBtn.addEventListener('click', () => {
                     Swal.close();
+                });
+            }
+            
+            // Refresh button handler
+            const refreshBtn = modal.querySelector('#refreshDetailsBtn');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', async () => {
+                    // Show loading state
+                    refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                    refreshBtn.disabled = true;
+                    
+                    // Close current modal and reopen with fresh data
+                    Swal.close();
+                    await showDetails(sub);
                 });
             }
         }
