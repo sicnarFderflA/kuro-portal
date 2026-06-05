@@ -552,7 +552,6 @@
                 isSigned = true;
                 confirmBtn.disabled = false;
                 
-                // Visual feedback
                 const icon = document.getElementById('signatureIcon');
                 icon.classList.add('loading');
                 setTimeout(() => {
@@ -570,64 +569,33 @@
             if (isProcessing) return;
             isProcessing = true;
             
-            // Show loading state on button
             this.classList.add('loading');
             this.disabled = true;
             const originalHTML = this.innerHTML;
             this.innerHTML = '<span class="spinner"></span> Processing Signature...';
             
-            // Animate icon
             const icon = document.getElementById('signatureIcon');
             icon.classList.add('loading');
             document.getElementById('statusMessage').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Recording your signature...';
             
             try {
-                // ✅ CORRECT: Update signature using the correct nested structure
-                const signatureUpdate = {
-                    signatures: {
-                        [role]: {
-                            signed: true,
-                            signedDate: new Date().toISOString(),
-                            signerEmail: authenticatedUser.email,
-                            signerName: authenticatedUser.name
-                        }
-                    }
-                };
-                
-                console.log('✍️ Sending signature update:', signatureUpdate);
-                
-                // Update signature via API
-                await KURO_API.updateApplication(appId, signatureUpdate);
-                
-                // Mark request as completed
-                await KURO_API.markSignatureComplete(token, {
-                    completed: true,
-                    signedDate: new Date().toISOString(),
-                    signerName: authenticatedUser.name
+                // ✅ FIXED: Use the correct endpoint - Direct API call to backend
+                const response = await fetch(`${API_URL}/api/signatures/${token}/complete`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: authenticatedUser.name,
+                        email: authenticatedUser.email
+                    })
                 });
-
-                // Check if both signatures are now complete
-                const updatedApp = await KURO_API.getApplication(appId);
-                console.log('Updated app signatures:', updatedApp.signatures);
                 
-                if (updatedApp.signatures?.chair?.signed && updatedApp.signatures?.dean?.signed) {
-                    // Update status to Pending Eligibility Check
-                    await KURO_API.updateApplication(appId, {
-                        status: "Pending Eligibility Check"
-                    });
-                    console.log("✅ Both signatures complete! Status updated to Pending Eligibility Check");
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to save signature');
                 }
                 
-                // Add notification
-                await KURO_API.createNotification({
-                    userEmail: userEmail,
-                    type: 'signature_received',
-                    title: '✍️ Signature Received',
-                    message: `${role === 'chair' ? 'Department Chair' : 'Dean'} ${authenticatedUser.name} has signed the endorsement letter.`,
-                    appId: appId,
-                    icon: '✍️',
-                    color: '#2ecc71'
-                });
+                const result = await response.json();
+                console.log('Signature saved successfully:', result);
                 
                 // Show success
                 document.getElementById('signSection').style.display = 'none';
@@ -644,13 +612,22 @@
                     <footer><i class="fas fa-certificate"></i> Digital signature recorded at ${new Date().toLocaleString()}</footer>
                 `;
                 
+                // Notify the parent window to refresh
+                if (window.opener) {
+                    window.opener.postMessage({ 
+                        type: 'SIGNATURE_COMPLETED', 
+                        appId: appId,
+                        role: role 
+                    }, '*');
+                }
+                
             } catch (error) {
                 console.error('Signature failed:', error);
                 this.classList.remove('loading');
                 this.disabled = false;
                 this.innerHTML = originalHTML;
                 icon.classList.remove('loading');
-                document.getElementById('statusMessage').innerHTML = '<span style="color: #e74c3c;">❌ Failed to save signature. Please try again.</span>';
+                document.getElementById('statusMessage').innerHTML = `<span style="color: #e74c3c;">❌ Failed to save signature: ${error.message}</span>`;
                 showError('Failed to save signature. Please try again.');
                 isProcessing = false;
             }
@@ -666,100 +643,65 @@
         }
         
         try {
-            // Get signature request from backend API instead of localStorage
+            // ✅ FIXED: Use the correct endpoint that returns the signature request data
             const response = await fetch(`${API_URL}/api/signatures/${token}`);
             
             if (!response.ok) {
-                document.getElementById('statusMessage').innerHTML = '<span style="color: #e74c3c;">❌ This signature link is invalid or has expired.</span><br><br>Please contact the KURO office for assistance.';
+                if (response.status === 404) {
+                    document.getElementById('statusMessage').innerHTML = '<span style="color: #e74c3c;">❌ This signature link is invalid.</span><br><br>Please contact the KURO office for assistance.';
+                } else if (response.status === 410) {
+                    document.getElementById('statusMessage').innerHTML = `
+                        <div class="warning">
+                            <i class="fas fa-hourglass-end" style="color: #e74c3c;"></i> 
+                            <strong>⏰ This signature link has expired!</strong><br><br>
+                            Please contact the faculty member to request a new link.
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('statusMessage').innerHTML = '<span style="color: #e74c3c;">❌ Error validating signature link.</span><br><br>Please try again later.';
+                }
                 document.getElementById('signatureIcon').style.background = '#e74c3c';
                 return;
             }
             
             const signatureData = await response.json();
+            console.log('Signature data received:', signatureData);
             
-            // Check if the signature request exists and matches
-            if (!signatureData || signatureData.appId !== appId) {
-                document.getElementById('statusMessage').innerHTML = '<span style="color: #e74c3c;">❌ This signature link is invalid.</span><br><br>Please contact the KURO office for assistance.';
-                document.getElementById('signatureIcon').style.background = '#e74c3c';
-                return;
-            }
+            // Check if already signed
+            const isChair = role === 'chair';
+            const isAlreadySigned = isChair ? signatureData.chairCompleted : signatureData.deanCompleted;
             
-            // Check if revoked
-            if (signatureData.revoked === true) {
-                document.getElementById('statusMessage').innerHTML = `
-                    <div class="warning">
-                        <i class="fas fa-ban" style="color: #e74c3c;"></i> 
-                        <strong>⚠️ This signature link has been revoked!</strong><br><br>
-                        The applicant has generated a new signature request. 
-                        Please use the most recent link sent to you.
-                    </div>
-                `;
-                document.getElementById('signatureIcon').style.background = '#e74c3c';
-                return;
-            }
-            
-            // Check if expired
-            if (signatureData.expiresAt && new Date(signatureData.expiresAt) < new Date()) {
-                // Notify the applicant about expired attempt
-                await notifyApplicantAboutExpiredLink(appId, role, signatureData.signerEmail, signatureData.signerName);
-                
-                document.getElementById('statusMessage').innerHTML = `
-                    <div class="warning">
-                        <i class="fas fa-hourglass-end" style="color: #e74c3c;"></i> 
-                        <strong>⏰ This signature link has expired!</strong><br><br>
-                        The applicant has been notified and will send you a new link shortly.
-                    </div>
-                    <div style="margin-top: 1rem;">
-                        <button id="requestNewLinkBtn" class="btn-confirm" style="background: #3498db; margin-top: 0;">
-                            <i class="fas fa-paper-plane"></i> Request New Link
-                        </button>
-                    </div>
-                `;
-                document.getElementById('signatureIcon').style.background = '#e74c3c';
-                
-                // Add event listener for "Request New Link" button after DOM update
-                setTimeout(() => {
-                    const requestBtn = document.getElementById('requestNewLinkBtn');
-                    if (requestBtn) {
-                        requestBtn.addEventListener('click', async () => {
-                            await requestNewSignatureLink(appId, role);
-                        });
-                    }
-                }, 100);
-                
-                return;
-            }
-            
-            // Check if already completed
-            if (signatureData.completed === true) {
+            if (isAlreadySigned) {
                 document.getElementById('statusMessage').innerHTML = `
                     <div class="success">
                         <i class="fas fa-check-circle"></i> 
-                        <strong>✅ Signature Already Completed!</strong>
+                        <strong>✅ Signature Already Completed!</strong><br><br>
+                        You have already signed this document.
                     </div>
                 `;
                 document.getElementById('signatureIcon').style.background = '#2ecc71';
                 return;
             }
             
-            // Check if role matches
-            if (signatureData.role !== role) {
+            // Check if expired
+            if (signatureData.expiresAt && new Date(signatureData.expiresAt) < new Date()) {
                 document.getElementById('statusMessage').innerHTML = `
                     <div class="warning">
-                        <i class="fas fa-exclamation-triangle"></i> 
-                        <strong>🔐 This signature link is for a different role.</strong>
+                        <i class="fas fa-hourglass-end" style="color: #e74c3c;"></i> 
+                        <strong>⏰ This signature link has expired!</strong><br><br>
+                        Please contact the faculty member to request a new link.
                     </div>
                 `;
                 document.getElementById('signatureIcon').style.background = '#e74c3c';
                 return;
             }
             
-            // Store the request data for later use
+            // Store the request data
             request = {
-                signerEmail: signatureData.signerEmail,
-                signerName: signatureData.signerName,
+                signerEmail: isChair ? signatureData.chairEmail : signatureData.deanEmail,
+                signerName: isChair ? signatureData.chairName : signatureData.deanName,
                 application: signatureData.application,
-                role: signatureData.role,
+                role: role,
                 token: token
             };
             

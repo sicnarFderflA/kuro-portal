@@ -1200,7 +1200,6 @@ const startServer = async () => {
             
             console.log('🔐 Completing signature for token:', token);
             
-            // Find the signature request
             const signatureRequest = await SignatureRequest.findOne({
                 $or: [{ chairToken: token }, { deanToken: token }]
             });
@@ -1209,18 +1208,13 @@ const startServer = async () => {
                 return res.status(404).json({ error: 'Signature request not found' });
             }
             
-            // Check expiration
             if (signatureRequest.expiresAt && new Date() > new Date(signatureRequest.expiresAt)) {
-                return res.status(410).json({ 
-                    error: 'Link Expired',
-                    message: 'This signature link has expired (7 days).'
-                });
+                return res.status(410).json({ error: 'Link Expired' });
             }
             
             const isChair = token === signatureRequest.chairToken;
             const isDean = token === signatureRequest.deanToken;
             
-            // Check if already signed for this role
             const alreadySigned = isChair ? signatureRequest.chairCompleted : signatureRequest.deanCompleted;
             if (alreadySigned) {
                 return res.status(400).json({ error: 'Already signed' });
@@ -1253,35 +1247,51 @@ const startServer = async () => {
                 { $set: updateField }
             );
             
-            // ✅ ALSO UPDATE THE APPLICATION
+            // ✅ FIXED: Update Application without overwriting existing signatures
             const application = await Application.findOne({ id: signatureRequest.appId });
             
             if (application) {
-                // Update the signatures in the Application collection
-                const appUpdate = {};
+                // Get existing signatures or create new object
+                const existingSignatures = application.signatures || {};
+                
+                // Create updated signatures object
+                const updatedSignatures = { ...existingSignatures };
                 
                 if (isChair) {
-                    appUpdate['signatures.chair'] = {
+                    updatedSignatures.chair = {
                         signed: true,
                         signedDate: new Date(),
                         signerEmail: email,
                         signerName: name
                     };
+                    console.log('✅ Updating Chair signature');
                 } else {
-                    appUpdate['signatures.dean'] = {
+                    updatedSignatures.dean = {
                         signed: true,
                         signedDate: new Date(),
                         signerEmail: email,
                         signerName: name
                     };
+                    console.log('✅ Updating Dean signature');
+                }
+                
+                // Update both signatures and optionally status
+                const updateData = { signatures: updatedSignatures };
+                
+                // Check if both are now signed
+                const updatedRequest = await SignatureRequest.findById(signatureRequest._id);
+                if (updatedRequest.chairCompleted && updatedRequest.deanCompleted) {
+                    updateData.status = 'Pending Eligibility Check';
+                    console.log('🎉 Both signatures complete! Moving to Pending Eligibility Check');
                 }
                 
                 await Application.updateOne(
                     { id: signatureRequest.appId },
-                    { $set: appUpdate }
+                    { $set: updateData }
                 );
                 
                 console.log(`✅ Updated Application ${signatureRequest.appId} for ${roleName}`);
+                console.log('Current signatures:', updatedSignatures);
             }
             
             // Get updated signature request
@@ -1299,28 +1309,6 @@ const startServer = async () => {
                 isRead: false,
                 createdAt: new Date()
             });
-            
-            // If both signed, update application status
-            if (updatedRequest.chairCompleted && updatedRequest.deanCompleted) {
-                console.log('🎉 Both signatures complete! Moving to Pending Eligibility Check');
-                
-                await Application.updateOne(
-                    { id: signatureRequest.appId },
-                    { $set: { status: 'Pending Eligibility Check' } }
-                );
-                
-                await Notification.create({
-                    userEmail: application.userEmail,
-                    type: 'signatures_complete',
-                    title: '📋 All Signatures Received',
-                    message: `Both Chair and Dean have signed. Your application is now moving to eligibility review.`,
-                    appId: signatureRequest.appId,
-                    icon: '📋',
-                    color: '#D4AF37',
-                    isRead: false,
-                    createdAt: new Date()
-                });
-            }
             
             res.json({ 
                 success: true, 
