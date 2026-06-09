@@ -1606,8 +1606,9 @@ function initNotificationSystem() {
 // API Data functions
 async function getAllApplications() {
     try {
-        const applications = await KURO_API.getAdminApplicationsMetadata();
-        console.log(`✅ Loaded ${applications.length} applications (metadata only)`);
+        // Use the existing admin applications endpoint (not metadata)
+        const applications = await KURO_API.getAdminApplications();
+        console.log(`✅ Loaded ${applications.length} applications`);
         return applications;
     } catch (error) {
         console.error('Failed to load applications:', error);
