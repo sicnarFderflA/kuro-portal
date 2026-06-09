@@ -1485,6 +1485,59 @@ const startServer = async () => {
             res.status(500).json({ error: error.message });
         }
     });
+
+    app.get('/api/admin/applications/metadata', async (req, res) => {
+        try {
+            const { userEmail } = req.query;
+            
+            // Verify admin permissions
+            const user = await User.findOne({ email: userEmail });
+            const isSuperAdmin = userEmail === '200520181@my.xu.edu.ph';
+            const isAdmin = user?.role === 'admin';
+            
+            if (!isAdmin && !isSuperAdmin) {
+                return res.status(403).json({ error: 'Admin access required' });
+            }
+            
+            // Get all applications with selected fields only (metadata for performance)
+            const applications = await Application.find({})
+                .select('id grantTitle proposalTitle status submittedDate userEmail piName piEmail dept school piCVName piCVStatus teamMembers teamCVs signatures chairEmail deanEmail fromChair deanName')
+                .sort({ submittedDate: -1 });
+            
+            console.log(`✅ Admin metadata: returning ${applications.length} applications`);
+            res.json(applications);
+            
+        } catch (error) {
+            console.error('Error in /api/admin/applications/metadata:', error);
+            res.status(500).json({ error: error.message });
+        }
+    });
+
+    // GET /api/faculty/applications/metadata - Get faculty applications metadata (lightweight)
+    app.get('/api/faculty/applications/metadata', async (req, res) => {
+        try {
+            const { userEmail } = req.query;
+            
+            if (!userEmail) {
+                return res.status(400).json({ error: 'userEmail required' });
+            }
+            
+            const applications = await Application.find({ userEmail: userEmail })
+                .select('id grantTitle proposalTitle status submittedDate piName userEmail piCVName piCVStatus teamMembers teamCVs signatures chairEmail deanEmail fromChair deanName')
+                .sort({ submittedDate: -1 });
+            
+            res.json(applications);
+            
+        } catch (error) {
+            console.error('Error in /api/faculty/applications/metadata:', error);
+            res.status(500).json({ error: error.message });
+        }
+    });
+    
+    // ========== 404 HANDLER ==========
+    app.use((req, res) => {
+        res.status(404).json({ error: 'Route not found', path: req.url });
+    });
     
     // ========== 404 HANDLER ==========
     app.use((req, res) => {
